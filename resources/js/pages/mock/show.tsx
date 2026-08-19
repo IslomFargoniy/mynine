@@ -1,13 +1,14 @@
 import React, { useState } from 'react';
 import AppLayout from '@/layouts/app-layout';
-import { Head, Link, usePage } from '@inertiajs/react';
+import { Head, Link, useForm, usePage } from '@inertiajs/react';
 import { type BreadcrumbItem } from '@/types';
 import { useTranslation } from 'react-i18next';
-import { Users, Calendar, CheckCircle2, Clock, Activity, FileText, ArrowLeft, FileSpreadsheet, Eye, Download, Award } from 'lucide-react';
+import { Users, Calendar, CheckCircle2, Clock, Activity, FileText, ArrowLeft, FileSpreadsheet, Eye, FileDown, Award, Trash2 } from 'lucide-react';
 import { format } from 'date-fns';
+import { toast } from 'sonner';
 
 import MockStudentManager from '@/components/mock/mock-student-manager';
-import AttemptTable from '@/components/attempt/attempt-table';
+import DeleteItemModal from '@/components/delete-item-modal';
 import { Button } from '@/components/ui/button';
 import { exportAttemptsToExcel } from '@/lib/excel-export';
 import { extractAttemptScores } from '@/lib/ielts-score-converter';
@@ -20,6 +21,28 @@ export default function MockShow() {
 
     const { t } = useTranslation();
     const [activeTab, setActiveTab] = useState<'students' | 'attempts'>('students');
+
+    const [openDeleteModal, setOpenDeleteModal] = useState(false);
+    const [selectedAttemptToDelete, setSelectedAttemptToDelete] = useState<any>(null);
+    const { delete: deleteAttempt } = useForm();
+
+    const handleDeleteAttemptClick = (attemptItem: any) => {
+        setSelectedAttemptToDelete(attemptItem);
+        setOpenDeleteModal(true);
+    };
+
+    const handleConfirmDelete = (id: number) => {
+        deleteAttempt(route('attempt.destroy', id), {
+            preserveScroll: true,
+            onSuccess: () => {
+                setOpenDeleteModal(false);
+                toast.success(t('deleted_successfully') || "Urinish o'chirildi");
+            },
+            onError: (err) => {
+                toast.error(err?.error || t('delete_failed') || "O'chirishda xatolik yuz berdi");
+            }
+        });
+    };
 
     const breadcrumbs: BreadcrumbItem[] = [
         {
@@ -286,16 +309,16 @@ export default function MockShow() {
                                                                 <Link
                                                                     href={route('attempt.show', attempt.id)}
                                                                     className="p-1.5 rounded-lg bg-indigo-50 dark:bg-indigo-950/40 text-indigo-600 dark:text-indigo-400 hover:bg-indigo-100 transition-colors"
-                                                                    title="Natijani Ko'rish"
+                                                                    title="Natijani Ko'rish (View Result)"
                                                                 >
                                                                     <Eye className="w-4 h-4" />
                                                                 </Link>
                                                                 <button
                                                                     onClick={() => window.open(route('attempt.pdf', attempt.id), '_blank')}
-                                                                    className="p-1.5 rounded-lg bg-gray-50 dark:bg-gray-800 text-gray-600 dark:text-gray-300 hover:bg-gray-100 transition-colors"
-                                                                    title="PDF Yuklab Olish"
+                                                                    className="p-1.5 rounded-lg bg-red-50 dark:bg-red-950/40 text-red-600 dark:text-red-400 hover:bg-red-100 transition-colors"
+                                                                    title="PDF Yuklab Olish (Download PDF)"
                                                                 >
-                                                                    <Download className="w-4 h-4" />
+                                                                    <FileDown className="w-4 h-4" />
                                                                 </button>
                                                             </div>
                                                         ) : (
@@ -314,22 +337,210 @@ export default function MockShow() {
 
                 {activeTab === 'attempts' && (
                     <div className="rounded-2xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 p-5 shadow-xs">
-                        <AttemptTable
-                            data={attempts}
-                            search=""
-                            current_page={1}
-                            last_page={1}
-                            per_page={100}
-                            total={attempts.length}
-                            from={1}
-                            to={attempts.length}
-                            links={[]}
-                            searchData={{ search: '', user_id: '', mock_id: '', test_id: '', from: '', to: '', per_page: 100, page: 1, total: attempts.length }}
-                            hidePagination={true}
-                        />
+                        <div className="flex items-center justify-between mb-4">
+                            <h3 className="text-sm font-bold text-gray-900 dark:text-white">
+                                Imtihon Urinishlari Ro'yxati
+                            </h3>
+                            {attempts.length > 0 && (
+                                <Button
+                                    onClick={() => exportAttemptsToExcel(attempts, `Mock_${mock.name}_Attempts`)}
+                                    variant="outline"
+                                    className="h-8 px-3 rounded-xl border-green-200 bg-green-50/50 text-green-700 hover:bg-green-100 dark:border-green-900/30 dark:bg-green-900/20 dark:text-green-400 gap-1.5 font-bold text-xs shadow-xs"
+                                >
+                                    <FileSpreadsheet className="w-3.5 h-3.5 text-green-600" />
+                                    Excelga Yuklash
+                                </Button>
+                            )}
+                        </div>
+
+                        {attempts.length === 0 ? (
+                            <div className="text-center py-12 border border-dashed border-gray-200 dark:border-gray-800 rounded-xl text-xs text-gray-400 space-y-3">
+                                <FileText className="w-8 h-8 mx-auto text-gray-300 dark:text-gray-600" />
+                                <p>Hali imtihon topshirganlar yo'q.</p>
+                                <p className="text-[11px]">O'quvchilar imtihonni topshirgandan so'ng natijalar bu yerda ko'rinadi.</p>
+                            </div>
+                        ) : (
+                            <div className="overflow-x-auto rounded-xl border border-gray-200 dark:border-gray-800">
+                                <table className="w-full text-xs text-left">
+                                    <thead className="bg-gray-50 dark:bg-gray-800/80 text-gray-500 dark:text-gray-400 font-bold uppercase text-[10px]">
+                                        <tr>
+                                            <th className="px-4 py-3">#</th>
+                                            <th className="px-4 py-3">O'quvchi Ismi</th>
+                                            <th className="px-4 py-3">Nomzod Kodi</th>
+                                            <th className="px-4 py-3 text-center">Holat / Sana</th>
+                                            <th className="px-4 py-3 text-center">Listening</th>
+                                            <th className="px-4 py-3 text-center">Reading</th>
+                                            <th className="px-4 py-3 text-center">Writing</th>
+                                            <th className="px-4 py-3 text-center">Speaking</th>
+                                            <th className="px-4 py-3 text-center">Overall Band</th>
+                                            <th className="px-4 py-3 text-right">Amallar</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody className="divide-y divide-gray-100 dark:divide-gray-800 bg-white dark:bg-gray-900">
+                                        {attempts.map((item: any, idx: number) => {
+                                            const scores = extractAttemptScores(item);
+                                            const isFinished = !!item.finished_at;
+                                            const studentName = item.mock_student?.name || item.mockStudent?.name || item.name || item.user?.name || "---";
+                                            const studentCode = item.mock_student?.code || item.mockStudent?.code;
+
+                                            return (
+                                                <tr key={item.id} className="hover:bg-gray-50/50 dark:hover:bg-gray-800/40">
+                                                    <td className="px-4 py-3 font-mono text-gray-400">{idx + 1}</td>
+                                                    <td className="px-4 py-3 font-bold text-gray-900 dark:text-gray-100">
+                                                        <div>{studentName}</div>
+                                                        {item.user?.email && (
+                                                            <span className="text-[10px] text-gray-400 font-normal">{item.user.email}</span>
+                                                        )}
+                                                    </td>
+                                                    <td className="px-4 py-3 font-mono font-bold text-indigo-600 dark:text-indigo-400">
+                                                        {studentCode ? (
+                                                            <span className="px-2 py-0.5 rounded-lg bg-indigo-50 dark:bg-indigo-950/40 border border-indigo-200 dark:border-indigo-800/40 text-[11px]">
+                                                                {studentCode}
+                                                            </span>
+                                                        ) : (
+                                                            <span className="text-gray-300 dark:text-gray-600 font-mono text-[11px]">-</span>
+                                                        )}
+                                                    </td>
+                                                    <td className="px-4 py-3 text-center">
+                                                        <div className="inline-flex flex-col items-center gap-0.5">
+                                                            <span className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold ${
+                                                                isFinished
+                                                                    ? 'bg-emerald-50 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-400'
+                                                                    : 'bg-blue-50 text-blue-700 dark:bg-blue-950/40 dark:text-blue-400'
+                                                            }`}>
+                                                                {isFinished ? <CheckCircle2 className="w-3 h-3" /> : <Clock className="w-3 h-3" />}
+                                                                {isFinished ? 'Tugatildi' : 'Jarayonda'}
+                                                            </span>
+                                                            {item.finished_at ? (
+                                                                <span className="text-[9px] text-gray-400 font-mono">
+                                                                    {format(new Date(item.finished_at), 'dd.MM.yyyy HH:mm')}
+                                                                </span>
+                                                            ) : item.started_at ? (
+                                                                <span className="text-[9px] text-gray-400 font-mono">
+                                                                    {format(new Date(item.started_at), 'dd.MM.yyyy HH:mm')}
+                                                                </span>
+                                                            ) : null}
+                                                        </div>
+                                                    </td>
+
+                                                    {/* Listening Score */}
+                                                    <td className="px-4 py-3 text-center">
+                                                        {scores.listening !== null ? (
+                                                            <div className="inline-flex flex-col items-center">
+                                                                <span className="font-bold text-gray-900 dark:text-gray-100">{scores.listeningBand?.toFixed(1)}</span>
+                                                                <span className="text-[9px] text-gray-400 font-mono">({scores.listening}/40)</span>
+                                                            </div>
+                                                        ) : (
+                                                            <span className="text-gray-300 dark:text-gray-600 font-mono">-</span>
+                                                        )}
+                                                    </td>
+
+                                                    {/* Reading Score */}
+                                                    <td className="px-4 py-3 text-center">
+                                                        {scores.reading !== null ? (
+                                                            <div className="inline-flex flex-col items-center">
+                                                                <span className="font-bold text-gray-900 dark:text-gray-100">{scores.readingBand?.toFixed(1)}</span>
+                                                                <span className="text-[9px] text-gray-400 font-mono">({scores.reading}/40)</span>
+                                                            </div>
+                                                        ) : (
+                                                            <span className="text-gray-300 dark:text-gray-600 font-mono">-</span>
+                                                        )}
+                                                    </td>
+
+                                                    {/* Writing Score */}
+                                                    <td className="px-4 py-3 text-center">
+                                                        {scores.writingBand !== null ? (
+                                                            <span className="font-bold text-gray-900 dark:text-gray-100">{scores.writingBand.toFixed(1)}</span>
+                                                        ) : (
+                                                            <span className="text-gray-300 dark:text-gray-600 font-mono">-</span>
+                                                        )}
+                                                    </td>
+
+                                                    {/* Speaking Score */}
+                                                    <td className="px-4 py-3 text-center">
+                                                        {scores.speakingBand !== null ? (
+                                                            <span className="font-bold text-gray-900 dark:text-gray-100">{scores.speakingBand.toFixed(1)}</span>
+                                                        ) : (
+                                                            <span className="text-gray-300 dark:text-gray-600 font-mono">-</span>
+                                                        )}
+                                                    </td>
+
+                                                    {/* Overall Band Score */}
+                                                    <td className="px-4 py-3 text-center">
+                                                        {scores.overallBand !== null ? (
+                                                            <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-black bg-amber-50 dark:bg-amber-950/40 text-amber-700 dark:text-amber-400 border border-amber-300 dark:border-amber-700">
+                                                                <Award className="w-3.5 h-3.5 text-amber-500" />
+                                                                {scores.overallBand.toFixed(1)}
+                                                            </span>
+                                                        ) : isFinished ? (
+                                                            <span className="text-emerald-600 font-bold text-[10px]">Baholanmoqda</span>
+                                                        ) : (
+                                                            <span className="text-gray-300 dark:text-gray-600 font-mono">-</span>
+                                                        )}
+                                                    </td>
+
+                                                    {/* Actions */}
+                                                    <td className="px-4 py-3 text-right">
+                                                        <div className="inline-flex items-center gap-1.5">
+                                                            {isFinished ? (
+                                                                <>
+                                                                    <Link
+                                                                        href={route('attempt.show', item.id)}
+                                                                        className="p-1.5 rounded-lg bg-indigo-50 dark:bg-indigo-950/40 text-indigo-600 dark:text-indigo-400 hover:bg-indigo-100 transition-colors"
+                                                                        title="Natijani Ko'rish (View Result)"
+                                                                    >
+                                                                        <Eye className="w-4 h-4" />
+                                                                    </Link>
+                                                                    <button
+                                                                        onClick={() => window.open(route('attempt.pdf', item.id), '_blank')}
+                                                                        className="p-1.5 rounded-lg bg-red-50 dark:bg-red-950/40 text-red-600 dark:text-red-400 hover:bg-red-100 transition-colors"
+                                                                        title="PDF Yuklab Olish (Download PDF)"
+                                                                    >
+                                                                        <FileDown className="w-4 h-4" />
+                                                                    </button>
+                                                                </>
+                                                            ) : (
+                                                                <Link
+                                                                    href={`/practice?attempt_id=${item.id}`}
+                                                                    className="px-2.5 py-1 bg-indigo-600 text-white text-[11px] font-bold rounded-lg hover:bg-indigo-700 transition shadow-xs"
+                                                                >
+                                                                    Davom etish
+                                                                </Link>
+                                                            )}
+                                                            {isAdmin && (
+                                                                <button
+                                                                    onClick={() => handleDeleteAttemptClick(item)}
+                                                                    className="p-1.5 rounded-lg bg-gray-50 dark:bg-gray-800 text-gray-500 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-950/40 dark:hover:text-red-400 transition-colors"
+                                                                    title="O'chirish"
+                                                                >
+                                                                    <Trash2 className="w-4 h-4" />
+                                                                </button>
+                                                            )}
+                                                        </div>
+                                                    </td>
+                                                </tr>
+                                            );
+                                        })}
+                                    </tbody>
+                                </table>
+                            </div>
+                        )}
                     </div>
                 )}
             </div>
+
+            {/* Delete Attempt Modal */}
+            {selectedAttemptToDelete && openDeleteModal && (
+                <DeleteItemModal
+                    item={{
+                        id: selectedAttemptToDelete.id,
+                        name: selectedAttemptToDelete.mock_student?.name || selectedAttemptToDelete.mockStudent?.name || selectedAttemptToDelete.name || selectedAttemptToDelete.user?.name || `Urinish #${selectedAttemptToDelete.id}`
+                    }}
+                    open={openDeleteModal}
+                    setOpen={setOpenDeleteModal}
+                    onDelete={handleConfirmDelete}
+                />
+            )}
         </AppLayout>
     );
 }
