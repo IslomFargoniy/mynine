@@ -189,8 +189,8 @@ mkdir -p storage/framework/sessions storage/framework/views storage/framework/ca
 
 ## 🤝 Support & Contribution
 
-- **YouTube:** [IslamAbdurahman](https://www.youtube.com/@IslamAbdurahman)
-- **Telegram Community:** [LiveLongevity](https://t.me/LiveLongevity)
+- **YouTube:** [IslomFargniy](https://www.youtube.com/@IslomFargniy)
+- **Telegram Community:** [IslomFargniy](https://t.me/IslomFargniy)
 - **Email:** [abdurahmanislam304@gmail.com](mailto:abdurahmanislam304@gmail.com)
 
 ---

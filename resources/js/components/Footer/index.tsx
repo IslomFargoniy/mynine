@@ -27,15 +27,15 @@ const Footer: React.FC = () => {
                             {capitalizeDomain} — {t('footer.description')}
                         </p>
                         <div className="flex items-center gap-4 mt-4">
-                            <a target="_blank" href="https://t.me/livelongevity"
+                            <a target="_blank" href="https://t.me/IslomFargniy"
                                className="hover:text-primary text-black dark:text-gray-300 text-3xl">
                                 <Icon icon="tabler:brand-facebook" />
                             </a>
-                            <a target="_blank" href="https://t.me/livelongevity"
+                            <a target="_blank" href="https://t.me/IslomFargniy"
                                className="hover:text-primary text-black dark:text-gray-300 text-3xl">
                                 <Icon icon="tabler:brand-telegram" />
                             </a>
-                            <a target="_blank" href="https://t.me/livelongevity"
+                            <a target="_blank" href="https://t.me/IslomFargniy"
                                className="hover:text-primary text-black dark:text-gray-300 text-3xl">
                                 <Icon icon="tabler:brand-instagram" />
                             </a>
@@ -84,7 +84,7 @@ const Footer: React.FC = () => {
                         <div className="flex items-center gap-2">
                             <Icon icon="tabler:mail" className="text-primary text-3xl" />
 
-                            <a href={'https://t.me/livelongevity'} target="_blank">
+                            <a href={'https://t.me/IslomFargniy'} target="_blank">
                                 <span className="text-lg text-black/60 dark:text-gray-400">{t('footer.support_telegram')}</span>
                             </a>
 
