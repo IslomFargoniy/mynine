@@ -21,6 +21,7 @@ use App\Http\Controllers\PracticeController;
 use App\Http\Controllers\QuestionController;
 use App\Http\Controllers\QuestionTypeController;
 use App\Http\Controllers\SectionController;
+use App\Http\Controllers\SitemapController;
 use App\Http\Controllers\Telegram\MynineUzBotController;
 use App\Http\Controllers\Telegram\TelegramController;
 use App\Http\Controllers\TestController;
@@ -38,6 +39,7 @@ use Illuminate\Support\Facades\Route;
 */
 
 Route::get('/', [HomeController::class, 'home'])->name('home');
+Route::get('/sitemap.xml', [SitemapController::class, 'index'])->name('sitemap');
 Route::get('landing-page-tests', [LandingPageController::class, 'tests'])->name('landing-page-tests');
 
 Route::post('/webapp-login', [TelegramAuthController::class, 'login']);

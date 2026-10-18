@@ -1,2 +1,26 @@
 User-agent: *
-Disallow:
+Allow: /$
+Allow: /login
+Allow: /register
+Disallow: /dashboard
+Disallow: /practice
+Disallow: /practice-
+Disallow: /attempt
+Disallow: /attempt-
+Disallow: /mock
+Disallow: /mock-student
+Disallow: /folder
+Disallow: /test
+Disallow: /part
+Disallow: /section
+Disallow: /question
+Disallow: /option
+Disallow: /user
+Disallow: /settings
+Disallow: /media/
+Disallow: /storage/
+Disallow: /telescope
+Disallow: /api/
+Disallow: /lang/
+
+Sitemap: https://mynine.uz/sitemap.xml
