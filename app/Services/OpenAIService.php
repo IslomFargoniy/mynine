@@ -3,7 +3,6 @@
 namespace App\Services;
 
 use OpenAI;
-use Exception;
 
 class OpenAIService
 {
@@ -125,6 +124,7 @@ EOT;
             ]);
 
             $jsonString = $response->choices[0]->message->content ?? '{"sections": []}';
+
             return json_decode($jsonString, true) ?? ['sections' => []];
         } catch (\Exception $e) {
             return ['sections' => [], 'error' => $e->getMessage()];

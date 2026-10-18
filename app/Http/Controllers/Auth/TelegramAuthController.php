@@ -23,14 +23,14 @@ class TelegramAuthController extends Controller
         $isLocal = app()->environment('local');
         $initData = $data['initData'] ?? '';
 
-        if (!empty($initData)) {
-            if (!$this->verifyTelegramWebApp($initData)) {
+        if (! empty($initData)) {
+            if (! $this->verifyTelegramWebApp($initData)) {
                 return response()->json([
                     'success' => false,
                     'message' => 'Invalid Telegram WebApp signature',
                 ], 403);
             }
-        } elseif (!$isLocal) {
+        } elseif (! $isLocal) {
             return response()->json([
                 'success' => false,
                 'message' => 'Telegram authentication initData is required',
@@ -41,14 +41,14 @@ class TelegramAuthController extends Controller
         $user = User::where('telegram_id', $data['id'])
             ->first();
 
-        if (!$user) {
+        if (! $user) {
             // 2️⃣ Create new user if not found
-            $user = new User();
+            $user = new User;
             $user->telegram_id = $data['id'];
         }
 
         // 3️⃣ Update basic info
-        $user->name = trim(($data['first_name'] ?? '') . ' ' . ($data['last_name'] ?? ''));
+        $user->name = trim(($data['first_name'] ?? '').' '.($data['last_name'] ?? ''));
         $user->username = $data['username'] ?? null;
         $user->avatar = $data['photo_url'] ?? null;
         $user->save();
@@ -69,14 +69,19 @@ class TelegramAuthController extends Controller
 
     private function verifyTelegramWebApp(string $initData): bool
     {
-        $botToken = env('MynineUzBot_TOKEN');
+        $botToken = config('services.telegram.mynine_bot_token');
         if (empty($botToken) || empty($initData)) {
             return false;
         }
 
         parse_str($initData, $data);
 
-        if (!isset($data['hash'])) {
+        if (! isset($data['hash'])) {
+            return false;
+        }
+
+        // Reject stale payloads (replay protection): Telegram signs auth_date as a unix timestamp
+        if (! isset($data['auth_date']) || abs(time() - (int) $data['auth_date']) > 86400) {
             return false;
         }
 
@@ -87,7 +92,7 @@ class TelegramAuthController extends Controller
 
         $dataCheckArr = [];
         foreach ($data as $key => $value) {
-            $dataCheckArr[] = $key . '=' . $value;
+            $dataCheckArr[] = $key.'='.$value;
         }
         $dataCheckString = implode("\n", $dataCheckArr);
 

@@ -18,7 +18,7 @@ class StoreUserRequest extends FormRequest
     protected function prepareForValidation(): void
     {
         $this->merge([
-            'user_id' => Auth::id()
+            'user_id' => Auth::id(),
         ]);
     }
 
@@ -30,16 +30,15 @@ class StoreUserRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'user_id'  => 'nullable|integer|exists:users,id',
-            'name'     => 'required|string|max:255',
-            'phone'    => 'nullable|string|max:20|unique:users,phone',
-            'role'     => 'nullable|string',
-            'email'    => 'nullable|email|unique:users,email',
+            'user_id' => 'nullable|integer|exists:users,id',
+            'name' => 'required|string|max:255',
+            'phone' => 'nullable|string|max:20|unique:users,phone',
+            'role' => 'nullable|string',
+            'email' => 'nullable|email|unique:users,email',
             'password' => 'nullable|string|min:6',
             'create_test_limit' => 'nullable|integer|min:0',
         ];
     }
-
 
     public function messages(): array
     {
@@ -47,5 +46,4 @@ class StoreUserRequest extends FormRequest
             'name.required' => 'The name field is required.',
         ];
     }
-
 }

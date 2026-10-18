@@ -7,7 +7,7 @@ import { Link, useForm, usePage } from '@inertiajs/react';
 import { useTranslation } from 'react-i18next';
 import { Auth, Folder, type FolderPaginate, SearchData } from '@/types';
 import { toast } from 'sonner';
-import { baseButton } from '@/components/ui/baseButton';
+
 
 interface FolderTableProps extends FolderPaginate {
     searchData: SearchData;
@@ -37,7 +37,7 @@ const FolderTable = ({ searchData, ...folder }: FolderTableProps) => {
     };
 
 
-    const { delete: deleteFolder, reset, errors: deleteError, clearErrors } = useForm();
+    const { delete: deleteFolder, reset, clearErrors } = useForm();
 
     const handleDelete = (id: number) => {
         deleteFolder(route('folder.destroy', id), {

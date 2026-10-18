@@ -10,7 +10,6 @@ class Option extends Model
     /** @use HasFactory<\Database\Factories\OptionFactory> */
     use HasFactory;
 
-
     protected $fillable = [
         'section_id',
         'question_id',
@@ -31,7 +30,6 @@ class Option extends Model
     {
         return $this->belongsTo(Question::class, 'question_id');
     }
-
 
     public function attempt_answer_options()
     {

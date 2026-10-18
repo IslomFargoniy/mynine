@@ -9,7 +9,7 @@ interface LanguageBarProps {
 }
 
 const LanguageBar = ({ variant, placement, className }: LanguageBarProps) => {
-    const { i18n, t } = useTranslation();
+    const { i18n } = useTranslation();
     const [open, setOpen] = useState(false);
     const dropdownRef = useRef<HTMLDivElement>(null);
 

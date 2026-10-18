@@ -69,7 +69,7 @@
         <p>Your test attempt is complete! 🎉</p>
 
         <p>
-            <a href="{{ url('/attempt-pdf/'.$result->id) }}" class="btn">Download PDF</a>
+            <a href="{{ url(\Illuminate\Support\Facades\URL::signedRoute('attempt.pdf', ['attempt' => $result->id], null, false)) }}" class="btn">Download PDF</a>
         </p>
         <p>
             <a href="{{ url('/attempt/'.$result->id) }}" class="btn btn-secondary">View Full Results</a>

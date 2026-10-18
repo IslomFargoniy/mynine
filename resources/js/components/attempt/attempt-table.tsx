@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { CheckCircle, Download, FileSpreadsheet, MinusCircle, TrashIcon } from 'lucide-react';
+import { CheckCircle, FileSpreadsheet, MinusCircle, TrashIcon } from 'lucide-react';
 import DeleteItemModal from '@/components/delete-item-modal';
 import { Link, useForm, usePage } from '@inertiajs/react';
 import { useTranslation } from 'react-i18next';
@@ -35,7 +35,7 @@ const AttemptTable = ({ searchData, hidePagination, ...attempt }: AttemptTablePr
     };
 
 
-    const { delete: deleteAttempt, reset, errors: deleteError, clearErrors } = useForm();
+    const { delete: deleteAttempt, reset, clearErrors } = useForm();
 
     const handleDelete = (id: number) => {
         deleteAttempt(route('attempt.destroy', id), {

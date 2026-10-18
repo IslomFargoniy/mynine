@@ -243,6 +243,8 @@ export interface Section {
     question_type: QuestionType;
     questions: Question[];
     options: Option[];
+    /** Present only in exam payloads for drag_and_drop sections (server-built, neutral ids). */
+    drag_options?: { id: string; label: string }[];
 }
 
 export interface Question {
@@ -250,7 +252,8 @@ export interface Question {
     section_id: number;
     is_correct_count?: number;
     textarea: string;
-    answer_text: string;
+    /** Hidden while an exam is in progress; present in review / editor payloads. */
+    answer_text?: string | null;
     options: Option[];
     section: Section;
     attempt_answer?: AttemptAnswer;
@@ -260,7 +263,8 @@ export interface Option {
     id: number;
     question_id: number;
     textarea: string;
-    is_correct: number;
+    /** Hidden while an exam is in progress. */
+    is_correct?: number | boolean;
 }
 
 

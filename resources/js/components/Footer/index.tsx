@@ -1,6 +1,6 @@
 import React from 'react';
 import { useTranslation } from 'react-i18next';
-import { Link } from '@inertiajs/react';
+
 import Logo from '../Header/Logo';
 import { Icon } from '@iconify/react';
 import { headerData } from '../Header/Navigation/menuData';

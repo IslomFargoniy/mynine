@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { CountdownTimer } from './countdown-timer';
-import { Eye, EyeOff, Wifi, WifiOff, Loader2, Bell, Menu, Edit3, X, CheckCircle, Info, Settings, HelpCircle, FileText, Maximize2, Minimize2, Keyboard, AlertTriangle } from 'lucide-react';
+import { Eye, EyeOff, Wifi, WifiOff, Loader2, Bell, Menu, Edit3, X, CheckCircle, Settings, Maximize2, Minimize2, Keyboard, AlertTriangle } from 'lucide-react';
 import AudioEqualizer from './audio-equalizer';
 import LanguageBar from '@/components/language';
 import { syncQueue, SyncStatus } from '@/services/sync-queue';

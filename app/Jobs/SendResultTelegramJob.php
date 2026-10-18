@@ -2,22 +2,23 @@
 
 namespace App\Jobs;
 
+use App\Models\Attempt;
+use App\Models\User\User;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
-use App\Models\User\User;
-use App\Models\Attempt;
+use Illuminate\Support\Facades\Log;
 use Telegram\Bot\Api;
 use Telegram\Bot\FileUpload\InputFile;
-use Illuminate\Support\Facades\Log;
 
 class SendResultTelegramJob implements ShouldQueue
 {
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
     protected $user;
+
     protected $attempt;
 
     public function __construct(User $user, Attempt $attempt)
@@ -29,11 +30,11 @@ class SendResultTelegramJob implements ShouldQueue
     public function handle()
     {
         try {
-            if (!$this->user->telegram_id) {
+            if (! $this->user->telegram_id) {
                 return;
             }
 
-            $telegram = new Api(env('MynineUzBot_TOKEN'));
+            $telegram = new Api(config('services.telegram.mynine_bot_token'));
 
             // Generate PDF internally instead of via URL
             $attempt = $this->attempt->load([
@@ -41,9 +42,8 @@ class SendResultTelegramJob implements ShouldQueue
                 'user',
                 'mock',
                 'attempt_types' => function ($query) {
-                    $query->whereHas('type', function ($q) {
-                    });
-                }
+                    $query->whereHas('type', function ($q) {});
+                },
             ]);
 
             $attempt->attempt_types->each(function ($attemptType) {
@@ -69,10 +69,10 @@ class SendResultTelegramJob implements ShouldQueue
             $document = InputFile::createFromContents($pdfContent, "TestResult_{$this->attempt->id}.pdf");
 
             // Caption
-            $caption = "Hello {$this->user->name},\nYour test attempt is complete! 🎉\n\n" .
-                       "💳 Bizni Qo'llab-quvvatlang:\n\n" .
-                       "9860600402432220\n\n" .
-                       "Donat qilishingiz mumkin.";
+            $caption = "Hello {$this->user->name},\nYour test attempt is complete! 🎉\n\n".
+                       "💳 Bizni Qo'llab-quvvatlang:\n\n".
+                       "9860600402432220\n\n".
+                       'Donat qilishingiz mumkin.';
 
             // Send document
             $telegram->sendDocument([
@@ -85,7 +85,7 @@ class SendResultTelegramJob implements ShouldQueue
             Log::info("Telegram PDF sent to user {$this->user->telegram_id}");
 
         } catch (\Exception $e) {
-            Log::error("SendResultTelegramJob failed: " . $e->getMessage());
+            Log::error('SendResultTelegramJob failed: '.$e->getMessage());
         }
     }
 }

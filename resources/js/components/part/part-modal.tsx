@@ -1,13 +1,11 @@
 import { useForm } from '@inertiajs/react';
-import React, { FormEventHandler, useEffect, useRef } from 'react';
+import React, { FormEventHandler, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
 import {
     Dialog,
-    DialogClose,
     DialogContent,
-    DialogFooter,
     DialogTitle,
 } from '@/components/ui/dialog';
 import { Part, TestType } from '@/types';

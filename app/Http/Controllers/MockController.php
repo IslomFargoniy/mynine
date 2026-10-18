@@ -10,29 +10,23 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Validation\ValidationException;
 use Inertia\Inertia;
-use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
-
-// ✅ important
 
 class MockController extends Controller
 {
-    use AuthorizesRequests;
-
-    // ✅ add this
-
     /**
      * Display a listing of the resource.
      */
     public function index(Request $request)
     {
 
-        $this->authorize('viewAny', Mock::class); // ✅ add this
+        $this->authorize('viewAny', Mock::class);
 
-        $per_page = $request->per_page === 'all' ? 100 : min((int)($request->per_page ?? 10), 100);
+        $per_page = $request->per_page === 'all' ? 100 : min((int) ($request->per_page ?? 10), 100);
 
         $mock = Mock::with([
             'students.attempt',
             'test.folder',
+            'user:id,name',
         ]);
 
         if ($request->search) {
@@ -101,7 +95,7 @@ class MockController extends Controller
                 $q->where('user_id', Auth::id());
             });
             $folders_query->where('user_id', Auth::id());
-        } elseif (!Auth::user()->hasRole('Admin')) {
+        } elseif (! Auth::user()->hasRole('Admin')) {
             $tests_query->where('active', 1)->where('open', 1);
             $folders_query->where('active', 1);
         }
@@ -136,9 +130,11 @@ class MockController extends Controller
      */
     public function store(StoreMockRequest $request)
     {
+        $this->authorize('create', Mock::class);
+
         try {
 
-            if (!Auth::user()->hasRole('Admin')) {
+            if (! Auth::user()->hasRole('Admin')) {
                 $mock = Mock::query()->where('user_id', Auth::id())
                     ->whereMonth('created_at', now()->month)
                     ->whereYear('created_at', now()->year)
@@ -160,7 +156,6 @@ class MockController extends Controller
         }
     }
 
-
     /**
      * Display the specified resource.
      */
@@ -170,7 +165,7 @@ class MockController extends Controller
 
         $mock->load([
             'test.folder',
-            'user',
+            'user:id,name',
             'students.attempt.attempt_types.type',
             'students.attempt.user',
             'students.attempt.mock',
@@ -188,7 +183,6 @@ class MockController extends Controller
         ]);
     }
 
-
     /**
      * Show the form for editing the specified resource.
      */
@@ -202,9 +196,12 @@ class MockController extends Controller
      */
     public function update(UpdateMockRequest $request, Mock $mock)
     {
+        $this->authorize('update', $mock);
+
         try {
 
             $mock->update($request->validated());
+
             return back()->with('success', __('success.mock_updated'));
         } catch (\Exception $e) {
             // Proper Inertia error response
@@ -219,6 +216,8 @@ class MockController extends Controller
      */
     public function destroy(Mock $mock)
     {
+        $this->authorize('delete', $mock);
+
         try {
             \Illuminate\Support\Facades\DB::transaction(function () use ($mock) {
                 // Detach/nullify attempts so history is preserved without FK error

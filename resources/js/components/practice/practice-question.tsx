@@ -2,9 +2,9 @@ import React, { useCallback, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Attempt, Part, Question, Section } from '@/types';
 import PracticeOption from '@/components/practice/practice-option';
-import MatchingHeadings from '@/components/practice/matching-headings';
+
 import { debounce } from 'lodash';
-import { buildRange } from '@/utils/rangeHelpers';
+
 import { toast } from 'sonner';
 
 import { syncQueue } from '@/services/sync-queue';
@@ -25,7 +25,6 @@ export default function PracticeQuestion({
                                              attempt,
                                              question,
                                              section,
-                                             index,
                                              setSelectedPart,
                                              isFlagged,
                                              toggleFlag

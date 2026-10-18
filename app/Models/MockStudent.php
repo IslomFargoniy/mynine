@@ -50,7 +50,7 @@ class MockStudent extends Model
         // Limit prefix to 8 characters max
         $prefix = substr($clean, 0, 8);
 
-        return !empty($prefix) ? $prefix : 'MOCK';
+        return ! empty($prefix) ? $prefix : 'MOCK';
     }
 
     /**
@@ -60,7 +60,7 @@ class MockStudent extends Model
     {
         $prefix = self::generatePrefix($prefix);
         do {
-            $code = $prefix . '-' . rand(100000, 999999);
+            $code = $prefix.'-'.rand(100000, 999999);
         } while (static::where('code', $code)->exists());
 
         return $code;
@@ -68,21 +68,21 @@ class MockStudent extends Model
 
     /**
      * Generates a batch of unique codes in memory with zero collisions and only 1 DB check
-     * 
-     * @param int $count
-     * @param string $prefix
+     *
      * @return array<string>
      */
     public static function generateBulkCodes(int $count, string $prefix = 'MOCK'): array
     {
-        if ($count <= 0) return [];
+        if ($count <= 0) {
+            return [];
+        }
 
         $prefix = self::generatePrefix($prefix);
         $codes = [];
 
         // Generate N unique codes in memory
         while (count($codes) < $count) {
-            $code = $prefix . '-' . rand(100000, 999999);
+            $code = $prefix.'-'.rand(100000, 999999);
             $codes[$code] = $code;
         }
 
@@ -92,11 +92,11 @@ class MockStudent extends Model
         $existingCodes = static::whereIn('code', $codeList)->pluck('code')->flip()->toArray();
 
         // If any code exists in DB, replace it
-        if (!empty($existingCodes)) {
+        if (! empty($existingCodes)) {
             for ($i = 0; $i < count($codeList); $i++) {
                 if (isset($existingCodes[$codeList[$i]])) {
                     do {
-                        $newCode = $prefix . '-' . rand(100000, 999999);
+                        $newCode = $prefix.'-'.rand(100000, 999999);
                     } while (isset($codes[$newCode]) || static::where('code', $newCode)->exists());
 
                     $codes[$newCode] = $newCode;

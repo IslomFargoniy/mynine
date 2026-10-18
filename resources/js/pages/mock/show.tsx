@@ -3,7 +3,7 @@ import AppLayout from '@/layouts/app-layout';
 import { Head, Link, useForm, usePage } from '@inertiajs/react';
 import { type BreadcrumbItem } from '@/types';
 import { useTranslation } from 'react-i18next';
-import { Users, Calendar, CheckCircle2, Clock, Activity, FileText, ArrowLeft, FileSpreadsheet, Eye, FileDown, Award, Trash2 } from 'lucide-react';
+import { Users, CheckCircle2, Clock, Activity, FileText, ArrowLeft, FileSpreadsheet, Eye, FileDown, Award, Trash2 } from 'lucide-react';
 import { format } from 'date-fns';
 import { toast } from 'sonner';
 

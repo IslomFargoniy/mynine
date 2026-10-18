@@ -1,5 +1,5 @@
-const fs = require('fs');
-const path = require('path');
+import fs from 'node:fs';
+import path from 'node:path';
 
 const tsxRegex = /t\(\s*(['"])(.*?)\1\s*\)/g;
 const phpRegex = /__\(\s*(['"])(.*?)\1\s*\)/g;

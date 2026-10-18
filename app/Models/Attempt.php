@@ -2,17 +2,15 @@
 
 namespace App\Models;
 
+use App\Jobs\EvaluateEssayJob;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
-use App\Models\AttemptAnswer;
-use App\Jobs\EvaluateEssayJob;
 use Illuminate\Support\Facades\DB;
 
 class Attempt extends Model
 {
     /** @use HasFactory<\Database\Factories\AttemptsFactory> */
     use HasFactory;
-
 
     protected $fillable = [
         'name',
@@ -31,8 +29,6 @@ class Attempt extends Model
         return $this->belongsTo(MockStudent::class, 'mock_student_id');
     }
 
-
-
     public function mock()
     {
         return $this->belongsTo(Mock::class, 'mock_id');
@@ -48,7 +44,6 @@ class Attempt extends Model
         return $this->belongsTo(Test::class, 'test_id');
     }
 
-
     public function attempt_parts()
     {
         return $this->hasMany(AttemptPart::class, 'attempt_id');
@@ -57,6 +52,28 @@ class Attempt extends Model
     public function attempt_types()
     {
         return $this->hasMany(AttemptType::class, 'attempt_id');
+    }
+
+    public function attempt_answers()
+    {
+        return $this->hasManyThrough(AttemptAnswer::class, AttemptPart::class, 'attempt_id', 'attempt_part_id');
+    }
+
+    /**
+     * Essay answers of this attempt that are long enough to be worth an AI evaluation.
+     */
+    public function essayAnswersForEvaluation(?int $typeId = null)
+    {
+        return AttemptAnswer::query()
+            ->whereHas('attempt_part', function ($query) use ($typeId) {
+                $query->where('attempt_id', $this->id);
+                if ($typeId) {
+                    $query->whereHas('part.test_type', fn ($q) => $q->where('type_id', $typeId));
+                }
+            })
+            ->whereHas('question.section.question_type', fn ($q) => $q->where('type', 'essay'))
+            ->whereRaw('LENGTH(answer_text) > 10')
+            ->get();
     }
 
     public function finish()
@@ -73,7 +90,7 @@ class Attempt extends Model
 
             // Mark all attempt parts as finished
             foreach ($this->attempt_parts as $attempt_part) {
-                if (!$attempt_part->finished_at) {
+                if (! $attempt_part->finished_at) {
                     $attempt_part->finished_at = now();
                     $attempt_part->save();
                 }
@@ -84,22 +101,14 @@ class Attempt extends Model
                 $attemptType->recalculateIsCorrectCount();
             }
 
-            // Dispatch Essay Evaluation Jobs if any
-            $essayAnswers = AttemptAnswer::query()
-                ->whereHas('attempt_part', function ($query) {
-                    $query->where('attempt_id', $this->id);
-                })
-                ->whereHas('question.section.question_type', function ($query) {
-                    $query->where('type', 'essay');
-                })
-                ->whereRaw('LENGTH(answer_text) > 10')
-                ->get();
+            $essayAnswers = $this->essayAnswersForEvaluation();
 
+            DB::commit();
+
+            // Dispatch only after the commit so workers never see half-written answers
             foreach ($essayAnswers as $answer) {
                 EvaluateEssayJob::dispatch($answer->id);
             }
-
-            DB::commit();
         } catch (\Exception $e) {
             DB::rollBack();
             throw $e;
@@ -107,5 +116,4 @@ class Attempt extends Model
 
         return $this;
     }
-
 }

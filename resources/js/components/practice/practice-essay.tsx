@@ -1,5 +1,4 @@
 import React, { } from 'react';
-import { useTranslation } from 'react-i18next';
 import { Attempt, Part } from '@/types';
 import PracticeQuestion from '@/components/practice/practice-question';
 
@@ -20,14 +19,13 @@ export default function PracticeEssay({
                                            isFlagged,
                                            toggleFlag
                                        }: SectionUpdateProps) {
-    const { t } = useTranslation();
 
     let currentOrder = order ?? 0;
     return (
         <div>
             {/* Active Section */}
             {part.sections.map(
-                (section, index) =>
+                (section) =>
                     (
                         <div key={section.id} className="p-2">
                             {section.questions.map((question, qIndex) => {

@@ -1,5 +1,5 @@
 import AppLayout from '@/layouts/app-layout';
-import { Head, usePage, useForm, Link, router } from '@inertiajs/react';
+import { Head, usePage, useForm, router } from '@inertiajs/react';
 import { type BreadcrumbItem, Part } from '@/types';
 import { FormEventHandler, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -15,7 +15,6 @@ export default function EditPart() {
     const { part } = usePage<{ part: Part }>().props;
     const { t } = useTranslation();
 
-    const editorRef = useRef<any>(null);
     const nameInput = useRef<HTMLInputElement>(null);
 
     const folder = part?.test_type?.test?.folder;

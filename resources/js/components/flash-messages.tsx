@@ -34,15 +34,8 @@ export default function FlashMessages() {
                 // If errors.error is an array, take the first one
                 const errorMessage = Array.isArray(errors.error) ? errors.error[0] : errors.error;
                 toast.error(t(errorMessage));
-            } else if (errorKeys.length === 1) {
-                // Handle cases where validation errors for specific fields are returned
-                // and we want to show the first one as a toast.
-                const firstErrorKey = errorKeys[0];
-                const firstErrorMessage = Array.isArray(errors[firstErrorKey]) ? errors[firstErrorKey][0] : errors[firstErrorKey];
-                
-                // Only toast if it's not a standard field error (optional strategy)
-                // For now, let's keep it safe and only toast if we specifically want to.
             }
+            // Field-level validation errors are rendered next to their inputs, not as toasts.
         }
     }, [flash, errors, t]);
 

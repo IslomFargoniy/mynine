@@ -19,10 +19,9 @@ class StoreMockRequest extends FormRequest
     {
         $this->merge([
             'user_id' => auth()->id(),
-            'slug' => Str::slug($this->name, '-') . '-' . \Str::random(5),
+            'slug' => Str::slug($this->name, '-').'-'.\Str::random(5),
         ]);
     }
-
 
     /**
      * Get the validation rules that apply to the request.

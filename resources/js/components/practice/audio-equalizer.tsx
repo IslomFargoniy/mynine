@@ -16,8 +16,6 @@ export default function AudioEqualizer({
     const audioRef = useRef<HTMLAudioElement | null>(null);
     const [audioSource, setAudioSource] = useState<string>(src);
     const [bars, setBars] = useState<number[]>(new Array(20).fill(0));
-    const [time, setTime] = useState(0);
-    const [duration, setDuration] = useState(0);
 
     // Resolve offline cached audio blob
     useEffect(() => {
@@ -70,8 +68,7 @@ export default function AudioEqualizer({
         if (!audio) return;
 
         const updateTime = () => {
-            setTime(audio.currentTime);
-            setDuration(audio.duration || 0);
+            /* progress is rendered by the equalizer bars; keep listeners so the audio element reports readiness */
         };
 
         audio.addEventListener("timeupdate", updateTime);
@@ -117,14 +114,6 @@ export default function AudioEqualizer({
     }, [endTime, autoPlay]);
 
     // -----------------------------
-    // Format mm:ss
-    // -----------------------------
-    const formatTime = (seconds: number) => {
-        const m = Math.floor(seconds / 60);
-        const s = Math.floor(seconds % 60);
-        return `${m}:${s.toString().padStart(2, "0")}`;
-    };
-
     return (
         <div className="flex items-center gap-1">
             {/* Equalizer */}

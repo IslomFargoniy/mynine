@@ -2,8 +2,6 @@
 
 namespace App\Services\Telegram;
 
-use App\Models\Mock;
-use App\Models\User\User;
 use Telegram\Bot\Api;
 use Telegram\Bot\Keyboard\Keyboard;
 
@@ -13,7 +11,7 @@ class TelegramService
 
     public function __construct()
     {
-        $this->telegram = new Api(env('TELEGRAM_BOT_TOKEN'));
+        $this->telegram = new Api(config('services.telegram.bot_token'));
     }
 
     /**
@@ -21,19 +19,20 @@ class TelegramService
      */
     public function handleCommand(int|string $chatId): void
     {
-        $this->sendSafeMessage($chatId, "We moved to MynineUzBot! Please use @MynineUzBot for further interactions.");
+        $this->sendSafeMessage($chatId, 'We moved to MynineUzBot! Please use @MynineUzBot for further interactions.');
 
         // clear commands for this bot
 
         // Clear all commands
         $this->telegram->setMyCommands([
-            'commands' => []
+            'commands' => [],
         ]);
     }
+
     /**
      * Safe message sender (catches Telegram API errors)
      */
-    protected function sendSafeMessage(int|string $chatId, string $text, Keyboard $keyboard = null): void
+    protected function sendSafeMessage(int|string $chatId, string $text, ?Keyboard $keyboard = null): void
     {
         try {
             $params = [
@@ -45,8 +44,7 @@ class TelegramService
             }
             $this->telegram->sendMessage($params);
         } catch (\Exception $e) {
-            \Log::error('Telegram sendMessage error: ' . $e->getMessage());
+            \Log::error('Telegram sendMessage error: '.$e->getMessage());
         }
     }
-
 }

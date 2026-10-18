@@ -15,20 +15,20 @@ class AllTestController extends Controller
      */
     public function index(Request $request)
     {
-        $per_page = $request->per_page === 'all' ? 100 : min((int)($request->per_page ?? 10), 100);
+        $per_page = $request->per_page === 'all' ? 100 : min((int) ($request->per_page ?? 10), 100);
 
         $folder = Folder::with([
             'tests' => function ($query) {
                 $query->with([
                     'types' => function ($query) {
                         $query->whereHas('parts');
-                    }
+                    },
                 ])
                     ->withCount('attempts')
                     ->where('active', 1)
                     ->where('open', 1)
                     ->orderBy('id', 'asc');
-            }
+            },
         ])
             ->whereHas('tests', function ($query) {
                 $query->where(function ($q) {
@@ -64,7 +64,7 @@ class AllTestController extends Controller
         if (Auth::user()->hasRole('Admin')) {
             // Admin sees all
         } elseif (Auth::user()->hasRole('Teacher')) {
-            $folder->where(fn($q) => $q->where('user_id', Auth::id()));
+            $folder->where(fn ($q) => $q->where('user_id', Auth::id()));
         } else {
             // Default: active folders and open tests (already filtered in initial query above)
         }
@@ -78,8 +78,8 @@ class AllTestController extends Controller
         if (Auth::user()->hasRole('Teacher')) {
             $folders_query->where('user_id', Auth::id());
         } elseif (Auth::user()->hasRole('Student')) {
-            $folders_query->where(fn($q) => $q->where('user_id', Auth::id()));
-            $folders_query->where(fn($q) => $q->where('active', 1));
+            $folders_query->where(fn ($q) => $q->where('user_id', Auth::id()));
+            $folders_query->where(fn ($q) => $q->where('active', 1));
         } elseif (Auth::user()->hasRole('Admin')) {
             $folders_query = Folder::select('id', 'name'); // Admin sees all in dropdown
         }

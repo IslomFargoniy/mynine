@@ -6,7 +6,6 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\StoreUserRequest;
 use App\Http\Requests\UpdateUserRequest;
 use App\Models\User\User;
-use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
@@ -16,8 +15,6 @@ use Spatie\Permission\Models\Role;
 
 class UserController extends Controller
 {
-    use AuthorizesRequests;
-
     /**
      * Display a listing of the resource.
      */
@@ -26,7 +23,7 @@ class UserController extends Controller
 
         $this->authorize('viewAny', User::class);
 
-        $per_page = $request->per_page === 'all' ? 100 : min((int)($request->per_page ?? 10), 100);
+        $per_page = $request->per_page === 'all' ? 100 : min((int) ($request->per_page ?? 10), 100);
 
         $user = User::with([
             'roles',
@@ -76,7 +73,7 @@ class UserController extends Controller
             }
         }
 
-        if (!Auth::user()->hasRole('Admin')) {
+        if (! Auth::user()->hasRole('Admin')) {
             $user->where(function ($query) {
                 $query->where('user_id', '=', Auth::id())
                     ->orWhere('ref_telegram_id', '=', Auth::user()->telegram_id);
@@ -119,7 +116,7 @@ class UserController extends Controller
 
             $validated = $request->validated();
 
-            if (!empty($validated['password'])) {
+            if (! empty($validated['password'])) {
                 $validated['password'] = Hash::make($validated['password']);
             } else {
                 unset($validated['password']); // Don't update if password is empty
@@ -144,8 +141,8 @@ class UserController extends Controller
      */
     public function show($id)
     {
-        if (!Auth::user()->hasRole('Admin')) {
-            return back()->with('error', __("error.unauthorized_access"));
+        if (! Auth::user()->hasRole('Admin')) {
+            return back()->with('error', __('error.unauthorized_access'));
         }
 
         $user = clone User::query()
@@ -201,7 +198,7 @@ class UserController extends Controller
 
             $validated = $request->validated();
 
-            if (!empty($validated['password'])) {
+            if (! empty($validated['password'])) {
                 $validated['password'] = Hash::make($validated['password']);
             } else {
                 unset($validated['password']); // Don't update if password is empty
@@ -223,7 +220,6 @@ class UserController extends Controller
             ]);
         }
     }
-
 
     /**
      * Remove the specified resource from storage.

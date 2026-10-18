@@ -10,8 +10,6 @@ class AttemptAnswerOption extends Model
     /** @use HasFactory<\Database\Factories\AttemptAnswerOptionFactory> */
     use HasFactory;
 
-
-
     protected $fillable = [
         'attempt_answer_id',
         'option_id',
@@ -19,16 +17,16 @@ class AttemptAnswerOption extends Model
     ];
 
     protected $with = [
-        'option'
+        'option',
     ];
-
 
     public function attempt_answer()
     {
-        return $this->belongsTo(AttemptAnswer::class , 'attempt_answer_id');
+        return $this->belongsTo(AttemptAnswer::class, 'attempt_answer_id');
     }
+
     public function option()
     {
-        return $this->belongsTo(Option::class , 'option_id');
+        return $this->belongsTo(Option::class, 'option_id');
     }
 }

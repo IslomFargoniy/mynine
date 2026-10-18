@@ -10,7 +10,6 @@ class AttemptAnswer extends Model
     /** @use HasFactory<\Database\Factories\AttemptAnswerFactory> */
     use HasFactory;
 
-
     protected $fillable = [
         'attempt_part_id',
         'question_id',
@@ -23,7 +22,6 @@ class AttemptAnswer extends Model
         'score',
     ];
 
-
     public function attempt_part()
     {
         return $this->belongsTo(AttemptPart::class, 'attempt_part_id');
@@ -34,10 +32,8 @@ class AttemptAnswer extends Model
         return $this->belongsTo(Question::class, 'question_id');
     }
 
-
     public function attempt_answer_options()
     {
         return $this->hasMany(AttemptAnswerOption::class, 'attempt_answer_id');
     }
-
 }

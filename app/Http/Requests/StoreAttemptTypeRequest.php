@@ -18,7 +18,6 @@ class StoreAttemptTypeRequest extends FormRequest
     /**
      * Prepare the data for validation.
      */
-
     protected function prepareForValidation(): void
     {
         $type = Type::query()
@@ -26,7 +25,7 @@ class StoreAttemptTypeRequest extends FormRequest
             ->first();
 
         $this->merge([
-            'type_id' => $this->input('type_id', $type?->id), // agar yuborilmasa, Listening id
+            'type_id' => $this->input('type_id', $type?->id), // default: Speaking (manual examiner score)
         ]);
     }
 

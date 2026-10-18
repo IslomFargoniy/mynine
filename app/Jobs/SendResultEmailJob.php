@@ -1,5 +1,7 @@
 <?php
+
 // app/Jobs/SendResultEmailJob.php
+
 namespace App\Jobs;
 
 use App\Mail\SendResultMail;
@@ -15,6 +17,7 @@ class SendResultEmailJob implements ShouldQueue
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
     protected $user;
+
     protected $result;
 
     public function __construct($user, $result)
@@ -28,7 +31,7 @@ class SendResultEmailJob implements ShouldQueue
         try {
             Mail::to($this->user->email)->send(new SendResultMail($this->user, $this->result));
         } catch (\Exception $e) {
-            \Illuminate\Support\Facades\Log::error("SendResultEmailJob failed: " . $e->getMessage());
+            \Illuminate\Support\Facades\Log::error('SendResultEmailJob failed: '.$e->getMessage());
             throw $e;
         }
     }

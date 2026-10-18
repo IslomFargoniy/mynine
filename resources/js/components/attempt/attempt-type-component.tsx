@@ -36,11 +36,6 @@ const AttemptTypeComponent = ({ attempt_type }: { attempt_type: AttemptType }) =
         }, 0);
     }, [attemptParts]);
 
-    const normalizeText = (text: string | undefined | null): string => {
-        if (!text) return '';
-        return text.trim().toLowerCase();
-    };
-
     const checkAnswerCorrect = (correctAnswer?: string | null, studentAnswer?: string | null): boolean => {
         if (!correctAnswer || !studentAnswer) return false;
         const student = studentAnswer.trim().toLowerCase();

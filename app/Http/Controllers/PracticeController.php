@@ -4,423 +4,274 @@ namespace App\Http\Controllers;
 
 use App\Jobs\EvaluateEssayJob;
 use App\Models\Attempt;
-use App\Models\AttemptAnswer;
 use App\Models\AttemptPart;
 use App\Models\AttemptType;
 use App\Models\Part;
-use App\Models\Test;
 use App\Models\TestType;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Gate;
 use Inertia\Inertia;
-use Illuminate\Validation\ValidationException;
 
 class PracticeController extends Controller
 {
     /**
-     * Display a listing of the resource.
+     * Exam room page.
      */
     public function index(Request $request)
     {
         $request->validate([
-            'attempt_id' => 'required|exists:attempts,id'
+            'attempt_id' => 'required|exists:attempts,id',
         ]);
 
-        try {
-            $this->checkAndAutoFinishExpired($request->attempt_id);
-            $attempt = Attempt::with(['user', 'test.types', 'attempt_types', 'mock'])->find($request->attempt_id);
+        $attempt = Attempt::with(['user', 'test.types', 'attempt_types', 'mock'])->findOrFail($request->attempt_id);
 
-            if (!$attempt) {
-                return back()->with('error', __('error.attempt_not_found'));
-            }
-
-            if ($attempt->mock) {
-                $mock = $attempt->mock;
-                if ($mock->active != 1) {
-                    return back()->with('error', 'Ushbu Mock test hozirda faol emas!');
-                }
-                $now = now();
-                if ($mock->started_at && $now->lt(\Carbon\Carbon::parse($mock->started_at))) {
-                    $formattedStart = \Carbon\Carbon::parse($mock->started_at)->format('d.m.Y H:i');
-                    return back()->with('error', "Ushbu Mock test hali boshlanmagan! Boshlanish vaqti: {$formattedStart}");
-                }
-                if ($mock->finished_at && $now->gt(\Carbon\Carbon::parse($mock->finished_at))) {
-                    $formattedFinish = \Carbon\Carbon::parse($mock->finished_at)->format('d.m.Y H:i');
-                    return back()->with('error', "Ushbu Mock test vaqti tugagan! Yakunlangan vaqti: {$formattedFinish}");
-                }
-            }
-
-            if ($attempt->user_id !== Auth::id()) {
-                $sessionMockStudentId = session('mock_student_id');
-                if (!$sessionMockStudentId || (int)$attempt->mock_student_id !== (int)$sessionMockStudentId) {
-                    return back()->with('error', __('error.unauthorized_attempt'));
-                }
-            }
-
-            if ($attempt->finished_at !== null) {
-                return back()->with('error', __('error.attempt_already_finished'));
-            }
-
-            return Inertia::render('practice/index', [
-                'attempt' => $attempt
-            ]);
-            
-
-        } catch (\Exception $e) {
-            throw ValidationException::withMessages([
-                'error' => [$e->getMessage()],
-            ]);
+        if ($attempt->finished_at !== null) {
+            return back()->with('error', __('error.attempt_already_finished'));
         }
 
+        if (! Gate::allows('participate', $attempt)) {
+            return back()->with('error', __('error.unauthorized_attempt'));
+        }
 
+        if ($error = $this->mockWindowError($attempt)) {
+            return back()->with('error', $error);
+        }
+
+        $this->autoFinishExpiredTypes($attempt->id);
+        $attempt->load('attempt_types');
+
+        return Inertia::render('practice/index', [
+            'attempt' => $attempt,
+        ]);
     }
 
     /**
-     * Show the form for creating a new resource.
+     * Finish the whole attempt.
      */
-    public function create()
+    public function submit(Attempt $attempt)
     {
-        //
-    }
+        $this->authorize('view', $attempt);
 
-    /**
-     * Store a newly created resource in storage.
-     */
-    public function store(Request $request)
-    {
-        //
-    }
-
-    public function submit($attempt_id)
-    {
-        try {
-            $attempt = Attempt::with([
-                'mock',
-                'test' => function ($query) {
-                    $query->with([
-                        'types'
-                    ]);
-                },
-                'attempt_parts' => function ($query) {
-                    $query->with([
-                        'part',
-                        'attempt_answers' => function ($query) {
-                            $query->with('attempt_answer_options');
-                        }
-                    ]);
-                },
-            ])
-                ->findOrFail($attempt_id);
-
-            // If the attempt is already finished, return it
-            if ($attempt->finished_at) {
-                if (session()->has('mock_student_id') || !Auth::check()) {
-                    session()->forget(['mock_student_id', 'mock_attempt_id']);
-                    return redirect('/')->with('success', __('success.test_submitted'));
-                }
-                return redirect(route('attempt.index'))->with('success', __('success.test_submitted'));
-            }
-
+        if (! $attempt->finished_at) {
+            $this->authorize('participate', $attempt);
             $attempt->finish();
-
-            if (session()->has('mock_student_id') || !Auth::check()) {
-                session()->forget(['mock_student_id', 'mock_attempt_id']);
-                return redirect('/')->with('success', __('success.test_submitted'));
-            }
-
-            return redirect(route('attempt.index'))->with('success', __('success.test_submitted'));
-
-        } catch (\Exception $e) {
-            return response()->json([
-                'data' => [],
-                'success' => false,
-                'message' => $e->getMessage(),
-            ], 500);
         }
 
-    }
+        $isCandidate = session()->has('mock_student_id') || ! Auth::check();
+        if ($isCandidate) {
+            session()->forget(['mock_student_id', 'mock_attempt_id']);
 
-    public function recordViolation(Request $request, $attempt_id)
-    {
-        try {
-            $attempt = Attempt::findOrFail($attempt_id);
-            $count = (int) $request->input('count', 1);
-            $attempt->increment('tab_switch_count', $count);
-
-            return response()->json([
-                'success' => true,
-                'tab_switch_count' => $attempt->fresh()->tab_switch_count,
-            ]);
-        } catch (\Exception $e) {
-            return response()->json([
-                'success' => false,
-                'message' => $e->getMessage(),
-            ], 500);
+            return redirect('/')->with('success', __('success.test_submitted'));
         }
-    }
 
-    public function submit_test_type($attempt_id, $type_id)
-    {
-        try {
-            $attempt_type = AttemptType::where('attempt_id', $attempt_id)
-                ->where('type_id', $type_id)
-                ->firstOrFail();
-
-            if ($attempt_type->is_submitted) {
-                return response()->json([
-                    'success' => true,
-                    'message' => 'Test type already submitted.',
-                ]);
-            }
-
-            DB::beginTransaction();
-
-            // Dispatch Essay Evaluation Jobs if any
-            $attempt_answers = \App\Models\AttemptAnswer::query()
-                ->whereHas('attempt_part', function ($query) use ($attempt_id, $type_id) {
-                    $query->where('attempt_id', $attempt_id)
-                        ->whereHas('part.test_type', function ($q) use ($type_id) {
-                            $q->where('type_id', $type_id);
-                        });
-                })
-                ->whereHas('question.section.question_type', function ($query) {
-                    $query->where('type', 'essay');
-                })
-                ->whereRaw('LENGTH(answer_text) > 10')
-                ->get();
-
-            foreach ($attempt_answers as $answer) {
-                EvaluateEssayJob::dispatch($answer->id);
-            }
-
-            $attempt_type->finish();
-
-            DB::commit();
-
-            return response()->json([
-                'success' => true,
-                'message' => 'Test type submitted successfully.',
-                'data' => $attempt_type,
-                'server_time' => now()->toIso8601String(),
-            ]);
-
-        } catch (\Exception $e) {
-            DB::rollBack();
-            return response()->json([
-                'success' => false,
-                'message' => $e->getMessage(),
-            ], 500);
-        }
+        return redirect()->route('attempt.index')->with('success', __('success.test_submitted'));
     }
 
     /**
-     * Display the specified resource.
+     * Tab-switch / focus-loss counter. The client cannot choose the increment.
      */
-    public function show(Request $request, $part_id)
+    public function recordViolation(Attempt $attempt): JsonResponse
     {
-        //
+        $this->authorize('participate', $attempt);
+
+        $attempt->increment('tab_switch_count');
+
+        return response()->json([
+            'success' => true,
+            'tab_switch_count' => $attempt->fresh()->tab_switch_count,
+        ]);
     }
 
-    public function practice_attempt($attempt_id)
+    /**
+     * Finish one module (Listening / Reading / Writing) early.
+     */
+    public function submit_test_type(Attempt $attempt, int $type_id): JsonResponse
     {
-        try {
-            $this->checkAndAutoFinishExpired($attempt_id);
+        $this->authorize('participate', $attempt);
 
-            $attempt = Attempt::with([
-                'user',
-                'attempt_types',
-                'test' => function ($query) {
-                    $query->with([
-                        'types' => function ($query) {
-                            $query->whereHas('parts');
-                        }
-                    ]);
-                },
-            ])
-                ->findOrFail($attempt_id);
+        $attemptType = AttemptType::where('attempt_id', $attempt->id)
+            ->where('type_id', $type_id)
+            ->firstOrFail();
 
-            return response()->json([
-                'data' => $attempt,
-                'success' => true,
-                'message' => 'Attempt retrieved successfully',
-                'server_time' => now()->toIso8601String(),
-            ]);
-        } catch (\Exception $e) {
-            return response()->json([
-                'data' => [],
-                'success' => false,
-                'message' => $e->getMessage(),
-            ], 500);
+        if (! $attemptType->is_submitted) {
+            $this->finishTypeWithEvaluation($attempt, $attemptType);
         }
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Test type submitted successfully.',
+            'data' => $attemptType->fresh(),
+            'server_time' => now()->toIso8601String(),
+        ]);
     }
 
-    public function practice_test_type(Request $request, $test_type_id)
+    public function practice_attempt(Attempt $attempt): JsonResponse
     {
-        try {
+        $this->authorize('participate', $attempt);
+        $this->autoFinishExpiredTypes($attempt->id);
 
-            $request->validate([
-                'attempt_id' => 'required|exists:attempts,id',
-            ]);
+        $attempt->load([
+            'user:id,name',
+            'attempt_types',
+            'test' => fn ($q) => $q->with(['types' => fn ($q) => $q->whereHas('parts')]),
+        ]);
 
-            $this->checkAndAutoFinishExpired($request->attempt_id);
+        return response()->json([
+            'data' => $attempt,
+            'success' => true,
+            'message' => 'Attempt retrieved successfully',
+            'server_time' => now()->toIso8601String(),
+        ]);
+    }
 
-            $test_type = TestType::with([
-                'parts'
-            ])
-                ->findOrFail($test_type_id);
+    public function practice_test_type(Request $request, TestType $test_type): JsonResponse
+    {
+        $request->validate(['attempt_id' => 'required|exists:attempts,id']);
+        $attempt = Attempt::findOrFail($request->attempt_id);
+        $this->authorize('participate', $attempt);
+        abort_unless((int) $test_type->test_id === (int) $attempt->test_id, 403);
 
-            return response()->json([
-                'data' => $test_type,
-                'success' => true,
-                'message' => 'Attempt retrieved successfully',
-                'server_time' => now()->toIso8601String(),
-            ]);
-        } catch (\Exception $e) {
-            return response()->json([
-                'data' => [],
-                'success' => false,
-                'message' => $e->getMessage(),
-            ], 500);
+        $this->autoFinishExpiredTypes($attempt->id);
 
+        $test_type->load('parts');
+        $test_type->parts->each(fn (Part $part) => $this->hideAnswerKeys($part));
+
+        return response()->json([
+            'data' => $test_type,
+            'success' => true,
+            'message' => 'Test type retrieved successfully',
+            'server_time' => now()->toIso8601String(),
+        ]);
+    }
+
+    public function practice_part(Request $request, Part $part): JsonResponse
+    {
+        $request->validate(['attempt_id' => 'required|exists:attempts,id']);
+        $attempt = Attempt::findOrFail($request->attempt_id);
+        $this->authorize('participate', $attempt);
+
+        $part->load(['test_type.test', 'test_type.type']);
+        abort_unless((int) $part->test_type->test_id === (int) $attempt->test_id, 403);
+
+        $this->autoFinishExpiredTypes($attempt->id);
+
+        $type = $part->test_type->type;
+        if ($type->name === 'Listening' && $part->test_type->test->playtime_seconds) {
+            $typeFinishedAt = now()->addSeconds((int) $part->test_type->test->playtime_seconds + 5);
+        } else {
+            $typeFinishedAt = now()->addMinutes((int) $type->minute);
         }
+
+        $attemptPart = AttemptPart::firstOrCreate(
+            ['attempt_id' => $attempt->id, 'part_id' => $part->id],
+            ['started_at' => now(), 'finished_at' => now()->addMinutes((int) ($part->minute ?: $type->minute))]
+        );
+
+        AttemptType::firstOrCreate(
+            ['attempt_id' => $attempt->id, 'type_id' => $part->test_type->type_id],
+            ['started_at' => now(), 'finished_at' => $typeFinishedAt]
+        );
+
+        $part = Part::with([
+            'test_type',
+            'attempt_part' => fn ($q) => $q->where('attempt_id', $attempt->id),
+            'sections.questions.options',
+            'sections.questions.attempt_answer' => fn ($q) => $q->where('attempt_part_id', $attemptPart->id)->with('attempt_answer_options'),
+        ])->findOrFail($part->id);
+
+        $this->hideAnswerKeys($part);
+
+        return response()->json([
+            'data' => $part,
+            'success' => true,
+            'message' => 'Part retrieved successfully',
+            'server_time' => now()->toIso8601String(),
+        ]);
     }
 
-    public function practice_part(Request $request, $part_id)
+    /**
+     * Strip everything a candidate could use to cheat from a part payload and
+     * build a neutral, pre-sorted option list for drag-and-drop sections.
+     */
+    private function hideAnswerKeys(Part $part): void
     {
-        try {
-            $request->validate([
-                'attempt_id' => 'required|exists:attempts,id',
-            ]);
+        foreach ($part->sections as $section) {
+            $section->options->each->makeHidden('is_correct');
 
-            $this->checkAndAutoFinishExpired($request->attempt_id);
+            if ($section->question_type?->type === 'drag_and_drop') {
+                $labels = $section->questions->pluck('answer_text')
+                    ->merge($section->options->pluck('textarea'))
+                    ->map(fn ($label) => trim((string) $label))
+                    ->filter()
+                    ->unique(fn ($label) => mb_strtolower($label))
+                    ->sort(fn ($a, $b) => strcasecmp($a, $b))
+                    ->values();
 
-            DB::beginTransaction();
-
-            $part = Part::with([
-                'test_type.test',
-                'test_type.type',
-            ])->findOrFail($part_id);
-
-
-            if ($part->test_type->type->name == 'Listening') {
-                $finished_at = now()->addSeconds($part->test_type->test->playtime_seconds + 5);
-            } else {
-                $finished_at = now()->addMinutes($part->test_type->type->minute);
+                $section->setAttribute('drag_options', $labels->map(fn ($label, $i) => [
+                    'id' => 'd'.($i + 1),
+                    'label' => $label,
+                ])->all());
             }
 
-            $attempt_type = AttemptType::firstOrCreate(
-                [
-                    'attempt_id' => $request->attempt_id,
-                    'type_id' => $part->test_type->type_id
-                ],
-                [
-                    'started_at' => now(),
-                    'finished_at' => $finished_at,
-                ]
-            );
+            foreach ($section->questions as $question) {
+                $question->makeHidden('answer_text');
+                $question->options->each->makeHidden('is_correct');
 
-            $attempt_part = AttemptPart::firstOrCreate(
-                [
-                    'attempt_id' => $request->attempt_id,
-                    'part_id' => $part_id
-                ],
-                [
-                    'started_at' => now(),
-                    'finished_at' => now()->addMinutes($part->minute),
-                ]
-            );
-
-            $part = Part::with([
-                'test_type',
-                'attempt_part' => function ($query) use ($attempt_part) {
-                    $query->where('attempt_id', $attempt_part->attempt_id);
-                },
-                'sections' => function ($query) use ($attempt_part) {
-                    $query->with([
-                        'questions' => function ($query) use ($attempt_part) {
-                            $query->with([
-                                'options',
-                                'attempt_answer' => function ($query) use ($attempt_part) {
-                                    $query->where('attempt_part_id', $attempt_part->id)
-                                        ->with('attempt_answer_options');
-                                }
-                            ]);
-                        }
-                    ]);
-                },
-            ])
-                ->findOrFail($part_id);
-
-            DB::commit();
-
-            return response()->json([
-                'data' => $part,
-                'success' => true,
-                'message' => 'Attempt retrieved successfully',
-                'server_time' => now()->toIso8601String(),
-            ]);
-        } catch (\Exception $e) {
-            return response()->json([
-                'data' => [],
-                'success' => false,
-                'message' => $e->getMessage(),
-            ], 500);
+                if ($question->attempt_answer) {
+                    $question->attempt_answer->makeHidden(['is_correct', 'score', 'review_note', 'review_note_ai']);
+                    $question->attempt_answer->attempt_answer_options->each(function ($answerOption) {
+                        $answerOption->makeHidden('is_correct');
+                        $answerOption->option?->makeHidden('is_correct');
+                    });
+                }
+            }
         }
     }
 
-    /**
-     * Show the form for editing the specified resource.
-     */
-    public function edit(Test $test)
+    private function mockWindowError(Attempt $attempt): ?string
     {
-        //
+        $mock = $attempt->mock;
+        if (! $mock) {
+            return null;
+        }
+
+        return match ($mock->status) {
+            'inactive' => 'Ushbu Mock test hozirda faol emas!',
+            'scheduled' => 'Ushbu Mock test hali boshlanmagan! Boshlanish vaqti: '.\Carbon\Carbon::parse($mock->started_at)->format('d.m.Y H:i'),
+            'expired' => 'Ushbu Mock test vaqti tugagan! Yakunlangan vaqti: '.\Carbon\Carbon::parse($mock->finished_at)->format('d.m.Y H:i'),
+            default => null,
+        };
     }
 
     /**
-     * Update the specified resource in storage.
+     * Close every module whose timer ran out and queue AI evaluation for its essays.
      */
-    public function update(Request $request, Test $test)
+    private function autoFinishExpiredTypes(int $attemptId): void
     {
-        //
-    }
-
-    /**
-     * Remove the specified resource from storage.
-     */
-    public function destroy(Test $test)
-    {
-        //
-    }
-
-    private function checkAndAutoFinishExpired($attemptId)
-    {
-        $expiredAttemptTypes = AttemptType::where('attempt_id', $attemptId)
+        $expired = AttemptType::where('attempt_id', $attemptId)
             ->where('is_submitted', false)
             ->whereNotNull('finished_at')
             ->where('finished_at', '<', now())
             ->get();
 
-        foreach ($expiredAttemptTypes as $attemptType) {
-            $attempt_answers = AttemptAnswer::query()
-                ->whereHas('attempt_part', function ($query) use ($attemptId, $attemptType) {
-                    $query->where('attempt_id', $attemptId)
-                        ->whereHas('part.test_type', function ($q) use ($attemptType) {
-                            $q->where('type_id', $attemptType->type_id);
-                        });
-                })
-                ->whereHas('question.section.question_type', function ($query) {
-                    $query->where('type', 'essay');
-                })
-                ->whereRaw('LENGTH(answer_text) > 10')
-                ->get();
+        if ($expired->isEmpty()) {
+            return;
+        }
 
-            foreach ($attempt_answers as $answer) {
-                EvaluateEssayJob::dispatch($answer->id);
-            }
+        $attempt = Attempt::findOrFail($attemptId);
+        foreach ($expired as $attemptType) {
+            $this->finishTypeWithEvaluation($attempt, $attemptType);
+        }
+    }
 
-            $attemptType->finish();
+    private function finishTypeWithEvaluation(Attempt $attempt, AttemptType $attemptType): void
+    {
+        $attemptType->finish();
+
+        foreach ($attempt->essayAnswersForEvaluation($attemptType->type_id) as $answer) {
+            EvaluateEssayJob::dispatch($answer->id);
         }
     }
 }

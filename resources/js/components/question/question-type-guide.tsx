@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Lightbulb, AlertTriangle, X, HelpCircle } from 'lucide-react';
+import { AlertTriangle, X } from 'lucide-react';
 
 interface QuestionTypeGuideProps {
     type?: string; // e.g., 'multiple_choice', 'true_false', 'matching', etc.

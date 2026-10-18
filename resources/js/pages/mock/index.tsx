@@ -1,7 +1,7 @@
 import AppLayout from '@/layouts/app-layout';
 import { Head, usePage, useForm } from '@inertiajs/react';
 import { type BreadcrumbItem, type MockPaginate, SearchData, Test, User, Folder } from '@/types';
-import { useEffect } from 'react';
+
 import { router } from '@inertiajs/react';
 import MockTable from '@/components/mock/mock-table';
 import PremiumFilters from '@/components/premium-filters';

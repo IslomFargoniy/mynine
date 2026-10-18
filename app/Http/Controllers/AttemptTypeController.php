@@ -2,85 +2,38 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\AttemptType;
 use App\Http\Requests\StoreAttemptTypeRequest;
-use App\Http\Requests\UpdateAttemptTypeRequest;
+use App\Models\Attempt;
+use App\Models\AttemptType;
 use Illuminate\Validation\ValidationException;
 
 class AttemptTypeController extends Controller
 {
     /**
-     * Display a listing of the resource.
-     */
-    public function index()
-    {
-        //
-    }
-
-    /**
-     * Show the form for creating a new resource.
-     */
-    public function create()
-    {
-        //
-    }
-
-    /**
-     * Store a newly created resource in storage.
+     * Manual (examiner) score for a module, e.g. Speaking.
      */
     public function store(StoreAttemptTypeRequest $request)
     {
-        try {
+        $attempt = Attempt::findOrFail($request->attempt_id);
+        $this->authorize('grade', $attempt);
 
+        try {
             $attemptType = AttemptType::updateOrCreate(
+                ['attempt_id' => $attempt->id, 'type_id' => $request->type_id],
                 [
-                    'attempt_id' => $request->attempt_id,
-                    'type_id' => $request->type_id,
-                ],
-                $request->validated()
+                    'score' => $request->score,
+                    'comment' => $request->comment,
+                    'started_at' => now(),
+                    'finished_at' => now(),
+                    'is_submitted' => true,
+                ]
             );
 
-            // Recalculate is_correct_count after score update
             $attemptType->recalculateIsCorrectCount();
 
             return back()->with('success', __('updated_successfully'));
         } catch (\Exception $e) {
-            // Proper Inertia error response
-            throw ValidationException::withMessages([
-                'error' => [$e->getMessage()],
-            ]);
+            throw ValidationException::withMessages(['error' => [$e->getMessage()]]);
         }
-    }
-
-    /**
-     * Display the specified resource.
-     */
-    public function show(AttemptType $attemptType)
-    {
-        //
-    }
-
-    /**
-     * Show the form for editing the specified resource.
-     */
-    public function edit(AttemptType $attemptType)
-    {
-        //
-    }
-
-    /**
-     * Update the specified resource in storage.
-     */
-    public function update(UpdateAttemptTypeRequest $request, AttemptType $attemptType)
-    {
-        //
-    }
-
-    /**
-     * Remove the specified resource from storage.
-     */
-    public function destroy(AttemptType $attemptType)
-    {
-        //
     }
 }

@@ -6,7 +6,6 @@ use App\Http\Controllers\Controller;
 use App\Models\User\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Str;
 
 class TelegramLoginController extends Controller
 {
@@ -16,7 +15,7 @@ class TelegramLoginController extends Controller
         $data = $request->all();
 
         // Validate Telegram login
-        if (!$this->isTelegramDataValid($data)) {
+        if (! $this->isTelegramDataValid($data)) {
             return redirect()->route('home')->with('error', __('error.invalid_telegram_login'));
         }
 
@@ -24,9 +23,9 @@ class TelegramLoginController extends Controller
         $user = User::updateOrCreate(
             ['telegram_id' => $data['id']],
             [
-                'name' => $data['first_name'] . ' ' . ($data['last_name'] ?? ''),
-                'username' => $data['username'] ?? null,
-                'avatar' => $data['photo_url'] ?? null
+                'name' => trim(($data['first_name'] ?? '').' '.($data['last_name'] ?? '')),
+                'username' => SocialUsername::unique($data['username'] ?? null),
+                'avatar' => $data['photo_url'] ?? null,
             ]
         );
 
@@ -42,8 +41,12 @@ class TelegramLoginController extends Controller
 
     private function isTelegramDataValid(array $data): bool
     {
-        $botToken = env('MynineUzBot_TOKEN');
-        if (!isset($data['hash'])) {
+        $botToken = config('services.telegram.mynine_bot_token');
+        if (empty($botToken) || ! isset($data['hash'])) {
+            return false;
+        }
+
+        if (! isset($data['auth_date']) || abs(time() - (int) $data['auth_date']) > 86400) {
             return false;
         }
 
@@ -52,7 +55,7 @@ class TelegramLoginController extends Controller
 
         $dataCheckArr = [];
         foreach ($data as $key => $value) {
-            $dataCheckArr[] = $key . '=' . $value;
+            $dataCheckArr[] = $key.'='.$value;
         }
 
         sort($dataCheckArr);

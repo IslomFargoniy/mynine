@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Sparkles, CheckCircle2, Award, FileText, AlertCircle, RefreshCw } from 'lucide-react';
+import { Sparkles, Award, FileText, RefreshCw } from 'lucide-react';
 import { router } from '@inertiajs/react';
 import { toast } from 'sonner';
 

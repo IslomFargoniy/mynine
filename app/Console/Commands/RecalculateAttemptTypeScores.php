@@ -8,6 +8,7 @@ use Illuminate\Console\Command;
 class RecalculateAttemptTypeScores extends Command
 {
     protected $signature = 'attempt-types:recalculate';
+
     protected $description = 'Recalculate is_correct_count for all existing attempt_types';
 
     public function handle()

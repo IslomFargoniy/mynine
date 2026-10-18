@@ -1,6 +1,5 @@
 import React from 'react';
-import { Activity, Clock, UserCheck, ShieldAlert, CheckCircle2 } from 'lucide-react';
-import { useTranslation } from 'react-i18next';
+import { Activity, Clock } from 'lucide-react';
 
 export interface ActiveAttempt {
     id: number;
@@ -16,7 +15,6 @@ interface LiveExamMonitorCardProps {
 }
 
 export default function LiveExamMonitorCard({ activeAttempts }: LiveExamMonitorCardProps) {
-    const { t } = useTranslation();
 
     const attempts: ActiveAttempt[] = activeAttempts && activeAttempts.length > 0 ? activeAttempts : [
         { id: 101, userName: 'Jasur Bek', testTitle: 'IELTS Mock Test 19', startedAt: '14:05', currentModule: 'Reading', status: 'in_progress' },

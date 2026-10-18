@@ -31,6 +31,8 @@ class SectionController extends Controller
      */
     public function store(StoreSectionRequest $request)
     {
+        $this->authorize('update', \App\Models\Part::findOrFail($request->part_id));
+
         try {
             DB::beginTransaction();
 
@@ -73,6 +75,8 @@ class SectionController extends Controller
      */
     public function update(UpdateSectionRequest $request, Section $section)
     {
+        $this->authorize('update', $section);
+
         try {
             DB::beginTransaction();
 
@@ -99,6 +103,8 @@ class SectionController extends Controller
      */
     public function destroy(Section $section)
     {
+        $this->authorize('delete', $section);
+
         $test = $section->part?->test_type?->test;
         if ($test && ($test->attempts()->exists() || $test->mocks()->whereHas('attempts')->exists())) {
             throw ValidationException::withMessages([
@@ -108,6 +114,7 @@ class SectionController extends Controller
 
         try {
             $section->delete();
+
             return back()->with('success', __('deleted_successfully'));
         } catch (\Exception $e) {
             // Proper Inertia error response
@@ -116,8 +123,6 @@ class SectionController extends Controller
             ]);
         }
     }
-
-
 
     private function syncQuestions(Section $section, string $textarea): void
     {
@@ -162,6 +167,8 @@ class SectionController extends Controller
 
     public function syncOptions(\Illuminate\Http\Request $request, Section $section)
     {
+        $this->authorize('update', $section);
+
         $request->validate([
             'options' => 'present|array',
             'options.*' => 'nullable|string',

@@ -2,12 +2,10 @@
 
 namespace App\Observers;
 
-use App\Jobs\SendResultEmailJob;
 use App\Jobs\SendResultTelegramJob;
 use App\Models\Attempt;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Log;
 
 class AttemptObserver
 {
@@ -22,10 +20,7 @@ class AttemptObserver
     /**
      * Handle the Attempt "updated" event.
      */
-    public function updating(Attempt $attempt): void
-    {
-
-    }
+    public function updating(Attempt $attempt): void {}
 
     public function updated(Attempt $attempt): void
     {
@@ -34,12 +29,12 @@ class AttemptObserver
 
             if ($attempt->user) {
                 // Send email if user has email
-                if (!empty($attempt->user->email) && filter_var($attempt->user->email, FILTER_VALIDATE_EMAIL)) {
+                if (! empty($attempt->user->email) && filter_var($attempt->user->email, FILTER_VALIDATE_EMAIL)) {
                     dispatch(new \App\Jobs\SendResultEmailJob($attempt->user, $attempt));
                 }
 
                 // Send Telegram message if user has Telegram ID
-                if (!empty($attempt->user->telegram_id)) {
+                if (! empty($attempt->user->telegram_id)) {
                     dispatch(new SendResultTelegramJob($attempt->user, $attempt));
                 }
             }
@@ -51,14 +46,8 @@ class AttemptObserver
      */
     public function deleting(Attempt $attempt): void
     {
-        $authUser = Auth::user();
-
-        // Admin emas yoki test egasi ham emas bo'lsa -> taqiqlanadi
-        if (
-            $authUser &&
-            !$authUser->hasRole('Admin') &&
-            $authUser->id !== $attempt->mock?->user_id
-        ) {
+        // Console commands / seeders run without a user; web requests are checked by AttemptPolicy
+        if (Auth::check() && ! Auth::user()->can('delete', $attempt)) {
             throw new \Exception('You are not allowed to access this page');
         }
 
@@ -77,7 +66,6 @@ class AttemptObserver
             $attempt->attempt_types()->delete();
         });
     }
-
 
     /**
      * Handle the Attempt "restored" event.

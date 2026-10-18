@@ -49,7 +49,6 @@ export function AppSidebar() {
     const { auth } = usePage().props as unknown as { auth?: Auth };
 
     const isAdmin = auth?.user?.roles?.some(role => role.name === 'Admin');
-    const isTeacher = auth?.user?.roles?.some(role => role.name === 'Teacher');
     const isStudent = auth?.user?.roles?.some(role => role.name === 'Student');
 
     const filteredNavItems = useMemo((): NavItem[] => {

@@ -29,6 +29,9 @@ export function useExamHotkeys({
                     document.activeElement.tagName === 'TEXTAREA' ||
                     (document.activeElement as HTMLElement).isContentEditable);
 
+            // Never hijack keys while the candidate is typing an answer
+            if (isInputFocused && !e.altKey && e.key !== 'F1') return;
+
             // Alt + / or F1: Show Keyboard Shortcuts Help
             if ((e.altKey && e.key === '/') || e.key === 'F1') {
                 e.preventDefault();

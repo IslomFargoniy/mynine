@@ -169,7 +169,8 @@
         "search_failed": "Поиск не удался",
         "submission_failed": "Ошибка при отправке",
         "unauthorized_access": "У вас нет доступа к этой странице",
-        "unauthorized_attempt": "Эта попытка не принадлежит вам."
+        "unauthorized_attempt": "Эта попытка не принадлежит вам.",
+        "social_login_failed": "Не удалось войти через соцсеть. Попробуйте ещё раз или другой способ."
     },
     "error_occurred": "Произошла ошибка",
     "evaluate_speaking": "Оценить говорение",

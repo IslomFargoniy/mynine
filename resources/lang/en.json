@@ -169,7 +169,8 @@
         "search_failed": "Search failed",
         "submission_failed": "Submission failed",
         "unauthorized_access": "You are not allowed to access this page",
-        "unauthorized_attempt": "This attempt does not belong to you."
+        "unauthorized_attempt": "This attempt does not belong to you.",
+        "social_login_failed": "Social login failed. Please try again or use another method."
     },
     "error_occurred": "An error occurred",
     "evaluate_speaking": "Evaluate speaking",

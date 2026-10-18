@@ -2,14 +2,10 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Attempt;
-use App\Models\Folder;
 use App\Models\Test;
-use Illuminate\Http\Request;
 
 class LandingPageController extends Controller
 {
-
     public function tests()
     {
         try {
@@ -19,7 +15,7 @@ class LandingPageController extends Controller
                     'folder',
                     'types' => function ($query) {
                         $query->whereHas('parts');
-                    }
+                    },
                 ])
                 ->withCount('attempts')
                 ->where('active', 1)
@@ -28,7 +24,6 @@ class LandingPageController extends Controller
                     $query->where('active', 1);
                 })
                 ->get();
-
 
             return response()->json([
                 'data' => $tests,

@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
-import { DndContext, useDraggable, useDroppable } from '@dnd-kit/core';
-import { Attempt, Part, Question, Option, Section } from '@/types';
+import { DndContext, DragEndEvent, useDraggable, useDroppable } from '@dnd-kit/core';
+import { Attempt, Part, Question, Section } from '@/types';
 import parse, { Text } from 'html-react-parser';
 import { debounce } from 'lodash';
 import { toast } from 'sonner';
@@ -9,6 +9,12 @@ import { cleanTinyMce } from '@/utils/util';
 import PracticeQuestion from '@/components/practice/practice-question';
 import MatchingHeadings from '@/components/practice/matching-headings';
 import { syncQueue } from '@/services/sync-queue';
+
+interface DragOption {
+    id: string | number;
+    label: string;
+    order: number;
+}
 
 interface SectionUpdateProps {
     order: number;
@@ -25,7 +31,6 @@ export default function PracticeSection({
                                             order,
                                             section,
                                             attempt,
-                                            partIndex,
                                             sectionIndex,
                                             setSelectedPart,
                                             flaggedIds,
@@ -36,54 +41,32 @@ export default function PracticeSection({
     const [selectedAnswers, setSelectedAnswers] = useState<
         Record<number, { optionId: string | number | null; text: string }>
     >({});
-    const [availableOptions, setAvailableOptions] = useState<Option[]>([]);
+    const [availableOptions, setAvailableOptions] = useState<DragOption[]>([]);
 
-    const allOptions = useMemo(() => {
-        const correctAnswers =
-            section.questions?.map((q: Question, idx: number) => ({
-                id: q.id ?? idx,
-                label: (q.answer_text ?? '').trim(),
-                original: q,
-                order: idx
-            })) ?? [];
-
-        const incorrectOptions =
-            (section as Section).options?.map((o: Option, idx: number) => ({
-                id: `opt-${o.id ?? idx}`,
-                label: (o.textarea ?? '').trim(),
-                original: o,
-                order: correctAnswers.length + idx
-            })) ?? [];
-
-        const merged = [...correctAnswers, ...incorrectOptions];
-        const seen = new Set<string>();
-        const unique = merged.filter((o) => {
-            const key = o.label.toLowerCase();
-            if (seen.has(key) || key === '') return false;
-            seen.add(key);
-            return true;
-        });
-
-        return unique.sort((a, b) =>
-            (a.label || '').localeCompare(b.label || '', undefined, { sensitivity: 'base' })
-        );
-    }, [section]);
+    /**
+     * Drag-and-drop choices are built on the server (answers + distractors, mixed and
+     * sorted, with neutral ids) so the client never learns which labels are correct.
+     */
+    const allOptions = useMemo<DragOption[]>(
+        () => (section.drag_options ?? []).map((o, idx) => ({ id: o.id, label: o.label.trim(), order: idx })),
+        [section.drag_options]
+    );
 
     const normalize = (s?: string) => (s ?? '').trim().toLowerCase();
 
     /** ✅ Initial setup */
     useEffect(() => {
         const avail = [...allOptions];
-        const selected: Record<number, { optionId: number | null; text: string }> = {};
+        const selected: Record<number, { optionId: string | number | null; text: string }> = {};
 
-        (section.questions || []).forEach((slot: any) => {
+        (section.questions || []).forEach((slot: Question) => {
             const attemptText = slot?.attempt_answer?.answer_text;
             if (attemptText) {
                 const match = allOptions.find(
                     (o) => normalize(o.label) === normalize(attemptText)
                 );
                 if (match) {
-                    selected[slot.id] = { optionId: match.id as any, text: match.label };
+                    selected[slot.id] = { optionId: match.id, text: match.label };
                     const idx = avail.findIndex((a) => a.id === match.id);
                     if (idx >= 0) avail.splice(idx, 1);
                 } else {
@@ -92,7 +75,7 @@ export default function PracticeSection({
             }
         });
 
-        setAvailableOptions(avail as any);
+        setAvailableOptions(avail);
         setSelectedAnswers(selected);
     }, [allOptions, section.questions]);
 
@@ -126,11 +109,11 @@ export default function PracticeSection({
                                                 attempt_answer:
                                                     value.trim() === ''
                                                         ? undefined
-                                                        : {
+                                                        : ({
                                                             id: Date.now(),
                                                             question_id: qId,
                                                             answer_text: value.trim()
-                                                        } as any
+                                                        } as unknown as Question['attempt_answer'])
                                             }
                                             : q
                                     )
@@ -169,7 +152,7 @@ export default function PracticeSection({
         debouncedSave(slotId, '');
     };
 
-    const handleDragEnd = (event: any) => {
+    const handleDragEnd = (event: DragEndEvent) => {
         const { active, over } = event;
         if (!over || !active) return;
         const overId = String(over.id);
@@ -191,7 +174,7 @@ export default function PracticeSection({
         debouncedSave(slotId, draggedOpt.label);
     };
 
-    const DraggableOption = ({ opt }: { opt: any }) => {
+    const DraggableOption = ({ opt }: { opt: DragOption }) => {
         const { setNodeRef, listeners, attributes, transform, isDragging } = useDraggable({
             id: `drag-${opt.id}`
         });
@@ -258,7 +241,7 @@ export default function PracticeSection({
                     if (parts.length > 1) {
                         return (
                             <>
-                                {parts.map((part, i) => {
+                                {parts.map((part) => {
                                     if (part.match(/^\{.*\}$/)) {
                                         const question = section.questions[qIndex++];
                                         section_order++;

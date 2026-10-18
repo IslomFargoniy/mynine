@@ -6,9 +6,10 @@ use App\Models\Mock;
 use App\Models\MockStudent;
 use App\Models\User\User;
 use App\Services\IeltsScoreConverter;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\URL;
 use Telegram\Bot\Api;
 use Telegram\Bot\Keyboard\Keyboard;
-use Illuminate\Support\Facades\Log;
 
 class MynineUzBotService
 {
@@ -16,7 +17,7 @@ class MynineUzBotService
 
     public function __construct()
     {
-        $this->telegram = new Api(env('MynineUzBot_TOKEN'));
+        $this->telegram = new Api(config('services.telegram.mynine_bot_token'));
     }
 
     /**
@@ -32,26 +33,30 @@ class MynineUzBotService
         // 1. Direct Command matching
         if ($command === '/start' || str_starts_with($text, '/start')) {
             $this->sendWelcomeMessage($update, $chatId);
+
             return;
         }
 
         if ($command === '/help') {
             $this->sendHelpMessage($chatId);
+
             return;
         }
 
         if ($command === '/mocks') {
             $this->sendMockMessage($chatId);
+
             return;
         }
 
         if ($command === '/ref') {
             $this->sendRefMessage($chatId);
+
             return;
         }
 
         if ($command === '/result' || $command === '/natija') {
-            if (!empty($params)) {
+            if (! empty($params)) {
                 $this->sendCandidateResult($chatId, $params);
             } else {
                 $this->sendSafeMessage(
@@ -61,18 +66,20 @@ class MynineUzBotService
                     'Markdown'
                 );
             }
+
             return;
         }
 
         // 2. Check if the text matches a Candidate Code directly (e.g. TEST1-849201, MS123456)
         $cleanCandidateCode = strtoupper(preg_replace('/[^a-zA-Z0-9-]/', '', $text));
-        if (!empty($cleanCandidateCode) && strlen($cleanCandidateCode) >= 4 && strlen($cleanCandidateCode) <= 25) {
+        if (! empty($cleanCandidateCode) && strlen($cleanCandidateCode) >= 4 && strlen($cleanCandidateCode) <= 25) {
             $student = MockStudent::where('code', $cleanCandidateCode)
-                ->orWhere('code', str_replace('-', '', $cleanCandidateCode))
+                ->orWhereRaw("REPLACE(code, '-', '') = ?", [str_replace('-', '', $cleanCandidateCode)])
                 ->first();
 
             if ($student) {
                 $this->sendCandidateResult($chatId, $student->code);
+
                 return;
             }
         }
@@ -96,11 +103,10 @@ class MynineUzBotService
             ])
             ->first();
 
-        // If not found, try searching with or without hyphens
-        if (!$student) {
-            $altCode = str_contains($code, '-') ? str_replace('-', '', $code) : $code;
-            $student = MockStudent::where('code', $altCode)
-                ->orWhere('code', 'LIKE', "%{$altCode}%")
+        // Accept the code typed without the hyphen, but never do fuzzy matching:
+        // a partial code must not reveal somebody else's result.
+        if (! $student && ! str_contains($code, '-')) {
+            $student = MockStudent::whereRaw("REPLACE(code, '-', '') = ?", [$code])
                 ->with([
                     'mock',
                     'attempt.attempt_types.type',
@@ -109,13 +115,14 @@ class MynineUzBotService
                 ->first();
         }
 
-        if (!$student) {
+        if (! $student) {
             $this->sendSafeMessage(
                 $chatId,
                 "❌ *Nomzod Kodi topilmadi*\n\nSiz kiritgan `{$code}` kodi bo'yicha hech qanday ma'lumot topilmadi.\n\nIltimos, kodingizni to'g'ri kiritganingizni tekshiring (masalan: `TEST1-849201`).",
                 null,
                 'Markdown'
             );
+
             return;
         }
 
@@ -123,7 +130,7 @@ class MynineUzBotService
         $attempt = $student->attempt;
 
         // If candidate hasn't taken the exam yet
-        if (!$attempt || !$attempt->finished_at) {
+        if (! $attempt || ! $attempt->finished_at) {
             $msg = "⏳ *Imtihon Natijasi Kutilmoqda*\n";
             $msg .= "━━━━━━━━━━━━━━━━━━━\n";
             $msg .= "👤 *Nomzod:* {$student->name}\n";
@@ -132,7 +139,7 @@ class MynineUzBotService
                 $msg .= "🧪 *Mock Test:* {$mock->name}\n";
             }
             $msg .= "━━━━━━━━━━━━━━━━━━━\n";
-            $msg .= "ℹ️ Ushbu nomzod imtihonni hali boshlamagan yoki natijalari tekshirilmoqda.";
+            $msg .= 'ℹ️ Ushbu nomzod imtihonni hali boshlamagan yoki natijalari tekshirilmoqda.';
 
             $keyboard = Keyboard::make()->inline()->row([
                 Keyboard::inlineButton([
@@ -142,6 +149,7 @@ class MynineUzBotService
             ]);
 
             $this->sendSafeMessage($chatId, $msg, $keyboard, 'Markdown');
+
             return;
         }
 
@@ -178,14 +186,14 @@ class MynineUzBotService
             }
         }
 
-        $overallBand = !empty($validBands) ? IeltsScoreConverter::calculateOverallBand($validBands) : 0.0;
+        $overallBand = ! empty($validBands) ? IeltsScoreConverter::calculateOverallBand($validBands) : 0.0;
         $cefr = IeltsScoreConverter::getCefrLevel($overallBand);
         $finishedDate = $attempt->finished_at ? date('d.m.Y H:i', strtotime($attempt->finished_at)) : date('d.m.Y');
 
-        $lStr = $listeningBand !== null ? "{$listeningBand} ({$listeningRaw}/40)" : "—";
-        $rStr = $readingBand !== null ? "{$readingBand} ({$readingRaw}/40)" : "—";
-        $wStr = $writingBand !== null ? number_format($writingBand, 1) : "Tekshirilmoqda ⏳";
-        $sStr = $speakingBand !== null ? number_format($speakingBand, 1) : "Tekshirilmoqda ⏳";
+        $lStr = $listeningBand !== null ? "{$listeningBand} ({$listeningRaw}/40)" : '—';
+        $rStr = $readingBand !== null ? "{$readingBand} ({$readingRaw}/40)" : '—';
+        $wStr = $writingBand !== null ? number_format($writingBand, 1) : 'Tekshirilmoqda ⏳';
+        $sStr = $speakingBand !== null ? number_format($speakingBand, 1) : 'Tekshirilmoqda ⏳';
 
         $mockName = $mock?->name ?? ($attempt->test?->name ?? 'IELTS Mock Test');
 
@@ -210,15 +218,19 @@ class MynineUzBotService
             ->row([
                 Keyboard::inlineButton([
                     'text' => '📄 Rasmiy TRF Sertifikat (PDF)',
-                    'url' => "https://mynine.uz/attempt/{$attempt->id}/pdf",
-                ]),
-            ])
-            ->row([
-                Keyboard::inlineButton([
-                    'text' => '🔍 Batafsil Natijani Ko\'rish',
-                    'web_app' => ['url' => "https://mynine.uz/attempt/{$attempt->id}"],
+                    'url' => url(URL::signedRoute('attempt.pdf', ['attempt' => $attempt->id], null, false)),
                 ]),
             ]);
+
+        // The detailed web page requires a login, so only offer it to registered candidates
+        if ($attempt->user_id) {
+            $keyboard->row([
+                Keyboard::inlineButton([
+                    'text' => '🔍 Batafsil Natijani Ko\'rish',
+                    'web_app' => ['url' => route('attempt.show', $attempt->id)],
+                ]),
+            ]);
+        }
 
         $this->sendSafeMessage($chatId, $msg, $keyboard, 'Markdown');
     }
@@ -228,11 +240,11 @@ class MynineUzBotService
      */
     protected function sendHelpMessage(int|string $chatId): void
     {
-        $text = "📘 *Mynine Bot Yordam Bo'limi:*\n\n" .
-            "🔹 `/start` - Platformani ochish\n" .
-            "🔹 `/result <KOD>` - Nomzod kodi orqali natijani bilish\n" .
-            "🔹 `/mocks` - Faol mock testlarni ko'rish\n" .
-            "🔹 `/ref` - Shaxsiy taklif havolangiz\n\n" .
+        $text = "📘 *Mynine Bot Yordam Bo'limi:*\n\n".
+            "🔹 `/start` - Platformani ochish\n".
+            "🔹 `/result <KOD>` - Nomzod kodi orqali natijani bilish\n".
+            "🔹 `/mocks` - Faol mock testlarni ko'rish\n".
+            "🔹 `/ref` - Shaxsiy taklif havolangiz\n\n".
             "💡 *Maslahat:* Imtihon natijangizni bilish uchun shunchaki o'zingizning Nomzod Kodingizni (masalan: `TEST1-849201` yoki `MS123456`) to'g'ridan-to'g'ri yozib yuborishingiz ham mumkin!";
 
         $this->sendSafeMessage($chatId, $text, null, 'Markdown');
@@ -243,8 +255,8 @@ class MynineUzBotService
      */
     protected function sendUnknownCommand(int|string $chatId): void
     {
-        $text = "Kechirasiz, buyruq tushunarsiz 😅.\n\n" .
-            "📊 Natijani bilish uchun *Nomzod Kodingizni* yuboring (masalan: `TEST1-849201`).\n" .
+        $text = "Kechirasiz, buyruq tushunarsiz 😅.\n\n".
+            "📊 Natijani bilish uchun *Nomzod Kodingizni* yuboring (masalan: `TEST1-849201`).\n".
             "Barcha buyruqlarni ko'rish uchun /help ni bosing.";
 
         $this->sendSafeMessage($chatId, $text, null, 'Markdown');
@@ -263,17 +275,17 @@ class MynineUzBotService
 
         $user = User::where('telegram_id', $chatId)->first();
 
-        if (!$user) {
+        if (! $user) {
             $user = User::create([
                 'telegram_id' => $chatId,
-                'name' => trim(($from['first_name'] ?? '') . ' ' . ($from['last_name'] ?? '')),
+                'name' => trim(($from['first_name'] ?? '').' '.($from['last_name'] ?? '')),
                 'username' => $from['username'] ?? null,
                 'avatar' => $from['photo_url'] ?? null,
                 'ref_telegram_id' => $ref_telegram_id,
             ]);
         } else {
             $user->update([
-                'name' => trim(($from['first_name'] ?? '') . ' ' . ($from['last_name'] ?? '')),
+                'name' => trim(($from['first_name'] ?? '').' '.($from['last_name'] ?? '')),
                 'username' => $from['username'] ?? null,
                 'avatar' => $from['photo_url'] ?? null,
                 'ref_telegram_id' => $user->ref_telegram_id ?? $ref_telegram_id,
@@ -298,9 +310,9 @@ class MynineUzBotService
                 ]),
             ]);
 
-        $welcomeText = "👋 *Assalomu alaykum, Mynine IELTS platformasiga xush kelibsiz!*\n\n" .
-            "📊 Mock imtihoni natijangizni bilish uchun o'zingizga berilgan *Nomzod Kodini* (masalan: `TEST1-849201`) yuboring.\n\n" .
-            "Platformani ochish uchun quyidagi tugmani bosing:";
+        $welcomeText = "👋 *Assalomu alaykum, Mynine IELTS platformasiga xush kelibsiz!*\n\n".
+            "📊 Mock imtihoni natijangizni bilish uchun o'zingizga berilgan *Nomzod Kodini* (masalan: `TEST1-849201`) yuboring.\n\n".
+            'Platformani ochish uchun quyidagi tugmani bosing:';
 
         $this->sendSafeMessage(
             $chatId,
@@ -309,7 +321,7 @@ class MynineUzBotService
             'Markdown'
         );
 
-        if (!$ref_telegram_id) {
+        if (! $ref_telegram_id) {
             $this->sendRefMessage($chatId);
         }
 
@@ -317,23 +329,23 @@ class MynineUzBotService
             'commands' => [
                 [
                     'command' => 'start',
-                    'description' => 'Platformani ochish 🎓'
+                    'description' => 'Platformani ochish 🎓',
                 ],
                 [
                     'command' => 'result',
-                    'description' => 'Imtihon natijasini bilish 📊'
+                    'description' => 'Imtihon natijasini bilish 📊',
                 ],
                 [
                     'command' => 'mocks',
-                    'description' => 'Faol mock testlar 🧪'
+                    'description' => 'Faol mock testlar 🧪',
                 ],
                 [
                     'command' => 'ref',
-                    'description' => 'Referral havola olish 🔗'
+                    'description' => 'Referral havola olish 🔗',
                 ],
                 [
                     'command' => 'help',
-                    'description' => 'Yordam va buyruqlar ℹ️'
+                    'description' => 'Yordam va buyruqlar ℹ️',
                 ],
             ],
         ]);
@@ -345,8 +357,9 @@ class MynineUzBotService
     public function sendMockMessage(int|string $chatId): void
     {
         $user = User::where('telegram_id', $chatId)->first();
-        if (!$user) {
+        if (! $user) {
             $this->sendSafeMessage($chatId, "❗ Iltimos, avvalo Mynine botiga /start buyrug'i orqali kiring.");
+
             return;
         }
 
@@ -358,7 +371,8 @@ class MynineUzBotService
             ->get(['name', 'slug']);
 
         if ($mocks->isEmpty()) {
-            $this->sendSafeMessage($chatId, "😕 Hozircha faol mock testlar mavjud emas.");
+            $this->sendSafeMessage($chatId, '😕 Hozircha faol mock testlar mavjud emas.');
+
             return;
         }
 
@@ -369,7 +383,7 @@ class MynineUzBotService
                 Keyboard::inlineButton([
                     'text' => "🧪 {$mock->name}",
                     'web_app' => [
-                        'url' => "https://mynine.uz",
+                        'url' => 'https://mynine.uz',
                     ],
                 ]),
             ]);
@@ -377,7 +391,7 @@ class MynineUzBotService
 
         $this->sendSafeMessage(
             $chatId,
-            "🧠 Quyidagi faol mock testlardan birini tanlang:",
+            '🧠 Quyidagi faol mock testlardan birini tanlang:',
             $keyboard
         );
     }
@@ -393,7 +407,7 @@ class MynineUzBotService
     /**
      * Safe message sender (catches Telegram API errors)
      */
-    protected function sendSafeMessage(int|string $chatId, string $text, Keyboard $keyboard = null, string $parseMode = null): void
+    protected function sendSafeMessage(int|string $chatId, string $text, ?Keyboard $keyboard = null, ?string $parseMode = null): void
     {
         try {
             $params = [
@@ -408,7 +422,7 @@ class MynineUzBotService
             }
             $this->telegram->sendMessage($params);
         } catch (\Exception $e) {
-            Log::error('Telegram sendMessage error: ' . $e->getMessage());
+            Log::error('Telegram sendMessage error: '.$e->getMessage());
         }
     }
 
@@ -428,7 +442,7 @@ class MynineUzBotService
                 ],
             ]);
         } catch (\Exception $e) {
-            Log::error('Failed to set persistent menu button: ' . $e->getMessage());
+            Log::error('Failed to set persistent menu button: '.$e->getMessage());
         }
     }
 }

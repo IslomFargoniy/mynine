@@ -52,7 +52,7 @@ export default function ManageSectionOptionsModal({
     const handleSwitchToList = () => {
         const parsed = bulkText
             .split('\n')
-            .map(line => line.replace(/^[A-Z0-9]+[\.\)\-\:\s]+/i, '').trim())
+            .map(line => line.replace(/^[A-Z0-9]+[.)\-:\s]+/i, '').trim())
             .filter(line => line !== '');
         setOptionsList(parsed.length > 0 ? parsed : ['']);
         setMode('list');
@@ -103,7 +103,7 @@ export default function ManageSectionOptionsModal({
         if (mode === 'bulk') {
             finalOptions = bulkText
                 .split('\n')
-                .map(line => line.replace(/^[A-Z0-9]+[\.\)\-\:\s]+/i, '').trim())
+                .map(line => line.replace(/^[A-Z0-9]+[.)\-:\s]+/i, '').trim())
                 .filter(line => line !== '');
         } else {
             finalOptions = optionsList.map(o => o.trim()).filter(o => o !== '');

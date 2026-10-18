@@ -14,7 +14,7 @@
 
 # 🚀 Ultimate Laravel 12 & React 19 Starter Kit
 
-A robust, feature-rich starter kit built on top of **Laravel 12** and **React 19** using **Inertia.js**. It comes pre-configured with modern tools, UI components, payment gateways (specifically for Uzbekistan), role-based access control, and API documentation out of the box.
+A robust, feature-rich starter kit built on top of **Laravel 12** and **React 19** using **Inertia.js**. It comes pre-configured with modern tools, UI components, role-based access control, and API documentation out of the box.
 
 This template is perfect for building SaaS applications, ERPs, CRMs, or any complex web application rapidly. It is ready to be published on GitHub!
 
@@ -25,7 +25,6 @@ This template is perfect for building SaaS applications, ERPs, CRMs, or any comp
 - **⚡ Latest Tech Stack:** Laravel 12, React 19 (Hooks & Modern Context), Inertia.js 2 (SSR supported), Vite, and TypeScript.
 - **🎨 Modern UI/UX:** Styled with **Tailwind CSS v4**, featuring Radix UI primitives, Flowbite React, and beautiful icons (Lucide, Framer Motion).
 - **🔐 Authentication & Authorization:** Laravel Sanctum for auth, and Spatie Permission for seamless Role/Permission management.
-- **💳 Payment Integrations:** Pre-configured with `goodoneuz/pay-uz` supporting **Payme, Click, Oson, Uzcard, Paynet, and Stripe**.
 - **🌍 Multi-language Support:** Ready for Uzbek (Cyrillic/Latin), Russian, English, Spanish, Italian, and German.
 - **📱 PWA Ready:** Integrated with Laravel PWA for offline capabilities and mobile installation.
 - **🤖 Telegram Bot API:** Includes `irazasyed/telegram-bot-sdk` for instant Telegram integrations.
@@ -75,7 +74,6 @@ php artisan storage:link
 **5. Run Migrations & Seeders**
 ```bash
 php artisan migrate --seed
-php artisan db:seed --class="Goodoneuz\PayUz\database\seeds\PayUzSeeder"
 ```
 
 **6. Start Development Servers**
@@ -105,29 +103,6 @@ Access the Swagger UI at: `http://localhost:8000/api/documentation`
 
 ---
 
-## 💳 Payment Gateway Setup (Pay-Uz)
-
-Handling payments in Uzbekistan is a breeze. The routes are ready in `routes/web.php`:
-
-**Webhook Handler:**
-```php
-Route::any('/handle/{paysys}', function($paysys){
-    (new Goodoneuz\PayUz\PayUz)->driver($paysys)->handle();
-});
-```
-
-**Redirect to Payment System:**
-```php
-Route::any('/pay/{paysys}/{key}/{amount}', function($paysys, $key, $amount){
-    $model = Goodoneuz\PayUz\Services\PaymentService::convertKeyToModel($key);
-    $url = request('redirect_url', '/'); // Callback URL after successful payment
-    
-    $pay_uz = new Goodoneuz\PayUz\PayUz;
-    $pay_uz->driver($paysys)->redirect($model, $amount, 860, $url);
-});
-```
-
----
 
 ## 🛠️ Useful Links
 

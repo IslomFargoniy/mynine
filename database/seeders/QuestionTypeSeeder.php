@@ -2,8 +2,8 @@
 
 namespace Database\Seeders;
 
-use Illuminate\Database\Seeder;
 use App\Models\QuestionType;
+use Illuminate\Database\Seeder;
 
 class QuestionTypeSeeder extends Seeder
 {
@@ -58,11 +58,11 @@ class QuestionTypeSeeder extends Seeder
                 'type' => 'drag_and_drop',
                 'input_type' => 'text',
             ],
-//            [
-//                'name' => 'Speaking',
-//                'type' => 'speaking',
-//                'input_type' => 'audio',
-//            ],
+            //            [
+            //                'name' => 'Speaking',
+            //                'type' => 'speaking',
+            //                'input_type' => 'audio',
+            //            ],
         ];
 
         foreach ($types as $type) {

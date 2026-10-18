@@ -9,7 +9,6 @@ class Test extends Model
 {
     use HasFactory;
 
-
     /** @use HasFactory<\Database\Factories\TestFactory> */
     protected $fillable = [
         'folder_id',
@@ -18,24 +17,18 @@ class Test extends Model
         'audio_path',
         'playtime_seconds',
         'active',
-        'open'
+        'open',
     ];
-
-
-
-
 
     public function folder()
     {
         return $this->belongsTo(Folder::class, 'folder_id');
     }
 
-
     public function mocks()
     {
         return $this->hasMany(Mock::class, 'test_id');
     }
-
 
     public function attempts()
     {
@@ -55,5 +48,3 @@ class Test extends Model
         });
     }
 }
-
-

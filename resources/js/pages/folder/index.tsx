@@ -1,7 +1,7 @@
 import AppLayout from '@/layouts/app-layout';
 import { Head, usePage, useForm } from '@inertiajs/react';
 import { type BreadcrumbItem, type FolderPaginate, SearchData, User } from '@/types';
-import { useEffect } from 'react';
+
 import { router } from '@inertiajs/react';
 import FolderTable from '@/components/folder/folder-table';
 import PremiumFilters from '@/components/premium-filters';

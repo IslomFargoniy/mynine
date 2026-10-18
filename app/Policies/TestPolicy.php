@@ -4,62 +4,46 @@ namespace App\Policies;
 
 use App\Models\Test;
 use App\Models\User\User;
+use App\Policies\Concerns\ChecksContentOwnership;
 
 class TestPolicy
 {
-    /**
-     * Determine whether the user can view any models.
-     */
+    use ChecksContentOwnership;
+
     public function viewAny(User $user): bool
     {
-        return false;
+        return $this->isContentManager($user);
     }
 
-    /**
-     * Determine whether the user can view the model.
-     */
     public function view(User $user, Test $test): bool
     {
-        return false;
+        return $this->ownsTest($user, $test);
     }
 
-    /**
-     * Determine whether the user can create models.
-     */
     public function create(User $user): bool
     {
-        return false;
+        return $this->isContentManager($user);
     }
 
-    /**
-     * Determine whether the user can update the model.
-     */
     public function update(User $user, Test $test): bool
     {
-        return false;
+        return $this->ownsTest($user, $test);
     }
 
-    /**
-     * Determine whether the user can delete the model.
-     */
     public function delete(User $user, Test $test): bool
     {
-        return false;
+        return $this->ownsTest($user, $test);
     }
 
     /**
-     * Determine whether the user can restore the model.
+     * Whether a user may start an attempt on this test outside of a mock.
      */
-    public function restore(User $user, Test $test): bool
+    public function attempt(User $user, Test $test): bool
     {
-        return false;
-    }
+        if ($this->ownsTest($user, $test)) {
+            return true;
+        }
 
-    /**
-     * Determine whether the user can permanently delete the model.
-     */
-    public function forceDelete(User $user, Test $test): bool
-    {
-        return false;
+        return (int) $test->active === 1 && (int) $test->open === 1;
     }
 }

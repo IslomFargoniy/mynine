@@ -5,7 +5,6 @@ namespace App\Http\Controllers;
 use App\Http\Requests\StoreFolderRequest;
 use App\Http\Requests\UpdateFolderRequest;
 use App\Models\Folder;
-use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Validation\ValidationException;
@@ -13,19 +12,15 @@ use Inertia\Inertia;
 
 class FolderController extends Controller
 {
-
-    use AuthorizesRequests;
-
     /**
      * Display a listing of the resource.
      */
     public function index(Request $request)
     {
 
-
         $this->authorize('viewAny', Folder::class);
 
-        $per_page = $request->per_page === 'all' ? 100 : min((int)($request->per_page ?? 10), 100);
+        $per_page = $request->per_page === 'all' ? 100 : min((int) ($request->per_page ?? 10), 100);
 
         $folder = Folder::query()->select('id', 'name', 'comment', 'active', 'user_id', 'created_at', 'updated_at');
 
@@ -91,6 +86,8 @@ class FolderController extends Controller
      */
     public function store(StoreFolderRequest $request)
     {
+        $this->authorize('create', Folder::class);
+
         try {
             Folder::create($request->validated());
 
@@ -103,40 +100,34 @@ class FolderController extends Controller
         }
     }
 
-
     /**
      * Display the specified resource.
      */
     public function show(Request $request, Folder $folder)
     {
+        $this->authorize('view', $folder);
+
         $folder->load([
             'tests' => function ($query) use ($request) {
                 if ($request->search) {
-                    $query->where('name', 'like', '%' . $request->search . '%');
+                    $query->where('name', 'like', '%'.$request->search.'%');
                 }
                 $query->with([
                     'types' => function ($query) {
                         $query->with([
-                            'type'
+                            'type',
                         ]);
-                    }
+                    },
                 ])
                     ->withCount('attempts')
                     ->orderBy('id', 'asc');
             },
         ]);
-        // Non-admin users must be part of the folder
-        if (!Auth::user()->hasRole('Admin')) {
-//            Auth::user()->user_folders()
-//                ->where('folder_id', $folder->id)
-//                ->firstOrFail(); // Throws if unauthorized
-        }
 
         return Inertia::render('folder/show', [
-            'folder' => $folder
+            'folder' => $folder,
         ]);
     }
-
 
     /**
      * Show the form for editing the specified resource.
@@ -151,8 +142,11 @@ class FolderController extends Controller
      */
     public function update(UpdateFolderRequest $request, Folder $folder)
     {
+        $this->authorize('update', $folder);
+
         try {
             $folder->update($request->validated());
+
             return back()->with('success', __('updated_successfully'));
         } catch (\Exception $e) {
             // Proper Inertia error response
@@ -167,6 +161,8 @@ class FolderController extends Controller
      */
     public function destroy(Folder $folder)
     {
+        $this->authorize('delete', $folder);
+
         try {
             \Illuminate\Support\Facades\DB::transaction(function () use ($folder) {
                 // Delete tests that have no attempts

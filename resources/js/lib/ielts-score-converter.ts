@@ -62,61 +62,69 @@ export function calculateOverallBand(scores: number[]): number {
     }
 }
 
-export function extractAttemptScores(attempt: any) {
+export interface AttemptScores {
+    listening: number | null;
+    reading: number | null;
+    writing: number | null;
+    speaking: number | null;
+    listeningBand: number | null;
+    readingBand: number | null;
+    writingBand: number | null;
+    speakingBand: number | null;
+    overallBand: number | null;
+}
+
+interface ScoredAttemptType {
+    type?: { name?: string } | null;
+    is_correct_count?: number | string | null;
+    score?: number | string | null;
+}
+
+interface ScoredAttempt {
+    attempt_types?: ScoredAttemptType[] | null;
+}
+
+export function extractAttemptScores(attempt: ScoredAttempt | null | undefined): AttemptScores {
+    const result: AttemptScores = {
+        listening: null,
+        reading: null,
+        writing: null,
+        speaking: null,
+        listeningBand: null,
+        readingBand: null,
+        writingBand: null,
+        speakingBand: null,
+        overallBand: null,
+    };
+
     if (!attempt || !attempt.attempt_types) {
-        return {
-            listening: null,
-            reading: null,
-            writing: null,
-            speaking: null,
-            listeningBand: null,
-            readingBand: null,
-            writingBand: null,
-            speakingBand: null,
-            overallBand: null,
-        };
+        return result;
     }
-
-    let listeningRaw: number | null = null;
-    let readingRaw: number | null = null;
-    let writingBand: number | null = null;
-    let speakingBand: number | null = null;
-
-    let listeningBand: number | null = null;
-    let readingBand: number | null = null;
 
     const validBands: number[] = [];
 
-    attempt.attempt_types.forEach((typeItem: any) => {
+    attempt.attempt_types.forEach((typeItem) => {
         const typeName = typeItem.type?.name;
         if (typeName === 'Listening') {
-            listeningRaw = Number(typeItem.is_correct_count ?? 0);
-            listeningBand = convertListeningBand(listeningRaw);
-            validBands.push(listeningBand);
+            result.listening = Number(typeItem.is_correct_count ?? 0);
+            result.listeningBand = convertListeningBand(result.listening);
+            validBands.push(result.listeningBand);
         } else if (typeName === 'Reading') {
-            readingRaw = Number(typeItem.is_correct_count ?? 0);
-            readingBand = convertReadingBand(readingRaw);
-            validBands.push(readingBand);
+            result.reading = Number(typeItem.is_correct_count ?? 0);
+            result.readingBand = convertReadingBand(result.reading);
+            validBands.push(result.readingBand);
         } else if (typeName === 'Writing') {
-            writingBand = Number(typeItem.is_correct_count ?? 0) / 2;
-            validBands.push(writingBand);
+            result.writingBand = Number(typeItem.is_correct_count ?? 0) / 2;
+            result.writing = result.writingBand;
+            validBands.push(result.writingBand);
         } else if (typeName === 'Speaking') {
-            speakingBand = Number(typeItem.score ?? 0);
-            validBands.push(speakingBand);
+            result.speakingBand = Number(typeItem.score ?? 0);
+            result.speaking = result.speakingBand;
+            validBands.push(result.speakingBand);
         }
     });
 
-    const overallBand = validBands.length > 0 ? calculateOverallBand(validBands) : null;
+    result.overallBand = validBands.length > 0 ? calculateOverallBand(validBands) : null;
 
-    return {
-        listening: listeningRaw,
-        reading: readingRaw,
-        writing: writingBand,
-        speaking: speakingBand,
-        listeningBand,
-        readingBand,
-        writingBand,
-        speakingBand,
-        overallBand,
-    };
+    return result;
 }

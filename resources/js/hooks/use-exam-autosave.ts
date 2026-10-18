@@ -64,7 +64,7 @@ export function useExamAutoSave<T extends Record<string, any>>(attemptId: string
             if (!raw) return null;
             const parsed: SavedDraft<T> = JSON.parse(raw);
             return parsed.answers;
-        } catch (e) {
+        } catch {
             return null;
         }
     }, [attemptId, storageKey]);

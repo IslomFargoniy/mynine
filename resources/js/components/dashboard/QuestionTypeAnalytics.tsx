@@ -1,6 +1,5 @@
 import React from 'react';
-import { Target, TrendingUp, AlertTriangle, CheckCircle2, BookOpen } from 'lucide-react';
-import { useTranslation } from 'react-i18next';
+import { Target, AlertTriangle, CheckCircle2, BookOpen } from 'lucide-react';
 
 export interface QuestionTypeStat {
     typeName: string;
@@ -14,7 +13,6 @@ interface QuestionTypeAnalyticsProps {
 }
 
 export default function QuestionTypeAnalytics({ stats }: QuestionTypeAnalyticsProps) {
-    const { t } = useTranslation();
 
     // Default demo stats if none provided yet
     const data: QuestionTypeStat[] = stats && stats.length > 0 ? stats : [
@@ -25,7 +23,6 @@ export default function QuestionTypeAnalytics({ stats }: QuestionTypeAnalyticsPr
     ];
 
     const weakPoints = data.filter(d => d.accuracyPercentage < 65);
-    const strongPoints = data.filter(d => d.accuracyPercentage >= 75);
 
     return (
         <div className="rounded-2xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 p-5 shadow-xs space-y-4">

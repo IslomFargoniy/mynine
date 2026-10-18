@@ -26,7 +26,7 @@ class CloseOldAttempts extends Command
      */
     public function handle()
     {
-        Log::info("Command attempts:close-old started.");
+        Log::info('Command attempts:close-old started.');
 
         $oldAttempts = \App\Models\Attempt::whereNull('finished_at')
             ->where('created_at', '<', now()->subHours(3))
@@ -48,7 +48,7 @@ class CloseOldAttempts extends Command
             }
         }
 
-        $this->info("Done.");
-        Log::info("Command attempts:close-old finished.");
+        $this->info('Done.');
+        Log::info('Command attempts:close-old finished.');
     }
 }

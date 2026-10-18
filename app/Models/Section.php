@@ -10,7 +10,6 @@ class Section extends Model
     /** @use HasFactory<\Database\Factories\SectionFactory> */
     use HasFactory;
 
-
     protected $fillable = [
         'part_id',
         'question_type_id',
@@ -22,7 +21,7 @@ class Section extends Model
     protected $with = [
         'questions',
         'question_type',
-        'options'
+        'options',
     ];
 
     public function part()

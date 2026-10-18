@@ -6,7 +6,7 @@ import { Link, useForm, usePage } from '@inertiajs/react';
 import { useTranslation } from 'react-i18next';
 import { User, type UserPaginate, SearchData, Role, Auth } from '@/types';
 import { toast } from 'sonner';
-import CreateUserModal from '@/components/user/create-user-modal';
+
 
 interface UserTableProps extends UserPaginate {
     roles: Role[];
@@ -35,7 +35,7 @@ const UserTable = ({ roles, searchData, ...user }: UserTableProps) => {
         setOpenDelete(true); // Open the delete modal
     };
 
-    const { delete: deleteUser, reset, errors: deleteError, clearErrors } = useForm();
+    const { delete: deleteUser, reset, clearErrors } = useForm();
 
     const handleDelete = (id: number) => {
 

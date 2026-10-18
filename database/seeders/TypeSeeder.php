@@ -2,8 +2,8 @@
 
 namespace Database\Seeders;
 
-use Illuminate\Database\Seeder;
 use App\Models\Type;
+use Illuminate\Database\Seeder;
 
 class TypeSeeder extends Seeder
 {
@@ -24,7 +24,7 @@ class TypeSeeder extends Seeder
                 ['name' => $type], // Search condition
                 [
                     'name' => $type,
-                    'minute' => 60
+                    'minute' => 60,
                 ]  // Attributes to insert if not found
             );
         }

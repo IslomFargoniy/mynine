@@ -6,7 +6,7 @@ interface CreateUserFirmModalProps {
     firms: Firm[];
 }
 
-const CreateUserFirmModal = ({ user, firms }: CreateUserFirmModalProps) => {
+const CreateUserFirmModal = (_props: CreateUserFirmModalProps) => {
     return (
         <button className="bg-blue-500 text-white px-2 py-1 rounded text-xs">
             + Add Firm

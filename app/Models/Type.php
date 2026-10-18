@@ -10,16 +10,13 @@ class Type extends Model
     /** @use HasFactory<\Database\Factories\TypeFactory> */
     use HasFactory;
 
-
     protected $fillable = [
         'name',
         'minute',
     ];
 
-
-
     public function test_types()
     {
-        return $this->hasMany(TestType::class , 'type_id');
+        return $this->hasMany(TestType::class, 'type_id');
     }
 }

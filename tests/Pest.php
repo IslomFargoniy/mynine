@@ -1,47 +1,73 @@
 <?php
 
-/*
-|--------------------------------------------------------------------------
-| Test Case
-|--------------------------------------------------------------------------
-|
-| The closure you provide to your test functions is always bound to a specific PHPUnit test
-| case class. By default, that class is "PHPUnit\Framework\TestCase". Of course, you may
-| need to change it using the "pest()" function to bind a different classes or traits.
-|
-*/
+use App\Models\Folder;
+use App\Models\Part;
+use App\Models\QuestionType;
+use App\Models\Section;
+use App\Models\Test as ExamTest;
+use App\Models\TestType;
+use App\Models\Type;
+use App\Models\User\User;
+use Spatie\Permission\Models\Role;
 
 pest()->extend(Tests\TestCase::class)
- // ->use(Illuminate\Foundation\Testing\RefreshDatabase::class)
+    ->use(Illuminate\Foundation\Testing\RefreshDatabase::class)
     ->in('Feature');
 
-/*
-|--------------------------------------------------------------------------
-| Expectations
-|--------------------------------------------------------------------------
-|
-| When you're writing tests, you often need to check that values meet certain conditions. The
-| "expect()" function gives you access to a set of "expectations" methods that you can use
-| to assert different things. Of course, you may extend the Expectation API at any time.
-|
-*/
-
-expect()->extend('toBeOne', function () {
-    return $this->toBe(1);
-});
+pest()->extend(Tests\TestCase::class)->in('Unit');
 
 /*
 |--------------------------------------------------------------------------
-| Functions
+| Helpers
 |--------------------------------------------------------------------------
-|
-| While Pest is very powerful out-of-the-box, you may have some testing code specific to your
-| project that you don't want to repeat in every file. Here you can also expose helpers as
-| global functions to help you to reduce the number of lines of code in your test files.
-|
 */
 
-function something()
+function seedRoles(): void
 {
-    // ..
+    foreach (['Admin', 'Teacher', 'Student'] as $role) {
+        Role::findOrCreate($role);
+    }
+}
+
+function makeUser(string $role): User
+{
+    seedRoles();
+    $user = User::factory()->create();
+    $user->assignRole($role);
+
+    return $user;
+}
+
+function makeType(string $name, int $minute = 60): Type
+{
+    return Type::firstOrCreate(['name' => $name], ['minute' => $minute]);
+}
+
+function makeQuestionType(string $type, string $input = 'text'): QuestionType
+{
+    return QuestionType::firstOrCreate(['type' => $type], ['name' => ucfirst($type), 'input_type' => $input]);
+}
+
+/**
+ * Folder -> Test -> TestType -> Part owned by the given teacher.
+ *
+ * @return array{folder: Folder, test: ExamTest, testType: TestType, part: Part}
+ */
+function makeTestContent(User $owner, string $typeName = 'Reading', array $testAttributes = []): array
+{
+    $folder = Folder::create(['name' => 'Folder', 'user_id' => $owner->id, 'active' => 1]);
+    $test = ExamTest::create(array_merge(['folder_id' => $folder->id, 'name' => 'Test', 'active' => 1, 'open' => 1], $testAttributes));
+    $testType = TestType::create(['test_id' => $test->id, 'type_id' => makeType($typeName)->id]);
+    $part = Part::create(['test_type_id' => $testType->id, 'name' => 'Part 1', 'minute' => 20]);
+
+    return compact('folder', 'test', 'testType', 'part');
+}
+
+function makeSection(Part $part, string $questionType, string $textarea = 'Section'): Section
+{
+    return Section::create([
+        'part_id' => $part->id,
+        'question_type_id' => makeQuestionType($questionType)->id,
+        'textarea' => $textarea,
+    ]);
 }

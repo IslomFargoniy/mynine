@@ -1,5 +1,4 @@
 import React, { useRef, useEffect, useState } from 'react';
-import { useTranslation } from 'react-i18next';
 import { Attempt, Part } from '@/types';
 import { sanitizeAndInsertWbr } from '@/utils/sanitizeAndInsertWbr';
 import { Highlighter, FileText, X, Trash2, StickyNote, ChevronDown, ChevronUp } from 'lucide-react';
@@ -10,7 +9,6 @@ interface PartUpdateProps {
 }
 
 export default function PracticePart({ attempt, part }: PartUpdateProps) {
-    const { t } = useTranslation();
     const textRef = useRef<HTMLDivElement>(null);
     const toolbarRef = useRef<HTMLDivElement>(null);
 

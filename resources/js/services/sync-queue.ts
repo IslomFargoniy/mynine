@@ -19,6 +19,8 @@ export type SyncStatus = 'online' | 'offline' | 'syncing' | 'error';
 class SyncQueueService {
     private queue: QueuedItem[] = [];
     private isProcessing: boolean = false;
+    private retryTimer: ReturnType<typeof setTimeout> | null = null;
+    private static readonly MAX_RETRIES = 8;
     private listeners: Set<(status: { status: SyncStatus; pendingCount: number; isOnline: boolean }) => void> = new Set();
     private storageKey = 'mynine_offline_sync_queue';
 
@@ -158,14 +160,37 @@ class SyncQueueService {
                 this.queue = this.queue.filter(q => q.id !== item.id);
                 this.saveQueue();
                 return { success: true };
+            } else if (response.status === 422 || response.status === 403) {
+                // The server will never accept this answer (time is up / not allowed): drop it instead of retrying forever
+                this.queue = this.queue.filter(q => q.id !== item.id);
+                this.saveQueue();
+                throw new Error(data?.error || data?.message || 'Answer rejected by server');
             } else {
                 throw new Error(data?.error || data?.message || 'Server returned an error');
             }
-        } catch (error: any) {
+        } catch (error) {
             item.retries += 1;
             this.saveQueue();
-            return { success: false, error: error.message };
+            this.scheduleRetry();
+            const message = error instanceof Error ? error.message : String(error);
+            return { success: false, error: message };
         }
+    }
+
+    /**
+     * A failed save while online (flaky network, 419 after a session refresh, ...) used to sit
+     * in the queue until the browser fired an `online` event. Retry with backoff instead.
+     */
+    private scheduleRetry() {
+        if (this.retryTimer || typeof window === 'undefined') return;
+        const pending = this.queue.filter((q) => q.retries < SyncQueueService.MAX_RETRIES);
+        if (pending.length === 0) return;
+        const attempt = Math.min(...pending.map((q) => q.retries));
+        const delay = Math.min(30000, 1000 * 2 ** attempt);
+        this.retryTimer = setTimeout(() => {
+            this.retryTimer = null;
+            this.processQueue();
+        }, delay);
     }
 
     /**
@@ -177,7 +202,7 @@ class SyncQueueService {
         this.isProcessing = true;
         this.notify();
 
-        const itemsToProcess = [...this.queue];
+        const itemsToProcess = this.queue.filter((q) => q.retries < SyncQueueService.MAX_RETRIES);
         for (const item of itemsToProcess) {
             if (!this.isOnline()) break;
             await this.dispatchItem(item);

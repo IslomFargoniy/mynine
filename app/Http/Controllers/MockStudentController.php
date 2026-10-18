@@ -7,7 +7,6 @@ use App\Models\Mock;
 use App\Models\MockStudent;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
 
 class MockStudentController extends Controller
@@ -24,16 +23,13 @@ class MockStudentController extends Controller
         ]);
 
         $mock = Mock::findOrFail($request->mock_id);
-
-        if (!Auth::user()->hasRole('Admin') && $mock->user_id !== Auth::id()) {
-            abort(403, 'Unauthorized action.');
-        }
+        $this->authorize('manageStudents', $mock);
 
         $rawList = preg_split('/[\r\n,]+/', $request->names);
         $names = [];
         foreach ($rawList as $rawName) {
             $name = trim($rawName);
-            if (!empty($name)) {
+            if (! empty($name)) {
                 $names[] = $name;
             }
         }
@@ -61,6 +57,7 @@ class MockStudentController extends Controller
         MockStudent::insert($records);
 
         $createdCount = count($records);
+
         return back()->with('success', "{$createdCount} ta o'quvchi muvaffaqiyatli qo'shildi!");
     }
 
@@ -69,12 +66,10 @@ class MockStudentController extends Controller
      */
     public function destroy(MockStudent $mockStudent)
     {
-        $mock = $mockStudent->mock;
-        if (!Auth::user()->hasRole('Admin') && $mock->user_id !== Auth::id()) {
-            abort(403, 'Unauthorized action.');
-        }
+        $this->authorize('manageStudents', $mockStudent->mock);
 
         $mockStudent->delete();
+
         return back()->with('success', "O'quvchi o'chirildi.");
     }
 
@@ -91,9 +86,9 @@ class MockStudentController extends Controller
 
         $student = MockStudent::with(['mock.test'])->where('code', $code)->first();
 
-        if (!$student) {
+        if (! $student) {
             if ($request->isMethod('get')) {
-                return redirect('/?error=' . urlencode("Kiritilgan kod ({$code}) topilmadi!"));
+                return redirect('/?error='.urlencode("Kiritilgan kod ({$code}) topilmadi!"));
             }
             throw ValidationException::withMessages([
                 'code' => ["Kiritilgan kod ({$code}) topilmadi!"],
@@ -102,12 +97,12 @@ class MockStudentController extends Controller
 
         $mock = $student->mock;
 
-        if (!$mock || $mock->active != 1) {
+        if (! $mock || $mock->active != 1) {
             if ($request->isMethod('get')) {
-                return redirect('/?error=' . urlencode("Ushbu Mock test hozirda faol emas!"));
+                return redirect('/?error='.urlencode('Ushbu Mock test hozirda faol emas!'));
             }
             throw ValidationException::withMessages([
-                'code' => ["Ushbu Mock test hozirda faol emas!"],
+                'code' => ['Ushbu Mock test hozirda faol emas!'],
             ]);
         }
 
@@ -116,7 +111,7 @@ class MockStudentController extends Controller
         if ($mock->started_at && $now->lt(\Carbon\Carbon::parse($mock->started_at))) {
             $formattedStart = \Carbon\Carbon::parse($mock->started_at)->format('d.m.Y H:i');
             if ($request->isMethod('get')) {
-                return redirect('/?error=' . urlencode("Ushbu Mock test hali boshlanmagan! Boshlanish vaqti: {$formattedStart}"));
+                return redirect('/?error='.urlencode("Ushbu Mock test hali boshlanmagan! Boshlanish vaqti: {$formattedStart}"));
             }
             throw ValidationException::withMessages([
                 'code' => ["Ushbu Mock test hali boshlanmagan! Boshlanish vaqti: {$formattedStart}"],
@@ -126,7 +121,7 @@ class MockStudentController extends Controller
         if ($mock->finished_at && $now->gt(\Carbon\Carbon::parse($mock->finished_at))) {
             $formattedFinish = \Carbon\Carbon::parse($mock->finished_at)->format('d.m.Y H:i');
             if ($request->isMethod('get')) {
-                return redirect('/?error=' . urlencode("Ushbu Mock test vaqti tugagan! Yakunlangan vaqti: {$formattedFinish}"));
+                return redirect('/?error='.urlencode("Ushbu Mock test vaqti tugagan! Yakunlangan vaqti: {$formattedFinish}"));
             }
             throw ValidationException::withMessages([
                 'code' => ["Ushbu Mock test vaqti tugagan! Yakunlangan vaqti: {$formattedFinish}"],
@@ -134,7 +129,7 @@ class MockStudentController extends Controller
         }
 
         // Mark candidate as attended
-        if (!$student->attended) {
+        if (! $student->attended) {
             $student->attended = true;
             $student->save();
         }
@@ -142,7 +137,7 @@ class MockStudentController extends Controller
         // Get or create attempt
         $attempt = Attempt::where('mock_student_id', $student->id)->first();
 
-        if (!$attempt) {
+        if (! $attempt) {
             $attempt = Attempt::create([
                 'name' => $student->name,
                 'mock_id' => $student->mock_id,

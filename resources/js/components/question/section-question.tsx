@@ -20,7 +20,6 @@ export default function SectionQuestion({
     question,
     section,
     question_type,
-    index,
     globalIndex
 }: SectionUpdateProps) {
     const { t } = useTranslation();

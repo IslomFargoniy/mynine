@@ -24,7 +24,7 @@ class StoreAttemptRequest extends FormRequest
         return [
             'name' => 'required_with:mock_id|nullable|string|max:255',
             'mock_id' => 'nullable|exists:mocks,id',
-            'test_id' => 'required|exists:tests,id'
+            'test_id' => 'required|exists:tests,id',
         ];
     }
 }

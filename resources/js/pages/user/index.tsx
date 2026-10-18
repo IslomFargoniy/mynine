@@ -1,7 +1,7 @@
 import AppLayout from '@/layouts/app-layout';
 import { Head, usePage, useForm } from '@inertiajs/react';
 import { type BreadcrumbItem, type UserPaginate, SearchData, Role, User as UserType } from '@/types';
-import { useEffect } from 'react';
+
 import { router } from '@inertiajs/react';
 import UserTable from '@/components/user/user-table';
 import PremiumFilters from '@/components/premium-filters';

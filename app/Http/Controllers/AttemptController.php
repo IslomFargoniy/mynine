@@ -3,7 +3,6 @@
 namespace App\Http\Controllers;
 
 use App\Http\Requests\StoreAttemptRequest;
-use App\Http\Requests\UpdateAttemptRequest;
 use App\Models\Attempt;
 use Dompdf\Dompdf;
 use Illuminate\Http\Request;
@@ -18,7 +17,7 @@ class AttemptController extends Controller
      */
     public function index(Request $request)
     {
-        $per_page = $request->per_page === 'all' ? 100 : min((int)($request->per_page ?? 10), 100);
+        $per_page = $request->per_page === 'all' ? 100 : min((int) ($request->per_page ?? 10), 100);
 
         $data = Attempt::with([
             'test.folder',
@@ -28,7 +27,7 @@ class AttemptController extends Controller
             'attempt_types.type',
         ])->orderBy('id', 'desc');
 
-        if (!Auth::user()->hasRole('Admin')) {
+        if (! Auth::user()->hasRole('Admin')) {
             $data = $data->where(function ($query) {
                 $query->where('user_id', Auth::id())
                     ->orWhereHas('mock', function ($q) {
@@ -73,14 +72,14 @@ class AttemptController extends Controller
         if ($request->search) {
             $data = $data->where(function ($query) use ($request) {
                 $query->whereHas('test', function ($q) use ($request) {
-                    $q->where('name', 'like', '%' . $request->search . '%');
+                    $q->where('name', 'like', '%'.$request->search.'%');
                 })
                     ->orWhereHas('mock', function ($q) use ($request) {
-                        $q->where('name', 'like', '%' . $request->search . '%');
+                        $q->where('name', 'like', '%'.$request->search.'%');
                     })
                     ->orWhereHas('user', function ($q) use ($request) {
-                        $q->where('name', 'like', '%' . $request->search . '%')
-                            ->orWhere('email', 'like', '%' . $request->search . '%');
+                        $q->where('name', 'like', '%'.$request->search.'%')
+                            ->orWhere('email', 'like', '%'.$request->search.'%');
                     });
             });
         }
@@ -98,7 +97,7 @@ class AttemptController extends Controller
                 $q->where('user_id', Auth::id());
             });
             $folders_query->where('user_id', Auth::id());
-        } elseif (!Auth::user()->hasRole('Admin')) {
+        } elseif (! Auth::user()->hasRole('Admin')) {
             $mocks_query->where('active', 1);
             $tests_query->where('active', 1)->where('open', 1);
             $folders_query->where('active', 1);
@@ -123,21 +122,19 @@ class AttemptController extends Controller
     }
 
     /**
-     * Show the form for creating a new resource.
-     */
-    public function create()
-    {
-        //
-    }
-
-    /**
      * Store a newly created resource in storage.
      */
     public function store(StoreAttemptRequest $request)
     {
         try {
 
-            if (!$request->mock_id) {
+            $test = \App\Models\Test::with('folder')->findOrFail($request->test_id);
+
+            if (! $request->mock_id) {
+                if (! Auth::user()->can('attempt', $test)) {
+                    throw new \Exception(__('error.unauthorized_attempt'));
+                }
+
                 $active = Attempt::where('user_id', Auth::id())
                     ->whereNull('finished_at')
                     ->first();
@@ -146,20 +143,19 @@ class AttemptController extends Controller
                     $active->finish();
                 }
             } else {
-                $mock = \App\Models\Mock::find($request->mock_id);
-                if ($mock) {
-                    if ($mock->active != 1) {
-                        throw new \Exception("Ushbu Mock test hozirda faol emas!");
-                    }
-                    $now = now();
-                    if ($mock->started_at && $now->lt(\Carbon\Carbon::parse($mock->started_at))) {
+                $mock = \App\Models\Mock::findOrFail($request->mock_id);
+                if ((int) $mock->test_id !== (int) $test->id) {
+                    throw new \Exception('Mock test boshqa testga tegishli!');
+                }
+                switch ($mock->status) {
+                    case 'inactive':
+                        throw new \Exception('Ushbu Mock test hozirda faol emas!');
+                    case 'scheduled':
                         $formattedStart = \Carbon\Carbon::parse($mock->started_at)->format('d.m.Y H:i');
                         throw new \Exception("Ushbu Mock test hali boshlanmagan! Boshlanish vaqti: {$formattedStart}");
-                    }
-                    if ($mock->finished_at && $now->gt(\Carbon\Carbon::parse($mock->finished_at))) {
+                    case 'expired':
                         $formattedFinish = \Carbon\Carbon::parse($mock->finished_at)->format('d.m.Y H:i');
                         throw new \Exception("Ushbu Mock test vaqti tugagan! Yakunlangan vaqti: {$formattedFinish}");
-                    }
                 }
             }
 
@@ -168,7 +164,7 @@ class AttemptController extends Controller
             if (empty($data['name']) && Auth::check()) {
                 $data['name'] = Auth::user()->name;
             }
-            $data['started_at'] = date("Y-m-d H:i:s");
+            $data['started_at'] = date('Y-m-d H:i:s');
             $data['status'] = 1;
 
             $attempt = Attempt::create($data);
@@ -188,6 +184,8 @@ class AttemptController extends Controller
      */
     public function show(Attempt $attempt)
     {
+        $this->authorize('view', $attempt);
+
         $attempt->load(['test.folder', 'user', 'mock', 'mockStudent', 'attempt_types']);
         // Append attempt_parts only for detail view
         $attempt->attempt_types->each(function ($attemptType) {
@@ -195,7 +193,7 @@ class AttemptController extends Controller
         });
 
         return Inertia::render('attempt/show', [
-            'attempt' => $attempt
+            'attempt' => $attempt,
         ]);
 
     }
@@ -203,22 +201,22 @@ class AttemptController extends Controller
     /**
      * Display the specified resource.
      */
-    public function pdf(Attempt $attempt)
+    public function pdf(Request $request, Attempt $attempt)
     {
+        // Links sent by email / Telegram are signed; everyone else must be allowed to view the attempt.
+        if (! $request->hasValidSignature(false)) {
+            $this->authorize('view', $attempt);
+        }
+
         ini_set('memory_limit', '1024M');
         ini_set('max_execution_time', '300');
-
-
-//        return Inertia::render('attempt/show', [
-//            'attempt' => $attempt
-//        ]);
 
         $attempt = $attempt->load([
             'test.folder',
             'user',
             'mock',
             'mockStudent',
-            'attempt_types.type'
+            'attempt_types.type',
         ]);
 
         // Append attempt_parts for PDF view
@@ -242,30 +240,14 @@ class AttemptController extends Controller
 
         // Add page numbers to the footer
         $canvas = $dompdf->getCanvas();
-        $canvas->page_text(520, 815, "{PAGE_NUM} / {PAGE_COUNT}", null, 9, array(0.4, 0.4, 0.4));
+        $canvas->page_text(520, 815, '{PAGE_NUM} / {PAGE_COUNT}', null, 9, [0.4, 0.4, 0.4]);
 
-        $filename = "IELTS_TRF_Attempt_{$attempt->id}_" . $attempt->created_at->format('Y-m-d');
+        $filename = "IELTS_TRF_Attempt_{$attempt->id}_".$attempt->created_at->format('Y-m-d');
 
         return response($dompdf->output(), 200)
             ->header('Content-Type', 'application/pdf')
-            ->header('Content-Disposition', 'inline; filename="' . $filename . '.pdf"');
+            ->header('Content-Disposition', 'inline; filename="'.$filename.'.pdf"');
 
-    }
-
-    /**
-     * Show the form for editing the specified resource.
-     */
-    public function edit(Attempt $attempt)
-    {
-        //
-    }
-
-    /**
-     * Update the specified resource in storage.
-     */
-    public function update(UpdateAttemptRequest $request, Attempt $attempt)
-    {
-        //
     }
 
     /**
@@ -273,14 +255,11 @@ class AttemptController extends Controller
      */
     public function destroy(Attempt $attempt)
     {
+        $this->authorize('delete', $attempt);
+
         try {
-            \Illuminate\Support\Facades\DB::transaction(function () use ($attempt) {
-                // Delete related attempts answers, parts, types
-                $attempt->attempt_answers()->delete();
-                $attempt->attempt_parts()->delete();
-                $attempt->attempt_types()->delete();
-                $attempt->delete();
-            });
+            // AttemptObserver::deleting removes answers, options, parts and types
+            \Illuminate\Support\Facades\DB::transaction(fn () => $attempt->delete());
 
             return redirect()->route('attempt.index')->with('success', __('deleted_successfully') ?? "Natija o'chirildi");
         } catch (\Exception $e) {

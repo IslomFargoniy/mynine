@@ -36,7 +36,7 @@ class TestObserver
         $authUser = Auth::user();
 
         // Agar tizim/seeder yoki admin bo'lsa -> ruxsat
-        if (!$authUser || $authUser->hasRole('Admin')) {
+        if (! $authUser || $authUser->hasRole('Admin')) {
             return;
         }
 
@@ -47,7 +47,6 @@ class TestObserver
 
         $test->types()->delete();
     }
-
 
     /**
      * Handle the Test "restored" event.

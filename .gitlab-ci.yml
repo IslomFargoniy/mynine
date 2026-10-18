@@ -3,13 +3,23 @@ stages:
   - lint
   - deploy
 
+# Backend tests need a built Vite manifest because every Inertia page renders app.blade.php.
 test_backend:
   stage: test
-  image: php:8.4
+  image: lorisleiva/laravel-docker:8.3
+  variables:
+    DB_CONNECTION: sqlite
+    DB_DATABASE: ":memory:"
+  cache:
+    key: composer-${CI_COMMIT_REF_SLUG}
+    paths:
+      - vendor/
   script:
     - cp .env.example .env
-    - composer install
-    - php artisan key:generate
+    - composer install --no-interaction --prefer-dist --no-progress
+    - php artisan key:generate --force
+    - npm ci --no-audit --no-fund
+    - npm run build
     - php artisan test
   only:
     - main
@@ -18,34 +28,51 @@ test_backend:
 lint_frontend:
   stage: lint
   image: node:22
+  cache:
+    key: npm-${CI_COMMIT_REF_SLUG}
+    paths:
+      - node_modules/
   script:
-    - npm install
-    - npm run lint
+    - npm ci --no-audit --no-fund
+    - npx eslint .
     - npm run types
   only:
     - main
     - merge_requests
 
-before_script:
-  # Install SSH key
-  - 'which ssh-agent || ( apt-get update -y && apt-get install openssh-client -y )'
-  - eval $(ssh-agent -s)
-  - echo "$SSH_PRIVATE_KEY" | tr -d '\r' | ssh-add -
-  - mkdir -p ~/.ssh
-  - chmod 700 ~/.ssh
-  - ssh-keyscan "$SSH_HOST" >> ~/.ssh/known_hosts
-  - chmod 644 ~/.ssh/known_hosts
+lint_backend:
+  stage: lint
+  image: lorisleiva/laravel-docker:8.3
+  script:
+    - composer install --no-interaction --prefer-dist --no-progress
+    - vendor/bin/pint --test
+  only:
+    - main
+    - merge_requests
 
 deploy_production:
   stage: deploy
+  image: alpine:3.20
+  before_script:
+    - apk add --no-cache openssh-client
+    - eval $(ssh-agent -s)
+    - echo "$SSH_PRIVATE_KEY" | tr -d '\r' | ssh-add -
+    - mkdir -p ~/.ssh && chmod 700 ~/.ssh
+    - ssh-keyscan "$SSH_HOST" >> ~/.ssh/known_hosts
+    - chmod 644 ~/.ssh/known_hosts
   script:
-    - ssh "$SSH_USER"@"$SSH_HOST" "
-      cd "$WORK_DIR"
-      && git pull origin main
-      && composer install
-      && npm install
-      && npm run build
-      && php artisan migrate
-      && php artisan optimize:clear"
+    - |
+      ssh "$SSH_USER"@"$SSH_HOST" "set -e
+        cd '$WORK_DIR'
+        php artisan down --retry=30 || true
+        git pull origin main
+        composer install --no-interaction --no-dev --prefer-dist --optimize-autoloader
+        npm ci --no-audit --no-fund
+        npm run build
+        php artisan migrate --force
+        php artisan optimize
+        php artisan queue:restart
+        php artisan up"
   only:
     - main
+  when: manual

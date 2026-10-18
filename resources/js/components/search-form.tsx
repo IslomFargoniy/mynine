@@ -4,7 +4,7 @@ import { Search } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { format } from 'date-fns';
 import DatePicker from 'react-datepicker';
-import { Select, SelectContent, SelectItem, SelectTrigger } from '@/components/ui/select';
+
 
 interface SearchFormProps {
     handleSubmit: (e: React.FormEvent<HTMLFormElement>) => void;

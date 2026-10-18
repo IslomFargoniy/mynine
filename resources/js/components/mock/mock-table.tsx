@@ -2,11 +2,11 @@ import DeleteItemModal from '@/components/delete-item-modal';
 import CreateMockModal from '@/components/mock/create-mock-modal';
 import UpdateMockModal from '@/components/mock/update-mock-modal';
 import MockStudentManager from '@/components/mock/mock-student-manager';
-import { baseButton } from '@/components/ui/baseButton';
-import { Auth, Mock, type MockPaginate, SearchData, Test } from '@/types';
-import { Link, useForm, usePage } from '@inertiajs/react';
+
+import { Mock, type MockPaginate, SearchData, Test } from '@/types';
+import { Link, useForm } from '@inertiajs/react';
 import { format } from 'date-fns';
-import { CheckCircle, Clock, Copy, MinusCircle, PencilIcon, TrashIcon } from 'lucide-react';
+import { CheckCircle, Clock, MinusCircle, PencilIcon, TrashIcon } from 'lucide-react';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { toast } from 'sonner';
@@ -21,10 +21,6 @@ const MockTable = ({ tests, searchData, ...mock }: MockTableProps) => {
     const [open, setOpen] = useState(false);
     const [openDelete, setOpenDelete] = useState(false);
     const [selectedMock, setSelectedMock] = useState<Mock | null>(null);
-
-    const { auth } = usePage().props as unknown as { auth?: Auth };
-
-    const isAdmin = auth?.user?.roles?.some((role) => role.name === 'Admin');
 
     const renderStatusBadge = (item: Mock) => {
         const status = (item as any).status || (item.active ? 'active' : 'inactive');
@@ -66,7 +62,7 @@ const MockTable = ({ tests, searchData, ...mock }: MockTableProps) => {
         setOpenDelete(true); // Open the delete modal
     };
 
-    const { delete: deleteMock, reset, errors: deleteError, clearErrors } = useForm();
+    const { delete: deleteMock, reset, clearErrors } = useForm();
 
     const handleDelete = (id: number) => {
         deleteMock(route('mock.destroy', id), {
@@ -96,7 +92,6 @@ const MockTable = ({ tests, searchData, ...mock }: MockTableProps) => {
             <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
                 {mock.data.map((item, index) => {
                     const globalIndex = (mock.current_page - 1) * mock.per_page + index + 1;
-                    const isActive = item.active == 1;
 
                     return (
                         <div

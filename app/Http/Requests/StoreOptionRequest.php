@@ -22,8 +22,8 @@ class StoreOptionRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'section_id' => 'nullable|exists:questions,id',
-            'question_id' => 'nullable|exists:questions,id',
+            'section_id' => 'nullable|required_without:question_id|exists:sections,id',
+            'question_id' => 'nullable|required_without:section_id|exists:questions,id',
             'textarea' => 'required|string|max:1000',
             'is_correct' => 'required|boolean',
         ];

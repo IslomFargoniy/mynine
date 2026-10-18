@@ -6,8 +6,6 @@ use App\Http\Requests\StoreTestTypeRequest;
 use App\Http\Requests\UpdateTestTypeRequest;
 use App\Models\QuestionType;
 use App\Models\TestType;
-use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\DB;
 use Inertia\Inertia;
 
 class TestTypeController extends Controller
@@ -41,19 +39,13 @@ class TestTypeController extends Controller
      */
     public function show(TestType $testType)
     {
+        $this->authorize('view', $testType);
+
         $testType->load([
             'test.folder',
             'type',
             'parts',
         ]);
-
-
-        // Non-admin users must be part of the test
-        if (!Auth::user()->hasRole('Admin')) {
-//            Auth::user()->user_tests()
-//                ->where('test_id', $test->id)
-//                ->firstOrFail(); // Throws if unauthorized
-        }
 
         $question_types = QuestionType::all();
 

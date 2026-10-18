@@ -1,5 +1,7 @@
 <?php
+
 // app/Mail/SendResultMail.php
+
 namespace App\Mail;
 
 use Illuminate\Bus\Queueable;
@@ -11,6 +13,7 @@ class SendResultMail extends Mailable
     use Queueable, SerializesModels;
 
     public $user;
+
     public $result;
 
     public function __construct($user, $result)

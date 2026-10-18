@@ -14,35 +14,35 @@ return [
         'icons' => [
             '72x72' => [
                 'path' => '/images/logo/logo.png',
-                'purpose' => 'any'
+                'purpose' => 'any',
             ],
             '96x96' => [
                 'path' => '/images/logo/logo.png',
-                'purpose' => 'any'
+                'purpose' => 'any',
             ],
             '128x128' => [
                 'path' => '/images/logo/logo.png',
-                'purpose' => 'any'
+                'purpose' => 'any',
             ],
             '144x144' => [
                 'path' => '/images/logo/logo.png',
-                'purpose' => 'any'
+                'purpose' => 'any',
             ],
             '152x152' => [
                 'path' => '/images/logo/logo.png',
-                'purpose' => 'any'
+                'purpose' => 'any',
             ],
             '192x192' => [
                 'path' => '/images/logo/logo.png',
-                'purpose' => 'any'
+                'purpose' => 'any',
             ],
             '384x384' => [
                 'path' => '/images/logo/logo.png',
-                'purpose' => 'any'
+                'purpose' => 'any',
             ],
             '512x512' => [
                 'path' => '/images/logo/logo.png',
-                'purpose' => 'any'
+                'purpose' => 'any',
             ],
         ],
         'splash' => [
@@ -63,20 +63,20 @@ return [
                 'description' => 'Shortcut Link 1 Description',
                 'url' => '/shortcutlink1',
                 'icons' => [
-                    "src" => "/images/logo/logo.png",
-                    "purpose" => "any"
-                ]
+                    'src' => '/images/logo/logo.png',
+                    'purpose' => 'any',
+                ],
             ],
             [
                 'name' => 'Shortcut Link 2',
                 'description' => 'Shortcut Link 2 Description',
                 'url' => '/shortcutlink2',
                 'icons' => [
-                    "src" => "/images/logo/logo.png",
-                    "purpose" => "any"
-                ]
-            ]
+                    'src' => '/images/logo/logo.png',
+                    'purpose' => 'any',
+                ],
+            ],
         ],
-        'custom' => []
-    ]
+        'custom' => [],
+    ],
 ];

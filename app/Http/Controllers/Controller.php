@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 
 /**
  * @OA\Info(
@@ -16,9 +17,8 @@ namespace App\Http\Controllers;
  *          scheme="bearer",
  *          bearerFormat="JWT"
  *     ),
- *
  */
 abstract class Controller
 {
-    //
+    use AuthorizesRequests;
 }

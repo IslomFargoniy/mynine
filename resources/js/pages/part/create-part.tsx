@@ -1,5 +1,5 @@
 import AppLayout from '@/layouts/app-layout';
-import { Head, usePage, useForm, Link, router } from '@inertiajs/react';
+import { Head, usePage, useForm, router } from '@inertiajs/react';
 import { type BreadcrumbItem, TestType } from '@/types';
 import { FormEventHandler, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -15,7 +15,6 @@ export default function CreatePart() {
     const { testType } = usePage<{ testType: TestType }>().props;
     const { t } = useTranslation();  // Using the translation hook
 
-    const editorRef = useRef<any>(null);
 
     // const logContent = () => {
     //     if (editorRef.current) {

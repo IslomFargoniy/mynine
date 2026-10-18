@@ -1,4 +1,4 @@
-import { Head, usePage } from '@inertiajs/react';
+import { Head, router, usePage } from '@inertiajs/react';
 import { Attempt, Part, Question, Section, TestType } from '@/types';
 import { useTranslation } from 'react-i18next';
 import React, { ReactElement, useEffect, useState, useMemo, useCallback } from 'react';
@@ -7,13 +7,13 @@ import PracticeSection from '@/components/practice/practice-section';
 import PracticeEssay from '@/components/practice/practice-essay';
 import PracticeNumberBar from '@/components/practice/practice-number-bar';
 import InsperaHeader from '@/components/practice/inspera-header';
-import TextHighlighter from '@/components/practice/text-highlighter';
-import { CheckIcon, BookOpen, HelpCircle } from 'lucide-react';
-import { CountdownTimer } from '@/components/practice/countdown-timer';
-import AppearanceTabs from '@/components/appearance-tabs';
-import { FaCirclePlay } from 'react-icons/fa6';
-import AudioEqualizer from '@/components/practice/audio-equalizer';
-import LanguageBar from '@/components/language';
+
+import { CheckIcon } from 'lucide-react';
+
+
+
+
+
 import FinishConfirmationModal from '@/components/practice/finish-confirmation-modal';
 import SoundCheckModal from '@/components/practice/sound-check-modal';
 import { useExamIntegrity } from '@/hooks/use-exam-integrity';
@@ -27,7 +27,6 @@ export default function Practice() {
     const [resAttempt, setResAttempt] = useState<Attempt | null>(null);
     const [testType, setTestType] = useState<TestType | null>(null);
     const [selectedPart, setSelectedPart] = useState<Part | null>(null);
-    const [isDisabled, setIsDisabled] = useState<boolean>(false);
     const [isTimeUp, setIsTimeUp] = useState<boolean>(false);
     const [flaggedIds, setFlaggedIds] = useState<Set<number>>(new Set());
     const [serverTimeOffset, setServerTimeOffset] = useState<number>(0);
@@ -216,19 +215,27 @@ export default function Practice() {
         // Timer check
         const isTimeUp = finishedAt ? new Date(finishedAt).getTime() <= (Date.now() + serverTimeOffset) : false;
         setIsTimeUp(isTimeUp);
+    };
 
-        // Disable all buttons if a Listening part is selected and time is not up
-        const isDisabled = !isTimeUp;
+    const csrfToken = () =>
+        (document.querySelector('meta[name="csrf-token"]') as HTMLMetaElement | null)?.content ?? '';
 
-        setIsDisabled(isDisabled);
-
-        console.log(isDisabled, isTimeUp);
+    /** Remove per-question drafts of this attempt once it has been handed in. */
+    const clearLocalDrafts = () => {
+        try {
+            const prefixes = [`unsaved-q-${attempt.id}-`, `unsaved-opt-${attempt.id}-`, `mynine_attempt_draft_${attempt.id}`];
+            Object.keys(localStorage)
+                .filter((key) => prefixes.some((prefix) => key.startsWith(prefix)))
+                .forEach((key) => localStorage.removeItem(key));
+        } catch {
+            /* storage unavailable */
+        }
     };
 
     const handleTestType = (test_type_id: number, autoStart: boolean = false) => {
         setIsLoading(true);
         fetch(route('practice-test-type', {
-            test_type_id,
+            test_type: test_type_id,
             attempt_id: attempt.id
         }))
             .then((res) => res.json())
@@ -256,7 +263,7 @@ export default function Practice() {
     const handlePart = (part_id: number) => {
         setIsLoading(true);
         fetch(route('practice-part', {
-            part_id,
+            part: part_id,
             attempt_id: attempt.id
         }))
             .then((res) => res.json())
@@ -306,7 +313,11 @@ export default function Practice() {
         if (isFullExamSubmit) {
             setIsSubmitting(true);
             await syncQueue.flushAttempt(attempt.id);
-            window.location.href = route('practice-attempt-submit', attempt.id);
+            clearLocalDrafts();
+            // Submitting is a state change, so it goes through POST (CSRF-protected); Inertia follows the redirect.
+            router.post(route('practice-attempt-submit', attempt.id), {}, {
+                onError: () => setIsSubmitting(false),
+            });
             return;
         }
 
@@ -314,9 +325,16 @@ export default function Practice() {
         setIsSubmitting(true);
         await syncQueue.flushAttempt(attempt.id);
         fetch(route('practice-test-type-submit', {
-            attempt_id: attempt.id,
+            attempt: attempt.id,
             type_id: testType.type_id
-        }))
+        }), {
+            method: 'POST',
+            headers: {
+                Accept: 'application/json',
+                'X-Requested-With': 'XMLHttpRequest',
+                'X-CSRF-TOKEN': csrfToken()
+            }
+        })
             .then((res) => res.json())
             .then((res) => {
                 setIsSubmitting(false);

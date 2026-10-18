@@ -15,7 +15,6 @@ interface MatchingHeadingsProps {
 
 export default function MatchingHeadings({
     section,
-    attemptId,
     order,
     answers,
     onAnswerChange,

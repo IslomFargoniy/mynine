@@ -86,7 +86,7 @@ export default function TextareaEditor({
                 value={value}
                 onEditorChange={(content) => onChange(content)}
                 init={{
-                    // @ts-ignore
+                    // @ts-expect-error -- license_key is accepted by TinyMCE but missing from its typings
                     license_key: 'gpl',
                     promotion: false,
                     branding: false,

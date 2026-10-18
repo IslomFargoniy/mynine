@@ -47,5 +47,12 @@ return [
     'openai' => [
         'key' => env('OPENAI_API_KEY'),
     ],
+    'telegram' => [
+        // Legacy bot that only redirects users to @MynineUzBot
+        'bot_token' => env('TELEGRAM_BOT_TOKEN'),
+        // Main bot: WebApp login, Login Widget, result delivery
+        'mynine_bot_token' => env('MynineUzBot_TOKEN'),
+        'mynine_bot_username' => env('MynineUzBot_USERNAME', 'MynineUzBot'),
+    ],
 
 ];

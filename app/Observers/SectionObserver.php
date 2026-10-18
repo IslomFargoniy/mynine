@@ -19,10 +19,7 @@ class SectionObserver
     /**
      * Handle the Section "updated" event.
      */
-    public function updating(Section $section): void
-    {
-
-    }
+    public function updating(Section $section): void {}
 
     /**
      * Handle the Section "deleted" event.
@@ -30,7 +27,7 @@ class SectionObserver
     public function deleting(Section $section): void
     {
         $user = Auth::user();
-        if ($user && !$user->hasRole('Admin')) {
+        if ($user && ! $user->hasRole('Admin')) {
             throw new \Exception('Only admins can delete sections.');
         }
 

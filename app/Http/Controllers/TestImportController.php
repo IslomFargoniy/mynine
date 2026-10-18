@@ -2,11 +2,11 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Part;
-use App\Models\Section;
-use App\Models\Question;
 use App\Models\Option;
+use App\Models\Part;
+use App\Models\Question;
 use App\Models\QuestionType;
+use App\Models\Section;
 use App\Services\OpenAIService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -23,6 +23,8 @@ class TestImportController extends Controller
 
     public function importAI(Request $request, Part $part)
     {
+        $this->authorize('update', $part);
+
         $request->validate([
             'text' => 'nullable|string',
             'file' => 'nullable|file|mimes:txt,docx',
@@ -37,7 +39,7 @@ class TestImportController extends Controller
             if ($extension === 'txt') {
                 $text = file_get_contents($file->getRealPath());
             } elseif ($extension === 'docx') {
-                $zip = new \ZipArchive();
+                $zip = new \ZipArchive;
                 if ($zip->open($file->getRealPath()) === true) {
                     if (($index = $zip->locateName('word/document.xml')) !== false) {
                         $xml = $zip->getFromIndex($index);
@@ -82,7 +84,7 @@ class TestImportController extends Controller
                 ]);
 
                 // Import section-level options (e.g. incorrect options for drag_and_drop)
-                if (!empty($sectionData['options'])) {
+                if (! empty($sectionData['options'])) {
                     foreach ($sectionData['options'] as $optionText) {
                         Option::create([
                             'section_id' => $section->id,
@@ -93,7 +95,7 @@ class TestImportController extends Controller
                 }
 
                 // Import questions
-                if (!empty($sectionData['questions'])) {
+                if (! empty($sectionData['questions'])) {
                     foreach ($sectionData['questions'] as $qData) {
                         $question = Question::create([
                             'section_id' => $section->id,
@@ -102,12 +104,12 @@ class TestImportController extends Controller
                         ]);
 
                         // Import question-level options (for choices, true/false, etc.)
-                        if (!empty($qData['options'])) {
+                        if (! empty($qData['options'])) {
                             foreach ($qData['options'] as $optData) {
                                 Option::create([
                                     'question_id' => $question->id,
                                     'textarea' => $optData['textarea'] ?? '',
-                                    'is_correct' => (bool)($optData['is_correct'] ?? false),
+                                    'is_correct' => (bool) ($optData['is_correct'] ?? false),
                                 ]);
                             }
                         }
@@ -119,13 +121,13 @@ class TestImportController extends Controller
 
             return redirect()->route('test-type.show', [
                 'test_type' => $part->test_type_id,
-                'tab' => $part->id
+                'tab' => $part->id,
             ]);
 
         } catch (\Exception $e) {
             DB::rollBack();
             throw ValidationException::withMessages([
-                'error' => ['Import qilishda xatolik yuz berdi: ' . $e->getMessage()],
+                'error' => ['Import qilishda xatolik yuz berdi: '.$e->getMessage()],
             ]);
         }
     }

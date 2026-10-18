@@ -16,7 +16,9 @@ return [
     */
 
     'ssr' => [
-        'enabled' => true,
+        // The SSR bundle is not built or started on the server; keep this off until `npm run build:ssr`
+        // and `php artisan inertia:start-ssr` are part of the deploy.
+        'enabled' => false,
         'url' => 'http://127.0.0.1:13714',
         // 'bundle' => base_path('bootstrap/ssr/ssr.mjs'),
 

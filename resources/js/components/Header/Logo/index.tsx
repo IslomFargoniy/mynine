@@ -1,5 +1,5 @@
 import React from 'react';
-import { getImagePrefix } from '@/utils/util';
+
 import { Link } from '@inertiajs/react';
 
 const Logo: React.FC = () => {

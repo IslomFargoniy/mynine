@@ -1,8 +1,8 @@
 import { Head, Link, router, usePage } from '@inertiajs/react';
 import { useTranslation } from 'react-i18next';
 
-import TextLink from '@/components/text-link';
-import { Label } from '@/components/ui/label';
+
+
 import AuthLayout from '@/layouts/auth-layout';
 import LoginCard from '@/components/auth/login-card';
 import {  User } from '@/types';

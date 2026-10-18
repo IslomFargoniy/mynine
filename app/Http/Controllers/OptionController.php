@@ -30,13 +30,18 @@ class OptionController extends Controller
      */
     public function store(StoreOptionRequest $request)
     {
+        $parent = $request->question_id
+            ? \App\Models\Question::findOrFail($request->question_id)
+            : \App\Models\Section::findOrFail($request->section_id);
+        $this->authorize('update', $parent);
+
         try {
             $validated = $request->validated();
 
             \DB::transaction(function () use ($validated) {
                 $option = Option::create($validated);
 
-                if (!empty($validated['is_correct'])) {
+                if (! empty($validated['is_correct'])) {
                     $question = $option->question;
                     $qType = $question?->section?->question_type?->type;
 
@@ -80,13 +85,15 @@ class OptionController extends Controller
      */
     public function update(UpdateOptionRequest $request, Option $option)
     {
+        $this->authorize('update', $option);
+
         try {
             $validated = $request->validated();
 
             \DB::transaction(function () use ($option, $validated) {
                 $option->update($validated);
 
-                if (!empty($validated['is_correct'])) {
+                if (! empty($validated['is_correct'])) {
                     $question = $option->question;
                     $qType = $question?->section?->question_type?->type;
 
@@ -113,6 +120,8 @@ class OptionController extends Controller
      */
     public function destroy(Option $option)
     {
+        $this->authorize('delete', $option);
+
         $test = $option->question?->section?->part?->test_type?->test;
         if ($test && ($test->attempts()->exists() || $test->mocks()->whereHas('attempts')->exists())) {
             throw ValidationException::withMessages([
@@ -122,6 +131,7 @@ class OptionController extends Controller
 
         try {
             $option->delete();
+
             return back()->with('success', __('deleted_successfully'));
         } catch (\Exception $e) {
             // Proper Inertia error response
@@ -130,5 +140,4 @@ class OptionController extends Controller
             ]);
         }
     }
-
 }

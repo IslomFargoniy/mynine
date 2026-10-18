@@ -1,6 +1,6 @@
 import React, { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
-import { CheckCircle2, AlertTriangle, Info, HelpCircle, Layers } from 'lucide-react';
+import { CheckCircle2, AlertTriangle, HelpCircle, Layers } from 'lucide-react';
 
 interface LiveGapDetectorProps {
     textarea: string;
@@ -19,7 +19,7 @@ export interface DetectedGap {
 export default function LiveGapDetector({
     textarea = '',
     startIndex = 1,
-    onInsertGap
+    onInsertGap: _onInsertGap
 }: LiveGapDetectorProps) {
     const { t } = useTranslation();
 
@@ -34,7 +34,7 @@ export default function LiveGapDetector({
         const closeCount = (cleanedHtml.match(/\}/g) || []).length;
         const hasUnclosed = openCount !== closeCount;
 
-        const regex = /\{([^\}]*)\}/g;
+        const regex = /\{([^}]*)\}/g;
         const list: DetectedGap[] = [];
         let match: RegExpExecArray | null;
         let emptyFound = false;
@@ -52,7 +52,7 @@ export default function LiveGapDetector({
 
             // Split by alternative delimiters: /, ;, |
             const alternatives = cleanInside
-                .split(/[\/;|]/)
+                .split(/[/;|]/)
                 .map((alt) => alt.trim())
                 .filter((alt) => alt.length > 0);
 

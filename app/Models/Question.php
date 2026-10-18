@@ -4,23 +4,21 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Support\Facades\DB;
 
 class Question extends Model
 {
     /** @use HasFactory<\Database\Factories\QuestionFactory> */
     use HasFactory;
 
-
     protected $fillable = [
         'section_id',
         'order',
         'textarea',
-        'answer_text'
+        'answer_text',
     ];
 
     protected $with = [
-        'options'
+        'options',
     ];
 
     public function section()
@@ -48,20 +46,24 @@ class Question extends Model
         return $this->hasMany(AttemptAnswer::class, 'question_id');
     }
 
-
     protected $appends = ['is_correct_count'];
 
-    public function getIsCorrectCountAttribute()
+    /**
+     * How many answers this question is worth: 1 for free-text questions,
+     * otherwise the number of correct options (e.g. "choose TWO letters").
+     * Uses the already-loaded options relation to avoid one query per question.
+     */
+    public function getIsCorrectCountAttribute(): int
     {
-        return (int) DB::table('options')
-            ->where('options.question_id', $this->id)
-            ->selectRaw("
-            CASE
-                WHEN COUNT(options.id) = 0 THEN 1
-                ELSE SUM(CASE WHEN options.is_correct = 1 THEN 1 ELSE 0 END)
-            END as is_correct_count
-        ")
-            ->value('is_correct_count');
+        $options = $this->relationLoaded('options')
+            ? $this->options
+            : $this->options()->get(['id', 'is_correct']);
+
+        if ($options->isEmpty()) {
+            return 1;
+        }
+
+        return (int) $options->where('is_correct', true)->count();
     }
 
     protected static function booted()
@@ -72,6 +74,3 @@ class Question extends Model
         });
     }
 }
-
-
-

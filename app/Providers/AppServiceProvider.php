@@ -32,8 +32,6 @@ class AppServiceProvider extends ServiceProvider
     public function boot(): void
     {
 
-        app()->setLocale(session('locale', config('app.locale')));
-
         User::observe(UserObserver::class);
         Section::observe(SectionObserver::class);
         Attempt::observe(AttemptObserver::class);

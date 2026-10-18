@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Search, Filter, X, ChevronDown, ChevronUp, Calendar, ListOrdered, ShieldCheck, User as UserIcon, BookOpen, Layers, Folder as FolderIcon, GraduationCap } from 'lucide-react';
+import { Search, Filter, X, Calendar, ListOrdered, ShieldCheck, User as UserIcon, BookOpen, Layers, Folder as FolderIcon, GraduationCap } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { format } from 'date-fns';
 import DatePicker from 'react-datepicker';

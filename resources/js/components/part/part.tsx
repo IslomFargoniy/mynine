@@ -13,7 +13,7 @@ interface PartUpdateProps {
     testType?: any;
 }
 
-export default function PartComponent({ part, partIndex, testType }: PartUpdateProps) {
+export default function PartComponent({ part, testType }: PartUpdateProps) {
     const { t } = useTranslation();
     const [openDelete, setOpenDelete] = useState(false);
     const [openEditModal, setOpenEditModal] = useState(false);

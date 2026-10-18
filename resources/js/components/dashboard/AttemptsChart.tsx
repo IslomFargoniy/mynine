@@ -1,11 +1,9 @@
 import { useAppearance } from '@/hooks/use-appearance';
-import { useTranslation } from 'react-i18next';
 import Chart from 'react-apexcharts';
 import { Attempt } from '@/types';
 
 
 export default function AttemptsChart({ attempts }: { attempts: Attempt[] }) {
-    const { t } = useTranslation();
     const { appearance } = useAppearance();
     if (!attempts || attempts.length === 0) return null;
 

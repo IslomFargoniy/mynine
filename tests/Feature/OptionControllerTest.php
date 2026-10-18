@@ -1,20 +1,17 @@
 <?php
 
-use App\Models\Part;
-use App\Models\QuestionType;
 use App\Models\Folder;
-use App\Models\Test as TestModel;
-use App\Models\Type;
-use App\Models\TestType;
-use App\Models\User\User;
-use App\Models\Section;
-use App\Models\Question;
 use App\Models\Option;
-
-uses(\Illuminate\Foundation\Testing\RefreshDatabase::class);
+use App\Models\Part;
+use App\Models\Question;
+use App\Models\QuestionType;
+use App\Models\Section;
+use App\Models\Test as TestModel;
+use App\Models\TestType;
+use App\Models\Type;
 
 test('it automatically unchecks other options for singular choice question types on update', function () {
-    $user = User::factory()->create();
+    $user = makeUser('Teacher');
 
     $folder = Folder::create(['name' => 'Test Folder', 'user_id' => $user->id]);
     $test = TestModel::create([
@@ -37,7 +34,7 @@ test('it automatically unchecks other options for singular choice question types
     $qType = QuestionType::create([
         'type' => 'true_false',
         'name' => 'True / False',
-        'input_type' => 'radio'
+        'input_type' => 'radio',
     ]);
 
     $section = Section::create([

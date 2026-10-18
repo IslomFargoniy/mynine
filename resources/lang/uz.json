@@ -169,7 +169,8 @@
         "search_failed": "Qidirish muvaffaqiyatsiz bo'ldi",
         "submission_failed": "Yuborishda xatolik yuz berdi",
         "unauthorized_access": "Sizga ushbu sahifaga kirishga ruxsat berilmagan",
-        "unauthorized_attempt": "Ushbu urinish sizga tegishli emas."
+        "unauthorized_attempt": "Ushbu urinish sizga tegishli emas.",
+        "social_login_failed": "Ijtimoiy tarmoq orqali kirish amalga oshmadi. Qayta urinib ko'ring yoki boshqa usuldan foydalaning."
     },
     "error_occurred": "Xatolik yuz berdi",
     "evaluate_speaking": "Gapirishni baholash",

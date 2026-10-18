@@ -11,7 +11,6 @@ class AttemptType extends Model
     /** @use HasFactory<\Database\Factories\AttemptTypeFactory> */
     use HasFactory;
 
-
     protected $fillable = [
         'attempt_id',
         'type_id',
@@ -34,13 +33,10 @@ class AttemptType extends Model
 
     public function type()
     {
-        return $this->belongsTo(Type:: class, 'type_id');
+        return $this->belongsTo(Type::class, 'type_id');
     }
 
-
-
-
-// AttemptType modelida
+    // AttemptType modelida
     public function getAttemptPartsAttribute()
     {
         $attempt_parts = AttemptPart::query()
@@ -54,7 +50,7 @@ class AttemptType extends Model
             })
             ->with([
                 'part.test_type',
-                'part.attempt_part' => fn($q) => $q->where('attempt_id', $this->attempt_id),
+                'part.attempt_part' => fn ($q) => $q->where('attempt_id', $this->attempt_id),
                 'part.sections.questions.options',
             ])
             ->orderBy('part_id')
@@ -63,8 +59,8 @@ class AttemptType extends Model
         $attempt_parts->each(function ($attempt_part) {
             if ($attempt_part->part && $attempt_part->part->sections) {
                 $attempt_part->part->sections->load([
-                    'questions.attempt_answer' => fn($q) => $q->where('attempt_part_id', $attempt_part->id)
-                        ->with('attempt_answer_options.option')
+                    'questions.attempt_answer' => fn ($q) => $q->where('attempt_part_id', $attempt_part->id)
+                        ->with('attempt_answer_options.option'),
                 ]);
             }
         });
@@ -85,26 +81,27 @@ class AttemptType extends Model
                         $q->where('type_id', $type_id);
                     });
             })
-            ->with(['question.options', 'attempt_answer_options', 'attempt_part.part.test_type'])
+            ->with(['question.options', 'attempt_answer_options', 'attempt_part.part.test_type.type'])
             ->get();
 
         $correctCount = 0;
 
         foreach ($answers as $answer) {
             $question = $answer->question;
-            if (!$question) {
+            if (! $question) {
                 continue;
             }
 
-            $testType = $answer->attempt_part->part->test_type;
-            
-            // Writing (3) or Speaking (4)
-            if (!in_array($testType->type_id, [1, 2])) {
-                $correctCount += $answer->score;
+            $typeName = $answer->attempt_part?->part?->test_type?->type?->name;
+
+            // Writing / Speaking: sum of examiner or AI band scores
+            if (! in_array($typeName, ['Listening', 'Reading'], true)) {
+                $correctCount += (float) ($answer->score ?? 0);
+
                 continue;
             }
 
-            // Listening (1) and Reading (2)
+            // Listening / Reading: count of correct answers
             if ($question->options->count() > 0) {
                 foreach ($answer->attempt_answer_options as $aao) {
                     if ($aao->is_correct == 1) {
@@ -124,7 +121,7 @@ class AttemptType extends Model
 
                 $delimiters = ['/', ';', '|'];
                 $normalizedCorrectAnswers = [$correctAnswerText];
-                
+
                 foreach ($delimiters as $delimiter) {
                     $tempAnswers = [];
                     foreach ($normalizedCorrectAnswers as $val) {
@@ -140,18 +137,20 @@ class AttemptType extends Model
                 $expandedAnswers = [];
                 foreach ($normalizedCorrectAnswers as $val) {
                     $clean = trim(strtolower($val));
-                    if ($clean === '') continue;
+                    if ($clean === '') {
+                        continue;
+                    }
                     $expandedAnswers[] = $clean;
-                    
+
                     // Sonlardagi vergulni hisobga olish: 14,000 -> 14000 yoki aksincha
                     if (str_contains($clean, ',')) {
                         $withoutComma = str_replace(',', '', $clean);
-                        if (!in_array($withoutComma, $expandedAnswers)) {
+                        if (! in_array($withoutComma, $expandedAnswers)) {
                             $expandedAnswers[] = $withoutComma;
                         }
                     } elseif (is_numeric($clean) && strlen($clean) > 3) {
-                        $withComma = number_format((float)$clean);
-                        if (!in_array($withComma, $expandedAnswers)) {
+                        $withComma = number_format((float) $clean);
+                        if (! in_array($withComma, $expandedAnswers)) {
                             $expandedAnswers[] = strtolower($withComma);
                         }
                     }
@@ -166,7 +165,7 @@ class AttemptType extends Model
             }
         }
 
-        return $correctCount;
+        return (float) $correctCount;
     }
 
     /**
@@ -176,6 +175,7 @@ class AttemptType extends Model
     {
         $this->is_correct_count = static::calculateIsCorrectCount($this->attempt_id, $this->type_id) ?? 0;
         $this->save();
+
         return $this->is_correct_count;
     }
 
@@ -184,6 +184,10 @@ class AttemptType extends Model
      */
     public function finish()
     {
+        if ($this->is_submitted) {
+            return $this;
+        }
+
         $this->finished_at = now();
         $this->is_submitted = true;
         $this->save();
@@ -191,8 +195,8 @@ class AttemptType extends Model
         // Bog'liq AttemptPartlarni ham yakunlash
         AttemptPart::query()
             ->where('attempt_id', $this->attempt_id)
-            ->whereHas('part.test_type', fn($q) => $q->where('type_id', $this->type_id))
-            ->where(fn($q) => $q->whereNull('finished_at')->orWhere('finished_at', '>', now()))
+            ->whereHas('part.test_type', fn ($q) => $q->where('type_id', $this->type_id))
+            ->where(fn ($q) => $q->whereNull('finished_at')->orWhere('finished_at', '>', now()))
             ->update(['finished_at' => now()]);
 
         // Ballarni hisoblash

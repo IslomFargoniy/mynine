@@ -1,12 +1,11 @@
 import React, { useState } from 'react';
 import { useForm, router } from '@inertiajs/react';
 import { Users, Plus, Copy, Check, Trash2, Printer, CheckCircle2, Clock } from 'lucide-react';
-import { useTranslation } from 'react-i18next';
 import { toast } from 'sonner';
 
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogClose, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
-import { Input } from '@/components/ui/input';
+
 import { Label } from '@/components/ui/label';
 
 export interface MockStudentItem {
@@ -25,12 +24,10 @@ interface MockStudentManagerProps {
 }
 
 export default function MockStudentManager({ mockId, mockName, students = [] }: MockStudentManagerProps) {
-    const { t } = useTranslation();
     const [open, setOpen] = useState(false);
     const [copiedCode, setCopiedCode] = useState<string | null>(null);
 
-    const [addMode, setAddMode] = useState<'names' | 'group'>('names');
-    const { data, setData, post, processing, reset, errors } = useForm({
+    const { data, setData, post, processing, reset } = useForm({
         mock_id: mockId,
         names: '',
         phone: '',

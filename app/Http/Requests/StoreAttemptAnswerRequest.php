@@ -22,6 +22,8 @@ class StoreAttemptAnswerRequest extends FormRequest
     public function rules(): array
     {
         return [
+            'attempt_id' => 'required|integer|exists:attempts,id',
+            'part_id' => 'required|integer|exists:parts,id',
             'question_id' => 'required|exists:questions,id',
             'answer_text' => 'nullable|string',
             'options' => 'nullable|array',

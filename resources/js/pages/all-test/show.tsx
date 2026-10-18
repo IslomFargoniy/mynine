@@ -1,5 +1,5 @@
 import AppLayout from '@/layouts/app-layout';
-import { Head, usePage, useForm, Link } from '@inertiajs/react';
+import { Head, usePage, useForm } from '@inertiajs/react';
 import { type BreadcrumbItem, SearchData, Folder } from '@/types';
 import { useEffect } from 'react';
 import { router } from '@inertiajs/react';

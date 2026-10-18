@@ -3,7 +3,7 @@ import React from "react";
 import Slider from "react-slick";
 import "slick-carousel/slick/slick.css";
 import "slick-carousel/slick/slick-theme.css";
-import { getImagePrefix } from "@/utils/util";
+
 
 const TruestedCompanies = [
     { imgSrc: "images/companies/company1.svg" },

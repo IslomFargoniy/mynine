@@ -36,7 +36,7 @@ class FolderObserver
         $authUser = Auth::user();
 
         // Agar tizim/seeder yoki admin bo'lsa -> ruxsat
-        if (!$authUser || $authUser->hasRole('Admin')) {
+        if (! $authUser || $authUser->hasRole('Admin')) {
             return;
         }
 
@@ -44,7 +44,6 @@ class FolderObserver
             throw new \Exception('You are not allowed to access this page');
         }
     }
-
 
     /**
      * Handle the Folder "restored" event.

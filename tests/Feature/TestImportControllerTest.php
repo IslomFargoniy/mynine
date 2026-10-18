@@ -1,20 +1,16 @@
 <?php
 
+use App\Models\Folder;
 use App\Models\Part;
 use App\Models\QuestionType;
-use App\Models\Folder;
 use App\Models\Test as TestModel;
-use App\Models\Type;
 use App\Models\TestType;
-use App\Models\User\User;
+use App\Models\Type;
 use App\Services\OpenAIService;
-use Illuminate\Support\Facades\DB;
-
-uses(\Illuminate\Foundation\Testing\RefreshDatabase::class);
 
 test('it imports sections, questions, and options successfully from raw text via AI', function () {
     // 1. Arrange
-    $user = User::factory()->create();
+    $user = makeUser('Teacher');
 
     $folder = Folder::create(['name' => 'Test Folder', 'user_id' => $user->id]);
     $test = TestModel::create([
@@ -51,11 +47,11 @@ test('it imports sections, questions, and options successfully from raw text via
                         'options' => [
                             ['textarea' => 'Choice A', 'is_correct' => false],
                             ['textarea' => 'Choice B', 'is_correct' => true],
-                        ]
-                    ]
-                ]
-            ]
-        ]
+                        ],
+                    ],
+                ],
+            ],
+        ],
     ];
 
     $this->mock(OpenAIService::class, function ($mock) use ($mockData) {
@@ -73,7 +69,7 @@ test('it imports sections, questions, and options successfully from raw text via
     // 3. Assert
     $response->assertRedirect(route('test-type.show', [
         'test_type' => $part->test_type_id,
-        'tab' => $part->id
+        'tab' => $part->id,
     ]));
 
     $this->assertDatabaseHas('sections', [

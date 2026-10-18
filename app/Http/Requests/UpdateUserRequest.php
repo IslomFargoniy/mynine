@@ -4,6 +4,7 @@ namespace App\Http\Requests;
 
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
+
 class UpdateUserRequest extends FormRequest
 {
     /**
@@ -24,15 +25,15 @@ class UpdateUserRequest extends FormRequest
         $userId = $this->route('user'); // adjust depending on your route parameter name
 
         return [
-            'name'     => 'required|string|max:255',
-            'phone'    => [
+            'name' => 'required|string|max:255',
+            'phone' => [
                 'nullable',
                 'string',
                 'max:20',
                 Rule::unique('users', 'phone')->ignore($userId),
             ],
-            'role'     => 'nullable|string',
-            'email'    => [
+            'role' => 'nullable|string',
+            'email' => [
                 'nullable',
                 'email',
                 Rule::unique('users', 'email')->ignore($userId),
@@ -48,5 +49,4 @@ class UpdateUserRequest extends FormRequest
             'name.required' => 'The name field is required.',
         ];
     }
-
 }

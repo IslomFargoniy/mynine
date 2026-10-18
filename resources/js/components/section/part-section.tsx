@@ -19,7 +19,7 @@ interface SectionUpdateProps {
     sectionIndex: number;
 }
 
-export default function PartSection({ section, partIndex, globalIndex, sectionIndex }: SectionUpdateProps) {
+export default function PartSection({ section, globalIndex }: SectionUpdateProps) {
     const { t } = useTranslation();
     const [isOpen, setIsOpen] = useState(true);
     const [openDelete, setOpenDelete] = useState(false);

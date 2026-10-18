@@ -1,13 +1,13 @@
 import React, { useState } from 'react';
 import CreateTestModal from '@/components/test/create-test-modal';
-import { CheckCircle, MinusCircle, PencilIcon, TrashIcon } from 'lucide-react';
+import { PencilIcon, TrashIcon } from 'lucide-react';
 import UpdateTestModal from '@/components/test/update-test-modal';
 import DeleteItemModal from '@/components/delete-item-modal';
 import { Link, useForm, usePage } from '@inertiajs/react';
 import { useTranslation } from 'react-i18next';
 import { Auth, Test, Folder } from '@/types';
 import { toast } from 'sonner';
-import { baseButton } from '@/components/ui/baseButton';
+
 
 
 const TestTable = ({ ...folder }: Folder) => {
@@ -34,7 +34,7 @@ const TestTable = ({ ...folder }: Folder) => {
     };
 
 
-    const { delete: deleteTest, reset, errors: deleteError, clearErrors } = useForm();
+    const { delete: deleteTest, reset, clearErrors } = useForm();
 
     const handleDelete = (id: number) => {
         deleteTest(route('test.destroy', id), {

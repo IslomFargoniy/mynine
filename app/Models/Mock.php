@@ -10,7 +10,6 @@ class Mock extends Model
 {
     use HasFactory;
 
-
     /** @use HasFactory<\Database\Factories\MockFactory> */
     protected $fillable = [
         'name',
@@ -20,14 +19,12 @@ class Mock extends Model
         'test_id',
         'user_id',
         'slug',
-        'active'
+        'active',
     ];
 
     protected $with = [
         'test',
-        'user',
     ];
-
 
     protected $appends = [
         'status',
@@ -35,7 +32,7 @@ class Mock extends Model
 
     public function getStatusAttribute(): string
     {
-        if (!$this->active) {
+        if (! $this->active) {
             return 'inactive';
         }
         $now = now();
@@ -45,6 +42,7 @@ class Mock extends Model
         if ($this->finished_at && $now->gt(\Carbon\Carbon::parse($this->finished_at))) {
             return 'expired';
         }
+
         return 'active';
     }
 

@@ -4,53 +4,50 @@ namespace App\Policies;
 
 use App\Models\Mock;
 use App\Models\User\User;
+use App\Policies\Concerns\ChecksContentOwnership;
 
 class MockPolicy
 {
-    /**
-     * Determine whether the user can view any models.
-     */
+    use ChecksContentOwnership;
+
     public function viewAny(User $user): bool
     {
-        return $user->hasRole('Admin') || $user->hasRole('Teacher');
+        return $this->isContentManager($user);
     }
 
     /**
-     * Determine whether the user can view the model.
+     * The mock detail page lists every candidate code, so only the owner (or an admin) may open it.
      */
     public function view(User $user, Mock $mock): bool
     {
-        return $user->hasRole('Admin') || $mock->user_id === $user->id || $mock->active == 1;
+        return $this->owns($user, $mock);
     }
 
     public function create(User $user): bool
     {
-        return $user->hasRole('Admin') || $user->hasRole('Teacher');
+        return $this->isContentManager($user);
     }
 
     public function update(User $user, Mock $mock): bool
     {
-        return $user->hasRole('Admin') || $mock->user_id === $user->id;
+        return $this->owns($user, $mock);
     }
 
     public function delete(User $user, Mock $mock): bool
     {
-        return $user->hasRole('Admin') || $mock->user_id === $user->id;
+        return $this->owns($user, $mock);
     }
 
     /**
-     * Determine whether the user can restore the model.
+     * Adding/removing candidates for a mock.
      */
-    public function restore(User $user, Mock $mock): bool
+    public function manageStudents(User $user, Mock $mock): bool
     {
-        return false;
+        return $this->owns($user, $mock);
     }
 
-    /**
-     * Determine whether the user can permanently delete the model.
-     */
-    public function forceDelete(User $user, Mock $mock): bool
+    protected function owns(User $user, Mock $mock): bool
     {
-        return false;
+        return $user->hasRole('Admin') || (int) $mock->user_id === (int) $user->id;
     }
 }

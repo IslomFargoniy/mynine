@@ -1,4 +1,4 @@
-import { Button } from '@/components/ui/button';
+
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { useAppearance } from '@/hooks/use-appearance';
 import { Monitor, Moon, Sun, Check } from 'lucide-react';

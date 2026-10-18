@@ -1,5 +1,5 @@
 import AppLayout from '@/layouts/app-layout';
-import { Head, usePage, Link } from '@inertiajs/react';
+import { Head, usePage } from '@inertiajs/react';
 import { type BreadcrumbItem, Part, QuestionType, Section, TestType } from '@/types';
 import { Plus } from 'lucide-react';
 import { useState } from 'react';

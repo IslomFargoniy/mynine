@@ -23,7 +23,7 @@ class UserObserver
         $authUser = Auth::user();
 
         if ($authUser && $authUser->id != $user->id) {
-            if (!$authUser->hasRole('Admin') && $authUser->telegram_id !== $user->ref_telegram_id) {
+            if (! $authUser->hasRole('Admin') && $authUser->telegram_id !== $user->ref_telegram_id) {
                 throw new \Exception('You are not allowed to access this page');
             }
         }
@@ -37,7 +37,7 @@ class UserObserver
         $authUser = Auth::user();
 
         // Agar tizim/seeder yoki admin bo'lsa -> ruxsat
-        if (!$authUser || $authUser->hasRole('Admin')) {
+        if (! $authUser || $authUser->hasRole('Admin')) {
             return;
         }
 
@@ -46,7 +46,6 @@ class UserObserver
             throw new \Exception('You are not allowed to access this page');
         }
     }
-
 
     /**
      * Handle the User "restored" event.
