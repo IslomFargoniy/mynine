@@ -63,8 +63,6 @@ php artisan queue:restart      # worker yangi kod bilan qayta ishga tushadi
 php artisan up
 ```
 
-Shu ketma-ketlik `.gitlab-ci.yml` dagi `deploy_production` job'ida ham bor (qo'lda ishga tushiriladi, `manual`).
-
 > Migratsiyadan oldin **ma'lumotlar bazasidan zaxira nusxa** oling:
 > `mysqldump -u <user> -p <db> | gzip > ~/backups/mynine-$(date +%F).sql.gz`
 
