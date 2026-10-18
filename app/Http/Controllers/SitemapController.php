@@ -2,30 +2,43 @@
 
 namespace App\Http\Controllers;
 
+use App\Services\BlogRepository;
 use Illuminate\Http\Response;
 
 class SitemapController extends Controller
 {
     /**
-     * Only the public marketing/auth pages are indexable; everything else requires a login
-     * or a candidate code, so it is deliberately left out (and disallowed in robots.txt).
+     * Public, indexable URLs only. Everything else needs a login or a candidate code
+     * and is disallowed in robots.txt.
      */
-    public function index(): Response
+    public function index(BlogRepository $blog): Response
     {
+        $articles = $blog->all();
+        $latest = $articles->max(fn ($a) => $a['updated']) ?? now()->startOfWeek();
+        $pagesUpdated = now()->startOfMonth();
+
         $urls = [
-            ['loc' => route('home'), 'changefreq' => 'weekly', 'priority' => '1.0'],
-            ['loc' => route('login'), 'changefreq' => 'monthly', 'priority' => '0.5'],
-            ['loc' => route('register'), 'changefreq' => 'monthly', 'priority' => '0.5'],
+            ['loc' => route('home'), 'lastmod' => $latest, 'changefreq' => 'weekly', 'priority' => '1.0'],
+            ['loc' => route('blog.index'), 'lastmod' => $latest, 'changefreq' => 'weekly', 'priority' => '0.9'],
         ];
 
-        $lastmod = now()->startOfWeek()->toAtomString();
+        foreach (array_keys(SeoPageController::PAGES) as $page) {
+            $urls[] = ['loc' => route('seo.page', $page), 'lastmod' => $pagesUpdated, 'changefreq' => 'monthly', 'priority' => '0.8'];
+        }
+
+        foreach ($articles as $article) {
+            $urls[] = ['loc' => route('blog.show', $article['slug']), 'lastmod' => $article['updated'], 'changefreq' => 'monthly', 'priority' => '0.7'];
+        }
+
+        $urls[] = ['loc' => route('login'), 'lastmod' => $pagesUpdated, 'changefreq' => 'yearly', 'priority' => '0.3'];
+        $urls[] = ['loc' => route('register'), 'lastmod' => $pagesUpdated, 'changefreq' => 'yearly', 'priority' => '0.4'];
 
         $xml = '<?xml version="1.0" encoding="UTF-8"?>'."\n";
         $xml .= '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">'."\n";
         foreach ($urls as $url) {
             $xml .= "  <url>\n";
             $xml .= '    <loc>'.e($url['loc'])."</loc>\n";
-            $xml .= '    <lastmod>'.$lastmod."</lastmod>\n";
+            $xml .= '    <lastmod>'.$url['lastmod']->toAtomString()."</lastmod>\n";
             $xml .= '    <changefreq>'.$url['changefreq']."</changefreq>\n";
             $xml .= '    <priority>'.$url['priority']."</priority>\n";
             $xml .= "  </url>\n";
@@ -34,7 +47,7 @@ class SitemapController extends Controller
 
         return response($xml, 200, [
             'Content-Type' => 'application/xml; charset=UTF-8',
-            'Cache-Control' => 'public, max-age=86400',
+            'Cache-Control' => 'public, max-age=3600',
         ]);
     }
 }

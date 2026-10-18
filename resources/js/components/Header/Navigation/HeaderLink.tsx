@@ -39,7 +39,7 @@ const HeaderLink: React.FC<{ item: HeaderItem }> = ({ item }) => {
 
     return (
         <div className="relative group">
-            {isHashLink ? (
+            {isHashLink || item.external ? (
                 <a
                     href={item.href}
                     className={`${baseClasses} ${

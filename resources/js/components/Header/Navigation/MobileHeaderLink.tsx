@@ -16,6 +16,14 @@ const MobileHeaderLink: React.FC<{ item: HeaderItem }> = ({ item }) => {
 
     return (
         <div className="relative w-full">
+            {item.external ? (
+                <a
+                    href={item.href}
+                    className="flex items-center justify-between w-full py-2 text-gray-700 hover:text-black dark:text-gray-300 dark:hover:text-white transition-colors duration-200"
+                >
+                    {t(item.label)}
+                </a>
+            ) : (
             <Link
                 href={item.href || "#"}
                 onClick={handleToggle}
@@ -43,6 +51,7 @@ const MobileHeaderLink: React.FC<{ item: HeaderItem }> = ({ item }) => {
                     </svg>
                 )}
             </Link>
+            )}
 
             {submenuOpen && item.submenu && (
                 <div className="bg-white dark:bg-darklight border border-gray-200 dark:border-gray-700 rounded-lg mt-1 p-2 w-full shadow-md">

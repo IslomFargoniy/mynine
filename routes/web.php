@@ -9,6 +9,7 @@ use App\Http\Controllers\Auth\GithubAuthController;
 use App\Http\Controllers\Auth\GoogleAuthController;
 use App\Http\Controllers\Auth\TelegramAuthController;
 use App\Http\Controllers\Auth\TelegramLoginController;
+use App\Http\Controllers\BlogController;
 use App\Http\Controllers\FolderController;
 use App\Http\Controllers\HomeController;
 use App\Http\Controllers\LandingPageController;
@@ -21,6 +22,7 @@ use App\Http\Controllers\PracticeController;
 use App\Http\Controllers\QuestionController;
 use App\Http\Controllers\QuestionTypeController;
 use App\Http\Controllers\SectionController;
+use App\Http\Controllers\SeoPageController;
 use App\Http\Controllers\SitemapController;
 use App\Http\Controllers\Telegram\MynineUzBotController;
 use App\Http\Controllers\Telegram\TelegramController;
@@ -40,6 +42,13 @@ use Illuminate\Support\Facades\Route;
 
 Route::get('/', [HomeController::class, 'home'])->name('home');
 Route::get('/sitemap.xml', [SitemapController::class, 'index'])->name('sitemap');
+
+// SEO content (server-rendered Blade)
+Route::get('/blog', [BlogController::class, 'index'])->name('blog.index');
+Route::get('/blog/{slug}', [BlogController::class, 'show'])->where('slug', '[a-z0-9-]+')->name('blog.show');
+Route::get('/{page}', [SeoPageController::class, 'show'])
+    ->whereIn('page', array_keys(SeoPageController::PAGES))
+    ->name('seo.page');
 Route::get('landing-page-tests', [LandingPageController::class, 'tests'])->name('landing-page-tests');
 
 Route::post('/webapp-login', [TelegramAuthController::class, 'login']);

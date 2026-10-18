@@ -277,7 +277,9 @@
         "menu": {
             "home": "Главная",
             "tests": "Тесты",
-            "contact": "Контакты"
+            "contact": "Контакты",
+            "mock_test": "Mock тест",
+            "blog": "Блог"
         },
         "sign_in": "Войти",
         "sign_up": "Регистрация"

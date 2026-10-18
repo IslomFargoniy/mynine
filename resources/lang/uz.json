@@ -277,7 +277,9 @@
         "menu": {
             "home": "Bosh sahifa",
             "tests": "Testlar",
-            "contact": "Aloqa"
+            "contact": "Aloqa",
+            "mock_test": "Mock test",
+            "blog": "Blog"
         },
         "sign_in": "Kirish",
         "sign_up": "Ro'yxatdan o'tish"

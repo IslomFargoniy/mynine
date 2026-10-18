@@ -277,7 +277,9 @@
         "menu": {
             "home": "Home",
             "tests": "Tests",
-            "contact": "Contact"
+            "contact": "Contact",
+            "mock_test": "Mock test",
+            "blog": "Blog"
         },
         "sign_in": "Sign In",
         "sign_up": "Sign Up"
