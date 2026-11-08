@@ -166,13 +166,13 @@ mkdir -p storage/framework/sessions storage/framework/views storage/framework/ca
 
 - **YouTube:** [IslomFargniy](https://www.youtube.com/@IslomFargniy)
 - **Telegram Community:** [IslomFargniy](https://t.me/IslomFargniy)
-- **Email:** [abdurahmanislam304@gmail.com](mailto:abdurahmanislam304@gmail.com)
+- **Email:** [IslomFargoniy@gmail.com](mailto:IslomFargoniy@gmail.com)
 
 ---
 
 ## 🛡️ Security Vulnerabilities
 
-If you discover a security vulnerability within this project, please send an e-mail directly to [abdurahmanislam304@gmail.com](mailto:abdurahmanislam304@gmail.com).
+If you discover a security vulnerability within this project, please send an e-mail directly to [IslomFargoniy@gmail.com](mailto:IslomFargoniy@gmail.com).
 
 ## 📄 License
 
