@@ -575,3 +575,21 @@ test('a 429 from OpenAI is explained as a billing / rate limit problem', functio
     expect(ImportMockModuleJob::describe($e))->toContain('credit balance is exhausted')
         ->and(ImportMockModuleJob::describe(new RuntimeException('boom')))->toBe('boom');
 });
+
+test('an OpenAI rate limit puts the module back in the queue instead of failing', function () {
+    Storage::fake('local');
+    ['test' => $test] = makeBankTest();
+    $import = TestImport::create(['test_id' => $test->id, 'status' => TestImport::QUEUED, 'modules' => ['Listening' => ['status' => 'queued']]]);
+    $dir = ImportMockModuleJob::directory($test->id, $import->id);
+    Storage::disk('local')->put("{$dir}/listening.txt", 'LISTENING PART 1');
+    $import->forceFill(['files' => ['listening' => "{$dir}/listening.txt"]])->save();
+
+    $this->mock(OpenAIService::class, fn ($mock) => $mock->shouldReceive('parseMockModule')->andThrow(new RateLimitException(new Response(429))));
+
+    $job = (new ImportMockModuleJob($import->id, 'Listening'))->withFakeQueueInteractions();
+    app()->call([$job, 'handle']);
+
+    $job->assertReleased(90);
+    expect($import->fresh()->modules['Listening']['status'])->toBe(TestImport::QUEUED)
+        ->and($import->fresh()->modules['Listening']['message'])->toContain('retrying');
+});

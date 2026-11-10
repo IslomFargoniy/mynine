@@ -1,1 +1,1 @@
-{"version":"1.0.0","file":"mynine-setup-1.0.0.exe","sha256":"48f23cf1213d67536ec3e0d6956f0ee646d09dd3d4e8cf03d6e554bee7ae71da","size":19456214,"mandatory":false,"min_version":null,"notes":"First release","published_at":"2026-11-10T17:16:25Z"}
+{"version":"1.0.1","file":"mynine-setup-1.0.1.exe","sha256":"720303f37a527b3f17b40e50a836f96bb14cb83b0a380dc9f50233992b132586","size":19455594,"mandatory":false,"min_version":null,"notes":"Matching question letters fixed; gap answers are no longer sent to candidates.","published_at":"2026-11-10T18:12:10Z"}

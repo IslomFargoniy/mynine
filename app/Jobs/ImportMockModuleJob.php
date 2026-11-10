@@ -27,7 +27,8 @@ class ImportMockModuleJob implements ShouldQueue
 {
     use Dispatchable, InteractsWithQueue, Queueable;
 
-    public int $tries = 1;
+    /** Extra attempts are only used after an OpenAI 429 (tokens-per-minute limit of small accounts). */
+    public int $tries = 4;
 
     public int $timeout = 900;
 
@@ -56,7 +57,22 @@ class ImportMockModuleJob implements ShouldQueue
         $text = $extractor->extract($disk->path($files[$key]));
         $answers = isset($files['answers']) ? $extractor->extract($disk->path($files['answers'])) : '';
 
-        $result = $parser->parse($this->module, $text, $answers);
+        try {
+            $result = $parser->parse($this->module, $text, $answers);
+        } catch (RateLimitException $e) {
+            if ($this->attempts() < $this->tries) {
+                // Wait for the per-minute token window to reset, then try this module again.
+                TestImport::updateModule($import->id, $this->module, [
+                    'status' => TestImport::QUEUED,
+                    'message' => 'OpenAI rate limit hit, retrying in a moment ('.$this->attempts().'/'.($this->tries - 1).')…',
+                ]);
+                $this->release(90 * $this->attempts());
+
+                return;
+            }
+
+            throw $e;
+        }
         $counts = $importer->import($testType, $result['parts'], $import->replace);
 
         $done = TestImport::updateModule($import->id, $this->module, [
