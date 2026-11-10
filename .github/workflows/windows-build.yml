@@ -1,0 +1,71 @@
+name: windows-build
+
+on:
+  push:
+    branches: [main]
+    tags: ['v*']
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          flutter-version: 3.47.5
+          cache: true
+
+      - name: Dependencies and code generation
+        run: |
+          flutter pub get
+          dart run build_runner build
+
+      - name: Analyze and test
+        run: |
+          flutter analyze
+          flutter test --exclude-tags golden
+
+      - name: Build Windows release
+        run: flutter build windows --release
+
+      - name: Read version from pubspec.yaml
+        id: version
+        shell: pwsh
+        run: |
+          $line = Select-String -Path pubspec.yaml -Pattern '^version:\s*([0-9]+\.[0-9]+\.[0-9]+)' | Select-Object -First 1
+          $v = $line.Matches[0].Groups[1].Value
+          "version=$v" >> $env:GITHUB_OUTPUT
+
+      - name: Install Inno Setup
+        shell: pwsh
+        run: |
+          if (-not (Test-Path "${env:ProgramFiles(x86)}\Inno Setup 6\ISCC.exe")) {
+            choco install innosetup --no-progress -y
+          }
+
+      - name: Build installer
+        shell: pwsh
+        run: |
+          & "${env:ProgramFiles(x86)}\Inno Setup 6\ISCC.exe" "/DMyAppVersion=${{ steps.version.outputs.version }}" installer\mynine.iss
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+
+      - name: SHA-256
+        shell: pwsh
+        run: |
+          $file = "build\installer\mynine-setup-${{ steps.version.outputs.version }}.exe"
+          $hash = (Get-FileHash -Algorithm SHA256 $file).Hash.ToLower()
+          "$hash  mynine-setup-${{ steps.version.outputs.version }}.exe" | Out-File -Encoding ascii "$file.sha256"
+          Write-Host "SHA-256: $hash"
+          "## mynine-setup-${{ steps.version.outputs.version }}.exe`n``$hash``" >> $env:GITHUB_STEP_SUMMARY
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: mynine-setup-${{ steps.version.outputs.version }}
+          path: |
+            build/installer/mynine-setup-*.exe
+            build/installer/mynine-setup-*.exe.sha256
+          if-no-files-found: error
