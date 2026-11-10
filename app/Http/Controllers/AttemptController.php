@@ -44,17 +44,6 @@ class AttemptController extends Controller
             $data->where('user_id', $request->user_id);
         }
 
-        if ($request->teacher_id) {
-            $teacherId = $request->teacher_id;
-            $data->where(function ($q) use ($teacherId) {
-                $q->whereHas('mock', function ($mq) use ($teacherId) {
-                    $mq->where('user_id', $teacherId);
-                })->orWhereHas('test.folder', function ($fq) use ($teacherId) {
-                    $fq->where('user_id', $teacherId);
-                });
-            });
-        }
-
         if ($request->mock_id) {
             $data->where('mock_id', $request->mock_id);
         }
@@ -91,33 +80,20 @@ class AttemptController extends Controller
         $tests_query = \App\Models\Test::select('id', 'name');
         $folders_query = \App\Models\Folder::select('id', 'name');
 
-        if (Auth::user()->hasRole('Teacher')) {
-            $mocks_query->where('user_id', Auth::id());
-            $tests_query->whereHas('folder', function ($q) {
-                $q->where('user_id', Auth::id());
-            });
-            $folders_query->where('user_id', Auth::id());
-        } elseif (! Auth::user()->hasRole('Admin')) {
+        if (! Auth::user()->hasRole('Admin')) {
             $mocks_query->where('active', 1);
             $tests_query->where('active', 1)->where('open', 1);
             $folders_query->where('active', 1);
         }
 
-        $teachers = Auth::user()->hasRole('Admin')
-            ? \App\Models\User\User::whereHas('roles', function ($q) {
-                $q->where('name', 'Teacher');
-            })->select('id', 'name')->get()
-            : [];
-
         return Inertia::render('attempt/index', [
             'attempt' => $data,
             'users' => [],
-            'teachers' => $teachers,
             'mocks' => $mocks_query->limit(50)->get(),
             'tests' => $tests_query->limit(50)->get(),
             'folders' => $folders_query->limit(50)->get(),
             'isAdmin' => Auth::user()->hasRole('Admin'),
-            'filters' => $request->only(['search', 'teacher_id', 'user_id', 'mock_id', 'test_id', 'folder_id', 'from', 'to', 'per_page']),
+            'filters' => $request->only(['search', 'user_id', 'mock_id', 'test_id', 'folder_id', 'from', 'to', 'per_page']),
         ]);
     }
 

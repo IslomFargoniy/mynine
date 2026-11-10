@@ -47,11 +47,6 @@ class UserController extends Controller
 
         if (Auth::user()->hasRole('Admin')) {
             // Admin sees all excluding self
-        } elseif (Auth::user()->hasRole('Teacher')) {
-            $user->where(function ($query) {
-                $query->where('user_id', '=', Auth::id())
-                    ->orWhere('ref_telegram_id', '=', Auth::user()->telegram_id);
-            });
         } else {
             // Students shouldn't even be here, but just in case:
             $user->where('id', Auth::id());
@@ -63,16 +58,6 @@ class UserController extends Controller
             });
         }
 
-        if ($request->teacher_id) {
-            $teacher = User::find($request->teacher_id);
-            if ($teacher) {
-                $user->where(function ($query) use ($teacher) {
-                    $query->where('user_id', '=', $teacher->id)
-                        ->orWhere('ref_telegram_id', '=', $teacher->telegram_id);
-                });
-            }
-        }
-
         if (! Auth::user()->hasRole('Admin')) {
             $user->where(function ($query) {
                 $query->where('user_id', '=', Auth::id())
@@ -82,18 +67,11 @@ class UserController extends Controller
 
         $user = $user->paginate($per_page);
 
-        $teachers = Auth::user()->hasRole('Admin')
-            ? User::whereHas('roles', function ($q) {
-                $q->where('name', 'Teacher');
-            })->select('id', 'name')->get()
-            : [];
-
         return Inertia::render('user/index', [
             'user' => $user,
             'roles' => Role::all(),
-            'teachers' => $teachers,
             'isAdmin' => Auth::user()->hasRole('Admin'),
-            'filters' => $request->only(['search', 'role', 'teacher_id', 'from', 'to', 'per_page']),
+            'filters' => $request->only(['search', 'role', 'from', 'to', 'per_page']),
         ]);
     }
 

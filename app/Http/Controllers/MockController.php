@@ -52,10 +52,6 @@ class MockController extends Controller
             });
         }
 
-        if ($request->teacher_id) {
-            $mock->where('user_id', $request->teacher_id);
-        }
-
         if ($request->test_id) {
             $mock->where(function ($query) use ($request) {
                 $query->where('test_id', $request->test_id);
@@ -70,11 +66,6 @@ class MockController extends Controller
 
         if (Auth::user()->hasRole('Admin')) {
             // Admin can see everything
-        } elseif (Auth::user()->hasRole('Teacher')) {
-            // Teacher can see their own mocks
-            $mock->where(function ($q) {
-                $q->where('user_id', Auth::id());
-            });
         } else {
             // Students see active mocks
             $mock->where(function ($q) {
@@ -90,30 +81,18 @@ class MockController extends Controller
         $tests_query = Test::query()->select('id', 'name', 'folder_id')->with('folder:id,name');
         $folders_query = \App\Models\Folder::select('id', 'name');
 
-        if (Auth::user()->hasRole('Teacher')) {
-            $tests_query->whereHas('folder', function ($q) {
-                $q->where('user_id', Auth::id());
-            });
-            $folders_query->where('user_id', Auth::id());
-        } elseif (! Auth::user()->hasRole('Admin')) {
+        if (! Auth::user()->hasRole('Admin')) {
             $tests_query->where('active', 1)->where('open', 1);
             $folders_query->where('active', 1);
         }
-
-        $teachers = Auth::user()->hasRole('Admin')
-            ? \App\Models\User\User::whereHas('roles', function ($q) {
-                $q->where('name', 'Teacher');
-            })->select('id', 'name')->get()
-            : [];
 
         return Inertia::render('mock/index', [
             'mock' => $mock,
             'tests' => $tests_query->limit(50)->get(),
             'users' => [],
-            'teachers' => $teachers,
             'folders' => $folders_query->limit(50)->get(),
             'isAdmin' => Auth::user()->hasRole('Admin'),
-            'filters' => $request->only(['search', 'teacher_id', 'user_id', 'test_id', 'folder_id', 'from', 'to', 'per_page']),
+            'filters' => $request->only(['search', 'user_id', 'test_id', 'folder_id', 'from', 'to', 'per_page']),
         ]);
     }
 

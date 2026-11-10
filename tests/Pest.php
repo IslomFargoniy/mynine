@@ -24,7 +24,7 @@ pest()->extend(Tests\TestCase::class)->in('Unit');
 
 function seedRoles(): void
 {
-    foreach (['Admin', 'Teacher', 'Student'] as $role) {
+    foreach (['Admin', 'Reception', 'Student'] as $role) {
         Role::findOrCreate($role);
     }
 }

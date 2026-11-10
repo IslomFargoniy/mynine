@@ -8,12 +8,12 @@ use App\Models\Option;
 use App\Models\Question;
 
 beforeEach(function () {
-    $this->teacher = makeUser('Teacher');
-    $this->otherTeacher = makeUser('Teacher');
+    $this->admin = makeUser('Admin');
+    $this->reception = makeUser('Reception');
     $this->student = makeUser('Student');
     $this->otherStudent = makeUser('Student');
 
-    ['test' => $this->test, 'testType' => $this->testType, 'part' => $this->part] = makeTestContent($this->teacher);
+    ['test' => $this->test, 'testType' => $this->testType, 'part' => $this->part] = makeTestContent($this->admin);
 
     $section = makeSection($this->part, 'drag_and_drop', 'The {cave} was {dark}.');
     $this->q1 = Question::create(['section_id' => $section->id, 'order' => 1, 'answer_text' => 'cave']);
@@ -89,18 +89,18 @@ test('the owner can answer and the stored option records correctness server-side
     $this->assertDatabaseHas('attempt_answer_options', ['option_id' => $correct->id, 'is_correct' => 1]);
 });
 
-test('students cannot set module scores, the owning teacher can', function () {
+test('students and reception cannot set module scores, admins can', function () {
     $speaking = makeType('Speaking');
 
     $this->actingAs($this->student)
         ->post(route('attempt-type.store'), ['attempt_id' => $this->attempt->id, 'type_id' => $speaking->id, 'score' => 9])
         ->assertForbidden();
 
-    $this->actingAs($this->otherTeacher)
+    $this->actingAs($this->reception)
         ->post(route('attempt-type.store'), ['attempt_id' => $this->attempt->id, 'type_id' => $speaking->id, 'score' => 9])
         ->assertForbidden();
 
-    $this->actingAs($this->teacher)
+    $this->actingAs($this->admin)
         ->post(route('attempt-type.store'), ['attempt_id' => $this->attempt->id, 'type_id' => $speaking->id, 'score' => 7.5])
         ->assertRedirect();
 
@@ -114,23 +114,23 @@ test('tab-switch violations always increment by exactly one', function () {
         ->assertJsonPath('tab_switch_count', 1);
 });
 
-test('content editing is limited to admins and the owning teacher', function () {
+test('content editing is limited to admins', function () {
     $payload = ['textarea' => 'Edited', 'answer_text' => 'cave'];
 
     $this->actingAs($this->student)->put(route('question.update', $this->q1->id), $payload)->assertForbidden();
-    $this->actingAs($this->otherTeacher)->put(route('question.update', $this->q1->id), $payload)->assertForbidden();
-    $this->actingAs($this->teacher)->put(route('question.update', $this->q1->id), $payload)->assertRedirect();
+    $this->actingAs($this->reception)->put(route('question.update', $this->q1->id), $payload)->assertForbidden();
+    $this->actingAs($this->admin)->put(route('question.update', $this->q1->id), $payload)->assertRedirect();
 
     expect($this->q1->fresh()->textarea)->toBe('Edited');
 });
 
-test('attempt results are only visible to the candidate, the owning teacher and admins', function () {
+test('attempt results are only visible to the candidate and admins', function () {
     $this->attempt->finish();
 
     $this->actingAs($this->otherStudent)->get(route('attempt.show', $this->attempt->id))->assertForbidden();
-    $this->actingAs($this->otherTeacher)->get(route('attempt.show', $this->attempt->id))->assertForbidden();
+    $this->actingAs($this->reception)->get(route('attempt.show', $this->attempt->id))->assertForbidden();
     $this->actingAs($this->student)->get(route('attempt.show', $this->attempt->id))->assertOk();
-    $this->actingAs($this->teacher)->get(route('attempt.show', $this->attempt->id))->assertOk();
+    $this->actingAs($this->admin)->get(route('attempt.show', $this->attempt->id))->assertOk();
     $this->actingAs(makeUser('Admin'))->get(route('attempt.show', $this->attempt->id))->assertOk();
 });
 
@@ -145,7 +145,7 @@ test('the PDF needs a signed link or permission to view the attempt', function (
 
 test('a mock owner can delete an attempt together with its answers', function () {
     $mock = Mock::create([
-        'name' => 'Mock', 'test_id' => $this->test->id, 'user_id' => $this->teacher->id, 'slug' => 'mock-1',
+        'name' => 'Mock', 'test_id' => $this->test->id, 'user_id' => $this->admin->id, 'slug' => 'mock-1',
         'started_at' => now()->subHour(), 'finished_at' => now()->addHour(), 'active' => 1,
     ]);
     $attempt = Attempt::create(['mock_id' => $mock->id, 'user_id' => $this->student->id, 'test_id' => $this->test->id, 'started_at' => now()]);
@@ -157,9 +157,9 @@ test('a mock owner can delete an attempt together with its answers', function ()
             'question_id' => $this->q1->id, 'answer_text' => 'cave',
         ])->assertOk();
 
-    $this->actingAs($this->otherTeacher)->delete(route('attempt.destroy', $attempt->id))->assertForbidden();
+    $this->actingAs($this->reception)->delete(route('attempt.destroy', $attempt->id))->assertForbidden();
 
-    $this->actingAs($this->teacher)->delete(route('attempt.destroy', $attempt->id))->assertRedirect(route('attempt.index'));
+    $this->actingAs($this->admin)->delete(route('attempt.destroy', $attempt->id))->assertRedirect(route('attempt.index'));
 
     $this->assertDatabaseMissing('attempts', ['id' => $attempt->id]);
     $this->assertDatabaseCount('attempt_answers', 0);
@@ -168,7 +168,7 @@ test('a mock owner can delete an attempt together with its answers', function ()
 
 test('a candidate code session is bound to its own attempt', function () {
     $mock = Mock::create([
-        'name' => 'Mock', 'test_id' => $this->test->id, 'user_id' => $this->teacher->id, 'slug' => 'mock-2',
+        'name' => 'Mock', 'test_id' => $this->test->id, 'user_id' => $this->admin->id, 'slug' => 'mock-2',
         'started_at' => now()->subHour(), 'finished_at' => now()->addHour(), 'active' => 1,
     ]);
     $me = MockStudent::create(['mock_id' => $mock->id, 'name' => 'Me', 'code' => 'MOCK-111111']);

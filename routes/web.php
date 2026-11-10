@@ -83,10 +83,9 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::resource('attempt', AttemptController::class)->only(['index', 'store', 'show', 'destroy']);
 
     /*
-    | Content management and grading: admins and teachers only.
-    | Ownership (own folder / own mock) is enforced by the policies inside the controllers.
+    | Content management and grading: admins only.
     */
-    Route::middleware('role:Admin|Teacher')->group(function () {
+    Route::middleware('role:Admin')->group(function () {
         Route::resource('user', UserController::class);
         Route::resource('folder', FolderController::class);
 

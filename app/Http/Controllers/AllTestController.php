@@ -57,45 +57,21 @@ class AllTestController extends Controller
             });
         }
 
-        if ($request->teacher_id) {
-            $folder->where('user_id', $request->teacher_id);
-        }
-
-        if (Auth::user()->hasRole('Admin')) {
-            // Admin sees all
-        } elseif (Auth::user()->hasRole('Teacher')) {
-            $folder->where(fn ($q) => $q->where('user_id', Auth::id()));
-        } else {
-            // Default: active folders and open tests (already filtered in initial query above)
-        }
-
         $folder = $folder->select('id', 'name', 'comment', 'active', 'user_id', 'created_at', 'updated_at')
             ->orderBy('id', 'asc')
             ->paginate($per_page);
 
         // Filter folder dropdown for search
         $folders_query = Folder::select('id', 'name')->where('active', 1);
-        if (Auth::user()->hasRole('Teacher')) {
-            $folders_query->where('user_id', Auth::id());
-        } elseif (Auth::user()->hasRole('Student')) {
-            $folders_query->where(fn ($q) => $q->where('user_id', Auth::id()));
-            $folders_query->where(fn ($q) => $q->where('active', 1));
-        } elseif (Auth::user()->hasRole('Admin')) {
+        if (Auth::user()->hasRole('Admin')) {
             $folders_query = Folder::select('id', 'name'); // Admin sees all in dropdown
         }
-
-        $teachers = Auth::user()->hasRole('Admin')
-            ? \App\Models\User\User::whereHas('roles', function ($q) {
-                $q->where('name', 'Teacher');
-            })->select('id', 'name')->get()
-            : [];
 
         return Inertia::render('all-test/index', [
             'folder' => $folder,
             'folders' => $folders_query->limit(50)->get(),
-            'teachers' => $teachers,
             'isAdmin' => Auth::user()->hasRole('Admin'),
-            'filters' => $request->only(['search', 'teacher_id', 'folder_id', 'from', 'to', 'per_page']),
+            'filters' => $request->only(['search', 'folder_id', 'from', 'to', 'per_page']),
         ]);
     }
 

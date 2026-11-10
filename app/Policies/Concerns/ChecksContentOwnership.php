@@ -13,22 +13,18 @@ use App\Models\User\User;
 
 /**
  * Shared ownership rules for test content (folder -> test -> test type -> part -> section -> question -> option).
- * Admins manage everything; teachers manage only content inside their own folders.
+ * Only admins manage content (the Teacher role was removed: the system has Admin, Reception and Student).
  */
 trait ChecksContentOwnership
 {
     protected function isContentManager(User $user): bool
     {
-        return $user->hasRole('Admin') || $user->hasRole('Teacher');
+        return $user->hasRole('Admin');
     }
 
     protected function ownsFolder(User $user, ?Folder $folder): bool
     {
-        if ($user->hasRole('Admin')) {
-            return true;
-        }
-
-        return $folder !== null && (int) $folder->user_id === (int) $user->id;
+        return $folder !== null && $user->hasRole('Admin');
     }
 
     protected function ownsTest(User $user, ?Test $test): bool

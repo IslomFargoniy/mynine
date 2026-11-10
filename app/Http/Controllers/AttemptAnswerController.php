@@ -82,7 +82,7 @@ class AttemptAnswerController extends Controller
     }
 
     /**
-     * Re-trigger AI essay evaluation (teachers / admins).
+     * Re-trigger AI essay evaluation (admins).
      */
     public function reEvaluateAi(AttemptAnswer $attemptAnswer)
     {
