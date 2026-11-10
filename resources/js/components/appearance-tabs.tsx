@@ -24,16 +24,16 @@ export default function AppearanceToggleTab({
 
     return (
         <div
-            className={cn('flex p-1 bg-gray-200 dark:bg-gray-700 rounded-md', className)} {...props}>
+            className={cn('glass-pill flex gap-1 p-1', className)} {...props}>
             {tabs.map(({ value, icon: Icon, label }) => (
                 <button
                     key={value}
                     onClick={() => updateAppearance(value)}
                     className={cn(
-                        'flex-1 flex items-center justify-center gap-2 px-2.5 py-1.5 rounded transition-all text-xs font-medium uppercase tracking-wider',
+                        'flex-1 flex items-center justify-center gap-2 h-9 px-4 rounded-full border border-transparent transition-all text-xs font-medium uppercase tracking-wider',
                         appearance === value
-                            ? 'bg-card text-foreground shadow-sm'
-                            : 'text-muted-foreground hover:text-gray-900 dark:hover:text-gray-200'
+                            ? 'bg-glass-thumb border-glass-edge text-foreground font-semibold shadow-glass-pill'
+                            : 'text-muted-foreground hover:text-foreground'
                     )}
                 >
                     <Icon className="h-3 w-3" />

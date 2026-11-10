@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="{{ str_replace('_', '-', app()->getLocale()) }}" @class(['dark' => ($appearance ?? 'system') == 'dark'])>
+<html lang="{{ str_replace('_', '-', app()->getLocale()) }}" @class(['dark' => ($appearance ?? 'system') == 'dark', 'exam-room' => str_starts_with($page['component'] ?? '', 'practice/')])>
     <head>
         <meta charset="utf-8">
         <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -46,11 +46,16 @@
         {{-- Inline style to set the HTML background color based on our theme in app.css --}}
         <style>
             html {
-                background-color: oklch(1 0 0);
+                background-color: #eef1fb;
             }
 
             html.dark {
-                background-color: oklch(0.145 0 0);
+                background-color: #070b16;
+            }
+
+            /* Exam room keeps its original white page. */
+            html.exam-room {
+                background-color: oklch(1 0 0);
             }
         </style>
 
@@ -79,7 +84,7 @@
         @endisset
 
         <link rel="preconnect" href="https://fonts.bunny.net">
-        <link href="https://fonts.bunny.net/css?family=inter:400,500,600,700" rel="stylesheet" />
+        <link href="https://fonts.bunny.net/css?family=inter:400,500,600,700,800" rel="stylesheet" />
 
         @routes
         @viteReactRefresh

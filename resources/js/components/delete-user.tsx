@@ -35,8 +35,8 @@ export default function DeleteUser() {
     return (
         <div className="space-y-6">
             <HeadingSmall title={t('delete_account.title')} description={t('delete_account.description')} />
-            <div className="space-y-4 rounded-lg border border-red-100 bg-red-50 p-4 dark:border-red-200/10 dark:bg-red-700/10">
-                <div className="relative space-y-0.5 text-red-600 dark:text-red-100">
+            <div className="space-y-4 rounded-[18px] border border-rose-500/25 bg-rose-500/12 p-4 dark:bg-rose-400/15">
+                <div className="relative space-y-0.5 text-rose-800 dark:text-rose-200">
                     <p className="font-medium">{t('delete_account.warning')}</p>
                     <p className="text-sm">{t('delete_account.warning_description')}</p>
                 </div>

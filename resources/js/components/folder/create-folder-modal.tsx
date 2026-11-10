@@ -52,14 +52,14 @@ export default function CreateFolderModal() {
     return (
         <Dialog open={open} onOpenChange={setOpen}>
             <DialogTrigger asChild>
-                <button className="inline-flex items-center gap-2 px-4 py-2.5 bg-blue-600 hover:bg-blue-700 active:scale-95 text-white font-bold text-xs rounded-xl shadow-xs transition-all cursor-pointer">
+                <button className="inline-flex items-center gap-2 px-4 py-2.5 btn-glass-primary hover:brightness-110 active:scale-95 text-primary-foreground font-bold text-xs rounded-full transition-all cursor-pointer">
                     <Plus className="w-4 h-4" />
                     {t('create')} {t('folder')}
                 </button>
             </DialogTrigger>
 
-            <DialogContent className="sm:max-w-lg w-full rounded-2xl border border-border shadow-2xl bg-card">
-                <DialogHeader className="space-y-1 pb-2 border-b border-border">
+            <DialogContent className="sm:max-w-lg w-full">
+                <DialogHeader className="space-y-1 pb-2 border-b border-divider">
                     <DialogTitle className="text-lg font-bold text-foreground">
                         {t('modal.create_folder_title')}
                     </DialogTitle>
@@ -97,12 +97,11 @@ export default function CreateFolderModal() {
                         <InputError message={errors.comment} />
                     </div>
 
-                    <DialogFooter className="flex items-center justify-end gap-3 pt-4 mt-4 border-t border-border">
+                    <DialogFooter className="flex items-center justify-end gap-3 pt-4 mt-4 border-t border-divider">
                         <DialogClose asChild>
                             <Button
                                 type="button"
                                 variant="outline"
-                                className="border-gray-300 dark:border-gray-700"
                                 onClick={() => {
                                     reset();
                                     clearErrors();
@@ -116,7 +115,7 @@ export default function CreateFolderModal() {
                         <Button
                             type="submit"
                             disabled={processing}
-                            className="bg-blue-600 hover:bg-blue-700 text-white font-semibold shadow-xs"
+                            className="font-semibold"
                         >
                             {t('save')}
                         </Button>

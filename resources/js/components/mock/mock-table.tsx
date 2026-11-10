@@ -15,7 +15,7 @@ interface MockTableProps extends MockPaginate {
     tests: Test[];
 }
 
-const MockTable = ({ tests, searchData, ...mock }: MockTableProps) => {
+const MockTable = ({ tests: _tests, searchData, ...mock }: MockTableProps) => {
     const { t } = useTranslation(); // Using the translation hook
     const [, setOpen] = useState(false);
     const [openDelete, setOpenDelete] = useState(false);
@@ -32,20 +32,20 @@ const MockTable = ({ tests, searchData, ...mock }: MockTableProps) => {
         }
         if (status === 'scheduled') {
             return (
-                <span className="inline-flex items-center rounded-full bg-amber-50 px-2 py-0.5 text-[10px] font-bold text-amber-700 dark:bg-amber-900/20 dark:text-amber-400">
+                <span className="inline-flex items-center rounded-full bg-amber-500/15 px-2 py-0.5 text-[10px] font-bold text-amber-800 dark:bg-amber-400/15 dark:text-amber-200">
                     <Clock className="mr-1 h-3 w-3" /> {t('scheduled') || 'Boshlanmagan'}
                 </span>
             );
         }
         if (status === 'expired') {
             return (
-                <span className="inline-flex items-center rounded-full bg-rose-50 px-2 py-0.5 text-[10px] font-bold text-rose-700 dark:bg-rose-900/20 dark:text-rose-400">
+                <span className="inline-flex items-center rounded-full bg-rose-500/12 px-2 py-0.5 text-[10px] font-bold text-rose-800 dark:bg-rose-400/15 dark:text-rose-200">
                     <MinusCircle className="mr-1 h-3 w-3" /> {t('expired') || 'Vaqti tugagan'}
                 </span>
             );
         }
         return (
-            <span className="inline-flex items-center rounded-full bg-green-50 px-2 py-0.5 text-[10px] font-bold text-green-700 dark:bg-green-900/20 dark:text-green-400">
+            <span className="inline-flex items-center rounded-full bg-emerald-500/12 px-2 py-0.5 text-[10px] font-bold text-emerald-800 dark:bg-emerald-400/15 dark:text-emerald-200">
                 <CheckCircle className="mr-1 h-3 w-3" /> {t('active') || 'Faol'}
             </span>
         );
@@ -81,7 +81,7 @@ const MockTable = ({ tests, searchData, ...mock }: MockTableProps) => {
                 <h2 className="text-xl font-semibold text-foreground">{t('mock')}</h2>
                 <Link
                     href={route('mock.create')}
-                    className="inline-flex cursor-pointer items-center gap-2 rounded-xl bg-blue-600 px-4 py-2.5 text-xs font-bold text-white shadow-xs transition-all hover:bg-blue-700 active:scale-95"
+                    className="btn-glass-primary inline-flex cursor-pointer items-center gap-2 rounded-full px-5 py-2.5 text-xs font-bold transition-all hover:brightness-110 active:scale-95"
                 >
                     <Plus className="h-4 w-4" />
                     {t('create')} {t('mock')}
@@ -96,17 +96,17 @@ const MockTable = ({ tests, searchData, ...mock }: MockTableProps) => {
                     return (
                         <div
                             key={item.id}
-                            className="group flex flex-col justify-between rounded-2xl border-2 border-border bg-card p-6 shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-xl"
+                            className="glass group flex flex-col justify-between rounded-[22px] p-6 transition-all duration-300 hover:-translate-y-1"
                         >
                             {/* Header */}
                             <div className="mb-4">
                                 <div className="flex items-center justify-between mb-2">
-                                    <span className="text-[10px] font-bold uppercase tracking-widest text-blue-500 opacity-70">
+                                    <span className="text-[10px] font-bold uppercase tracking-widest text-brand">
                                         #{globalIndex}
                                     </span>
                                     {renderStatusBadge(item)}
                                 </div>
-                                <h3 className="line-clamp-1 text-xl font-bold text-foreground group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">
+                                <h3 className="line-clamp-1 text-xl font-bold text-foreground group-hover:text-brand transition-colors">
                                     <Link href={`/mock/${item.id}`}>{item.name}</Link>
                                 </h3>
                                 {item.modules && item.modules.length > 0 ? (
@@ -117,14 +117,14 @@ const MockTable = ({ tests, searchData, ...mock }: MockTableProps) => {
                                             </ModuleBadge>
                                         ))}
                                         {item.require_desktop && (
-                                            <span className="inline-flex items-center gap-1 rounded-lg border border-border px-1.5 py-0.5 text-[10px] font-bold text-muted-foreground">
+                                            <span className="inline-flex items-center gap-1 rounded-full border border-glass-edge bg-glass-subtle px-2 py-0.5 text-[10px] font-bold text-muted-foreground">
                                                 <Monitor className="h-3 w-3" />
                                             </span>
                                         )}
                                     </div>
                                 ) : (
                                     <div className="mt-1 flex items-center text-xs text-muted-foreground">
-                                        <span className="font-semibold text-blue-600/70 dark:text-blue-400/70">{item.test?.folder?.name}</span>
+                                        <span className="font-semibold text-brand">{item.test?.folder?.name}</span>
                                         <span className="mx-2 opacity-30">/</span>
                                         <span className="truncate">{item.test?.name}</span>
                                     </div>
@@ -139,23 +139,23 @@ const MockTable = ({ tests, searchData, ...mock }: MockTableProps) => {
                             </div>
 
                             {/* Dates */}
-                            <div className="mb-6 space-y-2 rounded-xl bg-muted p-3">
+                            <div className="glass-subtle mb-6 space-y-2 rounded-[18px] p-3">
                                 <div className="flex justify-between text-[11px]">
                                     <span className="text-muted-foreground">{t('started_at')}</span>
-                                    <span className="font-mono font-medium text-foreground/80">
+                                    <span className="font-mono font-medium text-foreground">
                                         {format(new Date(item.started_at), 'MMM dd, HH:mm')}
                                     </span>
                                 </div>
                                 <div className="flex justify-between text-[11px]">
                                     <span className="text-muted-foreground">{t('finished_at')}</span>
-                                    <span className="font-mono font-medium text-foreground/80">
+                                    <span className="font-mono font-medium text-foreground">
                                         {format(new Date(item.finished_at), 'MMM dd, HH:mm')}
                                     </span>
                                 </div>
                             </div>
 
                             {/* Actions */}
-                            <div className="flex items-center justify-between gap-2 pt-3 border-t border-border">
+                            <div className="flex items-center justify-between gap-2 pt-3 border-t border-divider">
                                 <MockStudentManager
                                     mockId={item.id}
                                     mockName={item.name}
@@ -165,7 +165,7 @@ const MockTable = ({ tests, searchData, ...mock }: MockTableProps) => {
                                 <div className="flex items-center gap-1.5">
                                     <Link
                                         href={route('mock.edit', item.id)}
-                                        className="p-2 bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 hover:bg-blue-600 hover:text-white dark:hover:bg-blue-600 dark:hover:text-white rounded-xl font-semibold text-xs transition-all cursor-pointer shadow-xs active:scale-95"
+                                        className="p-2 bg-indigo-500/12 text-brand hover:bg-primary hover:text-primary-foreground rounded-full font-semibold text-xs transition-all cursor-pointer active:scale-95"
                                         title={t('edit')}
                                     >
                                         <PencilIcon className="h-3.5 w-3.5" />
@@ -174,7 +174,7 @@ const MockTable = ({ tests, searchData, ...mock }: MockTableProps) => {
                                     <button
                                         type="button"
                                         onClick={() => handleDeleteClick(item)}
-                                        className="p-2 bg-red-50 dark:bg-red-900/30 text-red-600 dark:text-red-400 hover:bg-red-600 hover:text-white dark:hover:bg-red-600 dark:hover:text-white rounded-xl font-semibold text-xs transition-all cursor-pointer shadow-xs active:scale-95"
+                                        className="p-2 bg-rose-500/12 text-rose-800 dark:bg-rose-400/15 dark:text-rose-200 hover:bg-rose-600 hover:text-white dark:hover:bg-rose-600 dark:hover:text-white rounded-full font-semibold text-xs transition-all cursor-pointer active:scale-95"
                                         title={t('delete')}
                                     >
                                         <TrashIcon className="h-3.5 w-3.5" />
@@ -190,7 +190,7 @@ const MockTable = ({ tests, searchData, ...mock }: MockTableProps) => {
             {selectedMock && openDelete && <DeleteItemModal item={selectedMock} open={openDelete} setOpen={setOpenDelete} onDelete={handleDelete} />}
 
             {/* Pagination */}
-            <div className="mt-6 flex items-center justify-between text-sm text-foreground/80">
+            <div className="mt-6 flex items-center justify-between text-sm text-foreground">
                 <div>
                     {t('showing', {
                         from: mock.from,
@@ -203,12 +203,12 @@ const MockTable = ({ tests, searchData, ...mock }: MockTableProps) => {
                         <Link
                             key={index}
                             href={`${link.url ?? '?'}&search=${searchData.search}&per_page=${searchData.per_page}`}
-                            className={`rounded-md px-3 py-1 text-sm transition ${
+                            className={`rounded-full px-3 py-1 text-sm transition ${
                                 link.active
-                                    ? 'bg-blue-600 text-white'
+                                    ? 'btn-glass-primary'
                                     : !link.url
                                       ? 'cursor-not-allowed text-muted-foreground'
-                                      : 'border border-gray-300 bg-white text-foreground/80 hover:bg-gray-100 dark:border-gray-600 dark:bg-gray-800 dark:hover:bg-gray-700'
+                                      : 'border border-glass-edge bg-glass-subtle text-foreground hover:bg-accent'
                             }`}
                             dangerouslySetInnerHTML={{ __html: link.label }}
                         />

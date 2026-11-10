@@ -20,19 +20,19 @@
 @endphp
 
 @section('content')
-    <section class="mx-auto max-w-3xl px-4 py-10">
+    <section class="glass-strong mx-auto my-10 w-[calc(100%-2rem)] max-w-3xl rounded-[28px] px-5 py-8 sm:px-10 sm:py-10">
         @include('seo.partials.breadcrumbs', ['items' => [['Bosh sahifa', route('home')], ['Savol-javob', null]]])
-        <h1 class="mt-6 text-4xl font-extrabold tracking-tight text-gray-900">Savol-javob</h1>
-        <p class="mt-4 text-lg text-gray-600">Mynine va onlayn IELTS mock test haqida eng ko'p beriladigan savollar.</p>
+        <h1 class="mt-6 text-4xl font-extrabold tracking-tight text-foreground">Savol-javob</h1>
+        <p class="mt-4 text-lg text-muted-foreground">Mynine va onlayn IELTS mock test haqida eng ko'p beriladigan savollar.</p>
 
-        <div class="mt-8 divide-y divide-gray-100 rounded-2xl border border-gray-100">
+        <div class="mt-8 divide-y divide-divider rounded-[18px] border border-divider">
             @foreach ($faqs as [$question, $answer])
                 <details class="group p-5" @if ($loop->first) open @endif>
-                    <summary class="flex cursor-pointer list-none items-center justify-between gap-4 text-lg font-semibold text-gray-900">
+                    <summary class="flex cursor-pointer list-none items-center justify-between gap-4 text-lg font-semibold text-foreground">
                         <h2 class="text-lg">{{ $question }}</h2>
-                        <span class="text-2xl text-[#6556ff] transition group-open:rotate-45" aria-hidden="true">+</span>
+                        <span class="text-2xl text-brand transition group-open:rotate-45" aria-hidden="true">+</span>
                     </summary>
-                    <p class="mt-3 text-gray-600">{{ $answer }}</p>
+                    <p class="mt-3 text-muted-foreground">{{ $answer }}</p>
                 </details>
             @endforeach
         </div>

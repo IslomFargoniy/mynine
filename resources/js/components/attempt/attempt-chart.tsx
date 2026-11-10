@@ -21,9 +21,9 @@ export default function AttemptsChart({ attempts }: { attempts: Attempt[] }) {
     const { t } = useTranslation();
     const isDark = useIsDark();
     // Chart.js draws on a canvas, so theme colours must be passed explicitly.
-    const tickColor = isDark ? '#94a3b8' : '#64748b';
-    const legendColor = isDark ? '#e2e8f0' : '#334155';
-    const gridColor = isDark ? 'rgba(255, 255, 255, 0.06)' : 'rgba(0, 0, 0, 0.05)';
+    const tickColor = isDark ? '#CBD5E1' : '#334155';
+    const legendColor = isDark ? '#E2E8F0' : '#1E293B';
+    const gridColor = isDark ? 'rgba(255, 255, 255, 0.10)' : 'rgba(15, 23, 42, 0.08)';
 
     // Extract labels (attempt dates)
     const labels = attempts.map(a =>

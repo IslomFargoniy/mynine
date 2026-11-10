@@ -137,7 +137,7 @@ export default function ReceptionIndex() {
                         variant="outline"
                         disabled={readySelected.length === 0}
                         onClick={() => printResults(readySelected)}
-                        className="rounded-xl text-xs font-bold"
+                        className="rounded-full text-xs font-bold"
                     >
                         <Printer className="h-4 w-4" />
                         {t('exam_admin.reception.print_selected', { count: readySelected.length })}
@@ -148,7 +148,7 @@ export default function ReceptionIndex() {
                     {['not_arrived', 'checked_in', 'in_exam', 'written_done', 'speaking_waiting', 'result_ready', 'delivered'].map((status) => (
                         <span key={status} className="inline-flex items-center gap-1.5">
                             <CandidateStatusBadge status={status} />
-                            <b className="text-xs text-foreground/80">{counts[status] ?? 0}</b>
+                            <b className="text-xs text-foreground">{counts[status] ?? 0}</b>
                         </span>
                     ))}
                 </div>
@@ -160,12 +160,12 @@ export default function ReceptionIndex() {
                 ) : (
                     <Panel className="overflow-x-auto p-0">
                         <table className="w-full text-left text-xs">
-                            <thead className="bg-muted text-[10px] font-bold text-muted-foreground uppercase">
+                            <thead className="bg-muted text-[10px] font-bold text-muted-foreground uppercase tracking-wide">
                                 <tr>
                                     <th className="px-3 py-2.5">
                                         <input
                                             type="checkbox"
-                                            className="accent-indigo-600"
+                                            className="accent-primary"
                                             checked={selected.length > 0 && selected.length === candidates.length}
                                             onChange={(e) => setSelected(e.target.checked ? candidates.map((c) => c.id) : [])}
                                         />
@@ -178,19 +178,19 @@ export default function ReceptionIndex() {
                                     <th className="px-3 py-2.5 text-right">{t('exam_admin.common.actions')}</th>
                                 </tr>
                             </thead>
-                            <tbody className="divide-y divide-gray-100 dark:divide-gray-800">
+                            <tbody className="divide-y divide-divider">
                                 {candidates.map((c) => (
-                                    <tr key={c.id} className="hover:bg-gray-50/60 dark:hover:bg-gray-800/30">
+                                    <tr key={c.id} className="hover:bg-accent/60">
                                         <td className="px-3 py-2.5">
-                                            <input type="checkbox" className="accent-indigo-600" checked={selected.includes(c.id)} onChange={() => toggle(c.id)} />
+                                            <input type="checkbox" className="accent-primary" checked={selected.includes(c.id)} onChange={() => toggle(c.id)} />
                                         </td>
                                         <td className="px-3 py-2.5">
                                             <div className="font-bold text-foreground">{c.name}</div>
                                             <div className="font-mono text-[11px] text-muted-foreground">{c.phone ?? '—'}</div>
-                                            {!filters.mock_id && mocks.length > 1 && <div className="text-[10px] text-indigo-500">{c.mock_name}</div>}
+                                            {!filters.mock_id && mocks.length > 1 && <div className="text-[10px] text-brand">{c.mock_name}</div>}
                                             {c.repeats.length > 0 && (
                                                 <div
-                                                    className="mt-0.5 flex items-center gap-1 text-[10px] font-bold text-amber-600 dark:text-amber-400"
+                                                    className="mt-0.5 flex items-center gap-1 text-[10px] font-bold text-amber-700 dark:text-amber-300"
                                                     title={c.repeats.map((r) => `${r.type} — ${r.test} (${r.date ?? ''})`).join('\n')}
                                                 >
                                                     <AlertTriangle className="h-3 w-3" />
@@ -198,7 +198,7 @@ export default function ReceptionIndex() {
                                                 </div>
                                             )}
                                         </td>
-                                        <td className="px-3 py-2.5 font-mono font-bold text-indigo-600 dark:text-indigo-400">{c.code}</td>
+                                        <td className="px-3 py-2.5 font-mono font-bold text-brand">{c.code}</td>
                                         <td className="px-3 py-2.5">
                                             <CandidateStatusBadge status={c.status} module={c.current_module} />
                                             {c.status === 'delivered' && c.delivered_by && (
@@ -217,7 +217,7 @@ export default function ReceptionIndex() {
                                         <td className="px-3 py-2.5">
                                             <div className="flex flex-wrap justify-end gap-1">
                                                 {!c.checked_in_at && (
-                                                    <Button size="sm" onClick={() => post('reception.check-in', c.id)} className="h-7 rounded-lg bg-blue-600 px-2 text-[11px] text-white hover:bg-blue-700">
+                                                    <Button size="sm" onClick={() => post('reception.check-in', c.id)} className="h-7 rounded-full px-3 text-[11px]">
                                                         <LogIn className="h-3.5 w-3.5" />
                                                         {t('exam_admin.reception.check_in')}
                                                     </Button>
@@ -225,15 +225,15 @@ export default function ReceptionIndex() {
                                                 <Button
                                                     size="sm"
                                                     variant="outline"
-                                                    className="h-7 rounded-lg px-2 text-[11px]"
+                                                    className="h-7 rounded-full px-2 text-[11px]"
                                                     title={t('exam_admin.candidates.print_card')}
                                                     onClick={() => window.open(route('mock.code-cards', { mock: c.mock_id, ids: String(c.id) }), '_blank')}
                                                 >
                                                     <Printer className="h-3.5 w-3.5" />
                                                 </Button>
                                                 {c.result_ready && (
-                                                    <Button size="sm" variant="outline" onClick={() => printResults([c.id])} className="h-7 rounded-lg px-2 text-[11px]">
-                                                        <FileText className="h-3.5 w-3.5 text-emerald-600 dark:text-emerald-400" />
+                                                    <Button size="sm" variant="outline" onClick={() => printResults([c.id])} className="h-7 rounded-full px-2 text-[11px]">
+                                                        <FileText className="h-3.5 w-3.5 text-emerald-700 dark:text-emerald-300" />
                                                         {c.result_printed_at ? t('exam_admin.reception.reprint') : t('exam_admin.reception.print_result')}
                                                     </Button>
                                                 )}
@@ -241,7 +241,7 @@ export default function ReceptionIndex() {
                                                     <Button
                                                         size="sm"
                                                         onClick={() => post('reception.deliver', c.id)}
-                                                        className="h-7 rounded-lg bg-emerald-600 px-2 text-[11px] text-white hover:bg-emerald-700"
+                                                        className="h-7 rounded-full bg-emerald-600 px-3 text-[11px] text-white hover:bg-emerald-700"
                                                     >
                                                         <CheckCheck className="h-3.5 w-3.5" />
                                                         {t('exam_admin.reception.deliver')}
@@ -251,7 +251,7 @@ export default function ReceptionIndex() {
                                                     <Button
                                                         size="sm"
                                                         variant="outline"
-                                                        className="h-7 rounded-lg px-2 text-[11px]"
+                                                        className="h-7 rounded-full px-2 text-[11px]"
                                                         title={t('exam_admin.monitor.unlock')}
                                                         onClick={() => {
                                                             if (confirm(t('exam_admin.monitor.unlock_confirm', { name: c.name }))) post('monitor.unlock', c.attempt_id!);

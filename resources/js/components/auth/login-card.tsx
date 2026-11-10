@@ -33,7 +33,7 @@ export default function LoginCard() {
     };
 
     return (
-        <div className="group relative w-full overflow-hidden rounded-[2.5rem] bg-white/70 dark:bg-gray-900/70 backdrop-blur-xl p-5 sm:p-6 shadow-2xl transition-all duration-500 hover:shadow-primary/10 border border-white/20 dark:border-white/5">
+        <div className="relative w-full overflow-hidden glass-strong rounded-[28px] p-5 sm:p-6">
             <SocialSignIn />
 
             <form className="mt-5 flex flex-col gap-4" onSubmit={submit}>
@@ -52,7 +52,7 @@ export default function LoginCard() {
                             value={data.email_or_phone}
                             onChange={(e) => setData('email_or_phone', e.target.value)}
                             placeholder={t('login.email_placeholder')}
-                            className="h-12 rounded-2xl border-border bg-white/50 dark:bg-gray-800/50 focus:ring-2 focus:ring-primary/20 transition-all font-medium"
+                            className="h-12 rounded-xl border border-input bg-glass-subtle focus-visible:ring-2 focus-visible:ring-ring/40 transition-all font-medium"
                         />
                         <InputError message={errors.email_or_phone} />
                     </div>
@@ -70,7 +70,7 @@ export default function LoginCard() {
                             value={data.password}
                             onChange={(e) => setData('password', e.target.value)}
                             placeholder={t('login.password_placeholder')}
-                            className="h-12 rounded-2xl border-border bg-white/50 dark:bg-gray-800/50 focus:ring-2 focus:ring-primary/20 transition-all font-medium"
+                            className="h-12 rounded-xl border border-input bg-glass-subtle focus-visible:ring-2 focus-visible:ring-ring/40 transition-all font-medium"
                         />
                         <InputError message={errors.password} />
                     </div>
@@ -83,7 +83,7 @@ export default function LoginCard() {
                                 checked={data.remember}
                                 onCheckedChange={(checked) => setData('remember', checked as boolean)}
                                 tabIndex={3}
-                                className="rounded-md border-gray-300 dark:border-gray-600"
+                                className="rounded-md border-input"
                             />
                             <Label htmlFor="remember" className="text-sm font-bold text-muted-foreground cursor-pointer">{t('login.remember')}</Label>
                         </div>
@@ -91,11 +91,10 @@ export default function LoginCard() {
 
                     <button
                         type="submit"
-                        className="group/btn relative mt-4 h-12 w-full overflow-hidden rounded-2xl bg-primary font-black tracking-tight text-white shadow-lg shadow-primary/20 transition-all hover:scale-[1.02] active:scale-[0.98] disabled:opacity-50"
+                        className="btn-glass-primary relative mt-4 h-12 w-full overflow-hidden rounded-full font-black tracking-tight transition-all hover:brightness-110 active:scale-[0.98] disabled:opacity-50"
                         tabIndex={4}
                         disabled={processing}
                     >
-                        <div className="absolute inset-0 bg-gradient-to-r from-blue-600 to-purple-600 opacity-0 group-hover/btn:opacity-100 transition-opacity" />
                         <div className="relative flex items-center justify-center gap-2">
                             {processing ? (
                                 <LoaderCircle className="h-5 w-5 animate-spin" />
@@ -111,7 +110,7 @@ export default function LoginCard() {
 
                 <div className="text-center text-sm font-semibold">
                     <span className="text-muted-foreground">{t('login.no_account')} </span>
-                    <Link href={route('register')} className="text-primary hover:underline transition-all underline-offset-4">
+                    <Link href={route('register')} className="text-brand font-bold hover:underline transition-all underline-offset-4">
                         {t('login.signup')}
                     </Link>
                 </div>

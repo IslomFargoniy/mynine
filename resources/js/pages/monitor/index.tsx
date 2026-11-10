@@ -109,19 +109,19 @@ export default function MonitorIndex() {
                                     key={a.id}
                                     className={cn(
                                         'space-y-3',
-                                        a.paused && 'border-amber-300 dark:border-amber-700',
-                                        !a.finished && !a.online && 'border-rose-200 dark:border-rose-900',
+                                        a.paused && 'border-amber-500/40',
+                                        !a.finished && !a.online && 'border-rose-500/30',
                                         a.finished && 'opacity-70',
                                     )}
                                 >
                                     <div className="flex items-start justify-between gap-2">
                                         <div>
                                             <div className="font-bold text-foreground">{a.name}</div>
-                                            <div className="font-mono text-[11px] text-indigo-600 dark:text-indigo-400">{a.code ?? `#${a.id}`}</div>
+                                            <div className="font-mono text-[11px] text-brand">{a.code ?? `#${a.id}`}</div>
                                         </div>
                                         <div className="text-right">
                                             {a.finished ? (
-                                                <span className="rounded-full bg-muted px-2 py-0.5 text-[10px] font-bold text-foreground/80">
+                                                <span className="rounded-full bg-muted px-2 py-0.5 text-[10px] font-bold text-foreground">
                                                     {t('exam_admin.monitor.finished')}
                                                 </span>
                                             ) : (
@@ -139,13 +139,13 @@ export default function MonitorIndex() {
                                             </span>
                                         ))}
                                         {a.paused && (
-                                            <span className="rounded-full bg-amber-100 px-2 py-0.5 text-[10px] font-bold text-amber-700 dark:bg-amber-900/50 dark:text-amber-300">
+                                            <span className="rounded-full bg-amber-500/15 px-2 py-0.5 text-[10px] font-bold text-amber-800 dark:bg-amber-400/15 dark:text-amber-200">
                                                 {t('exam_admin.monitor.paused')}
                                             </span>
                                         )}
-                                        {a.unlock_requested && <span className="text-[10px] font-bold text-indigo-500">{t('exam_admin.monitor.unlock_sent')}</span>}
+                                        {a.unlock_requested && <span className="text-[10px] font-bold text-brand">{t('exam_admin.monitor.unlock_sent')}</span>}
                                         {left !== null && !a.finished && (
-                                            <span className={cn('ml-auto flex items-center gap-1 font-mono text-sm font-black', left < 300 ? 'text-rose-600 dark:text-rose-400' : 'text-foreground')}>
+                                            <span className={cn('ml-auto flex items-center gap-1 font-mono text-sm font-black', left < 300 ? 'text-rose-700 dark:text-rose-300' : 'text-foreground')}>
                                                 <Clock className="h-3.5 w-3.5" />
                                                 {fmtSeconds(left)}
                                             </span>
@@ -156,9 +156,9 @@ export default function MonitorIndex() {
                                         type="button"
                                         onClick={() => setExpanded(expanded === a.id ? null : a.id)}
                                         className={cn(
-                                            'flex w-full items-center justify-between rounded-xl px-3 py-2 text-left text-[11px] font-bold',
+                                            'flex w-full items-center justify-between rounded-[14px] px-3 py-2 text-left text-[11px] font-bold',
                                             a.violations_count > 0
-                                                ? 'bg-rose-50 text-rose-700 dark:bg-rose-950/30 dark:text-rose-300'
+                                                ? 'bg-rose-500/12 text-rose-800 dark:bg-rose-400/15 dark:text-rose-200'
                                                 : 'bg-muted text-muted-foreground',
                                         )}
                                     >
@@ -177,7 +177,7 @@ export default function MonitorIndex() {
                                     {expanded === a.id && a.violations.length > 0 && (
                                         <ul className="max-h-48 space-y-1 overflow-y-auto text-[11px]">
                                             {a.violations.map((v) => (
-                                                <li key={v.id} className="flex gap-2 border-b border-border pb-1">
+                                                <li key={v.id} className="flex gap-2 border-b border-divider pb-1">
                                                     <span className="font-mono text-muted-foreground">{fmtDateTime(v.occurred_at, 'HH:mm:ss')}</span>
                                                     <span className="font-semibold">{t(`exam_admin.violation.${v.type}`, { defaultValue: v.type })}</span>
                                                     {v.detail && <span className="truncate text-muted-foreground">{JSON.stringify(v.detail)}</span>}
@@ -186,17 +186,17 @@ export default function MonitorIndex() {
                                         </ul>
                                     )}
 
-                                    <div className="flex flex-wrap gap-1.5 border-t border-border pt-3">
+                                    <div className="flex flex-wrap gap-1.5 border-t border-divider pt-3">
                                         {canControl && !a.finished && (
                                             <>
                                                 {a.paused ? (
-                                                    <Button size="sm" variant="outline" disabled={busy === a.id} onClick={() => act(a, 'resume')} className="h-7 rounded-lg px-2 text-[11px]">
-                                                        <Play className="h-3.5 w-3.5 text-emerald-600 dark:text-emerald-400" />
+                                                    <Button size="sm" variant="outline" disabled={busy === a.id} onClick={() => act(a, 'resume')} className="h-7 rounded-full px-2 text-[11px]">
+                                                        <Play className="h-3.5 w-3.5 text-emerald-700 dark:text-emerald-300" />
                                                         {t('exam_admin.monitor.resume')}
                                                     </Button>
                                                 ) : (
-                                                    <Button size="sm" variant="outline" disabled={busy === a.id} onClick={() => act(a, 'pause')} className="h-7 rounded-lg px-2 text-[11px]">
-                                                        <Pause className="h-3.5 w-3.5 text-amber-600 dark:text-amber-400" />
+                                                    <Button size="sm" variant="outline" disabled={busy === a.id} onClick={() => act(a, 'pause')} className="h-7 rounded-full px-2 text-[11px]">
+                                                        <Pause className="h-3.5 w-3.5 text-amber-700 dark:text-amber-300" />
                                                         {t('exam_admin.monitor.pause')}
                                                     </Button>
                                                 )}
@@ -204,7 +204,7 @@ export default function MonitorIndex() {
                                                     size="sm"
                                                     variant="outline"
                                                     disabled={busy === a.id}
-                                                    className="h-7 rounded-lg px-2 text-[11px]"
+                                                    className="h-7 rounded-full px-2 text-[11px]"
                                                     onClick={() => {
                                                         const minutes = Number(prompt(t('exam_admin.monitor.extra_time_prompt'), '5'));
                                                         if (minutes > 0) act(a, 'extra-time', { minutes });
@@ -217,7 +217,7 @@ export default function MonitorIndex() {
                                                     size="sm"
                                                     variant="outline"
                                                     disabled={busy === a.id}
-                                                    className="h-7 rounded-lg border-rose-200 px-2 text-[11px] text-rose-600 dark:text-rose-400 dark:border-rose-900/60"
+                                                    className="h-7 rounded-full border-rose-500/30 px-2 text-[11px] text-rose-700 dark:text-rose-300"
                                                     onClick={() => act(a, 'force-submit', {}, t('exam_admin.monitor.force_submit_confirm', { name: a.name }))}
                                                 >
                                                     <Send className="h-3.5 w-3.5" />
@@ -230,10 +230,10 @@ export default function MonitorIndex() {
                                                 size="sm"
                                                 variant="outline"
                                                 disabled={busy === a.id}
-                                                className="h-7 rounded-lg px-2 text-[11px]"
+                                                className="h-7 rounded-full px-2 text-[11px]"
                                                 onClick={() => act(a, 'unlock', {}, t('exam_admin.monitor.unlock_confirm', { name: a.name }))}
                                             >
-                                                <Unlock className="h-3.5 w-3.5 text-indigo-500" />
+                                                <Unlock className="h-3.5 w-3.5 text-brand" />
                                                 {t('exam_admin.monitor.unlock')}
                                             </Button>
                                         )}

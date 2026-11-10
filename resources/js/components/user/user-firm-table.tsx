@@ -50,31 +50,31 @@ const UserFirmTable = ({ user, firms }: UserFirmTableProps) => {
             <h3 className={'capitalize text-center py-2'}>{t('user_firm')}</h3>
 
             {/* Table */}
-            <div className="overflow-x-auto">
+            <div className="glass-strong overflow-x-auto rounded-[22px]">
                 <table className="border-collapse w-full text-sm text-left text-foreground">
-                    <thead className="bg-gray-100 dark:bg-gray-700">
+                    <thead className="bg-muted text-muted-foreground text-xs font-semibold uppercase tracking-wide">
                     <tr>
-                        <td className="border border-gray-300 dark:border-gray-600 px-4 py-2">{t('n')}</td>
-                        <td className="border border-gray-300 dark:border-gray-600 px-4 py-2">{t('firm')}</td>
-                        <td className="border border-gray-300 dark:border-gray-600 px-4 py-2">{t('user')}</td>
-                        <th className="border border-gray-300 dark:border-gray-600 px-4 py-2">
+                        <td className="border border-divider px-4 py-2">{t('n')}</td>
+                        <td className="border border-divider px-4 py-2">{t('firm')}</td>
+                        <td className="border border-divider px-4 py-2">{t('user')}</td>
+                        <th className="border border-divider px-4 py-2">
                             <CreateUserFirmModal user={user} firms={firms} />
                         </th>
                     </tr>
                     </thead>
-                    <tbody className="bg-white dark:bg-gray-800">
+                    <tbody>
                     {user.user_firms?.map((item, index) => {
                         return (
-                            <tr key={item.id} className="hover:bg-gray-50 dark:hover:bg-gray-700">
-                                <td className="border border-gray-300 dark:border-gray-600 px-4 py-2">{index + 1}</td>
-                                <td className="border border-gray-300 dark:border-gray-600 px-4 py-2">{item.firm?.name}</td>
-                                <td className="border border-gray-300 dark:border-gray-600 px-4 py-2">{item.user?.name}</td>
-                                <td className="border border-gray-300 dark:border-gray-600 px-4 py-2">
+                            <tr key={item.id} className="hover:bg-accent/60">
+                                <td className="border border-divider px-4 py-2">{index + 1}</td>
+                                <td className="border border-divider px-4 py-2">{item.firm?.name}</td>
+                                <td className="border border-divider px-4 py-2">{item.user?.name}</td>
+                                <td className="border border-divider px-4 py-2">
 
-                                    <div className="inline-flex shadow-sm">
+                                    <div className="inline-flex">
                                         <button
                                             onClick={() => handleDeleteClick(item)}
-                                            className="bg-red-500 px-3 py-2 text-sm font-medium text-white border border-red-600 hover:bg-red-600 focus:z-10 rounded"
+                                            className="bg-destructive px-3 py-2 text-sm font-medium text-white hover:brightness-110 focus:z-10 rounded-full"
                                         >
                                             <TrashIcon className="w-4 h-4" />
                                         </button>

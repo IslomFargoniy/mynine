@@ -87,7 +87,7 @@ export default function DevicesIndex() {
                 )}
 
                 {pending.length > 0 && (
-                    <div className="rounded-xl border border-amber-200 bg-amber-50 p-3 text-xs font-semibold text-amber-800 dark:border-amber-800/50 dark:bg-amber-950/30 dark:text-amber-300">
+                    <div className="rounded-[18px] border border-amber-500/25 bg-amber-500/15 p-3 text-xs font-semibold text-amber-800 dark:text-amber-200">
                         {t('exam_admin.devices.pending', { count: pending.length })}
                     </div>
                 )}
@@ -97,7 +97,7 @@ export default function DevicesIndex() {
                 ) : (
                     <Panel className="overflow-x-auto p-0">
                         <table className="w-full text-left text-xs">
-                            <thead className="bg-muted text-[10px] font-bold text-muted-foreground uppercase">
+                            <thead className="bg-muted text-[10px] font-bold text-muted-foreground uppercase tracking-wide">
                                 <tr>
                                     <th className="px-3 py-2.5">{t('exam_admin.devices.pc')}</th>
                                     <th className="px-3 py-2.5">{t('exam_admin.common.status')}</th>
@@ -108,9 +108,9 @@ export default function DevicesIndex() {
                                     <th className="px-3 py-2.5 text-right">{t('exam_admin.common.actions')}</th>
                                 </tr>
                             </thead>
-                            <tbody className="divide-y divide-gray-100 dark:divide-gray-800">
+                            <tbody className="divide-y divide-divider">
                                 {devices.map((d) => (
-                                    <tr key={d.id} className={cn(!d.is_approved && 'bg-amber-50/70 dark:bg-amber-950/20', d.is_blocked && 'bg-rose-50/60 dark:bg-rose-950/20')}>
+                                    <tr key={d.id} className={cn(!d.is_approved && 'bg-amber-500/8', d.is_blocked && 'bg-rose-500/8')}>
                                         <td className="px-3 py-2.5">
                                             <div className="font-bold text-foreground">{d.name}</div>
                                             <div className="max-w-[180px] truncate font-mono text-[10px] text-muted-foreground" title={d.machine_id}>
@@ -121,23 +121,23 @@ export default function DevicesIndex() {
                                             <OnlineDot online={d.online} label={d.online ? t('exam_admin.monitor.online') : t('exam_admin.monitor.offline')} />
                                             <div className="flex flex-wrap gap-1">
                                                 {d.is_approved ? (
-                                                    <span className="rounded-full bg-emerald-50 px-2 py-0.5 text-[10px] font-bold text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-300">
+                                                    <span className="rounded-full bg-emerald-500/12 px-2 py-0.5 text-[10px] font-bold text-emerald-800 dark:bg-emerald-400/15 dark:text-emerald-200">
                                                         {t('exam_admin.devices.approved')}
                                                     </span>
                                                 ) : (
-                                                    <span className="rounded-full bg-amber-100 px-2 py-0.5 text-[10px] font-bold text-amber-700 dark:bg-amber-900/50 dark:text-amber-300">
+                                                    <span className="rounded-full bg-amber-500/15 px-2 py-0.5 text-[10px] font-bold text-amber-800 dark:bg-amber-400/15 dark:text-amber-200">
                                                         {t('exam_admin.devices.pending_badge')}
                                                     </span>
                                                 )}
                                                 {d.is_blocked && (
-                                                    <span className="rounded-full bg-rose-100 px-2 py-0.5 text-[10px] font-bold text-rose-700 dark:bg-rose-900/50 dark:text-rose-300">
+                                                    <span className="rounded-full bg-rose-500/12 px-2 py-0.5 text-[10px] font-bold text-rose-800 dark:bg-rose-400/15 dark:text-rose-200">
                                                         {t('exam_admin.devices.blocked')}
                                                     </span>
                                                 )}
                                             </div>
                                         </td>
                                         <td className="px-3 py-2.5 font-mono">
-                                            <span className={cn(d.outdated && 'font-bold text-amber-600 dark:text-amber-400')}>{d.app_version ?? '—'}</span>
+                                            <span className={cn(d.outdated && 'font-bold text-amber-700 dark:text-amber-300')}>{d.app_version ?? '—'}</span>
                                         </td>
                                         <td className="px-3 py-2.5 text-[11px] text-muted-foreground">
                                             <div>{d.os_version ?? '—'}</div>
@@ -157,13 +157,13 @@ export default function DevicesIndex() {
                                         <td className="px-3 py-2.5">
                                             <div className="flex justify-end gap-1">
                                                 {!d.is_approved && (
-                                                    <Button size="sm" onClick={() => post('desktop.devices.approve', d)} className="h-7 rounded-lg bg-emerald-600 px-2 text-[11px] text-white hover:bg-emerald-700">
+                                                    <Button size="sm" onClick={() => post('desktop.devices.approve', d)} className="h-7 rounded-full bg-emerald-600 px-3 text-[11px] text-white hover:bg-emerald-700">
                                                         <CheckCircle2 className="h-3.5 w-3.5" />
                                                         {t('exam_admin.devices.approve')}
                                                     </Button>
                                                 )}
                                                 {d.is_blocked ? (
-                                                    <Button size="sm" variant="outline" onClick={() => post('desktop.devices.unblock', d)} className="h-7 rounded-lg px-2 text-[11px]">
+                                                    <Button size="sm" variant="outline" onClick={() => post('desktop.devices.unblock', d)} className="h-7 rounded-full px-2 text-[11px]">
                                                         <ShieldCheck className="h-3.5 w-3.5" />
                                                         {t('exam_admin.devices.unblock')}
                                                     </Button>
@@ -172,16 +172,16 @@ export default function DevicesIndex() {
                                                         size="sm"
                                                         variant="outline"
                                                         onClick={() => confirm(t('exam_admin.devices.block_confirm', { name: d.name })) && post('desktop.devices.block', d)}
-                                                        className="h-7 rounded-lg px-2 text-[11px] text-rose-600 dark:text-rose-400"
+                                                        className="h-7 rounded-full px-2 text-[11px] text-rose-700 dark:text-rose-300"
                                                     >
                                                         <Ban className="h-3.5 w-3.5" />
                                                         {t('exam_admin.devices.block')}
                                                     </Button>
                                                 )}
-                                                <Button size="sm" variant="outline" onClick={() => rename(d)} className="h-7 rounded-lg px-2" title={t('exam_admin.devices.rename')}>
+                                                <Button size="sm" variant="outline" onClick={() => rename(d)} className="h-7 rounded-full px-2" title={t('exam_admin.devices.rename')}>
                                                     <Pencil className="h-3.5 w-3.5" />
                                                 </Button>
-                                                <Button size="sm" variant="outline" onClick={() => remove(d)} className="h-7 rounded-lg px-2 text-rose-600 dark:text-rose-400" title={t('exam_admin.common.delete')}>
+                                                <Button size="sm" variant="outline" onClick={() => remove(d)} className="h-7 rounded-full px-2 text-rose-700 dark:text-rose-300" title={t('exam_admin.common.delete')}>
                                                     <Trash2 className="h-3.5 w-3.5" />
                                                 </Button>
                                             </div>

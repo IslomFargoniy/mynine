@@ -81,10 +81,10 @@ export default function PartModal({ testType, part, open, setOpen }: PartModalPr
 
     return (
         <Dialog open={open} onOpenChange={setOpen}>
-            <DialogContent className="sm:max-w-none w-screen h-screen rounded-none border-none p-0 overflow-hidden flex flex-col bg-card">
+            <DialogContent className="sm:max-w-none w-screen h-screen rounded-none border-none p-0 overflow-hidden flex flex-col">
 
                 {/* Sticky Full-Screen Header */}
-                <div className="flex items-center justify-between px-6 py-3.5 pr-14 border-b border-border bg-muted shrink-0">
+                <div className="flex items-center justify-between px-6 py-3.5 pr-14 border-b border-divider bg-muted shrink-0">
                     <div className="flex items-center gap-3">
                         <DialogTitle className="text-lg font-bold text-foreground">
                             {isEdit ? `${t('edit')} ${part?.name}` : `${t('add_part')} (${testType?.type?.name || ''})`}
@@ -150,19 +150,18 @@ export default function PartModal({ testType, part, open, setOpen }: PartModalPr
                     </div>
 
                     {/* Full-Screen Footer Bar */}
-                    <div className="shrink-0 flex items-center justify-end gap-3 px-6 py-3.5 border-t border-border bg-muted">
+                    <div className="shrink-0 flex items-center justify-end gap-3 px-6 py-3.5 border-t border-divider bg-muted">
                         <Button
                             type="button"
                             variant="outline"
                             onClick={() => setOpen(false)}
-                            className="border-gray-300 dark:border-gray-700"
                         >
                             {t('cancel')}
                         </Button>
                         <Button
                             type="submit"
                             disabled={processing}
-                            className="bg-blue-600 hover:bg-blue-700 text-white font-semibold shadow-sm px-6"
+                            className="font-semibold px-6"
                         >
                             {isEdit ? t('update') ?? 'Yangilash' : t('save') ?? 'Saqlash'}
                         </Button>

@@ -43,8 +43,8 @@ const LanguageBar = ({ variant, placement, className }: LanguageBarProps) => {
     const defaultButtonClass = variant === 'dark'
         ? "inline-flex items-center gap-1.5 rounded-lg border border-white/20 bg-white/10 px-3 py-1.5 text-xs font-semibold text-white backdrop-blur-sm hover:bg-white/20 transition-all cursor-pointer shadow-xs"
         : variant === 'header'
-        ? "inline-flex items-center gap-1.5 rounded-[2px] border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 px-2.5 py-1 text-xs font-bold text-foreground/80 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors cursor-pointer shrink-0"
-        : "inline-flex items-center gap-1.5 rounded-lg border border-border bg-card px-3 py-1.5 text-xs font-semibold text-foreground/80 hover:bg-gray-50 dark:hover:bg-gray-700 transition-all cursor-pointer shadow-xs";
+        ? "inline-flex items-center gap-1.5 rounded-full border border-glass-edge bg-glass-subtle px-3 py-1.5 text-xs font-bold text-foreground hover:bg-accent transition-colors cursor-pointer shrink-0"
+        : "inline-flex h-9 items-center gap-1.5 rounded-full border border-glass-edge bg-glass-subtle px-3.5 text-xs font-semibold text-foreground hover:bg-accent transition-colors cursor-pointer";
 
     return (
         <div className={`relative inline-block text-left ${className || ''}`} ref={dropdownRef}>
@@ -58,7 +58,7 @@ const LanguageBar = ({ variant, placement, className }: LanguageBarProps) => {
             </button>
 
             {open && (
-                <div className={`absolute ${placement === 'top' ? 'bottom-full mb-2' : 'top-full mt-2'} right-0 z-50 w-36 rounded-xl border border-border bg-white dark:bg-gray-800 p-1 shadow-lg`}>
+                <div className={`absolute ${placement === 'top' ? 'bottom-full mb-2' : 'top-full mt-2'} right-0 z-50 w-36 glass-strong rounded-2xl p-1`}>
                     {languages.map((lang) => (
                         <button
                             key={lang.code}
@@ -66,8 +66,8 @@ const LanguageBar = ({ variant, placement, className }: LanguageBarProps) => {
                             onClick={() => changeLanguage(lang.code)}
                             className={`flex w-full items-center justify-between px-3 py-2 text-xs font-semibold rounded-lg transition-colors cursor-pointer ${
                                 currentLang === lang.code
-                                    ? 'bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400'
-                                    : 'text-foreground/80 hover:bg-gray-100 dark:hover:bg-gray-700'
+                                    ? 'bg-indigo-500/12 text-primary'
+                                    : 'text-foreground hover:bg-accent'
                             }`}
                         >
                             <span className="flex items-center gap-2">
@@ -75,7 +75,7 @@ const LanguageBar = ({ variant, placement, className }: LanguageBarProps) => {
                                 <span>{lang.label}</span>
                             </span>
                             {currentLang === lang.code && (
-                                <Check className="w-3.5 h-3.5 text-blue-600 dark:text-blue-400" />
+                                <Check className="w-3.5 h-3.5 text-primary" />
                             )}
                         </button>
                     ))}

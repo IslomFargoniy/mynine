@@ -15,55 +15,55 @@
 @endphp
 
 @section('content')
-    <section class="bg-gradient-to-b from-[#6556ff]/10 to-white">
-        <div class="mx-auto max-w-4xl px-4 pb-10 pt-10">
+    <section class="pb-8 pt-8">
+        <div class="mx-auto w-[calc(100%-2rem)] max-w-4xl glass rounded-[28px] px-6 py-10 sm:px-10">
             @include('seo.partials.breadcrumbs', ['items' => [['Bosh sahifa', route('home')], ['IELTS ball kalkulyatori', null]]])
-            <h1 class="mt-6 text-4xl font-extrabold tracking-tight text-gray-900 md:text-5xl">IELTS ball kalkulyatori</h1>
-            <p class="mt-4 text-lg text-gray-600">Listening va Reading'dagi to'g'ri javoblar sonini, Writing va Speaking ballarini kiriting — kalkulyator har bir bo'lim band'ini va umumiy (overall) ballni IELTS yaxlitlash qoidasi bo'yicha hisoblaydi.</p>
+            <h1 class="mt-6 text-4xl font-extrabold tracking-tight text-foreground md:text-5xl">IELTS ball kalkulyatori</h1>
+            <p class="mt-4 text-lg text-muted-foreground">Listening va Reading'dagi to'g'ri javoblar sonini, Writing va Speaking ballarini kiriting — kalkulyator har bir bo'lim band'ini va umumiy (overall) ballni IELTS yaxlitlash qoidasi bo'yicha hisoblaydi.</p>
         </div>
     </section>
 
     <section class="mx-auto max-w-4xl px-4 pb-14">
-        <form id="calc" class="grid gap-5 rounded-3xl border border-gray-100 p-6 shadow-sm md:grid-cols-2" onsubmit="return false">
+        <form id="calc" class="glass-strong grid gap-5 rounded-[28px] p-6 md:grid-cols-2" onsubmit="return false">
             <label class="block">
-                <span class="text-sm font-semibold text-gray-800">Listening — to'g'ri javoblar (0–40)</span>
-                <input type="number" min="0" max="40" step="1" name="listening" inputmode="numeric" class="mt-2 w-full rounded-xl border border-gray-200 px-4 py-3 text-lg focus:border-[#6556ff] focus:outline-none" placeholder="masalan, 31">
+                <span class="text-sm font-semibold text-foreground">Listening — to'g'ri javoblar (0–40)</span>
+                <input type="number" min="0" max="40" step="1" name="listening" inputmode="numeric" class="mt-2 w-full rounded-xl border border-input bg-glass-subtle px-4 py-3 text-lg text-foreground focus:border-ring focus:outline-none" placeholder="masalan, 31">
             </label>
             <label class="block">
-                <span class="text-sm font-semibold text-gray-800">Reading (Academic) — to'g'ri javoblar (0–40)</span>
-                <input type="number" min="0" max="40" step="1" name="reading" inputmode="numeric" class="mt-2 w-full rounded-xl border border-gray-200 px-4 py-3 text-lg focus:border-[#6556ff] focus:outline-none" placeholder="masalan, 28">
+                <span class="text-sm font-semibold text-foreground">Reading (Academic) — to'g'ri javoblar (0–40)</span>
+                <input type="number" min="0" max="40" step="1" name="reading" inputmode="numeric" class="mt-2 w-full rounded-xl border border-input bg-glass-subtle px-4 py-3 text-lg text-foreground focus:border-ring focus:outline-none" placeholder="masalan, 28">
             </label>
             <label class="block">
-                <span class="text-sm font-semibold text-gray-800">Writing band (0–9)</span>
-                <select name="writing" class="mt-2 w-full rounded-xl border border-gray-200 px-4 py-3 text-lg focus:border-[#6556ff] focus:outline-none">
+                <span class="text-sm font-semibold text-foreground">Writing band (0–9)</span>
+                <select name="writing" class="mt-2 w-full rounded-xl border border-input bg-glass-subtle px-4 py-3 text-lg text-foreground focus:border-ring focus:outline-none">
                     <option value="">tanlang</option>
                     @for ($b = 9; $b >= 0; $b -= 0.5)<option value="{{ $b }}">{{ number_format($b, 1) }}</option>@endfor
                 </select>
             </label>
             <label class="block">
-                <span class="text-sm font-semibold text-gray-800">Speaking band (0–9)</span>
-                <select name="speaking" class="mt-2 w-full rounded-xl border border-gray-200 px-4 py-3 text-lg focus:border-[#6556ff] focus:outline-none">
+                <span class="text-sm font-semibold text-foreground">Speaking band (0–9)</span>
+                <select name="speaking" class="mt-2 w-full rounded-xl border border-input bg-glass-subtle px-4 py-3 text-lg text-foreground focus:border-ring focus:outline-none">
                     <option value="">tanlang</option>
                     @for ($b = 9; $b >= 0; $b -= 0.5)<option value="{{ $b }}">{{ number_format($b, 1) }}</option>@endfor
                 </select>
             </label>
 
-            <div class="rounded-2xl bg-[#6556ff] p-6 text-white md:col-span-2" aria-live="polite">
+            <div class="btn-glass-primary rounded-[22px] p-6 md:col-span-2" aria-live="polite">
                 <div class="grid grid-cols-2 gap-4 text-center sm:grid-cols-5">
-                    <div><p class="text-xs uppercase tracking-wide text-white/70">Listening</p><p class="text-2xl font-bold" data-out="listening">—</p></div>
-                    <div><p class="text-xs uppercase tracking-wide text-white/70">Reading</p><p class="text-2xl font-bold" data-out="reading">—</p></div>
-                    <div><p class="text-xs uppercase tracking-wide text-white/70">Writing</p><p class="text-2xl font-bold" data-out="writing">—</p></div>
-                    <div><p class="text-xs uppercase tracking-wide text-white/70">Speaking</p><p class="text-2xl font-bold" data-out="speaking">—</p></div>
-                    <div class="col-span-2 sm:col-span-1"><p class="text-xs uppercase tracking-wide text-white/70">Overall</p><p class="text-4xl font-extrabold" data-out="overall">—</p></div>
+                    <div><p class="text-xs uppercase tracking-wide text-white/85">Listening</p><p class="text-2xl font-bold" data-out="listening">—</p></div>
+                    <div><p class="text-xs uppercase tracking-wide text-white/85">Reading</p><p class="text-2xl font-bold" data-out="reading">—</p></div>
+                    <div><p class="text-xs uppercase tracking-wide text-white/85">Writing</p><p class="text-2xl font-bold" data-out="writing">—</p></div>
+                    <div><p class="text-xs uppercase tracking-wide text-white/85">Speaking</p><p class="text-2xl font-bold" data-out="speaking">—</p></div>
+                    <div class="col-span-2 sm:col-span-1"><p class="text-xs uppercase tracking-wide text-white/85">Overall</p><p class="text-4xl font-extrabold" data-out="overall">—</p></div>
                 </div>
-                <p class="mt-4 text-center text-sm text-white/80" data-out="cefr">To'rtta bo'limni to'ldiring — umumiy ball va CEFR darajasi shu yerda chiqadi.</p>
+                <p class="mt-4 text-center text-sm text-white/90" data-out="cefr">To'rtta bo'limni to'ldiring — umumiy ball va CEFR darajasi shu yerda chiqadi.</p>
             </div>
         </form>
-        <p class="mt-3 text-sm text-gray-500">Jadvallar taxminiy: rasmiy IELTS konvertatsiyasi har bir test variantida bir-ikki javobga farq qilishi mumkin. General Training Reading uchun jadval boshqacha (bir xil band uchun ko'proq to'g'ri javob kerak).</p>
+        <p class="mt-3 text-sm text-muted-foreground">Jadvallar taxminiy: rasmiy IELTS konvertatsiyasi har bir test variantida bir-ikki javobga farq qilishi mumkin. General Training Reading uchun jadval boshqacha (bir xil band uchun ko'proq to'g'ri javob kerak).</p>
     </section>
 
     <section class="mx-auto max-w-4xl px-4 pb-14">
-        <div class="prose prose-lg max-w-none">
+        <div class="glass-strong prose prose-lg max-w-none rounded-[28px] p-6 prose-a:text-brand sm:p-10">
             <h2>Overall band score qanday hisoblanadi</h2>
             <p>Umumiy ball to'rtta bo'lim ballarining o'rtacha arifmetigi bo'lib, eng yaqin yarim yoki butun band'gacha yaxlitlanadi:</p>
             <ul>
@@ -77,13 +77,13 @@
         <div class="mt-10 grid gap-8 md:grid-cols-2">
             @foreach (['Listening' => $listening, 'Reading (Academic)' => $reading] as $name => $table)
                 <div>
-                    <h2 class="text-xl font-bold text-gray-900">{{ $name }} ball jadvali</h2>
-                    <table class="mt-4 w-full overflow-hidden rounded-xl border border-gray-200 text-left text-sm">
-                        <thead class="bg-gray-50"><tr><th class="px-4 py-2">To'g'ri javoblar</th><th class="px-4 py-2">Band</th></tr></thead>
+                    <h2 class="text-xl font-bold text-foreground">{{ $name }} ball jadvali</h2>
+                    <table class="glass-strong mt-4 w-full overflow-hidden rounded-[22px] text-left text-sm text-foreground">
+                        <thead class="bg-muted text-xs font-semibold uppercase tracking-wide text-muted-foreground"><tr><th class="px-4 py-2">To'g'ri javoblar</th><th class="px-4 py-2">Band</th></tr></thead>
                         <tbody>
                             @foreach ($table as $i => [$min, $band])
                                 @continue($band < 4.0)
-                                <tr class="border-t border-gray-100"><td class="px-4 py-2">{{ $range($table, $i) }}</td><td class="px-4 py-2 font-semibold">{{ number_format($band, 1) }}</td></tr>
+                                <tr class="border-t border-divider"><td class="px-4 py-2">{{ $range($table, $i) }}</td><td class="px-4 py-2 font-semibold">{{ number_format($band, 1) }}</td></tr>
                             @endforeach
                         </tbody>
                     </table>

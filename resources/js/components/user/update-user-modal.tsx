@@ -79,8 +79,8 @@ export default function UpdateUserModal({ roles, user, open, setOpen }: UpdateUs
     return (
         <Dialog open={open} onOpenChange={setOpen}>
 
-            <DialogContent className="sm:max-w-lg w-full dark:border-gray-700">
-                <DialogHeader className="space-y-1 pb-2 border-b border-border">
+            <DialogContent className="sm:max-w-lg w-full">
+                <DialogHeader className="space-y-1 pb-2 border-b border-divider">
                     <DialogTitle className="text-lg font-bold text-foreground">
                         {t('modal.update_user_title')}
                     </DialogTitle>
@@ -188,7 +188,6 @@ export default function UpdateUserModal({ roles, user, open, setOpen }: UpdateUs
                                     reset();
                                     clearErrors();
                                 }}
-                                className="bg-muted text-foreground hover:bg-gray-200 dark:hover:bg-gray-700"
                             >
                                 {t('cancel')}
                             </Button>
@@ -197,7 +196,6 @@ export default function UpdateUserModal({ roles, user, open, setOpen }: UpdateUs
                         <Button
                             type="submit"
                             disabled={processing}
-                            className="bg-blue-600 text-white hover:bg-blue-700 dark:bg-blue-500 dark:hover:bg-blue-600"
                         >
                             {t('save')}
                         </Button>

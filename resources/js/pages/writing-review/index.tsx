@@ -86,24 +86,24 @@ function ReviewCard({ item }: { item: ReviewItem }) {
                 <div>
                     <div className="text-base font-black text-foreground">{item.candidate}</div>
                     <div className="text-[11px] text-muted-foreground">
-                        <span className="font-mono text-indigo-600 dark:text-indigo-400">{item.code}</span> · {item.mock} · {fmtDateTime(item.finished_at)}
+                        <span className="font-mono text-brand">{item.code}</span> · {item.mock} · {fmtDateTime(item.finished_at)}
                     </div>
                 </div>
                 <div className="flex items-center gap-3">
                     <div className="text-right">
                         <div className="text-[10px] font-bold text-muted-foreground uppercase">{t('exam_admin.writing.ai_band')}</div>
-                        <div className="text-xl font-black text-amber-600 dark:text-amber-400">{fmtBand(item.ai_band)}</div>
+                        <div className="text-xl font-black text-amber-700 dark:text-amber-300">{fmtBand(item.ai_band)}</div>
                     </div>
                     {item.reviewed_at && (
                         <div className="text-right">
                             <div className="text-[10px] font-bold text-muted-foreground uppercase">{t('exam_admin.writing.confirmed')}</div>
-                            <div className="text-xl font-black text-emerald-600 dark:text-emerald-400">{fmtBand(item.band)}</div>
+                            <div className="text-xl font-black text-emerald-700 dark:text-emerald-300">{fmtBand(item.band)}</div>
                             <div className="text-[10px] text-muted-foreground">
                                 {item.reviewer} · {fmtDateTime(item.reviewed_at, 'dd.MM HH:mm')}
                             </div>
                         </div>
                     )}
-                    <Link href={route('attempt.show', item.attempt_id)} className="text-[11px] font-bold text-indigo-600 hover:underline dark:text-indigo-400">
+                    <Link href={route('attempt.show', item.attempt_id)} className="text-[11px] font-bold text-brand hover:underline">
                         {t('exam_admin.writing.open_attempt')}
                     </Link>
                 </div>
@@ -113,14 +113,14 @@ function ReviewCard({ item }: { item: ReviewItem }) {
 
             <div className="space-y-2">
                 {item.essays.map((essay) => (
-                    <div key={essay.id} className="rounded-xl border border-border">
+                    <div key={essay.id} className="glass-subtle rounded-[18px]">
                         <div className="flex flex-wrap items-center justify-between gap-2 px-3 py-2">
                             <button type="button" className="text-left text-xs font-bold" onClick={() => setOpenEssay(openEssay === essay.id ? null : essay.id)}>
                                 {t('exam_admin.writing.task', { n: essay.task })} · {t('exam_admin.writing.words', { count: essay.words })}
                             </button>
                             <div className="flex items-center gap-2">
                                 {essay.ai_pending ? (
-                                    <span className="flex items-center gap-1 text-[11px] font-semibold text-amber-600 dark:text-amber-400">
+                                    <span className="flex items-center gap-1 text-[11px] font-semibold text-amber-700 dark:text-amber-300">
                                         <Loader2 className="h-3 w-3 animate-spin" /> {t('exam_admin.writing.ai_pending')}
                                     </span>
                                 ) : (
@@ -141,19 +141,19 @@ function ReviewCard({ item }: { item: ReviewItem }) {
                                         </option>
                                     ))}
                                 </select>
-                                <Button size="sm" variant="outline" className="h-8 rounded-lg px-2 text-[11px]" onClick={() => rerun(essay.id)} title={t('exam_admin.writing.rerun_ai')}>
+                                <Button size="sm" variant="outline" className="h-8 rounded-full px-3 text-[11px]" onClick={() => rerun(essay.id)} title={t('exam_admin.writing.rerun_ai')}>
                                     <RefreshCw className="h-3.5 w-3.5" />
                                 </Button>
                             </div>
                         </div>
                         {openEssay === essay.id && (
-                            <div className="grid gap-3 border-t border-border p-3 lg:grid-cols-2">
+                            <div className="grid gap-3 border-t border-divider p-3 lg:grid-cols-2">
                                 <div className="space-y-2">
-                                    {essay.prompt && <div className="rounded-lg bg-muted p-2 text-[11px] text-foreground/80">{stripHtml(essay.prompt)}</div>}
+                                    {essay.prompt && <div className="rounded-xl bg-muted p-2 text-[11px] text-foreground">{stripHtml(essay.prompt)}</div>}
                                     <div className="max-h-80 overflow-y-auto text-xs leading-relaxed whitespace-pre-wrap">{essay.text || '—'}</div>
                                 </div>
-                                <div className="max-h-96 overflow-y-auto rounded-lg bg-amber-50/50 p-3 text-[11px] leading-relaxed whitespace-pre-wrap dark:bg-amber-950/20">
-                                    <div className="mb-1 flex items-center gap-1 font-bold text-amber-700 dark:text-amber-400">
+                                <div className="max-h-96 overflow-y-auto rounded-lg bg-amber-500/8 p-3 text-[11px] leading-relaxed whitespace-pre-wrap">
+                                    <div className="mb-1 flex items-center gap-1 font-bold text-amber-800 dark:text-amber-200">
                                         <BotMessageSquare className="h-3.5 w-3.5" /> {t('exam_admin.writing.ai_feedback')}
                                     </div>
                                     {essay.feedback ?? '—'}
@@ -164,7 +164,7 @@ function ReviewCard({ item }: { item: ReviewItem }) {
                 ))}
             </div>
 
-            <div className="flex flex-wrap items-center justify-end gap-3 border-t border-border pt-3">
+            <div className="flex flex-wrap items-center justify-end gap-3 border-t border-divider pt-3">
                 <label className="flex items-center gap-2 text-xs">
                     {t('exam_admin.writing.override')}
                     <select className={`${selectClass} h-8 w-20`} value={override} onChange={(e) => setOverride(e.target.value)}>
@@ -179,7 +179,7 @@ function ReviewCard({ item }: { item: ReviewItem }) {
                 <span className="text-xs">
                     {t('exam_admin.writing.final')}: <b className="text-base">{fmtBand(finalBand)}</b>
                 </span>
-                <Button disabled={processing || item.ai_pending && override === '' && taskBands.length < item.essays.length} onClick={confirm} className="rounded-xl bg-emerald-600 text-xs font-bold text-white hover:bg-emerald-700">
+                <Button disabled={processing || item.ai_pending && override === '' && taskBands.length < item.essays.length} onClick={confirm} className="rounded-full bg-emerald-600 text-xs font-bold text-white hover:bg-emerald-700">
                     <CheckCircle2 className="h-4 w-4" />
                     {item.reviewed_at ? t('exam_admin.writing.reconfirm') : t('exam_admin.writing.confirm')}
                 </Button>
@@ -220,8 +220,8 @@ export default function WritingReviewIndex() {
                                     type="button"
                                     onClick={() => visit({ status })}
                                     className={cn(
-                                        'rounded-xl px-3 py-1.5 text-xs font-bold',
-                                        filters.status === status ? 'bg-indigo-600 text-white' : 'bg-muted text-foreground/80',
+                                        'rounded-full px-3.5 py-1.5 text-xs font-bold',
+                                        filters.status === status ? 'btn-glass-primary' : 'border border-glass-edge bg-glass-subtle text-foreground hover:bg-accent',
                                     )}
                                 >
                                     {t(`exam_admin.writing.filter.${status}`)}
@@ -232,7 +232,7 @@ export default function WritingReviewIndex() {
                 />
 
                 {pendingAi > 0 && (
-                    <div className="flex items-center gap-2 rounded-xl border border-amber-200 bg-amber-50 p-3 text-xs text-amber-800 dark:border-amber-800/50 dark:bg-amber-950/30 dark:text-amber-300">
+                    <div className="flex items-center gap-2 rounded-[18px] border border-amber-500/25 bg-amber-500/15 p-3 text-xs text-amber-800 dark:text-amber-200">
                         <Loader2 className="h-4 w-4 animate-spin" />
                         {t('exam_admin.writing.pending_ai', { count: pendingAi })}
                         <button type="button" className="ml-auto font-bold underline" onClick={() => router.reload()}>
@@ -255,8 +255,8 @@ export default function WritingReviewIndex() {
                                 href={link.url ?? '#'}
                                 preserveScroll
                                 className={cn(
-                                    'rounded-md px-3 py-1 text-xs',
-                                    link.active ? 'bg-indigo-600 text-white' : link.url ? 'border border-border' : 'text-muted-foreground',
+                                    'rounded-full px-3 py-1 text-xs',
+                                    link.active ? 'btn-glass-primary' : link.url ? 'border border-glass-edge bg-glass-subtle text-foreground hover:bg-accent' : 'text-muted-foreground',
                                 )}
                                 dangerouslySetInnerHTML={{ __html: link.label }}
                             />

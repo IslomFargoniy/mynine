@@ -7,10 +7,10 @@ import { useTranslation } from 'react-i18next';
 export const MODULE_TYPES = ['Listening', 'Reading', 'Writing'] as const;
 
 export const moduleColor: Record<string, string> = {
-    Listening: 'bg-sky-50 text-sky-700 border-sky-200 dark:bg-sky-950/40 dark:text-sky-300 dark:border-sky-800/50',
-    Reading: 'bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-950/40 dark:text-emerald-300 dark:border-emerald-800/50',
-    Writing: 'bg-amber-50 text-amber-700 border-amber-200 dark:bg-amber-950/40 dark:text-amber-300 dark:border-amber-800/50',
-    Speaking: 'bg-violet-50 text-violet-700 border-violet-200 dark:bg-violet-950/40 dark:text-violet-300 dark:border-violet-800/50',
+    Listening: 'bg-sky-500/12 text-sky-800 border-sky-500/25 dark:bg-sky-400/15 dark:text-sky-200 dark:border-sky-300/25',
+    Reading: 'bg-emerald-500/12 text-emerald-800 border-emerald-500/25 dark:bg-emerald-400/15 dark:text-emerald-200 dark:border-emerald-300/25',
+    Writing: 'bg-amber-500/15 text-amber-800 border-amber-500/25 dark:bg-amber-400/15 dark:text-amber-200 dark:border-amber-300/25',
+    Speaking: 'bg-violet-500/12 text-violet-800 border-violet-500/25 dark:bg-violet-400/15 dark:text-violet-200 dark:border-violet-300/25',
 };
 
 export function fmtDateTime(value?: string | null, pattern = 'dd.MM.yyyy HH:mm'): string {
@@ -75,8 +75,8 @@ export function ModuleBadge({ type, className, children }: { type?: string | nul
     return (
         <span
             className={cn(
-                'inline-flex items-center gap-1 rounded-lg border px-2 py-0.5 text-[10px] font-bold',
-                moduleColor[type ?? ''] ?? 'border-border bg-muted text-foreground/80',
+                'inline-flex items-center gap-1 rounded-full border px-2.5 py-0.5 text-[11px] font-bold',
+                moduleColor[type ?? ''] ?? 'border-glass-edge bg-muted text-foreground',
                 className,
             )}
         >
@@ -89,10 +89,10 @@ export function PageHeader({ title, description, icon, actions }: { title: strin
     return (
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
             <div className="flex items-center gap-3">
-                {icon && <div className="rounded-xl bg-indigo-50 p-2.5 text-indigo-600 dark:bg-indigo-950/40 dark:text-indigo-400">{icon}</div>}
+                {icon && <div className="glass-subtle rounded-2xl p-2.5 text-brand">{icon}</div>}
                 <div>
-                    <h1 className="text-xl font-black text-foreground">{title}</h1>
-                    {description && <p className="mt-0.5 text-xs text-muted-foreground">{description}</p>}
+                    <h1 className="text-2xl font-extrabold tracking-tight text-foreground sm:text-[28px]">{title}</h1>
+                    {description && <p className="mt-0.5 text-sm text-muted-foreground">{description}</p>}
                 </div>
             </div>
             {actions && <div className="flex flex-wrap items-center gap-2">{actions}</div>}
@@ -101,29 +101,30 @@ export function PageHeader({ title, description, icon, actions }: { title: strin
 }
 
 export function Panel({ className, children }: { className?: string; children: ReactNode }) {
-    return <div className={cn('rounded-2xl border border-border bg-card p-4 shadow-xs', className)}>{children}</div>;
+    // Data-heavy views (reception, monitor, speaking, writing review): near-opaque glass keeps text crisp.
+    return <div className={cn('glass-strong rounded-[22px] p-4 sm:p-5', className)}>{children}</div>;
 }
 
 export function EmptyState({ children }: { children: ReactNode }) {
     return (
-        <div className="rounded-xl border border-dashed border-border py-10 text-center text-xs text-muted-foreground">{children}</div>
+        <div className="rounded-[18px] border border-dashed border-glass-dash py-10 text-center text-sm text-muted-foreground">{children}</div>
     );
 }
 
 const statusTone: Record<string, string> = {
-    not_arrived: 'bg-muted text-foreground/80',
-    checked_in: 'bg-blue-50 text-blue-700 dark:bg-blue-950/40 dark:text-blue-300',
-    in_exam: 'bg-indigo-50 text-indigo-700 dark:bg-indigo-950/40 dark:text-indigo-300',
-    written_done: 'bg-amber-50 text-amber-700 dark:bg-amber-950/40 dark:text-amber-300',
-    speaking_waiting: 'bg-violet-50 text-violet-700 dark:bg-violet-950/40 dark:text-violet-300',
-    result_ready: 'bg-emerald-50 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-300',
-    delivered: 'bg-teal-600 text-white dark:bg-teal-700',
+    not_arrived: 'bg-muted text-foreground border border-glass-edge',
+    checked_in: 'bg-indigo-500/12 text-brand',
+    in_exam: 'bg-indigo-500/12 text-brand',
+    written_done: 'bg-amber-500/15 text-amber-800 dark:bg-amber-400/15 dark:text-amber-200',
+    speaking_waiting: 'bg-violet-500/12 text-violet-800 dark:bg-violet-400/15 dark:text-violet-200',
+    result_ready: 'bg-emerald-500/12 text-emerald-800 dark:bg-emerald-400/15 dark:text-emerald-200',
+    delivered: 'bg-teal-700 text-white dark:bg-teal-600',
 };
 
 export function CandidateStatusBadge({ status, module }: { status: string; module?: string | null }) {
     const { t } = useTranslation();
     return (
-        <span className={cn('inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-[10px] font-bold whitespace-nowrap', statusTone[status] ?? statusTone.not_arrived)}>
+        <span className={cn('inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-[11px] font-bold whitespace-nowrap', statusTone[status] ?? statusTone.not_arrived)}>
             {t(`exam_admin.status.${status}`)}
             {status === 'in_exam' && module ? ` · ${module}` : ''}
         </span>
@@ -133,14 +134,14 @@ export function CandidateStatusBadge({ status, module }: { status: string; modul
 export function OnlineDot({ online, label }: { online: boolean; label?: string }) {
     return (
         <span className="inline-flex items-center gap-1.5 text-[11px] font-semibold">
-            <span className={cn('h-2 w-2 rounded-full', online ? 'animate-pulse bg-emerald-500' : 'bg-gray-300 dark:bg-gray-600')} />
+            <span className={cn('h-2 w-2 rounded-full', online ? 'animate-pulse bg-emerald-500' : 'bg-slate-400 dark:bg-slate-500')} />
             {label}
         </span>
     );
 }
 
 export const selectClass =
-    'h-9 rounded-xl border border-border bg-card px-3 text-xs font-semibold text-foreground focus:ring-2 focus:ring-indigo-500/20';
+    'h-9 rounded-full border border-input bg-glass-subtle px-3.5 text-xs font-semibold text-foreground focus:border-ring focus:ring-2 focus:ring-ring/40';
 
 export const inputClass =
-    'h-9 w-full rounded-xl border border-border bg-card px-3 text-xs font-medium text-foreground focus:ring-2 focus:ring-indigo-500/20';
+    'h-9 w-full rounded-full border border-input bg-glass-subtle px-3.5 text-xs font-medium text-foreground focus:border-ring focus:ring-2 focus:ring-ring/40';

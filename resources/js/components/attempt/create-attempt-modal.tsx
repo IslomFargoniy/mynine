@@ -80,14 +80,14 @@ export default function CreateAttemptModal({ test, mock }: AttemptUpdateProps) {
         <Dialog open={open} onOpenChange={setOpen}>
             <DialogTrigger asChild>
                 <button
-                    className="flex items-center gap-2 px-6 py-3 bg-white/90 dark:bg-gray-900/90 backdrop-blur-md text-blue-600 dark:text-blue-400 font-bold rounded-2xl shadow-2xl hover:bg-primary hover:text-white dark:hover:bg-primary dark:hover:text-white transition-all duration-300 border border-white/20 active:scale-95 group/btn"
+                    className="flex items-center gap-2 px-6 py-3 bg-glass-subtle text-brand font-bold rounded-full shadow-glass-pill hover:bg-primary hover:text-primary-foreground transition-all duration-300 border border-glass-edge active:scale-95 group/btn"
                 >
                     <FaCirclePlay className="w-5 h-5 group-hover/btn:scale-110 transition-transform duration-300" aria-hidden="true" />
                     <span className="tracking-tight">{t('start')}</span>
                 </button>
             </DialogTrigger>
 
-            <DialogContent className="max-h-[90vh] overflow-y-auto dark:border-gray-400">
+            <DialogContent className="max-h-[90vh] overflow-y-auto">
                 <DialogTitle>{t('start_with_name', { name: test.name })}</DialogTitle>
                 <DialogDescription className="space-y-2 text-foreground/80" asChild>
                     <div className="space-y-2 text-foreground/80 text-sm">
@@ -114,7 +114,7 @@ export default function CreateAttemptModal({ test, mock }: AttemptUpdateProps) {
                     {mock && (
                         <div className="space-y-2">
                             <label htmlFor="name" className="text-sm font-medium text-foreground/80">
-                                {t('attempt_name')} <span className="text-red-500">*</span>
+                                {t('attempt_name')} <span className="text-rose-700 dark:text-rose-300">*</span>
                             </label>
                             <input
                                 id="name"
@@ -123,17 +123,17 @@ export default function CreateAttemptModal({ test, mock }: AttemptUpdateProps) {
                                 onChange={(e) => setData('name', e.target.value)}
                                 placeholder={t('enter_attempt_name')}
                                 required
-                                className={`w-full rounded-md border py-2 px-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-800 dark:text-gray-100 ${
+                                className={`w-full rounded-xl border bg-glass-subtle text-foreground py-2 px-3 text-sm focus:outline-none focus:ring-2 focus:ring-ring ${
                                     errors.name 
-                                    ? 'border-red-500 focus:ring-red-500' 
-                                    : 'border-gray-300 dark:border-gray-600'
+                                    ? 'border-rose-500 focus:ring-rose-500' 
+                                    : 'border-input'
                                 }`}
                             />
                             {errors.name && (
-                                <p className="text-xs text-red-500">{errors.name}</p>
+                                <p className="text-xs text-rose-700 dark:text-rose-300">{errors.name}</p>
                             )}
                             {!data.name && (
-                                <p className="text-xs text-orange-500">{t('name_is_required_for_mock')}</p>
+                                <p className="text-xs text-warning">{t('name_is_required_for_mock')}</p>
                             )}
                         </div>
                     )}
@@ -146,7 +146,6 @@ export default function CreateAttemptModal({ test, mock }: AttemptUpdateProps) {
                                     reset();
                                     clearErrors();
                                 }}
-                                className="bg-muted text-foreground hover:bg-gray-200 dark:hover:bg-gray-700"
                             >
                                 {t('cancel')}
                             </Button>
@@ -155,7 +154,6 @@ export default function CreateAttemptModal({ test, mock }: AttemptUpdateProps) {
                         <Button
                             type="submit"
                             disabled={processing}
-                            className="bg-blue-600 text-white hover:bg-blue-700 dark:bg-blue-500 dark:hover:bg-blue-600"
                         >
                             {t('start')}
                         </Button>

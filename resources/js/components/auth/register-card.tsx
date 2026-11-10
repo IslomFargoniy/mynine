@@ -36,7 +36,7 @@ export default function RegisterCard() {
     };
 
     return (
-        <div className="group relative w-full overflow-hidden rounded-[2.5rem] bg-white/70 dark:bg-gray-900/70 backdrop-blur-xl p-5 sm:p-6 shadow-2xl transition-all duration-500 hover:shadow-primary/10 border border-white/20 dark:border-white/5">
+        <div className="relative w-full overflow-hidden glass-strong rounded-[28px] p-5 sm:p-6">
             <SocialSignIn />
 
             <form className="mt-5 flex flex-col gap-4" onSubmit={submit}>
@@ -56,7 +56,7 @@ export default function RegisterCard() {
                             onChange={(e) => setData('name', e.target.value)}
                             disabled={processing}
                             placeholder={t('register.name_placeholder')}
-                            className="h-12 rounded-2xl border-border bg-white/50 dark:bg-gray-800/50 focus:ring-2 focus:ring-primary/20 transition-all font-medium"
+                            className="h-12 rounded-xl border border-input bg-glass-subtle focus-visible:ring-2 focus-visible:ring-ring/40 transition-all font-medium"
                         />
                         <InputError message={errors.name} />
                     </div>
@@ -75,7 +75,7 @@ export default function RegisterCard() {
                             onChange={(e) => setData('phone', e.target.value)}
                             disabled={processing}
                             placeholder={t('phone')}
-                            className="h-12 rounded-2xl border-border bg-white/50 dark:bg-gray-800/50 focus:ring-2 focus:ring-primary/20 transition-all font-medium"
+                            className="h-12 rounded-xl border border-input bg-glass-subtle focus-visible:ring-2 focus-visible:ring-ring/40 transition-all font-medium"
                         />
                         <InputError message={errors.phone} />
                     </div>
@@ -93,7 +93,7 @@ export default function RegisterCard() {
                             onChange={(e) => setData('email', e.target.value)}
                             disabled={processing}
                             placeholder={t('register.email_placeholder')}
-                            className="h-12 rounded-2xl border-border bg-white/50 dark:bg-gray-800/50 focus:ring-2 focus:ring-primary/20 transition-all font-medium"
+                            className="h-12 rounded-xl border border-input bg-glass-subtle focus-visible:ring-2 focus-visible:ring-ring/40 transition-all font-medium"
                         />
                         <InputError message={errors.email} />
                     </div>
@@ -112,7 +112,7 @@ export default function RegisterCard() {
                             onChange={(e) => setData('password', e.target.value)}
                             disabled={processing}
                             placeholder={t('register.password_placeholder')}
-                            className="h-12 rounded-2xl border-border bg-white/50 dark:bg-gray-800/50 focus:ring-2 focus:ring-primary/20 transition-all font-medium"
+                            className="h-12 rounded-xl border border-input bg-glass-subtle focus-visible:ring-2 focus-visible:ring-ring/40 transition-all font-medium"
                         />
                         <InputError message={errors.password} />
                     </div>
@@ -131,18 +131,17 @@ export default function RegisterCard() {
                             onChange={(e) => setData('password_confirmation', e.target.value)}
                             disabled={processing}
                             placeholder={t('register.password_confirmation_placeholder')}
-                            className="h-12 rounded-2xl border-border bg-white/50 dark:bg-gray-800/50 focus:ring-2 focus:ring-primary/20 transition-all font-medium"
+                            className="h-12 rounded-xl border border-input bg-glass-subtle focus-visible:ring-2 focus-visible:ring-ring/40 transition-all font-medium"
                         />
                         <InputError message={errors.password_confirmation} />
                     </div>
 
                     <button
                         type="submit"
-                        className="group/btn relative mt-4 h-12 w-full overflow-hidden rounded-2xl bg-primary font-black tracking-tight text-white shadow-lg shadow-primary/20 transition-all hover:scale-[1.02] active:scale-[0.98] disabled:opacity-50"
+                        className="btn-glass-primary relative mt-4 h-12 w-full overflow-hidden rounded-full font-black tracking-tight transition-all hover:brightness-110 active:scale-[0.98] disabled:opacity-50"
                         tabIndex={6}
                         disabled={processing}
                     >
-                        <div className="absolute inset-0 bg-gradient-to-r from-blue-600 to-purple-600 opacity-0 group-hover/btn:opacity-100 transition-opacity" />
                         <div className="relative flex items-center justify-center gap-2">
                             {processing ? (
                                 <LoaderCircle className="h-5 w-5 animate-spin" />
@@ -158,7 +157,7 @@ export default function RegisterCard() {
 
                 <div className="text-center text-sm font-semibold">
                     <span className="text-muted-foreground">{t('register.no_account')} </span>
-                    <Link href={route('login')} className="text-primary hover:underline transition-all underline-offset-4">
+                    <Link href={route('login')} className="text-brand font-bold hover:underline transition-all underline-offset-4">
                         {t('register.login')}
                     </Link>
                 </div>

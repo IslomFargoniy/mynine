@@ -33,7 +33,7 @@ export function AppBottomNav() {
 
     return (
         <div className="fixed right-4 left-4 bottom-[calc(1.2rem+env(safe-area-inset-bottom))] z-50 md:hidden">
-            <div className="flex p-1.5 items-center justify-around rounded-[2.5rem] border border-slate-200/80 bg-white/90 shadow-[0_8px_32px_rgba(0,0,0,0.12)] backdrop-blur-xl dark:border-white/15 dark:bg-slate-900/90 dark:shadow-[0_12px_48px_rgba(0,0,0,0.5)] gap-1">
+            <nav aria-label="Asosiy menyu" className="glass-pill flex items-center justify-around gap-1 bg-glass-strong p-1.5">
                 {mainNavItems.map((item) => {
                     const isActive = page.url.startsWith(item.href);
 
@@ -44,20 +44,21 @@ export function AppBottomNav() {
                                 impact('light');
                                 router.visit(item.href);
                             }}
-                            className={`flex flex-1 flex-col items-center justify-center transition-all duration-300 py-2 px-1 rounded-[1.8rem] ${
-                                isActive 
-                                    ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-500/30' 
-                                    : 'text-slate-400 hover:text-slate-600'
+                            aria-current={isActive ? 'page' : undefined}
+                            className={`flex flex-1 flex-col items-center justify-center rounded-full border px-1 py-2 transition-colors duration-200 ${
+                                isActive
+                                    ? 'border-glass-edge bg-glass-thumb text-glass-active shadow-glass-pill'
+                                    : 'border-transparent text-muted-foreground hover:text-foreground'
                             }`}
                         >
                             <item.icon size={isActive ? 20 : 22} strokeWidth={isActive ? 2.5 : 2} />
-                            <span className={`text-[9px] font-black mt-1 tracking-tight leading-none uppercase ${isActive ? 'text-white' : 'text-slate-400'}`}>
+                            <span className="mt-1 text-[10px] leading-none font-bold tracking-tight">
                                 {item.title}
                             </span>
                         </button>
                     );
                 })}
-            </div>
+            </nav>
         </div>
     );
 }

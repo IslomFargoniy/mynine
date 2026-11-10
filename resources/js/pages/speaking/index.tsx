@@ -46,14 +46,14 @@ function SlotEditor({ candidate }: { candidate: SpeakingCandidate }) {
         <div className="flex items-center gap-1">
             <input
                 type="datetime-local"
-                className="h-8 rounded-lg border border-border bg-card px-2 text-xs"
+                className="h-8 rounded-full border border-input bg-glass-subtle px-3 text-xs text-foreground focus:border-ring focus:ring-2 focus:ring-ring/40"
                 value={value}
                 onChange={(e) => setValue(e.target.value)}
             />
             {dirty && (
                 <Button
                     size="sm"
-                    className="h-8 rounded-lg bg-indigo-600 px-2 text-white"
+                    className="h-8 rounded-full px-3"
                     title={t('exam_admin.common.save')}
                     onClick={() =>
                         router.post(route('speaking.slot', candidate.id), { speaking_at: value ? value.replace('T', ' ') : null }, { preserveScroll: true })
@@ -91,10 +91,10 @@ function ScoreDialog({ candidate, criteria, onClose }: { candidate: SpeakingCand
 
     return (
         <Dialog open onOpenChange={(open) => !open && onClose()}>
-            <DialogContent className="rounded-2xl sm:max-w-md">
+            <DialogContent className="sm:max-w-md">
                 <DialogHeader>
                     <DialogTitle className="flex items-center gap-2">
-                        <Mic className="h-5 w-5 text-violet-500" />
+                        <Mic className="h-5 w-5 text-violet-700 dark:text-violet-300" />
                         {candidate.name}
                     </DialogTitle>
                     <DialogDescription className="font-mono text-xs">{candidate.code}</DialogDescription>
@@ -115,18 +115,18 @@ function ScoreDialog({ candidate, criteria, onClose }: { candidate: SpeakingCand
                     ))}
                     <textarea
                         rows={3}
-                        className="w-full rounded-xl border border-border bg-card p-2 text-xs"
+                        className="w-full rounded-xl border border-input bg-glass-subtle p-2 text-xs text-foreground focus:border-ring focus:ring-2 focus:ring-ring/40"
                         placeholder={t('exam_admin.speaking.note')}
                         value={note}
                         onChange={(e) => setNote(e.target.value)}
                     />
-                    <div className="flex items-center justify-between rounded-xl bg-violet-50 p-3 dark:bg-violet-950/30">
+                    <div className="flex items-center justify-between rounded-[18px] border border-violet-500/25 bg-violet-500/12 p-3 dark:bg-violet-400/15">
                         <span className="text-xs font-bold text-violet-700 uppercase dark:text-violet-300">{t('exam_admin.speaking.band')}</span>
                         <span className="text-2xl font-black text-violet-700 dark:text-violet-300">{fmtBand(band)}</span>
                     </div>
                 </div>
                 <DialogFooter>
-                    <Button disabled={!filled || processing} onClick={submit} className="rounded-xl bg-violet-600 text-white hover:bg-violet-700">
+                    <Button disabled={!filled || processing} onClick={submit} className="rounded-full">
                         {t('exam_admin.common.save')}
                     </Button>
                 </DialogFooter>
@@ -181,21 +181,21 @@ export default function SpeakingIndex() {
 
                 {mock && (
                     <Panel className="flex flex-wrap items-center gap-3">
-                        <CalendarClock className="h-4 w-4 text-indigo-500" />
+                        <CalendarClock className="h-4 w-4 text-brand" />
                         <span className="text-xs font-bold">{t('exam_admin.speaking.auto_assign')}</span>
                         <select className={selectClass} value={order} onChange={(e) => setOrder(e.target.value as 'finish' | 'name')}>
                             <option value="finish">{t('exam_admin.speaking.order_finish')}</option>
                             <option value="name">{t('exam_admin.speaking.order_name')}</option>
                         </select>
                         <label className="flex items-center gap-1.5 text-xs">
-                            <input type="checkbox" className="accent-indigo-600" checked={onlyUnassigned} onChange={(e) => setOnlyUnassigned(e.target.checked)} />
+                            <input type="checkbox" className="accent-primary" checked={onlyUnassigned} onChange={(e) => setOnlyUnassigned(e.target.checked)} />
                             {t('exam_admin.speaking.only_unassigned')}
                         </label>
-                        <Button size="sm" disabled={!mock.speaking_starts_at} onClick={autoAssign} className="rounded-xl bg-indigo-600 text-xs text-white hover:bg-indigo-700">
+                        <Button size="sm" disabled={!mock.speaking_starts_at} onClick={autoAssign} className="rounded-full text-xs">
                             <Wand2 className="h-3.5 w-3.5" />
                             {t('exam_admin.speaking.assign')}
                         </Button>
-                        {!mock.speaking_starts_at && <span className="text-[11px] text-rose-500">{t('exam_admin.speaking.no_start')}</span>}
+                        {!mock.speaking_starts_at && <span className="text-[11px] text-rose-700 dark:text-rose-300">{t('exam_admin.speaking.no_start')}</span>}
                     </Panel>
                 )}
 
@@ -204,7 +204,7 @@ export default function SpeakingIndex() {
                 ) : (
                     <Panel className="overflow-x-auto p-0">
                         <table className="w-full text-left text-xs">
-                            <thead className="bg-muted text-[10px] font-bold text-muted-foreground uppercase">
+                            <thead className="bg-muted text-[10px] font-bold text-muted-foreground uppercase tracking-wide">
                                 <tr>
                                     <th className="px-3 py-2.5">{t('exam_admin.speaking.slot')}</th>
                                     <th className="px-3 py-2.5">{t('exam_admin.common.candidate')}</th>
@@ -213,7 +213,7 @@ export default function SpeakingIndex() {
                                     <th className="px-3 py-2.5 text-right">{t('exam_admin.common.actions')}</th>
                                 </tr>
                             </thead>
-                            <tbody className="divide-y divide-gray-100 dark:divide-gray-800">
+                            <tbody className="divide-y divide-divider">
                                 {candidates.map((c) => (
                                     <tr key={c.id}>
                                         <td className="px-3 py-2">
@@ -221,7 +221,7 @@ export default function SpeakingIndex() {
                                         </td>
                                         <td className="px-3 py-2">
                                             <div className="font-bold">{c.name}</div>
-                                            <div className="font-mono text-[11px] text-indigo-600 dark:text-indigo-400">{c.code}</div>
+                                            <div className="font-mono text-[11px] text-brand">{c.code}</div>
                                         </td>
                                         <td className="px-3 py-2">
                                             {c.written_done ? (
@@ -232,8 +232,8 @@ export default function SpeakingIndex() {
                                         </td>
                                         <td className="px-3 py-2 text-lg font-black text-violet-700 dark:text-violet-300">{fmtBand(c.band)}</td>
                                         <td className="px-3 py-2 text-right">
-                                            <Button size="sm" variant="outline" className="rounded-lg text-xs" onClick={() => setScoring(c)}>
-                                                <Mic className="h-3.5 w-3.5 text-violet-500" />
+                                            <Button size="sm" variant="outline" className="rounded-full text-xs" onClick={() => setScoring(c)}>
+                                                <Mic className="h-3.5 w-3.5 text-violet-700 dark:text-violet-300" />
                                                 {c.band === null ? t('exam_admin.speaking.score') : t('exam_admin.speaking.rescore')}
                                             </Button>
                                         </td>

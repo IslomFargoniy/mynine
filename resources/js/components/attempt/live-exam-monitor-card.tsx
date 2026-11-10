@@ -25,17 +25,17 @@ export default function LiveExamMonitorCard({ activeAttempts }: LiveExamMonitorC
     const inProgressCount = attempts.filter(a => a.status === 'in_progress').length;
 
     return (
-        <div className="rounded-2xl border border-border bg-card p-5 shadow-xs space-y-4">
+        <div className="glass-strong rounded-[22px] p-5 space-y-4">
             {/* Header */}
-            <div className="flex items-center justify-between border-b border-border pb-3">
+            <div className="flex items-center justify-between border-b border-divider pb-3">
                 <div className="flex items-center gap-2.5">
-                    <div className="p-2 rounded-xl bg-emerald-50 dark:bg-emerald-950/40 text-emerald-600 dark:text-emerald-400">
+                    <div className="p-2 rounded-[14px] bg-emerald-500/12 text-emerald-800 dark:bg-emerald-400/15 dark:text-emerald-200">
                         <Activity className="w-4 h-4 animate-pulse" />
                     </div>
                     <div>
                         <h3 className="text-sm font-bold text-foreground flex items-center gap-2">
                             Jonli Imtihon Monitoringi (Live Monitor)
-                            <span className="px-2 py-0.5 rounded-full bg-emerald-100 dark:bg-emerald-900/60 text-emerald-700 dark:text-emerald-300 text-[10px] font-bold">
+                            <span className="px-2 py-0.5 rounded-full bg-emerald-500/12 text-emerald-800 dark:bg-emerald-400/15 dark:text-emerald-200 text-[10px] font-bold">
                                 {inProgressCount} faol student
                             </span>
                         </h3>
@@ -49,9 +49,9 @@ export default function LiveExamMonitorCard({ activeAttempts }: LiveExamMonitorC
             {/* List */}
             <div className="space-y-2.5">
                 {attempts.map(item => (
-                    <div key={item.id} className="p-3 rounded-xl border border-border bg-gray-50/50 dark:bg-gray-800/40 flex items-center justify-between text-xs">
+                    <div key={item.id} className="glass-subtle p-3 rounded-[18px] flex items-center justify-between text-xs">
                         <div className="flex items-center gap-3">
-                            <div className="w-8 h-8 rounded-full bg-blue-100 dark:bg-blue-900/40 text-blue-600 dark:text-blue-400 flex items-center justify-center font-bold text-xs">
+                            <div className="w-8 h-8 rounded-full bg-indigo-500/12 text-brand flex items-center justify-center font-bold text-xs">
                                 {item.userName.charAt(0)}
                             </div>
                             <div>
@@ -61,7 +61,7 @@ export default function LiveExamMonitorCard({ activeAttempts }: LiveExamMonitorC
                         </div>
 
                         <div className="flex items-center gap-3">
-                            <span className="px-2.5 py-1 rounded-lg bg-blue-50 dark:bg-blue-950/40 text-blue-700 dark:text-blue-300 font-semibold text-[11px]">
+                            <span className="px-2.5 py-1 rounded-full bg-indigo-500/12 text-brand font-semibold text-[11px]">
                                 📍 {item.currentModule}
                             </span>
                             <span className="text-muted-foreground text-[11px] flex items-center gap-1">
@@ -70,7 +70,7 @@ export default function LiveExamMonitorCard({ activeAttempts }: LiveExamMonitorC
                             </span>
                             <span className={`px-2.5 py-1 rounded-full text-[10px] font-bold ${
                                 item.status === 'in_progress'
-                                    ? 'bg-emerald-50 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-400'
+                                    ? 'bg-emerald-500/12 text-emerald-800 dark:bg-emerald-400/15 dark:text-emerald-200'
                                     : 'bg-muted text-muted-foreground'
                             }`}>
                                 {item.status === 'in_progress' ? '● Jonli' : '✓ Topshirildi'}

@@ -53,17 +53,17 @@ export default function SectionQuestion({
     })();
 
     return (
-        <div className="p-4 rounded-xl border border-border bg-card shadow-2xs space-y-3">
+        <div className="glass-subtle p-4 rounded-[18px] space-y-3">
             {/* Header: Question Number, Prompt & Action Buttons */}
             <div className="flex items-start justify-between gap-3">
                 <div className="flex-1 min-w-0">
                     <h3 className="font-bold text-sm text-foreground leading-snug">
-                        <span className="text-blue-600 dark:text-blue-400 mr-1.5">{questionNumberStr}.</span>
+                        <span className="text-brand mr-1.5">{questionNumberStr}.</span>
                         {question.textarea}
                     </h3>
 
                     {question.answer_text && (
-                        <div className="mt-1.5 inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-md bg-blue-50 dark:bg-blue-950/60 text-blue-700 dark:text-blue-300 text-xs font-semibold border border-blue-100 dark:border-blue-800">
+                        <div className="mt-1.5 inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-indigo-500/12 text-brand text-xs font-semibold border border-indigo-500/25">
                             <span>Javob:</span>
                             <span className="font-mono">{question.answer_text}</span>
                         </div>
@@ -74,14 +74,14 @@ export default function SectionQuestion({
                 <div className="flex items-center gap-1 shrink-0">
                     <button
                         onClick={() => setOpenUpdate(true)}
-                        className="p-1.5 rounded-lg hover:bg-blue-50 dark:hover:bg-blue-900/30 text-blue-600 dark:text-blue-400 transition-colors"
+                        className="p-1.5 rounded-full hover:bg-indigo-500/12 text-brand transition-colors"
                         title={t('edit') ?? 'Tahrirlash'}
                     >
                         <Edit className="w-4 h-4" />
                     </button>
                     <button
                         onClick={() => setOpenDelete(true)}
-                        className="p-1.5 rounded-lg hover:bg-red-50 dark:hover:bg-red-900/30 text-red-500 dark:text-red-400 transition-colors"
+                        className="p-1.5 rounded-full hover:bg-rose-500/12 text-rose-700 dark:text-rose-300 transition-colors"
                         title={t('delete') ?? "O'chirish"}
                     >
                         <TrashIcon className="w-4 h-4" />

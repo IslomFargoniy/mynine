@@ -41,15 +41,15 @@ export default function SettingsLayout({ children }: PropsWithChildren) {
 
             <div className="flex flex-col space-y-8 lg:flex-row lg:space-y-0 lg:space-x-12">
                 <aside className="w-full max-w-xl lg:w-48">
-                    <nav className="flex flex-col space-y-1 space-x-0">
+                    <nav className="glass-pill flex gap-1 p-1 lg:flex-col lg:rounded-[22px]">
                         {sidebarNavItems.map((item, index) => (
                             <Button
                                 key={`${item.href}-${index}`}
                                 size="sm"
                                 variant="ghost"
                                 asChild
-                                className={cn('w-full justify-start', {
-                                    'bg-muted': currentPath === item.href,
+                                className={cn('h-9 flex-1 justify-center rounded-full border border-transparent px-4 text-sm font-medium text-muted-foreground hover:bg-accent hover:text-foreground lg:w-full lg:flex-none lg:justify-start', {
+                                    'bg-glass-thumb border-glass-edge font-semibold text-foreground shadow-glass-pill': currentPath === item.href,
                                 })}
                             >
                                 <Link href={item.href} prefetch>
@@ -62,7 +62,7 @@ export default function SettingsLayout({ children }: PropsWithChildren) {
 
                 <Separator className="my-6 md:hidden" />
 
-                <div className="flex-1 md:max-w-2xl">
+                <div className="glass flex-1 rounded-[28px] p-6 md:max-w-2xl">
                     <section className="max-w-xl space-y-12">{children}</section>
                 </div>
             </div>

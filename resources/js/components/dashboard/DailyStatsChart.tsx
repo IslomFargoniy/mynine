@@ -10,7 +10,8 @@ interface Props {
 
 export default function DailyStatsChart({ dailyUsers, dailyAttempts }: Props) {
     const isDark = useIsDark();
-    const axisLabel = isDark ? '#94a3b8' : '#64748b';
+    const axisLabel = isDark ? '#CBD5E1' : '#334155';
+    const brand = isDark ? '#818CF8' : '#4F46E5';
 
     const allDates = Array.from(new Set([
         ...dailyUsers.map(d => d.day_date),
@@ -73,7 +74,7 @@ export default function DailyStatsChart({ dailyUsers, dailyAttempts }: Props) {
             }
         },
         grid: {
-            borderColor: isDark ? 'rgba(255, 255, 255, 0.06)' : 'rgba(0, 0, 0, 0.06)',
+            borderColor: isDark ? 'rgba(255, 255, 255, 0.10)' : 'rgba(15, 23, 42, 0.08)',
             strokeDashArray: 4,
         },
         legend: {
@@ -81,8 +82,9 @@ export default function DailyStatsChart({ dailyUsers, dailyAttempts }: Props) {
             horizontalAlign: 'right',
             fontFamily: 'inherit',
             markers: { size: 4 },
+            labels: { colors: axisLabel },
         },
-        colors: ['#6366f1', '#10b981', '#14b8a6'],
+        colors: [brand, '#10b981', '#14b8a6'],
         tooltip: {
             theme: isDark ? 'dark' : 'light',
         }

@@ -1,6 +1,6 @@
 import AppLayout from '@/layouts/app-layout';
 import { Head, usePage, useForm } from '@inertiajs/react';
-import { type BreadcrumbItem, type FolderPaginate, SearchData, Folder, User } from '@/types';
+import { type BreadcrumbItem, type FolderPaginate, SearchData, Folder } from '@/types';
 import { useEffect, useState, useRef } from 'react';
 import { router } from '@inertiajs/react';
 import AllTestCard from '@/components/all-test/all-test-card';
@@ -129,7 +129,7 @@ export default function AllTest() {
                 <div ref={sentinelRef} className="h-10 flex justify-center items-center">
                     {loading && (
                         <div className="flex items-center gap-2 text-sm text-muted-foreground py-4">
-                            <span className="animate-spin inline-block w-5 h-5 border-2 border-t-transparent border-blue-600 rounded-full"></span>
+                            <span className="animate-spin inline-block w-5 h-5 border-2 border-t-transparent border-primary rounded-full"></span>
                             <span>{t('loading')}</span>
                         </div>
                     )}

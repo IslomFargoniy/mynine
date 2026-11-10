@@ -50,17 +50,17 @@ export default function AIEvaluationCard({ rawNote, score, essayText, answerId }
     const wordCount = essayText ? essayText.trim().split(/\s+/).filter(Boolean).length : 0;
 
     return (
-        <div className="rounded-2xl border border-indigo-100 dark:border-indigo-900/40 bg-gradient-to-br from-indigo-50/40 via-white to-purple-50/30 dark:from-gray-900 dark:via-gray-900 dark:to-indigo-950/20 p-5 shadow-xs space-y-4 my-3">
+        <div className="rounded-[22px] border border-indigo-500/25 bg-indigo-500/[0.06] dark:bg-indigo-400/[0.08] p-5 space-y-4 my-3">
             {/* Header */}
-            <div className="flex items-center justify-between border-b border-indigo-100 dark:border-gray-800 pb-3">
+            <div className="flex items-center justify-between border-b border-indigo-500/25 pb-3">
                 <div className="flex items-center gap-2">
-                    <div className="p-2 rounded-xl bg-indigo-600 text-white shadow-xs">
+                    <div className="p-2 rounded-xl btn-glass-primary">
                         <Sparkles className="w-4 h-4 animate-pulse" />
                     </div>
                     <div>
                         <h4 className="text-sm font-bold text-foreground flex items-center gap-2">
                             AI Examiner Evaluation
-                            <span className="px-2 py-0.5 rounded-full bg-indigo-100 dark:bg-indigo-900/60 text-indigo-700 dark:text-indigo-300 text-[10px] font-bold">
+                            <span className="px-2 py-0.5 rounded-full bg-indigo-500/12 text-brand text-[10px] font-bold">
                                 Automated IELTS
                             </span>
                         </h4>
@@ -76,7 +76,7 @@ export default function AIEvaluationCard({ rawNote, score, essayText, answerId }
                             type="button"
                             onClick={handleReEvaluate}
                             disabled={isReEvaluating}
-                            className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-xl border border-indigo-200 dark:border-indigo-800 text-indigo-600 dark:text-indigo-400 hover:bg-indigo-50 dark:hover:bg-indigo-950 text-xs font-semibold transition-all cursor-pointer"
+                            className="inline-flex items-center gap-1 px-3 py-1.5 rounded-full border border-indigo-500/25 bg-glass-subtle text-brand hover:bg-indigo-500/12 text-xs font-semibold transition-all cursor-pointer"
                             title="Qayta baholash"
                         >
                             <RefreshCw className={`w-3.5 h-3.5 ${isReEvaluating ? 'animate-spin' : ''}`} />
@@ -85,7 +85,7 @@ export default function AIEvaluationCard({ rawNote, score, essayText, answerId }
                     )}
 
                     {score !== null && score !== undefined && (
-                        <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-indigo-600 text-white font-extrabold text-sm shadow-xs">
+                        <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full btn-glass-primary font-extrabold text-sm">
                             <Award className="w-4 h-4" />
                             <span>Band {score}</span>
                         </div>
@@ -95,31 +95,31 @@ export default function AIEvaluationCard({ rawNote, score, essayText, answerId }
 
             {/* Individual Criteria Grid */}
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
-                <div className="p-3 rounded-xl bg-white dark:bg-gray-800/80 border border-border text-center">
+                <div className="glass-subtle p-3 rounded-[18px] text-center">
                     <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">Task Response</p>
-                    <p className="text-base font-extrabold text-indigo-600 dark:text-indigo-400 mt-0.5">{taskResponse}</p>
+                    <p className="text-base font-extrabold text-brand mt-0.5">{taskResponse}</p>
                 </div>
-                <div className="p-3 rounded-xl bg-white dark:bg-gray-800/80 border border-border text-center">
+                <div className="glass-subtle p-3 rounded-[18px] text-center">
                     <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">Coherence</p>
-                    <p className="text-base font-extrabold text-indigo-600 dark:text-indigo-400 mt-0.5">{coherence}</p>
+                    <p className="text-base font-extrabold text-brand mt-0.5">{coherence}</p>
                 </div>
-                <div className="p-3 rounded-xl bg-white dark:bg-gray-800/80 border border-border text-center">
+                <div className="glass-subtle p-3 rounded-[18px] text-center">
                     <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">Lexical Resource</p>
-                    <p className="text-base font-extrabold text-indigo-600 dark:text-indigo-400 mt-0.5">{lexical}</p>
+                    <p className="text-base font-extrabold text-brand mt-0.5">{lexical}</p>
                 </div>
-                <div className="p-3 rounded-xl bg-white dark:bg-gray-800/80 border border-border text-center">
+                <div className="glass-subtle p-3 rounded-[18px] text-center">
                     <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">Grammar</p>
-                    <p className="text-base font-extrabold text-indigo-600 dark:text-indigo-400 mt-0.5">{grammar}</p>
+                    <p className="text-base font-extrabold text-brand mt-0.5">{grammar}</p>
                 </div>
             </div>
 
             {/* Detailed Feedback Text */}
-            <div className="bg-white/80 dark:bg-gray-800/60 rounded-xl p-3.5 border border-border text-xs leading-relaxed text-foreground/80 space-y-2">
+            <div className="glass-subtle rounded-[18px] p-3.5 text-xs leading-relaxed text-foreground space-y-2">
                 <div className="flex items-center gap-1.5 font-bold text-foreground">
-                    <FileText className="w-3.5 h-3.5 text-indigo-500" />
+                    <FileText className="w-3.5 h-3.5 text-brand" />
                     <span>Examiner Feedback & Suggestions:</span>
                 </div>
-                <p className="whitespace-pre-wrap text-foreground/80 font-normal">
+                <p className="whitespace-pre-wrap text-foreground font-normal">
                     {feedbackText}
                 </p>
             </div>

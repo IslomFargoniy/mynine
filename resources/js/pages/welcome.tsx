@@ -1,5 +1,6 @@
 import { AppBottomNav } from '@/components/app-bottom-nav';
 import Footer from '@/components/Footer';
+import { GlassBackdrop } from '@/components/glass-backdrop';
 import Header from '@/components/Header';
 import Courses from '@/components/Home/Courses';
 import Hero from '@/components/Home/Hero';
@@ -52,6 +53,7 @@ export default function Welcome() {
                 <link rel="preconnect" href="https://fonts.bunny.net" />
                 <link href="https://fonts.bunny.net/css?family=instrument-sans:400,500,600" rel="stylesheet" />
             </Head>
+            <GlassBackdrop />
             <div>
                 {/*<header className="mb-6 w-full max-w-[335px] text-sm not-has-[nav]:hidden lg:max-w-4xl">*/}
                 {/*    <nav className="flex items-center justify-end gap-4">*/}
@@ -90,14 +92,14 @@ export default function Welcome() {
                             {/* Heading */}
                             <div className="mt-20 mb-8 items-end justify-between flex flex-wrap gap-6">
                                 <div className="space-y-2">
-                                    <h2 className="text-4xl md:text-5xl font-extrabold text-gray-900 dark:text-white tracking-tight">
-                                        {t('landing.popular_tests')} <span className="text-primary">{t('landing.tests_accent')}</span>
+                                    <h2 className="text-4xl md:text-5xl font-extrabold text-foreground tracking-tight">
+                                        {t('landing.popular_tests')} <span className="text-brand">{t('landing.tests_accent')}</span>
                                     </h2>
-                                    <p className="text-gray-500 dark:text-gray-400 font-medium">{t('landing.explore_desc')}</p>
+                                    <p className="text-muted-foreground font-medium">{t('landing.explore_desc')}</p>
                                 </div>
                                 <Link
                                     href={route('all-test.index')}
-                                    className="inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-gray-50 dark:bg-white/5 border border-gray-100 dark:border-white/10 text-primary font-bold hover:bg-primary hover:text-white transition-all duration-300"
+                                    className="glass-pill inline-flex items-center gap-2 px-6 py-3 rounded-full text-brand font-bold hover:bg-accent transition-colors duration-300"
                                 >
                                     {t('landing.explore_all')}
                                     <Icon icon="solar:round-alt-arrow-right-bold" className="size-5" />

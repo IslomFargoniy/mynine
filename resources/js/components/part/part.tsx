@@ -42,7 +42,7 @@ export default function PartComponent({ part, testType }: PartUpdateProps) {
             <button
                 type="button"
                 onClick={() => setOpenEditModal(true)}
-                className="p-1.5 rounded-lg hover:bg-purple-50 dark:hover:bg-purple-900/30 text-purple-600 dark:text-purple-400 hover:text-purple-800 transition-colors cursor-pointer"
+                className="p-1.5 rounded-full hover:bg-indigo-500/12 text-brand transition-colors cursor-pointer"
                 title={`${t('edit')} ${t('part')}`}
             >
                 <Edit className="w-4 h-4" />
@@ -52,7 +52,7 @@ export default function PartComponent({ part, testType }: PartUpdateProps) {
             <button
                 type="button"
                 onClick={() => setOpenDelete(true)}
-                className="p-1.5 rounded-lg hover:bg-red-50 dark:hover:bg-red-900/30 text-red-500 dark:text-red-400 hover:text-red-700 transition-colors cursor-pointer"
+                className="p-1.5 rounded-full hover:bg-rose-500/12 text-rose-700 dark:text-rose-300 transition-colors cursor-pointer"
                 title={`${t('delete')} ${t('part')}`}
             >
                 <TrashIcon className="w-4 h-4" />

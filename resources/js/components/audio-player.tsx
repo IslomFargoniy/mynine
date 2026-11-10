@@ -77,7 +77,7 @@ export default function EnhancedAudioPlayer({ src, className = '' }: AudioPlayer
     const speeds = [0.75, 1.0, 1.25, 1.5];
 
     return (
-        <div className={`p-3 rounded-2xl border border-border bg-card shadow-xs space-y-2.5 ${className}`}>
+        <div className={`glass-subtle p-3 rounded-[18px] space-y-2.5 ${className}`}>
             <audio ref={audioRef} src={src} preload="auto" />
 
             <div className="flex items-center gap-3">
@@ -85,7 +85,7 @@ export default function EnhancedAudioPlayer({ src, className = '' }: AudioPlayer
                 <button
                     type="button"
                     onClick={togglePlay}
-                    className="p-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 active:scale-95 text-white transition-all shadow-xs cursor-pointer"
+                    className="btn-glass-primary p-2.5 rounded-full hover:brightness-110 active:scale-95 text-primary-foreground transition-all cursor-pointer"
                 >
                     {isPlaying ? <Pause className="w-4 h-4" /> : <Play className="w-4 h-4 ml-0.5" />}
                 </button>
@@ -98,7 +98,7 @@ export default function EnhancedAudioPlayer({ src, className = '' }: AudioPlayer
                         max={duration || 100}
                         value={currentTime}
                         onChange={handleSeek}
-                        className="w-full h-1.5 accent-blue-600 rounded-lg cursor-pointer bg-gray-200 dark:bg-gray-700"
+                        className="w-full h-1.5 accent-primary rounded-full cursor-pointer bg-foreground/10"
                     />
                     <div className="flex justify-between text-[10px] font-bold text-muted-foreground">
                         <span>{formatTime(currentTime)}</span>
@@ -110,23 +110,23 @@ export default function EnhancedAudioPlayer({ src, className = '' }: AudioPlayer
                 <button
                     type="button"
                     onClick={toggleMute}
-                    className="p-2 rounded-lg text-muted-foreground hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors cursor-pointer"
+                    className="p-2 rounded-full text-muted-foreground hover:bg-accent transition-colors cursor-pointer"
                 >
                     {isMuted ? <VolumeX className="w-4 h-4 text-rose-500" /> : <Volume2 className="w-4 h-4" />}
                 </button>
 
                 {/* Speed Select Buttons */}
-                <div className="flex items-center gap-1 bg-muted p-1 rounded-xl">
+                <div className="flex items-center gap-1 bg-muted border border-glass-edge p-1 rounded-full">
                     <Gauge className="w-3.5 h-3.5 text-muted-foreground ml-1 mr-0.5" />
                     {speeds.map(rate => (
                         <button
                             key={rate}
                             type="button"
                             onClick={() => changeSpeed(rate)}
-                            className={`px-1.5 py-0.5 rounded-lg text-[10px] font-bold transition-all cursor-pointer ${
+                            className={`px-1.5 py-0.5 rounded-full text-[10px] font-bold transition-all cursor-pointer ${
                                 playbackRate === rate
-                                    ? 'bg-blue-600 text-white shadow-xs'
-                                    : 'text-muted-foreground hover:bg-gray-200 dark:hover:bg-gray-700'
+                                    ? 'bg-primary text-primary-foreground shadow-glass-pill'
+                                    : 'text-muted-foreground hover:bg-accent'
                             }`}
                         >
                             {rate}x

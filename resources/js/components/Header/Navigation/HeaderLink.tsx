@@ -33,9 +33,9 @@ const HeaderLink: React.FC<{ item: HeaderItem }> = ({ item }) => {
     const baseClasses =
         "text-lg flex items-center gap-1 transition-colors duration-200 relative";
     const activeClasses =
-        "text-black dark:text-white after:absolute after:w-8 after:h-1 after:bg-primary after:rounded-full after:-bottom-1";
+        "text-foreground font-semibold after:absolute after:w-8 after:h-1 after:bg-primary after:rounded-full after:-bottom-1";
     const inactiveClasses =
-        "text-gray-600 hover:text-black dark:text-gray-300 dark:hover:text-white";
+        "text-muted-foreground hover:text-foreground";
 
     return (
         <div className="relative group">

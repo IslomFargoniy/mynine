@@ -1,12 +1,12 @@
 {{-- $items: [[label, url|null], ...] --}}
-<nav aria-label="Breadcrumb" class="text-sm text-gray-500">
+<nav aria-label="Breadcrumb" class="text-sm text-muted-foreground">
     <ol class="flex flex-wrap items-center gap-1">
         @foreach ($items as $i => [$label, $url])
             <li class="flex items-center gap-1">
                 @if ($url)
-                    <a href="{{ $url }}" class="hover:text-gray-800">{{ $label }}</a>
+                    <a href="{{ $url }}" class="hover:text-brand">{{ $label }}</a>
                 @else
-                    <span class="text-gray-700" aria-current="page">{{ $label }}</span>
+                    <span class="text-foreground" aria-current="page">{{ $label }}</span>
                 @endif
                 @if (! $loop->last)<span aria-hidden="true">/</span>@endif
             </li>

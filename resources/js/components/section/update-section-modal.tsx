@@ -83,8 +83,8 @@ export default function UpdateSectionModal({ section, open, setOpen }: UpdateSec
 
     return (
         <Dialog open={open} onOpenChange={setOpen}>
-            <DialogContent className="sm:max-w-6xl w-full h-[80vh] max-h-[80vh] flex flex-col p-0 overflow-hidden dark:border-gray-700">
-                <div className="px-5 py-3 border-b border-border shrink-0 bg-card">
+            <DialogContent className="sm:max-w-6xl w-full h-[80vh] max-h-[80vh] flex flex-col p-0 overflow-hidden">
+                <div className="px-5 py-3 border-b border-divider shrink-0">
                     <DialogTitle className="text-base font-bold text-foreground">
                         {t('modal.update_title') || "Bo'limni tahrirlash"}
                     </DialogTitle>
@@ -111,7 +111,7 @@ export default function UpdateSectionModal({ section, open, setOpen }: UpdateSec
                                     id="question_type"
                                     value={data.question_type_id ?? ''}
                                     onChange={(e) => setData('question_type_id', Number(e.target.value) || 0)}
-                                    className="block w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-xs font-medium shadow-xs focus:border-blue-500 focus:ring-1 focus:ring-blue-500/20 dark:border-gray-700 dark:bg-gray-800 dark:text-white"
+                                    className="block w-full rounded-xl border border-input bg-glass-subtle text-foreground focus:border-ring focus:ring-2 focus:ring-ring/40 px-3 py-2 text-xs font-medium focus:outline-none"
                                 >
                                     <option value="">{t('select') || '-- Savol turini tanlang --'}</option>
                                     {questionTypes.map((type) => (
@@ -125,8 +125,8 @@ export default function UpdateSectionModal({ section, open, setOpen }: UpdateSec
 
                             {/* Conditional fields for Matching (diapazon: A - F) */}
                             {isMatchingType && (
-                                <div className="p-2.5 rounded-lg bg-indigo-50/70 dark:bg-indigo-950/40 border border-indigo-200 dark:border-indigo-800 space-y-2">
-                                    <div className="text-[11px] font-bold text-indigo-900 dark:text-indigo-200 uppercase tracking-wider">
+                                <div className="p-2.5 rounded-[18px] bg-indigo-500/12 border border-indigo-500/25 space-y-2">
+                                    <div className="text-[11px] font-bold text-brand uppercase tracking-wider">
                                         {t('matching_options_range') || "Matching (Moslashtirish) Variantlar Diapazoni"} *
                                     </div>
                                     <div className="grid grid-cols-2 gap-3">
@@ -159,7 +159,7 @@ export default function UpdateSectionModal({ section, open, setOpen }: UpdateSec
                                             <InputError message={errors.to_option} />
                                         </div>
                                     </div>
-                                    <p className="text-[10px] text-indigo-700 dark:text-indigo-300">
+                                    <p className="text-[10px] text-brand">
                                         {t('matching_range_hint')}
                                     </p>
                                 </div>
@@ -183,7 +183,7 @@ export default function UpdateSectionModal({ section, open, setOpen }: UpdateSec
                                         onClick={() => {
                                             setData("textarea", (data.textarea || '') + " { to'g'ri_javob } ");
                                         }}
-                                        className="text-[11px] font-bold text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 bg-blue-50 dark:bg-blue-950/60 px-2.5 py-1 rounded-md border border-blue-200 dark:border-blue-800 transition-colors cursor-pointer"
+                                        className="text-[11px] font-bold text-brand hover:bg-indigo-500/20 bg-indigo-500/12 px-2.5 py-1 rounded-full border border-indigo-500/25 transition-colors cursor-pointer"
                                     >
                                         + &#123; &#125; {t('insert_bracket_gap') || "Savol qavsi qo'shish"}
                                     </button>
@@ -201,12 +201,12 @@ export default function UpdateSectionModal({ section, open, setOpen }: UpdateSec
                     </div>
                 </form>
 
-                <DialogFooter className="px-5 py-2.5 border-t border-border shrink-0 bg-gray-50/90 dark:bg-gray-900 flex items-center justify-end gap-2.5">
+                <DialogFooter className="px-5 py-2.5 border-t border-divider shrink-0 flex items-center justify-end gap-2.5">
                     <DialogClose asChild>
                         <Button
                             type="button"
                             variant="outline"
-                            className="h-8 text-xs border-gray-300 dark:border-gray-700"
+                            className="h-8 text-xs"
                             onClick={() => {
                                 reset();
                                 clearErrors();
@@ -221,7 +221,7 @@ export default function UpdateSectionModal({ section, open, setOpen }: UpdateSec
                         type="submit"
                         form="update-section-form"
                         disabled={processing}
-                        className="h-8 text-xs bg-blue-600 hover:bg-blue-700 text-white font-semibold shadow-xs"
+                        className="h-8 text-xs font-semibold"
                     >
                         {t('save')}
                     </Button>

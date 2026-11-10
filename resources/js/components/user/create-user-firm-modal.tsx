@@ -8,7 +8,7 @@ interface CreateUserFirmModalProps {
 
 const CreateUserFirmModal = (_props: CreateUserFirmModalProps) => {
     return (
-        <button className="bg-blue-500 text-white px-2 py-1 rounded text-xs">
+        <button className="btn-glass-primary px-3 py-1 rounded-full text-xs font-semibold">
             + Add Firm
         </button>
     );

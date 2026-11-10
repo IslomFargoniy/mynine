@@ -154,17 +154,17 @@ export default function MockStudentManager({ mockId, mockName, students = [], ca
             <DialogTrigger asChild>
                 <button
                     type="button"
-                    className="inline-flex items-center gap-1.5 rounded-xl border border-indigo-200 bg-indigo-50 px-3 py-1.5 text-xs font-bold text-indigo-700 shadow-xs transition-all hover:bg-indigo-100 dark:border-indigo-800 dark:bg-indigo-950/50 dark:text-indigo-300 dark:hover:bg-indigo-900/60"
+                    className="inline-flex items-center gap-1.5 rounded-full border border-indigo-500/25 bg-indigo-500/12 px-3.5 py-1.5 text-xs font-bold text-brand transition-all hover:bg-indigo-500/20"
                 >
                     <Users className="h-3.5 w-3.5" />
                     <span>{triggerLabel ?? t('exam_admin.candidates.trigger', { count: students.length })}</span>
                 </button>
             </DialogTrigger>
 
-            <DialogContent className="flex max-h-[90vh] w-full flex-col overflow-hidden rounded-2xl border border-border bg-card p-0 shadow-2xl sm:max-w-3xl">
-                <DialogHeader className="border-b border-border p-5">
+            <DialogContent className="flex max-h-[90vh] w-full flex-col overflow-hidden p-0 sm:max-w-3xl">
+                <DialogHeader className="border-b border-divider p-5">
                     <DialogTitle className="flex items-center gap-2 text-lg font-bold text-foreground">
-                        <Users className="h-5 w-5 text-indigo-600 dark:text-indigo-400" />
+                        <Users className="h-5 w-5 text-brand " />
                         {t('exam_admin.candidates.title')}
                     </DialogTitle>
                     <DialogDescription className="text-xs text-muted-foreground">
@@ -173,7 +173,7 @@ export default function MockStudentManager({ mockId, mockName, students = [], ca
                 </DialogHeader>
 
                 <div className="flex-1 space-y-5 overflow-y-auto p-5">
-                    <form onSubmit={handleAdd} className="space-y-3 rounded-xl border border-border bg-gray-50/50 p-4 dark:bg-gray-800/40">
+                    <form onSubmit={handleAdd} className="glass-subtle space-y-3 rounded-[18px] p-4">
                         <div className="flex flex-wrap items-center justify-between gap-2">
                             <Label htmlFor="candidates-input" className="text-xs font-bold text-foreground">
                                 {t('exam_admin.candidates.add_label')}
@@ -190,8 +190,8 @@ export default function MockStudentManager({ mockId, mockName, students = [], ca
                                         e.target.value = '';
                                     }}
                                 />
-                                <Button type="button" variant="outline" size="sm" className="rounded-xl text-xs" onClick={() => fileInput.current?.click()}>
-                                    <FileUp className="h-3.5 w-3.5 text-emerald-600 dark:text-emerald-400" />
+                                <Button type="button" variant="outline" size="sm" className="rounded-full text-xs" onClick={() => fileInput.current?.click()}>
+                                    <FileUp className="h-3.5 w-3.5 text-emerald-700 dark:text-emerald-300" />
                                     {t('exam_admin.candidates.import')}
                                 </Button>
                             </div>
@@ -200,26 +200,26 @@ export default function MockStudentManager({ mockId, mockName, students = [], ca
                             id="candidates-input"
                             rows={4}
                             placeholder={t('exam_admin.candidates.placeholder')}
-                            className="w-full rounded-xl border border-border bg-card p-3 font-mono text-xs text-foreground focus:ring-2 focus:ring-indigo-500/20"
+                            className="w-full rounded-xl border border-input bg-glass-subtle p-3 font-mono text-xs text-foreground focus:border-ring focus:ring-2 focus:ring-ring/40"
                             value={text}
                             onChange={(e) => setText(e.target.value)}
                         />
 
                         {rows.length > 0 && (
-                            <div className="max-h-56 overflow-y-auto rounded-xl border border-border bg-card">
+                            <div className="max-h-56 overflow-y-auto rounded-[14px] border border-divider bg-glass-subtle">
                                 <table className="w-full text-left text-xs">
-                                    <tbody className="divide-y divide-gray-100 dark:divide-gray-800">
+                                    <tbody className="divide-y divide-divider">
                                         {rows.map((row, index) => {
                                             const rowRepeats = row.normalized ? repeats[row.normalized] : undefined;
                                             return (
-                                                <tr key={index} className={!row.normalized || !row.name ? 'bg-rose-50/60 dark:bg-rose-950/20' : ''}>
+                                                <tr key={index} className={!row.normalized || !row.name ? 'bg-rose-500/8' : ''}>
                                                     <td className="px-3 py-1.5 font-semibold">{row.name || '—'}</td>
                                                     <td className="px-3 py-1.5 font-mono">
-                                                        {row.normalized ?? <span className="text-rose-600 dark:text-rose-400">{row.phone || t('exam_admin.candidates.phone_missing')}</span>}
+                                                        {row.normalized ?? <span className="text-rose-700 dark:text-rose-300">{row.phone || t('exam_admin.candidates.phone_missing')}</span>}
                                                     </td>
                                                     <td className="px-3 py-1.5">
                                                         {rowRepeats && (
-                                                            <span className="inline-flex items-center gap-1 text-[10px] font-bold text-amber-700 dark:text-amber-400">
+                                                            <span className="inline-flex items-center gap-1 text-[10px] font-bold text-amber-800 dark:text-amber-200">
                                                                 <AlertTriangle className="h-3 w-3" />
                                                                 {t('exam_admin.candidates.repeat')}:{' '}
                                                                 {rowRepeats.map((r) => `${r.type} (${r.test}${r.date ? ', ' + r.date : ''})`).join(', ')}
@@ -237,7 +237,7 @@ export default function MockStudentManager({ mockId, mockName, students = [], ca
                         <div className="flex items-center justify-between gap-3 pt-1">
                             <span className="text-[11px] text-muted-foreground">
                                 {invalid.length > 0 ? (
-                                    <span className="font-semibold text-rose-600 dark:text-rose-400">{t('exam_admin.candidates.invalid_rows', { count: invalid.length })}</span>
+                                    <span className="font-semibold text-rose-700 dark:text-rose-300">{t('exam_admin.candidates.invalid_rows', { count: invalid.length })}</span>
                                 ) : (
                                     t('exam_admin.candidates.hint')
                                 )}
@@ -245,7 +245,7 @@ export default function MockStudentManager({ mockId, mockName, students = [], ca
                             <Button
                                 type="submit"
                                 disabled={processing || rows.length === 0 || invalid.length > 0}
-                                className="rounded-xl bg-indigo-600 text-xs font-bold text-white hover:bg-indigo-700"
+                                className="rounded-full text-xs font-bold"
                             >
                                 <Plus className="h-3.5 w-3.5" />
                                 {t('exam_admin.candidates.add', { count: rows.length })}
@@ -258,21 +258,21 @@ export default function MockStudentManager({ mockId, mockName, students = [], ca
                             {t('exam_admin.candidates.registered', { count: students.length })}
                         </h4>
                         {students.length > 0 && (
-                            <Button type="button" variant="outline" onClick={() => printCards()} className="rounded-xl text-xs font-semibold">
-                                <Printer className="h-3.5 w-3.5 text-indigo-500" />
+                            <Button type="button" variant="outline" onClick={() => printCards()} className="rounded-full text-xs font-semibold">
+                                <Printer className="h-3.5 w-3.5 text-brand" />
                                 {t('exam_admin.candidates.print_cards')}
                             </Button>
                         )}
                     </div>
 
                     {students.length === 0 ? (
-                        <div className="rounded-xl border border-dashed border-border py-8 text-center text-xs text-muted-foreground">
+                        <div className="rounded-[18px] border border-dashed border-glass-dash py-8 text-center text-xs text-muted-foreground">
                             {t('exam_admin.candidates.empty')}
                         </div>
                     ) : (
-                        <div className="overflow-x-auto rounded-xl border border-border">
+                        <div className="overflow-x-auto rounded-[18px] border border-divider">
                             <table className="w-full border-collapse text-left text-xs">
-                                <thead className="bg-gray-100 text-[10px] font-bold text-muted-foreground uppercase dark:bg-gray-800/80">
+                                <thead className="bg-muted text-[10px] font-bold text-muted-foreground uppercase tracking-wide">
                                     <tr>
                                         <th className="px-3.5 py-2.5">{t('exam_admin.common.name')}</th>
                                         <th className="px-3.5 py-2.5">{t('exam_admin.common.code')}</th>
@@ -281,25 +281,25 @@ export default function MockStudentManager({ mockId, mockName, students = [], ca
                                         <th className="px-3.5 py-2.5 text-right">{t('exam_admin.common.actions')}</th>
                                     </tr>
                                 </thead>
-                                <tbody className="divide-y divide-gray-100 bg-card dark:divide-gray-800/60">
+                                <tbody className="divide-y divide-divider">
                                     {students.map((item) => (
-                                        <tr key={item.id} className="hover:bg-gray-50/50 dark:hover:bg-gray-800/40">
+                                        <tr key={item.id} className="hover:bg-accent/60">
                                             <td className="px-3.5 py-2.5 font-bold text-foreground">{item.name}</td>
-                                            <td className="px-3.5 py-2.5 font-mono font-bold text-indigo-600 dark:text-indigo-400">
-                                                <span className="inline-flex items-center gap-1.5 rounded-lg border border-indigo-200 bg-indigo-50 px-2.5 py-1 dark:border-indigo-800/40 dark:bg-indigo-950/40">
+                                            <td className="px-3.5 py-2.5 font-mono font-bold text-brand">
+                                                <span className="inline-flex items-center gap-1.5 rounded-full border border-indigo-500/25 bg-indigo-500/12 px-2.5 py-1">
                                                     {item.code}
                                                     <button type="button" onClick={() => copyCode(item.code)} className="cursor-pointer" title={t('exam_admin.common.copy')}>
-                                                        {copiedCode === item.code ? <Check className="h-3.5 w-3.5 text-emerald-600 dark:text-emerald-400" /> : <Copy className="h-3.5 w-3.5" />}
+                                                        {copiedCode === item.code ? <Check className="h-3.5 w-3.5 text-emerald-700 dark:text-emerald-300" /> : <Copy className="h-3.5 w-3.5" />}
                                                     </button>
                                                 </span>
                                             </td>
-                                            <td className="px-3.5 py-2.5 font-mono text-foreground/80">{item.phone ?? '—'}</td>
+                                            <td className="px-3.5 py-2.5 font-mono text-foreground">{item.phone ?? '—'}</td>
                                             <td className="px-3.5 py-2.5 text-center">
                                                 <span
                                                     className={`inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-[10px] font-bold ${
                                                         item.attended
-                                                            ? 'bg-emerald-50 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-400'
-                                                            : 'bg-amber-50 text-amber-700 dark:bg-amber-950/40 dark:text-amber-400'
+                                                            ? 'bg-emerald-500/12 text-emerald-800 dark:bg-emerald-400/15 dark:text-emerald-200'
+                                                            : 'bg-amber-500/15 text-amber-800 dark:bg-amber-400/15 dark:text-amber-200'
                                                     }`}
                                                 >
                                                     {item.attended ? <CheckCircle2 className="h-3 w-3" /> : <Clock className="h-3 w-3" />}
@@ -310,7 +310,7 @@ export default function MockStudentManager({ mockId, mockName, students = [], ca
                                                 <button
                                                     type="button"
                                                     onClick={() => printCards([item.id])}
-                                                    className="cursor-pointer rounded-lg p-1.5 text-indigo-500 transition-colors hover:bg-indigo-50 dark:hover:bg-indigo-950/40"
+                                                    className="cursor-pointer rounded-full p-1.5 text-brand transition-colors hover:bg-indigo-500/12"
                                                     title={t('exam_admin.candidates.print_card')}
                                                 >
                                                     <Printer className="h-3.5 w-3.5" />
@@ -319,7 +319,7 @@ export default function MockStudentManager({ mockId, mockName, students = [], ca
                                                     <button
                                                         type="button"
                                                         onClick={() => handleDelete(item.id)}
-                                                        className="cursor-pointer rounded-lg p-1.5 text-rose-500 transition-colors hover:bg-rose-50 dark:hover:bg-rose-950/40"
+                                                        className="cursor-pointer rounded-full p-1.5 text-rose-700 dark:text-rose-300 transition-colors hover:bg-rose-500/12"
                                                         title={t('exam_admin.common.delete')}
                                                     >
                                                         <Trash2 className="h-3.5 w-3.5" />
@@ -334,9 +334,9 @@ export default function MockStudentManager({ mockId, mockName, students = [], ca
                     )}
                 </div>
 
-                <DialogFooter className="border-t border-border p-4">
+                <DialogFooter className="border-t border-divider p-4">
                     <DialogClose asChild>
-                        <Button type="button" variant="outline" className="rounded-xl text-xs font-semibold">
+                        <Button type="button" variant="outline" className="rounded-full text-xs font-semibold">
                             {t('exam_admin.common.close')}
                         </Button>
                     </DialogClose>

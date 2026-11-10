@@ -58,9 +58,9 @@ const UserTable = ({ roles, searchData, ...user }: UserTableProps) => {
     return (
         <div>
             {/* Table Container */}
-            <div className="overflow-x-auto rounded-2xl border border-border bg-card shadow-xs">
+            <div className="glass-strong overflow-x-auto rounded-[22px]">
                 <table className="w-full text-xs text-left border-collapse">
-                    <thead className="bg-muted text-muted-foreground font-bold uppercase text-[10px] tracking-wider border-b border-border">
+                    <thead className="bg-muted text-muted-foreground font-semibold uppercase text-xs tracking-wide border-b border-divider">
                     <tr>
                         <th className="px-4 py-3 font-bold">{t('n')}</th>
                         <th className="px-4 py-3 font-bold">{t('name')}</th>
@@ -74,14 +74,14 @@ const UserTable = ({ roles, searchData, ...user }: UserTableProps) => {
                         </th>
                     </tr>
                     </thead>
-                    <tbody className="divide-y divide-gray-100 dark:divide-gray-800/60">
+                    <tbody className="divide-y divide-divider">
                     {user.data.map((item, index) => {
                         const globalIndex = (user.current_page - 1) * user.per_page + index + 1;
                         return (
-                            <tr key={item.id} className="hover:bg-gray-50/50 dark:hover:bg-gray-800/40 transition-colors">
+                            <tr key={item.id} className="border-b border-divider hover:bg-accent/60 transition-colors">
                                 <td className="px-4 py-3 font-semibold text-muted-foreground">#{globalIndex}</td>
                                 <td className="px-4 py-3 font-bold text-foreground">
-                                    <Link href={`/user/${item.id}`} className="hover:text-blue-600 dark:hover:text-blue-400 transition-colors">
+                                    <Link href={`/user/${item.id}`} className="hover:text-brand transition-colors">
                                         {item.name}
                                         <span className="ml-1.5 text-[11px] font-medium text-muted-foreground">
                                             ( {item.roles?.map((role) => role.name).join(', ')} )
@@ -100,7 +100,7 @@ const UserTable = ({ roles, searchData, ...user }: UserTableProps) => {
                                         <button
                                             type="button"
                                             onClick={() => handleUpdateClick(item)}
-                                            className="p-2 bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 hover:bg-blue-600 hover:text-white dark:hover:bg-blue-600 dark:hover:text-white rounded-xl font-semibold text-xs transition-all cursor-pointer shadow-xs active:scale-95"
+                                            className="p-2 bg-indigo-500/12 text-brand hover:bg-primary hover:text-primary-foreground rounded-full font-semibold text-xs transition-all cursor-pointer active:scale-95"
                                             title={t('edit')}
                                         >
                                             <PencilIcon className="w-3.5 h-3.5" />
@@ -109,7 +109,7 @@ const UserTable = ({ roles, searchData, ...user }: UserTableProps) => {
                                             <button
                                                 type="button"
                                                 onClick={() => handleDeleteClick(item)}
-                                                className="p-2 bg-red-50 dark:bg-red-900/30 text-red-600 dark:text-red-400 hover:bg-red-600 hover:text-white dark:hover:bg-red-600 dark:hover:text-white rounded-xl font-semibold text-xs transition-all cursor-pointer shadow-xs active:scale-95"
+                                                className="p-2 bg-rose-500/12 text-rose-800 dark:bg-rose-400/15 dark:text-rose-200 hover:bg-destructive hover:text-white dark:hover:bg-destructive dark:hover:text-white rounded-full font-semibold text-xs transition-all cursor-pointer active:scale-95"
                                                 title={t('delete')}
                                             >
                                                 <TrashIcon className="w-3.5 h-3.5" />
@@ -157,12 +157,12 @@ const UserTable = ({ roles, searchData, ...user }: UserTableProps) => {
                             <Link
                                 key={index}
                                 href={`${link.url ?? '?'}&search=${searchData.search}&per_page=${searchData.per_page}`}
-                                className={`px-3 py-1 rounded-md text-sm transition ${
+                                className={`px-3 py-1 rounded-full text-sm transition ${
                                     link.active
-                                        ? 'bg-blue-600 text-white'
+                                        ? 'btn-glass-primary'
                                         : !link.url
                                             ? 'text-muted-foreground cursor-not-allowed'
-                                            : 'bg-white dark:bg-gray-800 text-foreground/80 border border-gray-300 dark:border-gray-600 hover:bg-gray-100 dark:hover:bg-gray-700'
+                                            : 'bg-glass-subtle text-foreground border border-glass-edge hover:bg-accent'
                                 }`}
                                 dangerouslySetInnerHTML={{ __html: link.label }}
                             />

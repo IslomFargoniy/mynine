@@ -12,12 +12,60 @@
 
 @custom-variant dark (&:is(.dark *));
 
+/* ===== Liquid glass surfaces =====
+   All values come from CSS variables (defined per theme below), so the solid fallbacks for
+   browsers without backdrop-filter and for prefers-reduced-transparency only swap variables. */
 @utility glass {
-    @apply bg-white/80 dark:bg-black/80 backdrop-blur-md;
+    background-color: var(--glass-bg);
+    -webkit-backdrop-filter: var(--glass-blur);
+    backdrop-filter: var(--glass-blur);
+    border: 1px solid var(--glass-edge);
+    box-shadow: var(--glass-shadow);
+    border-radius: 22px;
 }
 
+/* Popovers, menus, modals and data-heavy panels: near-opaque so text stays crisp. */
+@utility glass-strong {
+    background-color: var(--glass-strong-bg);
+    -webkit-backdrop-filter: var(--glass-blur);
+    backdrop-filter: var(--glass-blur);
+    border: 1px solid var(--glass-edge);
+    box-shadow: var(--glass-shadow);
+    border-radius: 22px;
+}
+
+/* Inner tiles / inputs inside a glass panel: no blur of their own (one blur layer per panel). */
+@utility glass-subtle {
+    background-color: var(--glass-subtle-bg);
+    border: 1px solid var(--glass-edge);
+    box-shadow: var(--glass-pill-shadow);
+    border-radius: 18px;
+}
+
+/* Pills: top bar, segmented filters, floating bottom nav. */
+@utility glass-pill {
+    background-color: var(--glass-bg);
+    -webkit-backdrop-filter: var(--glass-blur);
+    backdrop-filter: var(--glass-blur);
+    border: 1px solid var(--glass-edge);
+    box-shadow: var(--glass-shadow);
+    border-radius: 9999px;
+}
+
+/* Primary action: indigo gradient with an inner highlight (same in both themes, white text 6.3:1). */
+@utility btn-glass-primary {
+    color: #ffffff;
+    background-image: linear-gradient(180deg, #6366f1, #4f46e5);
+    background-color: #4f46e5;
+    border: 1px solid rgba(255, 255, 255, 0.35);
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.45), 0 8px 24px rgba(79, 70, 229, 0.3);
+}
+
+/* Kept for older markup: same as glass-subtle. */
 @utility glass-card {
-    @apply bg-white/40 dark:bg-white/5 backdrop-blur-xl border border-white/20 dark:border-white/10 shadow-xl;
+    background-color: var(--glass-subtle-bg);
+    border: 1px solid var(--glass-edge);
+    box-shadow: var(--glass-pill-shadow);
 }
 
 @layer components {
@@ -58,12 +106,29 @@ mark.highlight {
     --radius-sm: calc(var(--radius) - 4px);
 
     /* Core colors */
-    --color-primary: #6556ff;
-    --color-secondary: #1a21bc;
+    --color-primary: var(--primary);
+    /* Secondary stays a solid brand indigo so the fixed white foreground below stays readable. */
+    --color-secondary: #4338ca;
     --color-grey: #57595f;
     --color-slateGray: #f6faff;
     --color-deepSlate: #d5effa;
-    --color-success: #43c639;
+    --color-success: var(--success);
+    --color-warning: var(--warning);
+    --color-divider: var(--divider);
+    /* Brand colour for text/links: indigo-700 light, indigo-300 dark (fills use bg-primary). */
+    --color-brand: var(--primary-text);
+
+    /* Glass surface colours as utilities: bg-glass, bg-glass-strong, bg-glass-subtle,
+       bg-glass-thumb, border-glass-edge, text-glass-active … */
+    --color-glass: var(--glass-bg);
+    --color-glass-strong: var(--glass-strong-bg);
+    --color-glass-subtle: var(--glass-subtle-bg);
+    --color-glass-thumb: var(--glass-thumb);
+    --color-glass-edge: var(--glass-edge);
+    --color-glass-active: var(--glass-active-fg);
+    --color-glass-dash: var(--glass-dash);
+    --shadow-glass: var(--glass-shadow);
+    --shadow-glass-pill: var(--glass-pill-shadow);
     --color-midnight_text: #222c44;
 
     --color-background: var(--background);
@@ -113,10 +178,9 @@ mark.highlight {
     --color-grey: #57595f;
     --color-slateGray: #f6faff;
     --color-deepSlate: #d5effa;
-    --color-success: #43c639;
     --color-midnight_text: #222c44;
-    --color-primary-fallback: #6556ff;
-    --color-secondary-fallback: #1a21bc;
+    --color-primary-fallback: #4f46e5;
+    --color-secondary-fallback: #4338ca;
 }
 
 /*
@@ -132,35 +196,44 @@ mark.highlight {
     }
 }
 
-/* Light mode */
+/* ===== Liquid glass theme =====
+   Light: base #EEF1FB, glass rgba(255,255,255,.55). Dark: base #070B16, glass rgba(17,24,39,.50).
+   Text: foreground #0F172A / #F8FAFC, muted #334155 / #CBD5E1 (>= 7:1 on glass in both modes). */
 :root {
-    --background: oklch(1 0 0);
-    --foreground: oklch(0.145 0 0);
+    --background: #eef1fb;
+    --foreground: #0f172a;
 
-    --card: oklch(1 0 0);
-    --card-foreground: oklch(0.145 0 0);
+    --card: rgba(255, 255, 255, 0.55);
+    --card-foreground: #0f172a;
 
-    --popover: oklch(1 0 0);
-    --popover-foreground: oklch(0.145 0 0);
+    --popover: rgba(255, 255, 255, 0.92);
+    --popover-foreground: #0f172a;
 
-    --primary: oklch(0.205 0 0);
-    --primary-foreground: oklch(0.985 0 0);
+    --primary: #4f46e5;
+    --primary-foreground: #ffffff;
+    /* Indigo used for text/links (design "link" colour). */
+    --primary-text: #4338ca;
 
-    --secondary: oklch(0.97 0 0);
-    --secondary-foreground: oklch(0.205 0 0);
+    --secondary: #4338ca;
+    --secondary-foreground: #ffffff;
 
-    --muted: oklch(0.97 0 0);
-    --muted-foreground: oklch(0.52 0 0);
+    --muted: rgba(255, 255, 255, 0.6);
+    --muted-foreground: #334155;
 
-    --accent: oklch(0.97 0 0);
-    --accent-foreground: oklch(0.205 0 0);
+    --accent: rgba(255, 255, 255, 0.85);
+    --accent-foreground: #0f172a;
 
-    --destructive: oklch(0.577 0.245 27.325);
-    --destructive-foreground: oklch(0.577 0.245 27.325);
+    --destructive: #be123c;
+    --destructive-foreground: #be123c;
 
-    --border: oklch(0.922 0 0);
-    --input: oklch(0.922 0 0);
-    --ring: oklch(0.87 0 0);
+    --success: #047857;
+    --warning: #b45309;
+
+    --border: rgba(255, 255, 255, 0.75);
+    --input: rgba(51, 65, 85, 0.28);
+    --ring: #6366f1;
+    /* Hairlines inside panels (table rows, separators) — the white glass edge is invisible there. */
+    --divider: rgba(15, 23, 42, 0.09);
 
     --chart-1: oklch(0.646 0.222 41.116);
     --chart-2: oklch(0.6 0.118 184.704);
@@ -168,58 +241,229 @@ mark.highlight {
     --chart-4: oklch(0.828 0.189 84.429);
     --chart-5: oklch(0.769 0.188 70.08);
 
-    --radius: 0.625rem;
+    --radius: 0.875rem;
 
-    --sidebar: oklch(0.985 0 0);
-    --sidebar-foreground: oklch(0.145 0 0);
-    --sidebar-primary: oklch(0.205 0 0);
-    --sidebar-primary-foreground: oklch(0.985 0 0);
-    --sidebar-accent: oklch(0.97 0 0);
-    --sidebar-accent-foreground: oklch(0.205 0 0);
-    --sidebar-border: oklch(0.922 0 0);
-    --sidebar-ring: oklch(0.87 0 0);
+    --sidebar: rgba(255, 255, 255, 0.55);
+    --sidebar-foreground: #0f172a;
+    --sidebar-primary: #4f46e5;
+    --sidebar-primary-foreground: #ffffff;
+    --sidebar-accent: rgba(255, 255, 255, 0.85);
+    --sidebar-accent-foreground: #3730a3;
+    --sidebar-border: rgba(255, 255, 255, 0.75);
+    --sidebar-ring: #6366f1;
+
+    /* Glass surfaces */
+    --glass-bg: rgba(255, 255, 255, 0.55);
+    --glass-strong-bg: rgba(255, 255, 255, 0.86);
+    --glass-subtle-bg: rgba(255, 255, 255, 0.6);
+    --glass-thumb: rgba(255, 255, 255, 0.9);
+    --glass-edge: rgba(255, 255, 255, 0.75);
+    --glass-dash: rgba(51, 65, 85, 0.35);
+    --glass-blur: blur(28px) saturate(170%);
+    --glass-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.9), 0 12px 40px rgba(15, 23, 42, 0.1);
+    --glass-pill-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.9), 0 2px 10px rgba(15, 23, 42, 0.06);
+    --glass-active-bg: rgba(255, 255, 255, 0.85);
+    --glass-active-fg: #3730a3;
+
+    /* Backdrop orbs */
+    --orb-a: rgba(129, 140, 248, 0.55);
+    --orb-b: rgba(56, 189, 248, 0.4);
+    --orb-c: rgba(244, 114, 182, 0.35);
 }
 
-/* Dark mode - Midnight Theme */
 .dark {
-    --background: oklch(0.12 0.02 252); /* Deeper midnight blue-black */
-    --foreground: oklch(0.98 0 0);
+    --background: #070b16;
+    --foreground: #f8fafc;
 
-    --card: oklch(0.15 0.02 252);
-    --card-foreground: oklch(0.98 0 0);
+    --card: rgba(17, 24, 39, 0.5);
+    --card-foreground: #f8fafc;
 
-    --popover: oklch(0.15 0.02 252);
-    --popover-foreground: oklch(0.98 0 0);
+    --popover: rgba(15, 20, 34, 0.94);
+    --popover-foreground: #f8fafc;
 
-    --primary: oklch(0.7 0.18 260); /* Vibrant blue-indigo */
-    --primary-foreground: oklch(0.98 0 0);
+    /* Fills keep the 6.3:1 indigo under white text; text-primary is lifted to #A5B4FC below. */
+    --primary: #4f46e5;
+    --primary-foreground: #ffffff;
+    --primary-text: #a5b4fc;
 
-    --secondary: oklch(0.2 0.02 252);
-    --secondary-foreground: oklch(0.98 0 0);
+    --secondary: #4338ca;
+    --secondary-foreground: #ffffff;
 
-    --muted: oklch(0.2 0.02 252);
-    --muted-foreground: oklch(0.72 0.01 252);
+    --muted: rgba(255, 255, 255, 0.07);
+    --muted-foreground: #cbd5e1;
 
-    --accent: oklch(0.25 0.02 252);
-    --accent-foreground: oklch(0.98 0 0);
+    --accent: rgba(255, 255, 255, 0.14);
+    --accent-foreground: #f8fafc;
 
-    /* Used both as text (text-destructive) and as a solid fill (bg-destructive + white text):
-       0.4 lightness was unreadable as text on the midnight background. */
+    /* Used both as text (text-destructive) and as a solid fill (bg-destructive + white text). */
     --destructive: oklch(0.637 0.237 25.331);
-    --destructive-foreground: oklch(0.98 0 0);
+    --destructive-foreground: #fda4af;
 
-    --border: oklch(0.27 0.02 252);
-    --input: oklch(0.3 0.02 252);
-    --ring: oklch(0.5 0.18 260);
+    --success: #6ee7b7;
+    --warning: #fcd34d;
 
-    --sidebar: oklch(0.14 0.02 252);
-    --sidebar-foreground: oklch(0.98 0 0);
-    --sidebar-primary: oklch(0.7 0.18 260);
-    --sidebar-primary-foreground: oklch(1 0 0);
-    --sidebar-accent: oklch(0.2 0.02 252);
-    --sidebar-accent-foreground: oklch(0.98 0 0);
-    --sidebar-border: oklch(0.27 0.02 252);
-    --sidebar-ring: oklch(0.5 0.18 260);
+    --border: rgba(255, 255, 255, 0.14);
+    --input: rgba(255, 255, 255, 0.2);
+    --ring: #818cf8;
+    --divider: rgba(255, 255, 255, 0.09);
+
+    --sidebar: rgba(17, 24, 39, 0.5);
+    --sidebar-foreground: #f8fafc;
+    --sidebar-primary: #4f46e5;
+    --sidebar-primary-foreground: #ffffff;
+    --sidebar-accent: rgba(255, 255, 255, 0.14);
+    --sidebar-accent-foreground: #ffffff;
+    --sidebar-border: rgba(255, 255, 255, 0.14);
+    --sidebar-ring: #818cf8;
+
+    --glass-bg: rgba(17, 24, 39, 0.5);
+    --glass-strong-bg: rgba(15, 20, 34, 0.88);
+    --glass-subtle-bg: rgba(255, 255, 255, 0.07);
+    --glass-thumb: rgba(255, 255, 255, 0.16);
+    --glass-edge: rgba(255, 255, 255, 0.14);
+    --glass-dash: rgba(203, 213, 225, 0.35);
+    --glass-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.1), 0 12px 40px rgba(0, 0, 0, 0.45);
+    --glass-pill-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.08), 0 2px 10px rgba(0, 0, 0, 0.3);
+    --glass-active-bg: rgba(255, 255, 255, 0.14);
+    --glass-active-fg: #ffffff;
+
+    --orb-a: rgba(79, 70, 229, 0.55);
+    --orb-b: rgba(14, 165, 233, 0.3);
+    --orb-c: rgba(219, 39, 119, 0.28);
+}
+
+/* Solid surfaces where translucency is unavailable or unwanted: no backdrop-filter support,
+   or the user asked for reduced transparency. Only the variables change. */
+@supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+    :root {
+        --card: #f8f9fe;
+        --sidebar: #f8f9fe;
+        --glass-bg: #f8f9fe;
+        --glass-strong-bg: #ffffff;
+        --popover: #ffffff;
+        --glass-edge: #dfe3f0;
+        --border: #dfe3f0;
+        --sidebar-border: #dfe3f0;
+    }
+
+    .dark {
+        --card: #111827;
+        --sidebar: #111827;
+        --glass-bg: #111827;
+        --glass-strong-bg: #0f1422;
+        --popover: #0f1422;
+        --glass-edge: #273449;
+        --border: #273449;
+        --sidebar-border: #273449;
+    }
+}
+
+@media (prefers-reduced-transparency: reduce) {
+    :root {
+        --card: #f8f9fe;
+        --sidebar: #f8f9fe;
+        --glass-bg: #f8f9fe;
+        --glass-strong-bg: #ffffff;
+        --popover: #ffffff;
+        --glass-edge: #dfe3f0;
+        --border: #dfe3f0;
+        --sidebar-border: #dfe3f0;
+        --glass-blur: none;
+    }
+
+    .dark {
+        --card: #111827;
+        --sidebar: #111827;
+        --glass-bg: #111827;
+        --glass-strong-bg: #0f1422;
+        --popover: #0f1422;
+        --glass-edge: #273449;
+        --border: #273449;
+        --sidebar-border: #273449;
+    }
+
+    .glass-backdrop {
+        display: none;
+    }
+}
+
+/* Exam room (practice/*): keeps the official IELTS look, always light. app.tsx puts
+   `exam-room` on <html> while a practice page is shown; this restores the pre-redesign
+   light palette so nothing in the room changes. */
+:root.exam-room {
+    --background: oklch(1 0 0);
+    --foreground: oklch(0.145 0 0);
+    --card: oklch(1 0 0);
+    --card-foreground: oklch(0.145 0 0);
+    --popover: oklch(1 0 0);
+    --popover-foreground: oklch(0.145 0 0);
+    --primary: #6556ff;
+    --primary-foreground: #ffffff;
+    --primary-text: #6556ff;
+    --secondary: #1a21bc;
+    --muted: oklch(0.97 0 0);
+    --muted-foreground: oklch(0.52 0 0);
+    --accent: oklch(0.97 0 0);
+    --accent-foreground: oklch(0.205 0 0);
+    --destructive: oklch(0.577 0.245 27.325);
+    --destructive-foreground: oklch(0.577 0.245 27.325);
+    --success: #43c639;
+    --border: oklch(0.922 0 0);
+    --input: oklch(0.922 0 0);
+    --ring: oklch(0.87 0 0);
+    --divider: oklch(0.922 0 0);
+}
+
+/* Backdrop colour orbs (static, painted once, behind everything). */
+.glass-backdrop {
+    position: fixed;
+    inset: 0;
+    z-index: -1;
+    overflow: hidden;
+    pointer-events: none;
+    background: var(--background);
+}
+
+.glass-backdrop > span {
+    position: absolute;
+    border-radius: 9999px;
+}
+
+.glass-backdrop > span:nth-child(1) {
+    width: 620px;
+    height: 620px;
+    left: -160px;
+    top: -200px;
+    background: radial-gradient(closest-side, var(--orb-a), transparent);
+}
+
+.glass-backdrop > span:nth-child(2) {
+    width: 600px;
+    height: 600px;
+    right: -140px;
+    top: 80px;
+    background: radial-gradient(closest-side, var(--orb-b), transparent);
+}
+
+.glass-backdrop > span:nth-child(3) {
+    width: 640px;
+    height: 640px;
+    left: 34%;
+    bottom: -300px;
+    background: radial-gradient(closest-side, var(--orb-c), transparent);
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .glass-backdrop > span {
+        opacity: 0.6;
+    }
+}
+
+/* Text in the brand colour: indigo-700 on light glass, indigo-300 on dark glass (fills keep #4F46E5). */
+@layer utilities {
+    .text-primary {
+        color: var(--primary-text);
+    }
 }
 
 @layer base {
@@ -227,8 +471,14 @@ mark.highlight {
         @apply border-border;
     }
 
+    /* The page base colour lives on <html> so the fixed backdrop orbs (z-index -1) paint above it;
+       a body background would cover them. */
+    html {
+        background-color: var(--background);
+    }
+
     body {
-        @apply bg-background text-foreground;
+        @apply bg-transparent text-foreground;
     }
 
     /* Native controls (select option lists, date pickers, scrollbars, autofill) follow the theme. */

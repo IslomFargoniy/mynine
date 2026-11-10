@@ -56,18 +56,18 @@ export default function FindMockModal() {
             <DialogTrigger asChild>
                 <button
                     type="button"
-                    className="inline-flex items-center justify-center gap-2 bg-indigo-600 hover:bg-indigo-700 active:scale-95 px-4 py-2 text-white font-bold text-xs rounded-xl shadow-xs transition-all cursor-pointer"
+                    className="btn-glass-primary inline-flex items-center justify-center gap-2 hover:brightness-110 active:scale-95 px-5 py-2 font-bold text-xs rounded-full transition-all cursor-pointer"
                 >
                     <IoCreate className="h-4 w-4" />
                     <span className="tracking-widest uppercase">{t('common.exam') || 'IMTIHON'}</span>
                 </button>
             </DialogTrigger>
 
-            <DialogContent className="sm:max-w-md w-full rounded-2xl border border-border shadow-2xl bg-card p-0 overflow-hidden">
+            <DialogContent className="sm:max-w-md w-full p-0 overflow-hidden">
                 {/* Header */}
-                <header className="border-b border-border bg-gray-50/80 dark:bg-gray-800/40 p-6">
+                <header className="border-b border-divider p-6">
                     <div className="flex items-center gap-3.5">
-                        <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-indigo-600 text-white shadow-xs">
+                        <div className="btn-glass-primary flex h-11 w-11 shrink-0 items-center justify-center rounded-[14px]">
                             <LayoutGrid className="h-5 w-5" />
                         </div>
                         <div>
@@ -83,14 +83,14 @@ export default function FindMockModal() {
 
                 <form onSubmit={submit} className="p-6 space-y-4">
                     <div className="space-y-2">
-                        <Label htmlFor="code-input" className="text-xs font-bold text-foreground/80">
+                        <Label htmlFor="code-input" className="text-xs font-bold text-foreground">
                             Nomzod Kodingiz *
                         </Label>
                         <Input
                             id="code-input"
                             ref={codeInput}
                             placeholder="Masalan: TEST1-849201"
-                            className="h-11 rounded-xl border-border bg-white dark:bg-gray-800 px-4 font-mono font-bold text-sm tracking-wider uppercase"
+                            className="h-11 rounded-xl px-4 font-mono font-bold text-sm tracking-wider uppercase"
                             value={data.code}
                             onChange={(e) => setData('code', e.target.value.toUpperCase())}
                             disabled={processing}
@@ -99,12 +99,12 @@ export default function FindMockModal() {
                         <InputError message={errors.code} />
                     </div>
 
-                    <DialogFooter className="flex items-center justify-end gap-2 pt-3 border-t border-border">
+                    <DialogFooter className="flex items-center justify-end gap-2 pt-3 border-t border-divider">
                         <DialogClose asChild>
                             <Button
                                 type="button"
                                 variant="outline"
-                                className="rounded-xl text-xs font-semibold"
+                                className="rounded-full text-xs font-semibold"
                             >
                                 {t('cancel')}
                             </Button>
@@ -113,7 +113,7 @@ export default function FindMockModal() {
                         <Button
                             type="submit"
                             disabled={processing}
-                            className="bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs rounded-xl shadow-xs active:scale-95"
+                            className="font-bold text-xs rounded-full active:scale-95"
                         >
                             Imtihonni Boshlash →
                         </Button>

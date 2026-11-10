@@ -25,11 +25,11 @@ export default function QuestionTypeAnalytics({ stats }: QuestionTypeAnalyticsPr
     const weakPoints = data.filter(d => d.accuracyPercentage < 65);
 
     return (
-        <div className="rounded-2xl border border-border bg-card p-5 shadow-xs space-y-4">
+        <div className="glass rounded-[22px] p-5 space-y-4">
             {/* Header */}
-            <div className="flex items-center justify-between border-b border-border pb-3">
+            <div className="flex items-center justify-between border-b border-divider pb-3">
                 <div className="flex items-center gap-2.5">
-                    <div className="p-2 rounded-xl bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400">
+                    <div className="p-2 rounded-xl bg-indigo-500/12 text-brand">
                         <Target className="w-4 h-4" />
                     </div>
                     <div>
@@ -53,13 +53,13 @@ export default function QuestionTypeAnalytics({ stats }: QuestionTypeAnalyticsPr
                         ? 'bg-emerald-500'
                         : isWeak
                             ? 'bg-rose-500'
-                            : 'bg-blue-500';
+                            : 'bg-primary';
 
                     const badgeStyle = isStrong
-                        ? 'bg-emerald-50 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-400 border-emerald-200 dark:border-emerald-800/40'
+                        ? 'bg-emerald-500/12 text-emerald-800 dark:bg-emerald-400/15 dark:text-emerald-200 border-emerald-500/25'
                         : isWeak
-                            ? 'bg-rose-50 text-rose-700 dark:bg-rose-950/40 dark:text-rose-400 border-rose-200 dark:border-rose-800/40'
-                            : 'bg-blue-50 text-blue-700 dark:bg-blue-950/40 dark:text-blue-400 border-blue-200 dark:border-blue-800/40';
+                            ? 'bg-rose-500/12 text-rose-800 dark:bg-rose-400/15 dark:text-rose-200 border-rose-500/25'
+                            : 'bg-indigo-500/12 text-brand border-indigo-500/25';
 
                     return (
                         <div key={idx} className="space-y-1.5">
@@ -93,8 +93,8 @@ export default function QuestionTypeAnalytics({ stats }: QuestionTypeAnalyticsPr
 
             {/* Smart Advice Box */}
             {weakPoints.length > 0 && (
-                <div className="mt-4 p-3 rounded-xl bg-amber-50/60 dark:bg-amber-950/20 border border-amber-200/60 dark:border-amber-900/40 text-xs text-amber-900 dark:text-amber-200 flex items-start gap-2.5">
-                    <BookOpen className="w-4 h-4 text-amber-600 dark:text-amber-400 shrink-0 mt-0.5" />
+                <div className="mt-4 p-3 rounded-[18px] bg-amber-500/15 border border-amber-500/25 text-xs text-amber-800 dark:text-amber-200 flex items-start gap-2.5">
+                    <BookOpen className="w-4 h-4 text-amber-700 dark:text-amber-300 shrink-0 mt-0.5" />
                     <div>
                         <span className="font-bold">Tavsiya: </span>
                         <span>

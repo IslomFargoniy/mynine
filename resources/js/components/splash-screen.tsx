@@ -34,8 +34,8 @@ export default function SplashScreen() {
 
                 <div className="flex flex-col items-center gap-4">
                     <div className="flex items-center gap-3">
-                        <Loader2 className="h-5 w-5 animate-spin text-primary" />
-                        <span className="text-sm font-semibold tracking-[0.2em] text-foreground/70 uppercase">
+                        <Loader2 className="h-5 w-5 animate-spin text-brand" />
+                        <span className="text-sm font-semibold tracking-[0.2em] text-muted-foreground uppercase">
                             Yuklanmoqda
                         </span>
                     </div>
@@ -66,7 +66,7 @@ export default function SplashScreen() {
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 transition={{ delay: 1, duration: 1 }}
-                className="absolute bottom-10 text-[10px] font-medium text-muted-foreground/50 uppercase tracking-[0.3em]"
+                className="absolute bottom-10 text-[10px] font-medium text-muted-foreground uppercase tracking-[0.3em]"
             >
                 Powered by MyNine
             </motion.div>

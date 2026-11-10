@@ -116,9 +116,8 @@ export function AppSidebar() {
         <Sidebar 
             collapsible="icon" 
             variant="inset"
-            className="border-r border-border bg-sidebar/80 dark:bg-sidebar/50 backdrop-blur-xl"
         >
-            <SidebarHeader className="border-b border-border/50 py-4 px-4">
+            <SidebarHeader className="py-4 px-4">
                 <SidebarMenu>
                     <SidebarMenuItem>
                         <SidebarMenuButton size="lg" asChild className="hover:bg-transparent active:bg-transparent">
@@ -136,7 +135,7 @@ export function AppSidebar() {
                 ))}
             </SidebarContent>
 
-            <SidebarFooter className="border-t border-border/50 shrink-0 px-4 py-2">
+            <SidebarFooter className="shrink-0 px-3 pt-2 pb-3">
                 <NavFooter items={footerNavItems} className="mb-1 py-0 opacity-70 hover:opacity-100 transition-opacity" />
                 <NavUser />
             </SidebarFooter>

@@ -36,9 +36,9 @@ export default function QuestionOption({ option, index, question_type }: Questio
     };
 
     return (
-        <div className="group flex items-center justify-between py-1.5 px-3 rounded-lg bg-muted border border-border text-sm hover:border-blue-200 dark:hover:border-blue-800 transition-colors">
+        <div className="group flex items-center justify-between py-1.5 px-3 rounded-xl bg-muted border border-glass-edge text-sm hover:border-indigo-500/25 transition-colors">
             <div className="flex items-center gap-2 min-w-0 flex-1">
-                <span className="w-5 h-5 rounded font-bold font-mono text-[11px] bg-gray-200 dark:bg-gray-700 text-foreground/80 flex items-center justify-center shrink-0">
+                <span className="w-5 h-5 rounded-md font-bold font-mono text-[11px] bg-foreground/10 text-foreground flex items-center justify-center shrink-0">
                     {letter}
                 </span>
                 <span className="text-foreground font-medium truncate text-xs">
@@ -49,7 +49,7 @@ export default function QuestionOption({ option, index, question_type }: Questio
             <div className="flex items-center gap-1.5 shrink-0">
                 {Boolean(option.is_correct) && (
                     <span
-                        className="inline-flex items-center justify-center p-1 rounded-full bg-emerald-50 dark:bg-emerald-950/60 text-emerald-600 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800 shrink-0"
+                        className="inline-flex items-center justify-center p-1 rounded-full bg-emerald-500/12 dark:bg-emerald-400/15 text-emerald-800 dark:text-emerald-200 border border-emerald-500/25 shrink-0"
                         title={t('is_correct') || "To'g'ri"}
                     >
                         <CheckCircle2 className="w-3.5 h-3.5" />
@@ -60,7 +60,7 @@ export default function QuestionOption({ option, index, question_type }: Questio
                     <button
                         type="button"
                         onClick={() => setOpenEdit(true)}
-                        className="p-1 rounded text-muted-foreground hover:text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-950/50 transition-colors"
+                        className="p-1 rounded-full text-muted-foreground hover:text-brand hover:bg-indigo-500/12 transition-colors"
                         title={t('edit') || "Tahrirlash"}
                     >
                         <Edit2 className="w-3 h-3" />
@@ -68,7 +68,7 @@ export default function QuestionOption({ option, index, question_type }: Questio
                     <button
                         type="button"
                         onClick={() => setOpenDelete(true)}
-                        className="p-1 rounded text-muted-foreground hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-950/50 transition-colors"
+                        className="p-1 rounded-full text-muted-foreground hover:text-rose-700 dark:hover:text-rose-300 hover:bg-rose-500/12 transition-colors"
                         title={t('delete') || "O'chirish"}
                     >
                         <Trash2 className="w-3 h-3" />

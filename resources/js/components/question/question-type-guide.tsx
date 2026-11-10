@@ -39,10 +39,10 @@ export default function QuestionTypeGuide({ type, defaultOpen = false }: Questio
                 <button
                     type="button"
                     onClick={() => setIsOpen(true)}
-                    className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-semibold text-blue-700 dark:text-blue-300 bg-blue-50/80 dark:bg-blue-950/50 border border-blue-200 dark:border-blue-800/80 hover:bg-blue-100 dark:hover:bg-blue-900 transition-all cursor-pointer shadow-2xs"
+                    className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold text-brand bg-indigo-500/12 border border-indigo-500/25 hover:bg-indigo-500/20 transition-all cursor-pointer"
                     title={t('guide.view_instructions') || "Savol turi bo'yicha yo'riqnomani ko'rish"}
                 >
-                    <span className="w-4 h-4 rounded-full bg-blue-600 dark:bg-blue-500 text-white flex items-center justify-center font-bold text-[11px] leading-none shrink-0 shadow-xs">
+                    <span className="w-4 h-4 rounded-full bg-primary text-primary-foreground flex items-center justify-center font-bold text-[11px] leading-none shrink-0">
                         !
                     </span>
                     <span>{t('guide.guide_button') || "Ko'rsatma va qoidalar"}</span>
@@ -52,10 +52,10 @@ export default function QuestionTypeGuide({ type, defaultOpen = false }: Questio
     }
 
     return (
-        <div className="rounded-xl border border-blue-200 bg-blue-50/70 dark:bg-blue-950/40 dark:border-blue-800 p-3.5 space-y-2.5 text-sm text-foreground animate-in fade-in zoom-in-95 duration-150 relative">
+        <div className="rounded-[18px] border border-indigo-500/25 bg-indigo-500/12 p-3.5 space-y-2.5 text-sm text-foreground animate-in fade-in zoom-in-95 duration-150 relative">
             <div className="flex items-center justify-between gap-2">
-                <div className="flex items-center gap-2 font-bold text-blue-900 dark:text-blue-200">
-                    <span className="w-5 h-5 rounded-full bg-blue-600 dark:bg-blue-500 text-white flex items-center justify-center font-bold text-xs shrink-0 shadow-xs">
+                <div className="flex items-center gap-2 font-bold text-brand">
+                    <span className="w-5 h-5 rounded-full bg-primary text-primary-foreground flex items-center justify-center font-bold text-xs shrink-0">
                         !
                     </span>
                     <span className="text-xs sm:text-sm font-bold">{title}</span>
@@ -63,7 +63,7 @@ export default function QuestionTypeGuide({ type, defaultOpen = false }: Questio
                 <button
                     type="button"
                     onClick={() => setIsOpen(false)}
-                    className="p-1 rounded-md text-muted-foreground hover:text-gray-700 dark:hover:text-gray-200 hover:bg-blue-100 dark:hover:bg-blue-900/60 transition-colors cursor-pointer"
+                    className="p-1 rounded-full text-muted-foreground hover:text-foreground hover:bg-indigo-500/12 transition-colors cursor-pointer"
                     title={t('guide.close') || "Yopish"}
                 >
                     <X className="w-4 h-4" />
@@ -80,7 +80,7 @@ export default function QuestionTypeGuide({ type, defaultOpen = false }: Questio
                 <ul className="space-y-1 text-xs text-foreground/80 pl-1">
                     {steps.map((step, i) => (
                         <li key={i} className="flex items-start gap-1.5">
-                            <span className="font-semibold text-blue-600 dark:text-blue-400 shrink-0">•</span>
+                            <span className="font-semibold text-brand shrink-0">•</span>
                             <span>{step}</span>
                         </li>
                     ))}
@@ -88,14 +88,14 @@ export default function QuestionTypeGuide({ type, defaultOpen = false }: Questio
             )}
 
             {hasWarning && (
-                <div className="flex items-center gap-1.5 p-2 rounded-lg bg-amber-100/80 dark:bg-amber-950/60 border border-amber-300 dark:border-amber-800 text-amber-900 dark:text-amber-200 text-xs font-semibold">
-                    <AlertTriangle className="w-4 h-4 text-amber-600 shrink-0 dark:text-amber-400" />
+                <div className="flex items-center gap-1.5 p-2 rounded-xl bg-amber-500/15 dark:bg-amber-400/15 border border-amber-500/25 text-amber-800 dark:text-amber-200 text-xs font-semibold">
+                    <AlertTriangle className="w-4 h-4 text-amber-700 shrink-0 dark:text-amber-300" />
                     <span>{warning}</span>
                 </div>
             )}
 
             {hasExample && (
-                <div className="text-[11px] font-mono bg-white dark:bg-gray-900/60 px-2.5 py-1 rounded border border-blue-100 dark:border-blue-900 text-blue-800 dark:text-blue-300 inline-block">
+                <div className="text-[11px] font-mono bg-glass-subtle px-2.5 py-1 rounded-lg border border-indigo-500/25 text-brand inline-block">
                     {t('guide.example_label') || 'Misol'}: {example}
                 </div>
             )}

@@ -36,7 +36,7 @@ export default function DesktopSettings() {
                 <Panel>
                     <form onSubmit={submit} className="space-y-4">
                         <div className="flex items-center gap-2">
-                            <KeyRound className="h-4 w-4 text-indigo-500" />
+                            <KeyRound className="h-4 w-4 text-brand" />
                             <h2 className="text-sm font-black">{t('exam_admin.settings.exit_password')}</h2>
                         </div>
                         <p className="text-xs text-muted-foreground">
@@ -68,7 +68,7 @@ export default function DesktopSettings() {
                             />
                         </div>
                         <p className="text-[11px] text-muted-foreground">{t('exam_admin.settings.hint')}</p>
-                        <Button type="submit" disabled={processing || data.password.length < 6} className="rounded-xl bg-indigo-600 text-xs font-bold text-white hover:bg-indigo-700">
+                        <Button type="submit" disabled={processing || data.password.length < 6} className="rounded-full text-xs font-bold">
                             {t('exam_admin.common.save')}
                         </Button>
                     </form>

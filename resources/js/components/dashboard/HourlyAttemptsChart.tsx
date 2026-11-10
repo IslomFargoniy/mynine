@@ -10,7 +10,8 @@ interface Props {
 
 export default function HourlyAttemptsChart({ title, data: chartData }: Props) {
     const isDark = useIsDark();
-    const axisLabel = isDark ? '#94a3b8' : '#64748b';
+    const axisLabel = isDark ? '#CBD5E1' : '#334155';
+    const brand = isDark ? '#818CF8' : '#4F46E5';
     
     const hours = Array.from({ length: 24 }, (_, i) => i);
     const labels = hours.map(h => `${h.toString().padStart(2, '0')}:00`);
@@ -63,10 +64,10 @@ export default function HourlyAttemptsChart({ title, data: chartData }: Props) {
             }
         },
         grid: {
-            borderColor: isDark ? 'rgba(255, 255, 255, 0.06)' : 'rgba(0, 0, 0, 0.06)',
+            borderColor: isDark ? 'rgba(255, 255, 255, 0.10)' : 'rgba(15, 23, 42, 0.08)',
             strokeDashArray: 4,
         },
-        colors: ['#3b82f6'],
+        colors: [brand],
         tooltip: {
             theme: isDark ? 'dark' : 'light',
         }

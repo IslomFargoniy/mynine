@@ -132,7 +132,7 @@ const AttemptTypeComponent = ({ attempt_type }: { attempt_type: AttemptType }) =
         <div className="space-y-6">
             {/* Question Types Accuracy Analytics (For Reading / Listening) */}
             {attempt_type.type?.name !== 'Writing' && attempt_type.type?.name !== 'Speaking' && questionTypeStats.length > 0 && (
-                <div className="p-4 bg-muted rounded-xl border border-border">
+                <div className="glass-subtle p-4 rounded-[18px]">
                     <h4 className="text-xs font-bold uppercase tracking-wider text-muted-foreground mb-3">
                         {t('question_types_analytics') || 'Savol turlari boʻyicha aniqlik darajasi'}
                     </h4>
@@ -145,7 +145,7 @@ const AttemptTypeComponent = ({ attempt_type }: { attempt_type: AttemptType }) =
                             return (
                                 <div
                                     key={i}
-                                    className="p-3 bg-white dark:bg-gray-800 border border-border rounded-lg space-y-1.5 shadow-2xs"
+                                    className="p-3 bg-glass-subtle border border-glass-edge rounded-[14px] space-y-1.5"
                                 >
                                     <div className="flex items-center justify-between text-xs font-medium">
                                         <span className="font-bold text-foreground truncate pr-2" title={stat.name}>
@@ -155,7 +155,7 @@ const AttemptTypeComponent = ({ attempt_type }: { attempt_type: AttemptType }) =
                                             {stat.correct} / {stat.total} ({pct}%)
                                         </span>
                                     </div>
-                                    <div className="w-full bg-gray-100 dark:bg-gray-700 h-1.5 rounded-full overflow-hidden">
+                                    <div className="w-full bg-muted h-1.5 rounded-full overflow-hidden">
                                         <div
                                             className={`h-full rounded-full transition-all duration-300 ${
                                                 isHigh ? 'bg-emerald-500' : isMed ? 'bg-amber-500' : 'bg-rose-500'
@@ -170,31 +170,31 @@ const AttemptTypeComponent = ({ attempt_type }: { attempt_type: AttemptType }) =
                 </div>
             )}
 
-            <div className="overflow-x-auto">
+            <div className="overflow-x-auto rounded-[18px] border border-glass-edge">
                 <table className="border-collapse w-full text-sm text-left text-foreground">
-                    <thead className="bg-gray-100 dark:bg-gray-700">
+                    <thead className="bg-muted text-muted-foreground text-xs font-semibold uppercase tracking-wide">
                     <tr>
-                        <td className="border border-gray-300 dark:border-gray-600 px-4 py-2">
+                        <td className="border border-divider px-4 py-2">
                             {t('n')}
                         </td>
 
                         {/* ✅ Conditional extra columns */}
                         {attempt_type.type?.name === 'Writing' && (
                             <>
-                                <td className="border border-gray-300 dark:border-gray-600 px-4 py-2">
+                                <td className="border border-divider px-4 py-2">
                                     {t('question')}
                                 </td>
                             </>
                         )}
 
-                        <td className="border border-gray-300 dark:border-gray-600 px-4 py-2">
+                        <td className="border border-divider px-4 py-2">
                             {t('answer')}
                         </td>
 
                         {/* ✅ Conditional extra columns */}
                         {attempt_type.type?.name !== 'Writing' && (
                             <>
-                                <td className="border border-gray-300 dark:border-gray-600 px-4 py-2">
+                                <td className="border border-divider px-4 py-2">
                                     {t('correct')} <span> : </span>
                                     {attempt_type.type?.name === 'Writing' ?
                                         totalScore
@@ -203,7 +203,7 @@ const AttemptTypeComponent = ({ attempt_type }: { attempt_type: AttemptType }) =
                                     }
                                 </td>
 
-                                <td className="border border-gray-300 dark:border-gray-600 px-4 py-2">
+                                <td className="border border-divider px-4 py-2">
                                     {t('correct_answer')}
                                 </td>
                             </>
@@ -212,10 +212,10 @@ const AttemptTypeComponent = ({ attempt_type }: { attempt_type: AttemptType }) =
                         {/* ✅ Conditional extra columns */}
                         {attempt_type.type?.name === 'Writing' && (
                             <>
-                                <td className="border border-gray-300 dark:border-gray-600 px-4 py-2">
+                                <td className="border border-divider px-4 py-2">
                                     {t('review_note_ai')}
                                 </td>
-                                <td className="border border-gray-300 dark:border-gray-600 px-4 py-2">
+                                <td className="border border-divider px-4 py-2">
                                     {t('score')} <span> : </span>
                                     {attempt_type.type?.name === 'Writing' ?
                                         totalScore
@@ -228,7 +228,7 @@ const AttemptTypeComponent = ({ attempt_type }: { attempt_type: AttemptType }) =
                     </tr>
                     </thead>
 
-                    <tbody className="bg-white dark:bg-gray-800">
+                    <tbody>
                     {attemptParts.map((attemptPart) => {
                             let order = Number(attemptPart.part?.order);
 
@@ -240,9 +240,9 @@ const AttemptTypeComponent = ({ attempt_type }: { attempt_type: AttemptType }) =
                                             return (
                                                 <tr
                                                     key={`${question.id}-${qIndex}`}
-                                                    className="hover:bg-gray-50 dark:hover:bg-gray-700"
+                                                    className="hover:bg-accent/60"
                                                 >
-                                                    <td className="border border-gray-300 dark:border-gray-600 px-4 py-2">
+                                                    <td className="border border-divider px-4 py-2">
                                                         {(() => {
                                                             const count = question.is_correct_count ?? 1;
                                                             return count > 1
@@ -253,13 +253,13 @@ const AttemptTypeComponent = ({ attempt_type }: { attempt_type: AttemptType }) =
 
                                                     {attempt_type.type?.name === 'Writing' && (
                                                         <>
-                                                            <td className="border border-gray-300 dark:border-gray-600 px-4 py-2">
+                                                            <td className="border border-divider px-4 py-2">
                                                                 {question.textarea}
                                                             </td>
                                                         </>
                                                     )}
 
-                                                    <td className="border border-gray-300 dark:border-gray-600 px-4 py-2">
+                                                    <td className="border border-divider px-4 py-2">
                                                         {question.attempt_answer?.answer_text && (
                                                             <div
                                                                 className={'whitespace-pre-wrap'}>{question.attempt_answer.answer_text}</div>
@@ -277,28 +277,28 @@ const AttemptTypeComponent = ({ attempt_type }: { attempt_type: AttemptType }) =
                                                     {/* ✅ Conditional extra columns */}
                                                     {attempt_type.type?.name !== 'Writing' && (
                                                         <>
-                                                            <td className="border border-gray-300 dark:border-gray-600 px-4 py-2">
+                                                            <td className="border border-divider px-4 py-2">
                                                                 {question.options.length === 0 ? (
                                                                     checkAnswerCorrect(question.answer_text, question.attempt_answer?.answer_text) ? (
-                                                                        <CheckCircle className="text-green-600 dark:text-green-400" />
+                                                                        <CheckCircle className="text-emerald-700 dark:text-emerald-300" />
                                                                     ) : (
-                                                                        <Minus className="text-red-600 dark:text-red-400" />
+                                                                        <Minus className="text-rose-700 dark:text-rose-300" />
                                                                     )
                                                                 ) : (
                                                                     question.attempt_answer?.attempt_answer_options?.map((opt, idx) => (
                                                                         <div key={idx}>
                                                                             {opt.option.is_correct === 1 ? (
                                                                                 <CheckCircle
-                                                                                    className="text-green-600 dark:text-green-400" />
+                                                                                    className="text-emerald-700 dark:text-emerald-300" />
                                                                             ) : (
-                                                                                <Minus className="text-red-600 dark:text-red-400" />
+                                                                                <Minus className="text-rose-700 dark:text-rose-300" />
                                                                             )}
                                                                         </div>
                                                                     ))
                                                                 )}
                                                             </td>
 
-                                                            <td className="border border-gray-300 dark:border-gray-600 px-4 py-2">
+                                                            <td className="border border-divider px-4 py-2">
                                                                 {question.options.length == 0 ? (
                                                                     <div>{question.answer_text}</div>
                                                                 ) : (
@@ -318,7 +318,7 @@ const AttemptTypeComponent = ({ attempt_type }: { attempt_type: AttemptType }) =
                                                     {/* ✅ Conditional extra columns */}
                                                     {attempt_type.type?.name === 'Writing' && (
                                                         <>
-                                                            <td className="border border-gray-300 dark:border-gray-600 p-2">
+                                                            <td className="border border-divider p-2">
                                                                 <AIEvaluationCard
                                                                     rawNote={question?.attempt_answer?.review_note_ai}
                                                                     score={question?.attempt_answer?.score}
@@ -326,7 +326,7 @@ const AttemptTypeComponent = ({ attempt_type }: { attempt_type: AttemptType }) =
                                                                     answerId={question?.attempt_answer?.id}
                                                                 />
                                                             </td>
-                                                            <td className="border border-gray-300 dark:border-gray-600 px-4 py-2 font-bold text-center">
+                                                            <td className="border border-divider px-4 py-2 font-bold text-center">
                                                                 {question?.attempt_answer?.score ?? '-'}
                                                             </td>
                                                         </>
@@ -344,24 +344,24 @@ const AttemptTypeComponent = ({ attempt_type }: { attempt_type: AttemptType }) =
                     )}
 
                     {/* ✅ total score row */}
-                    <tr className="bg-gray-100 dark:bg-gray-700 font-semibold">
+                    <tr className="bg-muted font-semibold">
                         <td
-                            className="border border-gray-300 dark:border-gray-600 px-4 py-2"
+                            className="border border-divider px-4 py-2"
                             colSpan={attempt_type.type?.name === 'Writing' ? 4 : 2}
                         >
                             {t('total_score')}
                         </td>
                         {attempt_type.type?.name === 'Writing' ?
-                            <td className="border border-gray-300 dark:border-gray-600 px-4 py-2">
+                            <td className="border border-divider px-4 py-2">
                                 {totalScore}
                             </td>
                             :
                             <>
-                                <td className="border border-gray-300 dark:border-gray-600 px-4 py-2">
+                                <td className="border border-divider px-4 py-2">
                                     {sum_is_correct}
                                 </td>
 
-                                <td className="border border-gray-300 dark:border-gray-600 px-4 py-2">
+                                <td className="border border-divider px-4 py-2">
                                     {t('correct_answer')}
                                 </td>
                             </>

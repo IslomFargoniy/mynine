@@ -73,10 +73,10 @@ export default function TestTypeShow() {
             <Head title={`${testName} - ${typeName}`} />
 
             {/* Full-height flex column inside AppLayout content */}
-            <div className="flex flex-col overflow-hidden" style={{ height: 'calc(100vh - 112px)' }}>
+            <div className="glass-strong flex flex-col overflow-hidden rounded-[22px]" style={{ height: 'calc(100vh - 112px)' }}>
 
                 {/* ══════════ STICKY SUBHEADER ══════════ */}
-                <div className="flex-none flex items-center justify-between gap-3 px-4 py-2 bg-card border-b border-border z-30">
+                <div className="flex-none flex items-center justify-between gap-3 px-4 py-2 border-b border-divider z-30">
                     {/* Part pills */}
                     <div className="flex items-center gap-1.5 overflow-x-auto hide-scrollbar flex-1">
                         {parts.map((part: Part, idx: number) => (
@@ -85,8 +85,8 @@ export default function TestTypeShow() {
                                 onClick={() => setSelectedPartId(part.id)}
                                 className={`px-4 py-1 rounded-full text-sm font-medium transition-all whitespace-nowrap border ${
                                     selectedPartId === part.id
-                                        ? 'bg-blue-600 text-white border-blue-600 shadow-sm'
-                                        : 'bg-white dark:bg-gray-800 text-foreground/80 border-border hover:border-blue-300 hover:text-blue-600'
+                                        ? 'bg-primary text-primary-foreground border-transparent shadow-glass-pill font-semibold'
+                                        : 'bg-glass-subtle text-foreground border-glass-edge hover:bg-accent hover:text-brand'
                                 }`}
                             >
                                 {part.name || `Part ${idx + 1}`}
@@ -98,7 +98,7 @@ export default function TestTypeShow() {
                     <button
                         type="button"
                         onClick={() => setOpenCreatePartModal(true)}
-                        className="shrink-0 flex items-center gap-1.5 px-3 py-1.5 bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 rounded-lg hover:bg-blue-600 hover:text-white transition-all font-semibold text-xs border border-blue-200 dark:border-blue-700 hover:border-blue-600 shadow-sm active:scale-95 cursor-pointer"
+                        className="shrink-0 flex items-center gap-1.5 px-3 py-1.5 bg-indigo-500/12 text-brand rounded-full hover:bg-primary hover:text-primary-foreground transition-all font-semibold text-xs border border-indigo-500/25 hover:border-ring active:scale-95 cursor-pointer"
                     >
                         <Plus className="w-3.5 h-3.5" />
                         {t('add_part') ?? 'Add Part'}
@@ -113,11 +113,11 @@ export default function TestTypeShow() {
                         {!isListening && (
                             <>
                                 <div
-                                    className="flex flex-col h-full bg-card border-r border-border overflow-hidden"
+                                    className="flex flex-col h-full border-r border-divider overflow-hidden"
                                     style={{ width: `${leftWidth}%` }}
                                 >
                                     {/* Part header */}
-                                    <div className="flex items-center justify-between px-4 py-2.5 border-b border-border bg-muted shrink-0">
+                                    <div className="flex items-center justify-between px-4 py-2.5 border-b border-divider bg-muted shrink-0">
                                         <h2 className="font-bold text-sm text-foreground truncate">
                                             {selectedPart.name}
                                         </h2>
@@ -131,12 +131,12 @@ export default function TestTypeShow() {
                                                 dangerouslySetInnerHTML={{ __html: cleanTinyMce(selectedPart.textarea) }}
                                             />
                                         ) : (
-                                            <div className="flex flex-col items-center justify-center h-full text-muted-foreground/60 gap-2">
+                                            <div className="flex flex-col items-center justify-center h-full text-muted-foreground gap-2">
                                                 <p className="text-sm">{t('no_passage') ?? 'No passage text yet.'}</p>
                                                 <button
                                                     type="button"
                                                     onClick={() => setOpenEditPartModal(true)}
-                                                    className="text-xs text-blue-500 hover:underline cursor-pointer"
+                                                    className="text-xs text-brand hover:underline cursor-pointer"
                                                 >
                                                     {t('edit')} {t('part')}
                                                 </button>
@@ -148,21 +148,21 @@ export default function TestTypeShow() {
                                 {/* Drag handle */}
                                 <div
                                     onMouseDown={startResize}
-                                    className="w-1.5 shrink-0 cursor-col-resize bg-gray-200 dark:bg-gray-700 hover:bg-blue-400 dark:hover:bg-blue-500 transition-colors z-10 flex items-center justify-center group"
+                                    className="w-1.5 shrink-0 cursor-col-resize bg-foreground/10 hover:bg-primary/60 transition-colors z-10 flex items-center justify-center group"
                                 >
-                                    <div className="w-0.5 h-8 bg-gray-400 dark:bg-gray-500 rounded-full group-hover:bg-blue-500 transition-colors" />
+                                    <div className="w-0.5 h-8 bg-muted-foreground/50 rounded-full group-hover:bg-primary transition-colors" />
                                 </div>
                             </>
                         )}
 
                         {/* ── RIGHT PANEL: Sections ── */}
                         <div
-                            className="flex flex-col h-full overflow-hidden bg-gray-50 dark:bg-gray-950"
+                            className="flex flex-col h-full overflow-hidden"
                             style={{ width: isListening ? '100%' : `${100 - leftWidth - 0.4}%` }}
                         >
                             {/* Listening: part actions in right panel header */}
                             {isListening && (
-                                <div className="flex items-center justify-between px-4 py-2.5 border-b border-border bg-card shrink-0">
+                                <div className="flex items-center justify-between px-4 py-2.5 border-b border-divider bg-muted shrink-0">
                                     <h2 className="font-bold text-sm text-foreground">
                                         {selectedPart.name}
                                     </h2>
@@ -202,7 +202,7 @@ export default function TestTypeShow() {
                             </div>
 
                             {/* Sticky bottom toolbar */}
-                            <div className="shrink-0 flex items-center gap-3 px-4 py-3 border-t border-border bg-card">
+                            <div className="shrink-0 flex items-center gap-3 px-4 py-3 border-t border-divider">
                                 <CreateSectionModal part={selectedPart} question_types={question_types} />
                                 <ImportAiModal part={selectedPart} />
                             </div>

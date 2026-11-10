@@ -63,14 +63,14 @@ export default function EvaluateSpeaking({ attempt }: UpdateFolderModalProps) {
         <Dialog open={open} onOpenChange={setOpen}>
             <DialogTrigger asChild>
                 <button
-                    className={`${baseButton} bg-blue-600 hover:bg-blue-700 focus:ring-blue-300 dark:bg-blue-600 dark:hover:bg-blue-700`}
+                    className={`${baseButton} btn-glass-primary rounded-full! hover:brightness-110 focus:ring-ring`}
                 >
                     <IoCreate className="w-4 h-4" />
                     {t('evaluate_speaking')}
                 </button>
             </DialogTrigger>
 
-            <DialogContent className={'dark:border-gray-400'}>
+            <DialogContent>
                 <DialogTitle>{t('evaluate_speaking')}</DialogTitle>
                 <DialogDescription>{t('modal.create_description')}</DialogDescription>
 
@@ -95,20 +95,17 @@ export default function EvaluateSpeaking({ attempt }: UpdateFolderModalProps) {
                             id="comment"
                             value={data.comment}
                             onChange={(e) => setData('comment', e.target.value)}
-                            className="mt-1 block w-full rounded-lg border border-gray-300 dark:border-gray-600
-                   bg-white dark:bg-gray-800 text-foreground 
-                   shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm p-2"
+                            className="mt-1 block w-full rounded-xl border border-input bg-glass-subtle text-foreground focus:border-ring focus:ring-ring sm:text-sm p-2"
                             rows={4}
                         />
-                        <InputError message={errors.comment} className="text-red-500 text-sm mt-1" />
+                        <InputError message={errors.comment} className="text-sm mt-1" />
                     </div>
 
 
-                    <DialogFooter className="flex justify-end gap-3 pt-4 border-t border-border">
+                    <DialogFooter className="flex justify-end gap-3 pt-4 border-t border-divider">
                         <DialogClose asChild>
                             <Button
                                 variant="secondary"
-                                className="bg-muted text-foreground/80 hover:bg-gray-200 dark:hover:bg-gray-700"
                                 onClick={() => {
                                     reset();
                                     clearErrors();
@@ -122,7 +119,7 @@ export default function EvaluateSpeaking({ attempt }: UpdateFolderModalProps) {
                         <Button
                             type="submit"
                             disabled={processing}
-                            className="bg-blue-600 text-white hover:bg-blue-700 dark:bg-blue-500 dark:hover:bg-blue-600 disabled:opacity-50"
+                            className="disabled:opacity-50"
                         >
                             {t('save')}
                         </Button>

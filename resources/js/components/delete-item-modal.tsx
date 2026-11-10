@@ -30,9 +30,9 @@ export default function DeleteItemModal({ item, open, setOpen, onDelete }: Delet
 
     return (
         <Dialog open={open} onOpenChange={setOpen}>
-            <DialogContent className="sm:max-w-md w-full dark:border-gray-700">
-                <DialogHeader className="space-y-1 pb-2 border-b border-border">
-                    <div className="flex items-center gap-2 text-red-600 dark:text-red-400">
+            <DialogContent className="sm:max-w-md w-full">
+                <DialogHeader className="space-y-1 pb-2 border-b border-divider">
+                    <div className="flex items-center gap-2 text-rose-700 dark:text-rose-300">
                         <AlertTriangle className="w-5 h-5 shrink-0" />
                         <DialogTitle className="text-lg font-bold text-foreground">
                             {t('modal.delete_title') || "O'chirishni tasdiqlang"}
@@ -44,17 +44,17 @@ export default function DeleteItemModal({ item, open, setOpen, onDelete }: Delet
                 </DialogHeader>
 
                 {displayName && (
-                    <div className="p-3 my-1 rounded-lg bg-red-50/60 dark:bg-red-950/30 border border-red-100 dark:border-red-900 text-xs font-semibold text-red-900 dark:text-red-200 truncate">
+                    <div className="p-3 my-1 rounded-[18px] bg-rose-500/12 dark:bg-rose-400/15 border border-rose-500/25 text-xs font-semibold text-rose-800 dark:text-rose-200 truncate">
                         "{displayName}"
                     </div>
                 )}
 
-                <DialogFooter className="flex items-center justify-end gap-3 pt-3 mt-2 border-t border-border">
+                <DialogFooter className="flex items-center justify-end gap-3 pt-3 mt-2 border-t border-divider">
                     <DialogClose asChild>
                         <Button
                             type="button"
                             variant="outline"
-                            className="border-gray-300 dark:border-gray-700"
+                            className="border-glass-edge"
                             onClick={() => setOpen(false)}
                         >
                             {t('cancel')}
@@ -65,7 +65,7 @@ export default function DeleteItemModal({ item, open, setOpen, onDelete }: Delet
                         type="button"
                         variant="destructive"
                         onClick={handleDelete}
-                        className="bg-red-600 hover:bg-red-700 text-white font-semibold shadow-xs"
+                        className="font-semibold"
                     >
                         {t('delete')}
                     </Button>

@@ -4,20 +4,19 @@ import { type BreadcrumbItem as BreadcrumbItemType } from '@/types';
 import LanguageBar from '@/components/language';
 import AppearanceToggleDropdown from '@/components/appearance-dropdown';
 
+/** Floating pill top bar (liquid glass): sidebar toggle + breadcrumbs, language and theme. */
 export function AppSidebarHeader({ breadcrumbs = [] }: { breadcrumbs?: BreadcrumbItemType[] }) {
     return (
-        <div className="fixed top-0 z-50 block w-full dark:bg-black bg-white">
-            <header className="flex justify-between items-center h-14 px-6 border-b-2 border-border">
-                <div className="flex items-center gap-2">
-                    <SidebarTrigger className="-ml-1" />
-                    <Breadcrumbs breadcrumbs={breadcrumbs} />
+        <div className="sticky top-3 z-40 mx-3 mt-3 mb-4 md:mx-0 md:mt-0">
+            <header className="glass-pill flex h-14 items-center justify-between gap-3 pr-2 pl-3 md:pl-4">
+                <div className="flex min-w-0 items-center gap-2">
+                    <SidebarTrigger className="-ml-0.5 size-9 rounded-full" />
+                    <div className="min-w-0 truncate">
+                        <Breadcrumbs breadcrumbs={breadcrumbs} />
+                    </div>
                 </div>
-                <div className="flex-1"></div>
-                <div className="fixed top-2.5 right-4 z-[60] flex items-center gap-2">
-                    {/* 1st: Language Switcher Dropdown */}
+                <div className="flex shrink-0 items-center gap-2">
                     <LanguageBar />
-                    
-                    {/* 2nd: Mode Button (Dark/Light theme toggle) */}
                     <AppearanceToggleDropdown />
                 </div>
             </header>

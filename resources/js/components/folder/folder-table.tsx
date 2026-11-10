@@ -73,11 +73,11 @@ const FolderTable = ({ searchData, ...folder }: FolderTableProps) => {
                     return (
                         <div
                             key={item.id}
-                            className="bg-card border border-border rounded-2xl p-5 shadow-xs hover:shadow-md transition-all flex flex-col justify-between"
+                            className="glass rounded-[22px] p-5 hover:bg-accent/40 transition-all flex flex-col justify-between"
                         >
                             {/* Header */}
                             <div className="flex justify-between items-start gap-2">
-                                <h3 className="text-base font-bold text-foreground line-clamp-1 hover:text-blue-600 dark:hover:text-blue-400 transition-colors">
+                                <h3 className="text-base font-bold text-foreground line-clamp-1 hover:text-brand transition-colors">
                                     <Link href={`/folder/${item.id}`}>
                                         {item.name}
                                     </Link>
@@ -91,11 +91,11 @@ const FolderTable = ({ searchData, ...folder }: FolderTableProps) => {
                             </p>
 
                             {/* Status */}
-                            <div className="mt-4 flex items-center justify-between border-t border-border pt-3">
+                            <div className="mt-4 flex items-center justify-between border-t border-divider pt-3">
                                 <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-bold ${
                                     item.active == 1
-                                        ? 'bg-emerald-50 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800/40'
-                                        : 'bg-muted text-muted-foreground'
+                                        ? 'bg-emerald-500/12 text-emerald-800 dark:bg-emerald-400/15 dark:text-emerald-200 border border-emerald-500/25'
+                                        : 'bg-muted text-foreground border border-glass-edge'
                                 }`}>
                                     {item.active == 1 ? (
                                         <CheckCircle className="w-3.5 h-3.5" />
@@ -112,7 +112,7 @@ const FolderTable = ({ searchData, ...folder }: FolderTableProps) => {
                                     <button
                                         type="button"
                                         onClick={() => handleUpdateClick(item)}
-                                        className="px-3 py-2 bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 hover:bg-blue-600 hover:text-white dark:hover:bg-blue-600 dark:hover:text-white rounded-xl font-semibold text-xs flex items-center justify-center gap-1.5 flex-1 transition-all cursor-pointer shadow-xs active:scale-95"
+                                        className="px-3 py-2 bg-indigo-500/12 text-brand hover:bg-primary hover:text-primary-foreground rounded-full font-semibold text-xs flex items-center justify-center gap-1.5 flex-1 transition-all cursor-pointer active:scale-95"
                                         title={t('edit')}
                                     >
                                         <PencilIcon className="w-3.5 h-3.5" />
@@ -121,7 +121,7 @@ const FolderTable = ({ searchData, ...folder }: FolderTableProps) => {
                                     <button
                                         type="button"
                                         onClick={() => handleDeleteClick(item)}
-                                        className="px-3 py-2 bg-red-50 dark:bg-red-900/30 text-red-600 dark:text-red-400 hover:bg-red-600 hover:text-white dark:hover:bg-red-600 dark:hover:text-white rounded-xl font-semibold text-xs flex items-center justify-center gap-1.5 flex-1 transition-all cursor-pointer shadow-xs active:scale-95"
+                                        className="px-3 py-2 bg-rose-500/12 text-rose-800 dark:bg-rose-400/15 dark:text-rose-200 hover:bg-destructive hover:text-white dark:hover:bg-destructive dark:hover:text-white rounded-full font-semibold text-xs flex items-center justify-center gap-1.5 flex-1 transition-all cursor-pointer active:scale-95"
                                         title={t('delete')}
                                     >
                                         <TrashIcon className="w-3.5 h-3.5" />
@@ -152,7 +152,7 @@ const FolderTable = ({ searchData, ...folder }: FolderTableProps) => {
             )}
 
             {/* Pagination */}
-            <div className="mt-6 flex justify-between items-center text-sm text-foreground/80">
+            <div className="mt-6 flex justify-between items-center text-sm text-muted-foreground">
                 <div>
                     {t('showing', {
                         from: folder.from,
@@ -165,12 +165,12 @@ const FolderTable = ({ searchData, ...folder }: FolderTableProps) => {
                         <Link
                             key={index}
                             href={`${link.url ?? '?'}&search=${searchData.search}&per_page=${searchData.per_page}`}
-                            className={`px-3 py-1 rounded-md text-sm transition ${
+                            className={`px-3 py-1 rounded-full text-sm transition ${
                                 link.active
-                                    ? 'bg-blue-600 text-white'
+                                    ? 'bg-primary text-primary-foreground shadow-glass-pill'
                                     : !link.url
                                         ? 'text-muted-foreground cursor-not-allowed'
-                                        : 'bg-white dark:bg-gray-800 text-foreground/80 border border-gray-300 dark:border-gray-600 hover:bg-gray-100 dark:hover:bg-gray-700'
+                                        : 'bg-glass-subtle text-foreground border border-glass-edge hover:bg-accent'
                             }`}
                             dangerouslySetInnerHTML={{ __html: link.label }}
                         />

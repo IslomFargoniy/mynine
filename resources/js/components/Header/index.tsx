@@ -57,9 +57,9 @@ const Header: React.FC = () => {
 
     return (
         <header
-            className={`fixed top-0 z-40 w-full transition-all duration-300 ${sticky ? 'bg-white/80 dark:bg-gray-950/80 backdrop-blur-md py-4 shadow-lg' : 'bg-transparent py-5 shadow-none'}`}
+            className={`fixed top-0 z-40 w-full px-3 transition-all duration-300 ${sticky ? 'pt-2' : 'pt-4'}`}
         >
-            <div className="container mx-auto px-4 md:max-w-screen-md lg:max-w-screen-xl">
+            <div className="container mx-auto glass-pill px-4 py-2 sm:px-6 md:max-w-screen-md lg:max-w-screen-xl">
                 <div className="flex items-center justify-between">
                     <Logo />
 
@@ -81,7 +81,7 @@ const Header: React.FC = () => {
                             {auth.user ? (
                                 <Link
                                     href={route('dashboard')}
-                                    className="flex items-center gap-2 rounded-xl bg-slate-900 px-6 py-2.5 text-sm font-bold text-white transition-all hover:bg-slate-800 dark:bg-indigo-600"
+                                    className="btn-glass-primary flex items-center gap-2 rounded-full px-6 py-2.5 text-sm font-bold transition-all hover:brightness-110"
                                 >
                                     <Icon icon="tabler:layout-dashboard" className="text-lg" />
                                     {t('header.dashboard')}
@@ -89,14 +89,14 @@ const Header: React.FC = () => {
                             ) : (
                                 <div className="flex items-center gap-4">
                                     <button
-                                        className="px-6 py-2.5 text-sm font-bold text-slate-600 transition-colors hover:text-indigo-600 dark:text-slate-400"
+                                        className="rounded-full px-6 py-2.5 text-sm font-bold text-foreground transition-colors hover:bg-accent hover:text-brand"
                                         onClick={() => setIsSignInOpen(true)}
                                     >
                                         {t('header.sign_in')}
                                     </button>
 
                                     <button
-                                        className="rounded-xl bg-indigo-600 px-8 py-2.5 text-sm font-black text-white shadow-lg transition-all hover:bg-indigo-700 active:scale-95"
+                                        className="btn-glass-primary rounded-full px-8 py-2.5 text-sm font-black transition-all hover:brightness-110 active:scale-95"
                                         onClick={() => setIsSignUpOpen(true)}
                                     >
                                         {t('header.sign_up')}
@@ -112,16 +112,16 @@ const Header: React.FC = () => {
                         <AppearanceToggleDropdown />
                         <button
                             onClick={() => setNavbarOpen(!navbarOpen)}
-                            className="block rounded-lg p-2 focus:outline-none"
+                            className="block rounded-full p-2 hover:bg-accent focus:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                             aria-label="Toggle Menu"
                         >
                             <div className="space-y-1.5">
                                 <span
-                                    className={`block h-0.5 w-6 bg-black transition-all dark:bg-white ${navbarOpen ? 'translate-y-2 rotate-45' : ''}`}
+                                    className={`block h-0.5 w-6 bg-foreground transition-all ${navbarOpen ? 'translate-y-2 rotate-45' : ''}`}
                                 />
-                                <span className={`block h-0.5 w-6 bg-black transition-all dark:bg-white ${navbarOpen ? 'opacity-0' : ''}`} />
+                                <span className={`block h-0.5 w-6 bg-foreground transition-all ${navbarOpen ? 'opacity-0' : ''}`} />
                                 <span
-                                    className={`block h-0.5 w-6 bg-black transition-all dark:bg-white ${navbarOpen ? '-translate-y-2 -rotate-45' : ''}`}
+                                    className={`block h-0.5 w-6 bg-foreground transition-all ${navbarOpen ? '-translate-y-2 -rotate-45' : ''}`}
                                 />
                             </div>
                         </button>
@@ -131,13 +131,13 @@ const Header: React.FC = () => {
 
             {/* Modals for Auth */}
             {isSignInOpen && (
-                <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/50 backdrop-blur-sm px-4">
+                <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/40 backdrop-blur-sm px-4">
                     <div
                         ref={signInRef}
                         className="relative mx-auto w-full max-w-md"
                     >
-                        <button onClick={() => setIsSignInOpen(false)} className="absolute z-10 top-4 right-4 bg-gray-100/50 dark:bg-gray-800/50 rounded-full p-1.5 hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors">
-                            <Icon icon="tabler:x" className="text-xl text-gray-600 dark:text-gray-300" />
+                        <button onClick={() => setIsSignInOpen(false)} className="absolute z-10 top-4 right-4 bg-glass-subtle border border-glass-edge rounded-full p-1.5 hover:bg-accent transition-colors">
+                            <Icon icon="tabler:x" className="text-xl text-muted-foreground" />
                         </button>
                         <LoginCard />
                     </div>
@@ -145,13 +145,13 @@ const Header: React.FC = () => {
             )}
 
             {isSignUpOpen && (
-                <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/50 backdrop-blur-sm px-4">
+                <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/40 backdrop-blur-sm px-4">
                     <div
                         ref={signUpRef}
                         className="relative mx-auto w-full max-w-md"
                     >
-                        <button onClick={() => setIsSignUpOpen(false)} className="absolute z-10 top-4 right-4 bg-gray-100/50 dark:bg-gray-800/50 rounded-full p-1.5 hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors">
-                            <Icon icon="tabler:x" className="text-xl text-gray-600 dark:text-gray-300" />
+                        <button onClick={() => setIsSignUpOpen(false)} className="absolute z-10 top-4 right-4 bg-glass-subtle border border-glass-edge rounded-full p-1.5 hover:bg-accent transition-colors">
+                            <Icon icon="tabler:x" className="text-xl text-muted-foreground" />
                         </button>
                         <RegisterCard />
                     </div>
@@ -159,16 +159,16 @@ const Header: React.FC = () => {
             )}
 
             {/* Mobile Drawer */}
-            {navbarOpen && <div className="fixed inset-0 z-40 bg-black/50 lg:hidden" onClick={() => setNavbarOpen(false)} />}
+            {navbarOpen && <div className="fixed inset-0 z-40 bg-black/40 lg:hidden" onClick={() => setNavbarOpen(false)} />}
 
             <div
                 ref={mobileMenuRef}
-                className={`fixed top-0 right-0 z-50 h-full w-full max-w-xs transform bg-white shadow-xl transition-transform duration-300 lg:hidden dark:bg-gray-900 ${navbarOpen ? 'translate-x-0' : 'translate-x-full'}`}
+                className={`fixed top-0 right-0 z-50 h-full w-full max-w-xs transform glass-strong rounded-l-[28px] rounded-r-none transition-transform duration-300 lg:hidden ${navbarOpen ? 'translate-x-0' : 'translate-x-full'}`}
             >
                 <div className="flex items-center justify-between p-6">
                     <Logo />
-                    <button onClick={() => setNavbarOpen(false)} className="p-2">
-                        <Icon icon="tabler:x" className="text-2xl text-gray-900 dark:text-white" />
+                    <button onClick={() => setNavbarOpen(false)} className="rounded-full p-2 hover:bg-accent">
+                        <Icon icon="tabler:x" className="text-2xl text-foreground" />
                     </button>
                 </div>
 
@@ -181,19 +181,19 @@ const Header: React.FC = () => {
                         <FindMockModal />
                     </div>
 
-                    <hr className="my-4 border-slate-100 dark:border-slate-800" />
+                    <hr className="my-4 border-divider" />
 
                     {auth.user ? (
                         <Link
                             href={route('dashboard')}
-                            className="flex items-center justify-center gap-2 rounded-xl bg-slate-900 py-3 font-bold text-white dark:bg-indigo-600"
+                            className="btn-glass-primary flex items-center justify-center gap-2 rounded-full py-3 font-bold hover:brightness-110"
                         >
                             {t('header.dashboard')}
                         </Link>
                     ) : (
                         <div className="flex flex-col gap-3">
                             <button
-                                className="w-full rounded-xl border border-slate-200 py-3 font-bold text-slate-700 dark:border-slate-700 dark:text-slate-300"
+                                className="w-full rounded-full border border-glass-edge bg-glass-subtle py-3 font-bold text-foreground hover:bg-accent"
                                 onClick={() => {
                                     setIsSignInOpen(true);
                                     setNavbarOpen(false);
@@ -202,7 +202,7 @@ const Header: React.FC = () => {
                                 {t('header.sign_in')}
                             </button>
                             <button
-                                className="w-full rounded-xl bg-indigo-600 py-3 font-bold text-white"
+                                className="btn-glass-primary w-full rounded-full py-3 font-bold hover:brightness-110"
                                 onClick={() => {
                                     setIsSignUpOpen(true);
                                     setNavbarOpen(false);

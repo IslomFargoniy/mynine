@@ -19,7 +19,7 @@ export function NavUser() {
                     <DropdownMenuTrigger asChild>
                         <SidebarMenuButton 
                             size="lg" 
-                            className="w-full justify-start p-2 rounded-xl transition-all duration-300 border border-transparent hover:border-gray-100 dark:hover:border-gray-800/50 hover:bg-white dark:hover:bg-gray-900/50 data-[state=open]:bg-white dark:data-[state=open]:bg-gray-900 shadow-sm hover:shadow-md"
+                            className="w-full justify-start rounded-[18px] border border-glass-edge bg-glass-subtle p-2.5 transition-colors duration-200 hover:bg-accent data-[state=open]:bg-accent"
                         >
                             <div className="flex items-center gap-3 w-full overflow-hidden">
                                 <UserInfo user={auth.user} />
@@ -28,7 +28,7 @@ export function NavUser() {
                         </SidebarMenuButton>
                     </DropdownMenuTrigger>
                     <DropdownMenuContent
-                        className="w-(--radix-dropdown-menu-trigger-width) min-w-56 rounded-lg"
+                        className="w-(--radix-dropdown-menu-trigger-width) min-w-56"
                         align="end"
                         side={isMobile ? 'bottom' : state === 'collapsed' ? 'left' : 'bottom'}
                     >

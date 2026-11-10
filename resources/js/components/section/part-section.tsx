@@ -51,17 +51,17 @@ export default function PartSection({ section, globalIndex }: SectionUpdateProps
     const typeName = section.question_type?.name ?? section.question_type?.type ?? 'Section';
 
     return (
-        <div className="rounded-xl border border-border bg-card overflow-hidden shadow-sm">
+        <div className="glass-subtle rounded-[18px] overflow-hidden">
 
             {/* Section Header */}
             <div
-                className="flex items-center gap-2 px-4 py-3 cursor-pointer select-none hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
+                className="flex items-center gap-2 px-4 py-3 cursor-pointer select-none hover:bg-accent transition-colors"
                 onClick={() => setIsOpen(!isOpen)}
             >
                 {/* Section info */}
                 <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 flex-wrap">
-                        <span className="inline-block px-2 py-0.5 text-[11px] font-semibold bg-blue-50 dark:bg-blue-900/40 text-blue-700 dark:text-blue-300 rounded-full border border-blue-100 dark:border-blue-800 whitespace-nowrap">
+                        <span className="inline-block px-2 py-0.5 text-[11px] font-semibold bg-indigo-500/12 text-brand rounded-full border border-indigo-500/25 whitespace-nowrap">
                             {typeName}
                         </span>
                         <span className="text-xs text-muted-foreground whitespace-nowrap">
@@ -79,14 +79,14 @@ export default function PartSection({ section, globalIndex }: SectionUpdateProps
                 <div className="flex items-center gap-1 shrink-0" onClick={e => e.stopPropagation()}>
                     <button
                         onClick={() => setOpenUpdate(true)}
-                        className="p-1.5 rounded hover:bg-blue-50 dark:hover:bg-blue-900/30 text-blue-500 dark:text-blue-400 hover:text-blue-700 transition-colors"
+                        className="p-1.5 rounded-full hover:bg-indigo-500/12 text-brand transition-colors"
                         title={t('edit') ?? 'Edit'}
                     >
                         <Edit className="w-3.5 h-3.5" />
                     </button>
                     <button
                         onClick={() => setOpenDelete(true)}
-                        className="p-1.5 rounded hover:bg-red-50 dark:hover:bg-red-900/30 text-red-400 hover:text-red-600 transition-colors"
+                        className="p-1.5 rounded-full hover:bg-rose-500/12 text-rose-700 dark:text-rose-300 transition-colors"
                         title={t('delete') ?? 'Delete'}
                     >
                         <TrashIcon className="w-3.5 h-3.5" />
@@ -101,7 +101,7 @@ export default function PartSection({ section, globalIndex }: SectionUpdateProps
 
             {/* Section Body */}
             {isOpen && (
-                <div className="border-t border-border px-4 py-3 space-y-3 bg-gray-50/50 dark:bg-gray-950/30">
+                <div className="border-t border-divider px-4 py-3 space-y-3">
                     {/* Section instruction text */}
                     {section.textarea && (
                         <div
@@ -112,13 +112,13 @@ export default function PartSection({ section, globalIndex }: SectionUpdateProps
 
                     {/* Options (drag_and_drop) */}
                     {section.question_type?.type === 'drag_and_drop' && (
-                        <div className="p-3 rounded-xl bg-card border border-border shadow-2xs space-y-2.5">
+                        <div className="p-3 rounded-[18px] bg-muted border border-glass-edge space-y-2.5">
                             <div className="flex items-center justify-between flex-wrap gap-2">
                                 <div className="flex items-center gap-2">
                                     <span className="text-xs font-bold uppercase tracking-wider text-foreground/80">
                                         {t('incorrect_options')}
                                     </span>
-                                    <span className="px-2 py-0.5 rounded-full text-[11px] font-bold bg-muted text-muted-foreground">
+                                    <span className="px-2 py-0.5 rounded-full text-[11px] font-bold bg-glass-subtle border border-glass-edge text-foreground">
                                         {section.options?.length ?? 0} {t('option')}
                                     </span>
                                 </div>
@@ -133,7 +133,7 @@ export default function PartSection({ section, globalIndex }: SectionUpdateProps
                                     ))}
                                 </div>
                             ) : (
-                                <div className="p-3 text-center rounded-lg border border-dashed border-border text-xs text-muted-foreground">
+                                <div className="p-3 text-center rounded-[18px] border border-dashed border-glass-dash text-xs text-muted-foreground">
                                     {t('no_incorrect_options') || "Hozircha noto'g'ri variantlar qo'shilmagan"}
                                 </div>
                             )}

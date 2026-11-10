@@ -73,36 +73,36 @@ const TestTable = ({ ...folder }: Folder) => {
                     return (
                         <div
                             key={item.id}
-                            className="group flex flex-col justify-between rounded-2xl border-2 border-border bg-card p-6 shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-xl"
+                            className="group flex flex-col justify-between glass rounded-[22px] p-6 transition-all duration-300 hover:-translate-y-1"
                         >
                             {/* Header */}
                             <div className="mb-4">
                                 <div className="flex items-center justify-between mb-2">
-                                    <span className="text-[10px] font-bold uppercase tracking-widest text-blue-500 opacity-70">
+                                    <span className="text-[10px] font-bold uppercase tracking-widest text-brand">
                                         #{globalIndex}
                                     </span>
                                     <div className="flex gap-1">
                                         {isActive ? (
-                                            <span className="inline-flex items-center rounded-full bg-green-50 px-2 py-0.5 text-[10px] font-bold text-green-700 dark:bg-green-900/20 dark:text-green-400">
+                                            <span className="inline-flex items-center rounded-full bg-emerald-500/12 px-2 py-0.5 text-[10px] font-bold text-emerald-800 dark:bg-emerald-400/15 dark:text-emerald-200">
                                                 {t('active')}
                                             </span>
                                         ) : (
-                                            <span className="inline-flex items-center rounded-full bg-muted px-2 py-0.5 text-[10px] font-bold text-muted-foreground">
+                                            <span className="inline-flex items-center rounded-full bg-muted px-2 py-0.5 text-[10px] font-bold text-foreground border border-glass-edge">
                                                 {t('inactive')}
                                             </span>
                                         )}
                                         {isAdmin && (
-                                            <span className={`inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-bold ${item.open == 1 ? 'bg-blue-50 text-blue-700 dark:text-blue-400 dark:bg-blue-950/40' : 'bg-amber-50 text-amber-700 dark:text-amber-400 dark:bg-amber-950/40'}`}>
+                                            <span className={`inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-bold ${item.open == 1 ? 'bg-indigo-500/12 text-brand' : 'bg-amber-500/15 text-amber-800 dark:bg-amber-400/15 dark:text-amber-200'}`}>
                                                 {item.open == 1 ? t('open') : t('closed') ?? 'Closed'}
                                             </span>
                                         )}
                                     </div>
                                 </div>
-                                <h3 className="line-clamp-1 text-lg font-bold text-foreground group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">
+                                <h3 className="line-clamp-1 text-lg font-bold text-foreground group-hover:text-brand transition-colors">
                                     {item.name}
                                 </h3>
                                 {item.purpose === 'mock' && (
-                                    <span className="mt-1 inline-flex rounded-full bg-indigo-50 px-2 py-0.5 text-[10px] font-bold text-indigo-700 dark:bg-indigo-950/40 dark:text-indigo-300">
+                                    <span className="mt-1 inline-flex rounded-full bg-indigo-500/12 px-2 py-0.5 text-[10px] font-bold text-brand">
                                         {t('exam_admin.nav.mock_bank')} · {t(`exam_admin.bank.status.${item.bank_status ?? 'draft'}`)}
                                     </span>
                                 )}
@@ -122,7 +122,7 @@ const TestTable = ({ ...folder }: Folder) => {
                                         <Link 
                                             key={idx} 
                                             href={`/test-type/${i.id}`}
-                                            className="inline-flex items-center px-2 py-1 rounded-md bg-muted text-[10px] font-semibold text-foreground/80 border border-border hover:border-blue-500 hover:text-blue-600 transition-all"
+                                            className="inline-flex items-center px-2 py-1 rounded-full bg-muted text-[10px] font-semibold text-foreground border border-glass-edge hover:border-ring hover:text-brand transition-all"
                                         >
                                             {i.type?.name}
                                         </Link>
@@ -132,7 +132,7 @@ const TestTable = ({ ...folder }: Folder) => {
 
                             {/* Audio Player */}
                             {item.audio_path && (
-                                <div className="mb-6 p-2 rounded-xl bg-gray-50 dark:bg-gray-800/40 border border-border">
+                                <div className="mb-6 glass-subtle p-2">
                                     <audio className="w-full h-8" controls>
                                         <source src={`/${item.audio_path}`} type="audio/mpeg" />
                                     </audio>
@@ -141,11 +141,11 @@ const TestTable = ({ ...folder }: Folder) => {
 
                             {/* Actions */}
                             {isAdmin && (
-                                <div className="flex items-center gap-2 pt-2 mt-auto border-t border-border">
+                                <div className="flex items-center gap-2 pt-2 mt-auto border-t border-divider">
                                     <button
                                         type="button"
                                         onClick={() => handleUpdateClick(item)}
-                                        className="px-3 py-2 bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 hover:bg-blue-600 hover:text-white dark:hover:bg-blue-600 dark:hover:text-white rounded-xl font-semibold text-xs flex items-center justify-center gap-1.5 flex-1 transition-all cursor-pointer shadow-xs active:scale-95"
+                                        className="px-3 py-2 bg-indigo-500/12 text-brand hover:bg-primary hover:text-primary-foreground rounded-full font-semibold text-xs flex items-center justify-center gap-1.5 flex-1 transition-all cursor-pointer active:scale-95"
                                     >
                                         <PencilIcon className="h-3.5 w-3.5" />
                                         {t('edit')}
@@ -154,7 +154,7 @@ const TestTable = ({ ...folder }: Folder) => {
                                     <button
                                         type="button"
                                         onClick={() => handleDeleteClick(item)}
-                                        className="p-2 bg-red-50 dark:bg-red-900/30 text-red-600 dark:text-red-400 hover:bg-red-600 hover:text-white dark:hover:bg-red-600 dark:hover:text-white rounded-xl font-semibold text-xs flex items-center justify-center gap-1.5 transition-all cursor-pointer shadow-xs active:scale-95"
+                                        className="p-2 bg-rose-500/12 text-rose-800 dark:bg-rose-400/15 dark:text-rose-200 hover:bg-destructive hover:text-white dark:hover:bg-destructive dark:hover:text-white rounded-full font-semibold text-xs flex items-center justify-center gap-1.5 transition-all cursor-pointer active:scale-95"
                                         title={t('delete')}
                                     >
                                         <TrashIcon className="h-3.5 w-3.5" />

@@ -69,8 +69,8 @@ export default function UpdateTestModal({ test, open, setOpen }: UpdateTestModal
 
     return (
         <Dialog open={open} onOpenChange={setOpen}>
-            <DialogContent className="sm:max-w-lg w-full dark:border-gray-700">
-                <DialogHeader className="space-y-1 pb-2 border-b border-border">
+            <DialogContent className="sm:max-w-lg w-full">
+                <DialogHeader className="space-y-1 pb-2 border-b border-divider">
                     <DialogTitle className="text-lg font-bold text-foreground">
                         {t('modal.update_title') || "Testni tahrirlash"}
                     </DialogTitle>
@@ -132,7 +132,7 @@ export default function UpdateTestModal({ test, open, setOpen }: UpdateTestModal
                                     checked={data.active === 1}
                                     onChange={(e) => setData('active', e.target.checked ? 1 : 0)}
                                 />
-                                <div className="relative w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-blue-500/20 rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:w-5 after:h-5 after:transition-all dark:border-gray-600 peer-checked:bg-blue-600 dark:peer-checked:bg-blue-600"></div>
+                                <div className="relative w-11 h-6 bg-foreground/10 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-ring rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-divider after:border after:rounded-full after:w-5 after:h-5 after:transition-all border border-glass-edge peer-checked:bg-primary"></div>
                                 <span className="text-xs font-medium text-foreground/80">
                                     {data.active === 1 ? 'Aktiv' : 'Nofaol'}
                                 </span>
@@ -153,7 +153,7 @@ export default function UpdateTestModal({ test, open, setOpen }: UpdateTestModal
                                         checked={data.open === 1}
                                         onChange={(e) => setData('open', e.target.checked ? 1 : 0)}
                                     />
-                                    <div className="relative w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-blue-500/20 rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:w-5 after:h-5 after:transition-all dark:border-gray-600 peer-checked:bg-blue-600 dark:peer-checked:bg-blue-600"></div>
+                                    <div className="relative w-11 h-6 bg-foreground/10 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-ring rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-divider after:border after:rounded-full after:w-5 after:h-5 after:transition-all border border-glass-edge peer-checked:bg-primary"></div>
                                     <span className="text-xs font-medium text-foreground/80">
                                         {data.open === 1 ? 'Ochiq' : 'Yopiq'}
                                     </span>
@@ -163,12 +163,11 @@ export default function UpdateTestModal({ test, open, setOpen }: UpdateTestModal
                         )}
                     </div>
 
-                    <DialogFooter className="flex items-center justify-end gap-3 pt-4 mt-4 border-t border-border">
+                    <DialogFooter className="flex items-center justify-end gap-3 pt-4 mt-4 border-t border-divider">
                         <DialogClose asChild>
                             <Button
                                 type="button"
                                 variant="outline"
-                                className="border-gray-300 dark:border-gray-700"
                                 onClick={() => {
                                     reset();
                                     clearErrors();
@@ -182,7 +181,7 @@ export default function UpdateTestModal({ test, open, setOpen }: UpdateTestModal
                         <Button
                             type="submit"
                             disabled={processing}
-                            className="bg-blue-600 hover:bg-blue-700 text-white font-semibold shadow-xs"
+                            className="font-semibold"
                         >
                             {t('save')}
                         </Button>

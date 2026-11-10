@@ -85,14 +85,14 @@ export default function CreatePart() {
         <AppLayout breadcrumbs={breadcrumbs}>
             <Head title={`${t('create_part') || 'Part yaratish'} - ${testName}`} />
             <div className="flex h-full flex-1 flex-col gap-4 rounded-xl p-4 overflow-y-auto">
-                <div className="flex items-center justify-between pb-2 border-b border-border">
+                <div className="flex items-center justify-between pb-2 border-b border-divider">
                     <h1 className="text-base font-bold text-foreground">
                         {t('create_part') || 'Part yaratish'}
                     </h1>
                 </div>
 
                 {/* Table */}
-                <div className="overflow-x-auto">
+                <div className="glass-strong overflow-x-auto rounded-[22px] p-4 sm:p-5">
 
                     <form onSubmit={submit} className="space-y-4">
                         <div>
@@ -140,9 +140,7 @@ export default function CreatePart() {
                             <Button
                                 type="submit"
                                 disabled={processing}
-                                className="bg-blue-600 text-white hover:bg-blue-700
-                   dark:bg-blue-500 dark:hover:bg-blue-600
-                   disabled:opacity-50"
+                                className="disabled:opacity-50"
                             >
                                 {t('save')}
                             </Button>
@@ -151,8 +149,7 @@ export default function CreatePart() {
                             <Button
                                 type="button"
                                 onClick={() => router.visit(route('test-type.show', testType?.id))}
-                                className="bg-muted text-foreground hover:bg-gray-200
-                     dark:hover:bg-gray-700"
+                                variant="outline"
                             >
                                 {t('cancel')}
                             </Button>

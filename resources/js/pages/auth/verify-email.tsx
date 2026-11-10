@@ -21,12 +21,12 @@ export default function VerifyEmail({ status }: { status?: string }) {
             <Head title="Email verification" />
 
             {status === 'verification-link-sent' && (
-                <div className="mb-4 text-center text-sm font-medium text-green-600 dark:text-green-400">
+                <div className="mb-4 rounded-[18px] border border-emerald-500/25 bg-emerald-500/12 px-4 py-2 text-emerald-800 dark:text-emerald-200 text-center text-sm font-medium">
                     A new verification link has been sent to the email address you provided during registration.
                 </div>
             )}
 
-            <form onSubmit={submit} className="space-y-6 text-center">
+            <form onSubmit={submit} className="glass rounded-[28px] p-6 sm:p-8 space-y-6 text-center">
                 <Button disabled={processing} variant="secondary">
                     {processing && <LoaderCircle className="h-4 w-4 animate-spin" />}
                     Resend verification email

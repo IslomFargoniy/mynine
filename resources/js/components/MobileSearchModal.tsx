@@ -49,29 +49,29 @@ const MobileSearchModal = ({ data, setData, handleSubmit, roles, users, mocks, t
                     <Button 
                         variant="outline" 
                         className={cn(
-                            "h-10 px-4 border rounded-xl transition-all gap-2 font-bold text-xs uppercase tracking-wider relative",
+                            "h-10 px-4 border rounded-full transition-all gap-2 font-bold text-xs uppercase tracking-wider relative",
                             hasActiveFilters 
-                                ? "border-blue-200 bg-blue-50/50 text-blue-600 dark:border-blue-900/50 dark:bg-blue-900/20 dark:text-blue-400" 
-                                : "border-border text-muted-foreground"
+                                ? "border-glass-edge bg-glass-thumb text-brand shadow-glass-pill" 
+                                : "border-glass-edge text-muted-foreground"
                         )}
                     >
                         <Filter className="h-4 w-4" />
                         {t('filters') ?? 'Filters'}
                         {hasActiveFilters && (
-                            <span className="absolute -top-1 -right-1 flex h-2.5 w-2.5 rounded-full bg-blue-500 border-2 border-white dark:border-gray-900" />
+                            <span className="absolute -top-1 -right-1 flex h-2.5 w-2.5 rounded-full bg-primary border-2 border-background" />
                         )}
                     </Button>
                 </SheetTrigger>
-                <SheetContent side="bottom" className="rounded-t-[32px] border-t border-border p-6 min-h-[60vh] focus-visible:outline-none overflow-y-auto max-h-[90vh]">
+                <SheetContent side="bottom" className="rounded-t-[32px] border-t border-glass-edge p-6 min-h-[60vh] focus-visible:outline-none overflow-y-auto max-h-[90vh]">
                     <SheetHeader className="mb-6">
                         <SheetTitle className="text-xl font-black uppercase tracking-tight text-center flex items-center justify-center gap-2">
-                            <Filter className="h-5 w-5 text-blue-500" />
+                            <Filter className="h-5 w-5 text-brand" />
                             {t('search_and_filters') ?? 'Search & Filters'}
                         </SheetTitle>
                     </SheetHeader>
                     
                     <div className="space-y-6 pb-12">
-                        <div className="bg-gray-50/50 dark:bg-gray-800/20 p-1 rounded-2xl">
+                        <div className="p-1">
                             <PremiumFilters 
                                 data={data} 
                                 setData={setData} 

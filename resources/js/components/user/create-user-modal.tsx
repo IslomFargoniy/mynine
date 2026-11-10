@@ -58,14 +58,14 @@ export default function CreateUserModal() {
         <Dialog open={open} onOpenChange={setOpen}>
             <DialogTrigger asChild>
                 <button
-                    className={`${baseButton} bg-blue-600 hover:bg-blue-700 focus:ring-blue-300 dark:bg-blue-600 dark:hover:bg-blue-700`}
+                    className={`${baseButton} btn-glass-primary rounded-full! hover:brightness-110 focus:ring-ring`}
                 >
                     <IoCreate className="w-4 h-4" />
                     {t('create')}
                 </button>
             </DialogTrigger>
 
-            <DialogContent className={'dark:border-gray-400'}>
+            <DialogContent>
                 <DialogTitle>{t('modal.create_title')}</DialogTitle>
                 <DialogDescription>{t('modal.create_description')}</DialogDescription>
 
@@ -136,7 +136,6 @@ export default function CreateUserModal() {
                                     reset();
                                     clearErrors();
                                 }}
-                                className="bg-muted text-foreground hover:bg-gray-200 dark:hover:bg-gray-700"
                             >
                                 {t('cancel')}
                             </Button>
@@ -145,7 +144,6 @@ export default function CreateUserModal() {
                         <Button
                             type="submit"
                             disabled={processing}
-                            className="bg-blue-600 text-white hover:bg-blue-700 dark:bg-blue-500 dark:hover:bg-blue-600"
                         >
                             {t('save')}
                         </Button>

@@ -5,7 +5,8 @@ import { Attempt } from '@/types';
 
 export default function AttemptsChart({ attempts }: { attempts: Attempt[] }) {
     const isDark = useIsDark();
-    const axisLabel = isDark ? '#94a3b8' : '#64748b';
+    const axisLabel = isDark ? '#CBD5E1' : '#334155';
+    const brand = isDark ? '#818CF8' : '#4F46E5';
     if (!attempts || attempts.length === 0) return null;
 
     const labels = attempts.map(a => 
@@ -35,7 +36,7 @@ export default function AttemptsChart({ attempts }: { attempts: Attempt[] }) {
         stroke: {
             curve: 'smooth',
             width: 3,
-            colors: ['#6366f1']
+            colors: [brand]
         },
         fill: {
             type: 'gradient',
@@ -46,7 +47,7 @@ export default function AttemptsChart({ attempts }: { attempts: Attempt[] }) {
                 stops: [20, 100, 100, 100]
             }
         },
-        colors: ['#6366f1'],
+        colors: [brand],
         xaxis: {
             categories: labels,
             labels: {
@@ -67,7 +68,7 @@ export default function AttemptsChart({ attempts }: { attempts: Attempt[] }) {
             }
         },
         grid: {
-            borderColor: isDark ? 'rgba(255, 255, 255, 0.06)' : 'rgba(0, 0, 0, 0.06)',
+            borderColor: isDark ? 'rgba(255, 255, 255, 0.10)' : 'rgba(15, 23, 42, 0.08)',
             strokeDashArray: 4,
         },
         tooltip: {
@@ -76,7 +77,7 @@ export default function AttemptsChart({ attempts }: { attempts: Attempt[] }) {
         },
         markers: {
             size: 5,
-            colors: ['#6366f1'],
+            colors: [brand],
             strokeColors: isDark ? '#0f172a' : '#fff',
             strokeWidth: 2,
             hover: { size: 7 }

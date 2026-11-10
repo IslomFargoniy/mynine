@@ -59,7 +59,7 @@ export default function TextareaEditor({
                     defaultValue={value}
                     onChange={(e) => onChange(e.target.value)}
                     style={{ minHeight: height }}
-                    className="w-full rounded border p-2"
+                    className="w-full rounded-xl border border-input bg-glass-subtle p-2 text-foreground focus:border-ring focus:ring-2 focus:ring-ring/40 focus:outline-none"
                 />
                 {error && <InputError message={error} />}
             </div>

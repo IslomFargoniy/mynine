@@ -77,7 +77,7 @@ export default function Login({ status, canResetPassword }: LoginProps) {
                 {canResetPassword && (
                     <Link
                         href={route('password.request')}
-                        className="text-sm font-bold text-muted-foreground hover:text-primary transition-colors duration-300 underline-offset-4 hover:underline"
+                        className="text-sm font-bold text-muted-foreground hover:text-brand transition-colors duration-300 underline-offset-4 hover:underline"
                         tabIndex={5}
                     >
                         {t('login.forgot')}
@@ -85,7 +85,7 @@ export default function Login({ status, canResetPassword }: LoginProps) {
                 )}
 
                 {status && (
-                    <div className="rounded-xl bg-green-500/10 px-4 py-2 border border-green-500/20 text-center text-sm font-bold text-green-600 dark:text-green-400">
+                    <div className="rounded-[18px] border border-emerald-500/25 bg-emerald-500/12 px-4 py-2 text-emerald-800 dark:text-emerald-200 text-center text-sm font-bold">
                         {t('login.status_success')}
                     </div>
                 )}

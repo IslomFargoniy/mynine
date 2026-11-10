@@ -15,7 +15,7 @@ const Logo: React.FC = () => {
     return (
         <Link href={route('home')} className="flex items-center gap-2">
 
-            <h1 className={'text-3xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-blue-500 via-purple-500 to-pink-500'}>
+            <h1 className={'text-3xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-indigo-600 to-violet-600 dark:from-indigo-300 dark:to-violet-300'}>
                 {capitalizeDomain}
             </h1>
             {/*<img*/}

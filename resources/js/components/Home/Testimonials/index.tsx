@@ -70,9 +70,9 @@ const Testimonial = () => {
 
         return (
             <>
-                {Array(fullStars).fill(<Icon icon="tabler:star-filled" className="text-yellow-500 text-xl inline-block" />)}
-                {halfStars > 0 && <Icon icon="tabler:star-half-filled" className="text-yellow-500 text-xl inline-block" />}
-                {Array(emptyStars).fill(<Icon icon="tabler:star-filled" className="text-gray-400 text-xl inline-block" />)}
+                {Array(fullStars).fill(<Icon icon="tabler:star-filled" className="text-amber-500 text-xl inline-block" />)}
+                {halfStars > 0 && <Icon icon="tabler:star-half-filled" className="text-amber-500 text-xl inline-block" />}
+                {Array(emptyStars).fill(<Icon icon="tabler:star-filled" className="text-muted-foreground text-xl inline-block" />)}
             </>
         );
     };
@@ -83,16 +83,16 @@ const Testimonial = () => {
                 <Slider {...settings}>
                     {TestimonialData.map((items, i) => (
                         <div key={i}>
-                            <div className={`bg-white rounded-2xl m-4 p-5 my-20 relative ${i % 2 ? 'shadow-testimonial-shadow2' : 'shadow-testimonial-shadow1'}`}>
+                            <div className={`glass rounded-[22px] m-4 p-5 my-20 relative`}>
                                 <div className="absolute top-[-45px]">
                                     <img src={`/${items.imgSrc}`}
                                         alt={items.name} width={100} height={100} className="inline-block" />
                                 </div>
-                                <h4 className='text-base font-normal text-darkgray my-4'>{items.comment}</h4>
+                                <h4 className='text-base font-normal text-muted-foreground my-4'>{items.comment}</h4>
                                 <div className="flex justify-between items-center">
                                     <div>
-                                        <h3 className='text-lg font-medium text-darkbrown pt-4 pb-2'>{items.name}</h3>
-                                        <h3 className='text-sm font-normal text-lightgray pb-2'>{items.profession}</h3>
+                                        <h3 className='text-lg font-medium text-foreground pt-4 pb-2'>{items.name}</h3>
+                                        <h3 className='text-sm font-normal text-muted-foreground pb-2'>{items.profession}</h3>
                                     </div>
                                     <div className="flex">
                                         {renderStars(items.rating)}

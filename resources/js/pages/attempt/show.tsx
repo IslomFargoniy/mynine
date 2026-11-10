@@ -122,11 +122,11 @@ export default function AttemptShow() {
     })();
 
     const cefr = (() => {
-        if (overallBand >= 8.5) return { level: 'C2', title: 'Proficient / Mastery', color: 'bg-purple-100 text-purple-800 dark:bg-purple-950/60 dark:text-purple-300 border-purple-300 dark:border-purple-800' };
-        if (overallBand >= 7.0) return { level: 'C1', title: 'Advanced / Fluent', color: 'bg-emerald-100 text-emerald-800 dark:bg-emerald-950/60 dark:text-emerald-300 border-emerald-300 dark:border-emerald-800' };
-        if (overallBand >= 5.5) return { level: 'B2', title: 'Upper-Intermediate', color: 'bg-blue-100 text-blue-800 dark:bg-blue-950/60 dark:text-blue-300 border-blue-300 dark:border-blue-800' };
-        if (overallBand >= 4.0) return { level: 'B1', title: 'Intermediate', color: 'bg-amber-100 text-amber-800 dark:bg-amber-950/60 dark:text-amber-300 border-amber-300 dark:border-amber-800' };
-        return { level: 'A2 / B0', title: 'Basic User', color: 'bg-muted text-foreground/80 border-gray-300 dark:border-gray-700' };
+        if (overallBand >= 8.5) return { level: 'C2', title: 'Proficient / Mastery', color: 'bg-violet-500/12 text-violet-800 border-violet-500/25 dark:bg-violet-400/15 dark:text-violet-200 dark:border-violet-300/25' };
+        if (overallBand >= 7.0) return { level: 'C1', title: 'Advanced / Fluent', color: 'bg-emerald-500/12 text-emerald-800 border-emerald-500/25 dark:bg-emerald-400/15 dark:text-emerald-200 dark:border-emerald-300/25' };
+        if (overallBand >= 5.5) return { level: 'B2', title: 'Upper-Intermediate', color: 'bg-indigo-500/12 text-brand border-indigo-500/25' };
+        if (overallBand >= 4.0) return { level: 'B1', title: 'Intermediate', color: 'bg-amber-500/15 text-amber-800 border-amber-500/25 dark:bg-amber-400/15 dark:text-amber-200 dark:border-amber-300/25' };
+        return { level: 'A2 / B0', title: 'Basic User', color: 'bg-muted text-foreground border-glass-edge' };
     })();
 
     return (
@@ -146,8 +146,8 @@ export default function AttemptShow() {
                 </div>
 
                 {/* Executive Result Hero Card */}
-                <div className="bg-card border border-border rounded-2xl p-6 shadow-sm space-y-6">
-                    <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 pb-6 border-b border-border">
+                <div className="glass-strong rounded-[28px] p-6 space-y-6">
+                    <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 pb-6 border-b border-divider">
                         <div>
                             <div className="flex items-center gap-2 mb-1">
                                 <span className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
@@ -156,8 +156,8 @@ export default function AttemptShow() {
                                 {attempt.tab_switch_count !== undefined && (
                                     <span className={`inline-flex items-center gap-1 text-[11px] font-bold px-2 py-0.5 rounded-full border ${
                                         attempt.tab_switch_count > 0
-                                            ? 'bg-amber-50 text-amber-700 border-amber-200 dark:bg-amber-950/50 dark:text-amber-300 dark:border-amber-800'
-                                            : 'bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-950/50 dark:text-emerald-300 dark:border-emerald-800'
+                                            ? 'bg-amber-500/15 text-amber-800 border-amber-500/25 dark:bg-amber-400/15 dark:text-amber-200 dark:border-amber-300/25'
+                                            : 'bg-emerald-500/12 text-emerald-800 border-emerald-500/25 dark:bg-emerald-400/15 dark:text-emerald-200 dark:border-emerald-300/25'
                                     }`}>
                                         {attempt.tab_switch_count > 0
                                             ? `⚠️ ${attempt.tab_switch_count} ta tab almashtirish`
@@ -174,12 +174,12 @@ export default function AttemptShow() {
                         </div>
 
                         {/* Overall Band & CEFR Badge */}
-                        <div className="flex items-center gap-4 bg-muted p-4 rounded-2xl border border-border shrink-0">
-                            <div className="text-center pr-4 border-r border-border">
+                        <div className="flex items-center gap-4 glass-subtle p-4 rounded-[18px] shrink-0">
+                            <div className="text-center pr-4 border-r border-divider">
                                 <span className="text-xs font-bold text-muted-foreground uppercase tracking-widest block">
                                     Overall Band
                                 </span>
-                                <span className="text-4xl font-black text-blue-600 dark:text-blue-400 font-mono">
+                                <span className="text-4xl font-black text-brand font-mono">
                                     {overallBand > 0 ? overallBand.toFixed(1) : '—'}
                                 </span>
                             </div>
@@ -187,7 +187,7 @@ export default function AttemptShow() {
                                 <span className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
                                     CEFR Level
                                 </span>
-                                <span className={`inline-flex items-center px-2.5 py-1 rounded-lg text-sm font-extrabold border mt-0.5 ${cefr.color}`}>
+                                <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-sm font-extrabold border mt-0.5 ${cefr.color}`}>
                                     {cefr.level}
                                 </span>
                                 <span className="text-[11px] text-muted-foreground font-medium mt-0.5">
@@ -209,14 +209,14 @@ export default function AttemptShow() {
                             return (
                                 <div
                                     key={type.id}
-                                    className="p-5 border border-border rounded-xl bg-muted/50 hover:bg-white dark:hover:bg-gray-800 transition-all flex flex-col justify-between"
+                                    className="glass-subtle p-5 rounded-[18px] hover:bg-accent transition-all flex flex-col justify-between"
                                 >
                                     <div>
                                         <div className="flex items-center justify-between">
                                             <span className="font-bold text-foreground text-base">
                                                 {type.type?.name}
                                             </span>
-                                            <span className="text-xs font-mono font-bold px-2 py-0.5 bg-blue-100 dark:bg-blue-950/60 text-blue-800 dark:text-blue-300 rounded-md">
+                                            <span className="text-xs font-mono font-bold px-2 py-0.5 bg-indigo-500/12 text-brand rounded-full">
                                                 Band {band > 0 ? band.toFixed(1) : '—'}
                                             </span>
                                         </div>
@@ -242,7 +242,7 @@ export default function AttemptShow() {
                                     </div>
 
                                     {type.comment && (
-                                        <p className="text-xs text-muted-foreground italic mt-3 pt-3 border-t border-border line-clamp-2">
+                                        <p className="text-xs text-muted-foreground italic mt-3 pt-3 border-t border-divider line-clamp-2">
                                             "{type.comment}"
                                         </p>
                                     )}
@@ -263,9 +263,9 @@ export default function AttemptShow() {
                     {attempt.attempt_types.map((attemptType) => (
                         <div
                             key={attemptType.id}
-                            className="bg-card border border-border rounded-2xl p-6 shadow-sm"
+                            className="glass-strong rounded-[28px] p-6"
                         >
-                            <div className="flex items-center justify-between mb-4 pb-3 border-b border-border">
+                            <div className="flex items-center justify-between mb-4 pb-3 border-b border-divider">
                                 <h3 className="text-lg font-bold text-foreground flex items-center gap-2">
                                     <span>{attemptType.type?.name}</span>
                                     <span className="text-xs font-normal text-muted-foreground">

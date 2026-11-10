@@ -19,7 +19,7 @@ const MobileHeaderLink: React.FC<{ item: HeaderItem }> = ({ item }) => {
             {item.external ? (
                 <a
                     href={item.href}
-                    className="flex items-center justify-between w-full py-2 text-gray-700 hover:text-black dark:text-gray-300 dark:hover:text-white transition-colors duration-200"
+                    className="flex items-center justify-between w-full py-2 text-muted-foreground hover:text-foreground transition-colors duration-200"
                 >
                     {t(item.label)}
                 </a>
@@ -27,7 +27,7 @@ const MobileHeaderLink: React.FC<{ item: HeaderItem }> = ({ item }) => {
             <Link
                 href={item.href || "#"}
                 onClick={handleToggle}
-                className="flex items-center justify-between w-full py-2 text-gray-700 hover:text-black dark:text-gray-300 dark:hover:text-white transition-colors duration-200 focus:outline-none"
+                className="flex items-center justify-between w-full py-2 text-muted-foreground hover:text-foreground transition-colors duration-200 focus:outline-none"
             >
                 {t(item.label)}
                 {item.submenu && (
@@ -38,7 +38,7 @@ const MobileHeaderLink: React.FC<{ item: HeaderItem }> = ({ item }) => {
                         viewBox="0 0 24 24"
                         className={`ml-2 transition-transform duration-200 ${
                             submenuOpen ? "rotate-180" : ""
-                        } text-gray-600 dark:text-gray-300`}
+                        } text-muted-foreground`}
                     >
                         <path
                             fill="none"
@@ -54,12 +54,12 @@ const MobileHeaderLink: React.FC<{ item: HeaderItem }> = ({ item }) => {
             )}
 
             {submenuOpen && item.submenu && (
-                <div className="bg-white dark:bg-darklight border border-gray-200 dark:border-gray-700 rounded-lg mt-1 p-2 w-full shadow-md">
+                <div className="glass-subtle rounded-[18px] mt-1 p-2 w-full">
                     {item.submenu.map((subItem, index) => (
                         <Link
                             key={index}
                             href={subItem.href || "#"}
-                            className="block rounded-lg px-4 py-3 text-lg font-bold text-slate-700 hover:bg-slate-50 dark:text-slate-300 dark:hover:bg-slate-800"
+                            className="block rounded-lg px-4 py-3 text-lg font-bold text-muted-foreground hover:bg-accent"
                         >
                             {t(subItem.label)}
                         </Link>

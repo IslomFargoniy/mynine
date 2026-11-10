@@ -70,7 +70,7 @@ export default function UpdateOptionModal({
 
     return (
         <Dialog open={open} onOpenChange={setOpen}>
-            <DialogContent className="dark:border-gray-700">
+            <DialogContent>
                 <DialogTitle>{t('modal.update_title')}</DialogTitle>
                 <DialogDescription>{t('modal.update_description')}</DialogDescription>
 
@@ -104,13 +104,11 @@ export default function UpdateOptionModal({
                     <InputError message={errors.is_correct} />
 
                     {/* Footer */}
-                    <DialogFooter className="flex justify-end gap-3 pt-4 border-t border-border">
+                    <DialogFooter className="flex justify-end gap-3 pt-4 border-t border-divider">
                         <DialogClose asChild>
                             <Button
                                 type="button"
                                 variant="secondary"
-                                className="bg-muted text-foreground/80 hover:bg-gray-200
-                             dark:hover:bg-gray-700"
                                 onClick={() => {
                                     reset();
                                     clearErrors();
@@ -124,9 +122,7 @@ export default function UpdateOptionModal({
                         <Button
                             type="submit"
                             disabled={processing}
-                            className="bg-blue-600 text-white hover:bg-blue-700
-                         dark:bg-blue-500 dark:hover:bg-blue-600
-                         disabled:opacity-50 disabled:cursor-not-allowed"
+                            className="disabled:opacity-50 disabled:cursor-not-allowed"
                         >
                             {processing ? t('saving') + '...' : t('save')}
                         </Button>

@@ -13,9 +13,17 @@ export default function AppLogo() {
 
     return (
         <>
-            <h1 className={'text-3xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-blue-500 via-purple-500 to-pink-500'}>
-                {capitalizeDomain}
-            </h1>
+            <span className="flex items-center gap-2.5">
+                <span
+                    aria-hidden="true"
+                    className="flex size-9 shrink-0 items-center justify-center rounded-xl bg-gradient-to-b from-indigo-500 to-indigo-700 text-[15px] font-extrabold text-white shadow-[inset_0_1px_0_rgba(255,255,255,0.45)]"
+                >
+                    M9
+                </span>
+                <span className="truncate text-lg font-extrabold tracking-tight text-foreground group-data-[collapsible=icon]:hidden">
+                    {capitalizeDomain}
+                </span>
+            </span>
 
             {/*<div*/}
             {/*    className="bg-sidebar-primary text-sidebar-primary-foreground flex aspect-square size-8 items-center justify-center rounded-md">*/}
