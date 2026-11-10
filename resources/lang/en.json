@@ -796,24 +796,29 @@
                 "no_questions": "No questions",
                 "missing_answer_keys": "{{count}} question(s) without an answer key",
                 "no_audio": "Listening audio missing",
-                "question_count": "{{count}} of 40 questions"
+                "question_count": "{{count}} of 40 questions",
+                "writing_tasks": "{{count}} of 2 Writing tasks",
+                "writing_no_prompt": "A Writing task has no task text",
+                "writing_no_image": "Writing Task 1 picture missing"
             },
             "edit_module": "Open module editor (add parts and questions)",
             "import": {
                 "button": "Import from PDF",
                 "title": "Import from PDF",
-                "description": "Upload the publisher's question papers. The AI reads the questions and the answer key and fills the Listening and Reading modules. It takes a few minutes; you can leave this page.",
+                "description": "Upload the publisher's question papers. The AI reads the questions and the answer key and fills the Listening, Reading and Writing modules. It takes a few minutes; you can leave this page.",
                 "listening_file": "Listening question paper",
                 "reading_file": "Reading question paper",
+                "writing_file": "Writing question paper",
+                "writing_hint": "Task 1 and Task 2 become two parts; the Task 1 chart / diagram is cut out of the PDF.",
                 "answers_file": "Answer key (optional)",
-                "answers_hint": "Without a separate key the answers are taken from the paper itself if it has them; otherwise they are left empty and listed as missing.",
+                "answers_hint": "Listening and Reading only. Without a separate key the answers are taken from the paper itself if it has them; otherwise they are left empty and listed as missing.",
                 "listening_audio": "Listening audio (mp3, optional)",
-                "file_types": "PDF, DOCX or TXT, up to 20 MB. Upload at least one of Listening / Reading.",
+                "file_types": "PDF, DOCX or TXT, up to 20 MB. Upload at least one of Listening / Reading / Writing.",
                 "replace": "Replace existing parts",
                 "replace_hint": "Without this, a module that already has parts is not imported.",
                 "has_content": "{{modules}} already has content.",
-                "writing_note": "Writing tasks are added manually in the module editor. Pictures (maps, diagrams, charts) are not imported — add them in the module editor.",
-                "need_file": "Choose a Listening or Reading file.",
+                "writing_note": "Pictures in Listening and Reading (maps, diagrams) are not imported — add them in the module editor. If the Writing Task 1 picture cannot be cut out of the PDF, the import says so; upload it in the module editor.",
+                "need_file": "Choose a Listening, Reading or Writing file.",
                 "submit": "Start import",
                 "heading": "PDF import",
                 "summary": "{{parts}} parts, {{questions}} questions",
@@ -1002,7 +1007,7 @@
             "hint": "At least 6 characters. Admin and Reception use it to leave the locked exam screen. PCs also keep it for offline checks."
         }
     },
-    "Upload a Listening or a Reading file.": "Upload a Listening or a Reading file.",
+    "Upload a Listening, Reading or Writing file.": "Upload a Listening, Reading or Writing file.",
     "An import of this test is still running.": "An import of this test is still running.",
     "Import started. It takes a few minutes; the status is shown on the test card.": "Import started. It takes a few minutes; the status is shown on the test card."
 }

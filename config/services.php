@@ -62,6 +62,8 @@ return [
     'mock_import' => [
         // "gemini" (PDF read directly) or "openai" (text extracted with smalot/pdfparser, then gpt-4o)
         'provider' => env('MOCK_IMPORT_PROVIDER', env('GEMINI_API_KEY') ? 'gemini' : 'openai'),
+        // Ghostscript renders a Writing Task 1 page when its chart is drawn as vectors (no embedded image).
+        'ghostscript' => env('GHOSTSCRIPT_BINARY', 'gs'),
     ],
     'telegram' => [
         // Legacy bot that only redirects users to @MynineUzBot

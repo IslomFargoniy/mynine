@@ -135,6 +135,66 @@ class GeminiService
     }
 
     /**
+     * Parse a Writing paper (Task 1 + Task 2). The response says where Task 1's picture is, so the
+     * importer can cut it out of the PDF (MockTestPdfParser::parseWriting).
+     *
+     * @param  array<int, array<string, mixed>>  $paper  request parts of the question paper
+     * @return array<string, mixed> {"tasks": [{number, page, minutes, min_words, prompt_html, visual_kind, visual_description, visual_box}]}
+     */
+    public function parseWritingPaper(array $paper): array
+    {
+        $prompt = <<<'EOT'
+Convert the attached IELTS Writing question paper into JSON for a test database. A Writing paper has exactly two tasks: Task 1 (Academic: a graph / chart / table / map / process diagram to describe; General Training: a letter to write) and Task 2 (an essay).
+
+Return ONE JSON object with "tasks": a list with one object per task, in order, with:
+- "number": 1 or 2.
+- "page": the 1-based page number of the PDF on which this task (for Task 1: its graph / chart / table / map / diagram) is printed. Count every page of the file, including cover pages.
+- "minutes": the time the paper gives for the task ("You should spend about 20 minutes on this task." -> 20).
+- "min_words": the minimum number of words ("Write at least 150 words." -> 150).
+- "prompt_html": the task text exactly as printed, word for word, as clean HTML (<p> per paragraph, <strong>/<em> as printed, <ul><li> for bullet points of a letter task). Include the description of the visual or the situation, the instruction ("Summarise the information by selecting and reporting the main features, and make comparisons where relevant.", "Write a letter...", the bullet points, "Begin your letter as follows: Dear ...,") and for Task 2 the topic / question and the closing instruction ("Give reasons for your answer and include any relevant examples from your own knowledge or experience."). Keep the paper's reading order even when the PDF text is laid out out of order. Do NOT include the "WRITING TASK N" heading, the "You should spend about N minutes on this task." line, the "Write at least N words." line, page numbers, cover-page instructions or copyright lines. Do not describe the picture in this text.
+- "visual_kind": for Task 1: "line_graph", "bar_chart", "pie_chart", "table", "map", "process_diagram", "mixed" (several charts), "letter" (General Training letter task, no picture) or "other"; for Task 2: "none".
+- "visual_description": for a Task 1 picture, a factual alt text of 1-3 sentences (what is shown, axes / categories / units, time span, labelled stages or places) that lets someone who cannot see the picture understand it; do not interpret trends beyond what is labelled. "" for a letter and for Task 2.
+- "visual_box": for a Task 1 picture, its bounding box on that page as [ymin, xmin, ymax, xmax] in 0-1000 page coordinates (0,0 = top-left corner of the page), covering the whole picture with its title, legend, axis labels and key but not the task text above it; [] when there is no picture.
+EOT;
+
+        $decoded = $this->generateJson([['text' => 'QUESTION PAPER (Writing):'], ...$paper, ['text' => $prompt]], self::writingSchema());
+
+        if (! isset($decoded['tasks']) || ! is_array($decoded['tasks'])) {
+            throw new RuntimeException('The AI response has no "tasks" list.');
+        }
+
+        return $decoded;
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    public static function writingSchema(): array
+    {
+        $task = [
+            'type' => 'OBJECT',
+            'properties' => [
+                'number' => ['type' => 'INTEGER'],
+                'page' => ['type' => 'INTEGER'],
+                'minutes' => ['type' => 'INTEGER'],
+                'min_words' => ['type' => 'INTEGER'],
+                'prompt_html' => ['type' => 'STRING'],
+                'visual_kind' => ['type' => 'STRING', 'enum' => ['line_graph', 'bar_chart', 'pie_chart', 'table', 'map', 'process_diagram', 'mixed', 'letter', 'other', 'none']],
+                'visual_description' => ['type' => 'STRING'],
+                'visual_box' => ['type' => 'ARRAY', 'items' => ['type' => 'NUMBER']],
+            ],
+            'required' => ['number', 'page', 'minutes', 'min_words', 'prompt_html', 'visual_kind', 'visual_description', 'visual_box'],
+            'propertyOrdering' => ['number', 'page', 'minutes', 'min_words', 'prompt_html', 'visual_kind', 'visual_description', 'visual_box'],
+        ];
+
+        return [
+            'type' => 'OBJECT',
+            'properties' => ['tasks' => ['type' => 'ARRAY', 'items' => $task]],
+            'required' => ['tasks'],
+        ];
+    }
+
+    /**
      * One generateContent call with JSON output.
      *
      * @param  array<int, array<string, mixed>>  $parts

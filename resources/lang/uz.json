@@ -796,24 +796,29 @@
                 "no_questions": "Savollar yo'q",
                 "missing_answer_keys": "{{count}} ta savolda javob kaliti yo'q",
                 "no_audio": "Listening audio yo'q",
-                "question_count": "40 ta savoldan {{count}} tasi bor"
+                "question_count": "40 ta savoldan {{count}} tasi bor",
+                "writing_tasks": "2 ta Writing topshirig'idan {{count}} tasi bor",
+                "writing_no_prompt": "Writing topshirig'ida topshiriq matni yo'q",
+                "writing_no_image": "Writing Task 1 rasmi yo'q"
             },
             "edit_module": "Modulni tahrirlash (part va savollar qo'shish)",
             "import": {
                 "button": "PDF dan import",
                 "title": "PDF dan import",
-                "description": "Nashriyot PDF fayllarini yuklang. AI savollar va javob kalitini o'qib, Listening va Reading modullarini to'ldiradi. Bir necha daqiqa davom etadi; sahifadan chiqib ketishingiz mumkin.",
+                "description": "Nashriyot PDF fayllarini yuklang. AI savollar va javob kalitini o'qib, Listening, Reading va Writing modullarini to'ldiradi. Bir necha daqiqa davom etadi; sahifadan chiqib ketishingiz mumkin.",
                 "listening_file": "Listening savollar varag'i",
                 "reading_file": "Reading savollar varag'i",
+                "writing_file": "Writing topshiriqlar varag'i",
+                "writing_hint": "Task 1 va Task 2 ikkita partga aylanadi; Task 1 grafigi / diagrammasi PDF dan qirqib olinadi.",
                 "answers_file": "Javob kaliti (ixtiyoriy)",
-                "answers_hint": "Alohida kalit bo'lmasa, javoblar savollar faylining o'zidan olinadi (agar bo'lsa); aks holda bo'sh qoladi va yetishmayotgan deb ko'rsatiladi.",
+                "answers_hint": "Faqat Listening va Reading uchun. Alohida kalit bo'lmasa, javoblar savollar faylining o'zidan olinadi (agar bo'lsa); aks holda bo'sh qoladi va yetishmayotgan deb ko'rsatiladi.",
                 "listening_audio": "Listening audio (mp3, ixtiyoriy)",
-                "file_types": "PDF, DOCX yoki TXT, 20 MB gacha. Listening yoki Reading dan kamida bittasini yuklang.",
+                "file_types": "PDF, DOCX yoki TXT, 20 MB gacha. Listening, Reading yoki Writing dan kamida bittasini yuklang.",
                 "replace": "Mavjud partlarni almashtirish",
                 "replace_hint": "Belgilanmasa, partlari bor modulga import qilinmaydi.",
                 "has_content": "{{modules}} da allaqachon kontent bor.",
-                "writing_note": "Writing topshiriqlari modul muharririda qo'lda qo'shiladi. Rasmlar (xarita, diagramma, grafik) import qilinmaydi — ularni modul muharririda qo'shing.",
-                "need_file": "Listening yoki Reading faylini tanlang.",
+                "writing_note": "Listening va Reading dagi rasmlar (xarita, diagramma) import qilinmaydi — ularni modul muharririda qo'shing. Writing Task 1 rasmini PDF dan qirqib bo'lmasa, import buni ogohlantiradi; uni modul muharririda yuklang.",
+                "need_file": "Listening, Reading yoki Writing faylini tanlang.",
                 "submit": "Importni boshlash",
                 "heading": "PDF import",
                 "summary": "{{parts}} ta part, {{questions}} ta savol",
@@ -1002,7 +1007,7 @@
             "hint": "Kamida 6 belgi. Admin va Qabulxona qulflangan imtihon ekranidan chiqish uchun ishlatadi. Kompyuterlar uni oflayn tekshirish uchun ham saqlaydi."
         }
     },
-    "Upload a Listening or a Reading file.": "Listening yoki Reading faylini yuklang.",
+    "Upload a Listening, Reading or Writing file.": "Listening, Reading yoki Writing faylini yuklang.",
     "An import of this test is still running.": "Bu testning importi hali davom etmoqda.",
     "Import started. It takes a few minutes; the status is shown on the test card.": "Import boshlandi. Bir necha daqiqa davom etadi; holati test kartasida ko'rsatiladi."
 }

@@ -17,7 +17,7 @@ use OpenAI\Exceptions\RateLimitException;
 use Throwable;
 
 /**
- * Mock Bank "Import from PDF" for ONE module (Listening or Reading) of a TestImport.
+ * Mock Bank "Import from PDF" for ONE module (Listening, Reading or Writing) of a TestImport.
  *
  * The AI calls take minutes, so the job has its own long timeout. Provider: Gemini reading the PDFs
  * directly, or OpenAI on extracted text (MockTestPdfParser::provider()).
@@ -55,7 +55,9 @@ class ImportMockModuleJob implements ShouldQueue
         $files = $import->files ?? [];
         $key = strtolower($this->module);
 
-        $answers = isset($files['answers']) ? $disk->path($files['answers']) : null;
+        $answers = isset($files['answers']) && in_array($this->module, MockTestPdfParser::KEYED_MODULES, true)
+            ? $disk->path($files['answers'])
+            : null;
 
         try {
             $result = $parser->parseFiles($this->module, $disk->path($files[$key]), $answers);

@@ -30,7 +30,8 @@ class MockBankService
     /**
      * Problems that keep a module out of the "ready" state (empty = ready).
      *
-     * @return array<int, string> machine codes: no_parts, no_questions, missing_answer_keys:<n>, question_count:<n>, no_audio
+     * @return array<int, string> machine codes: no_parts, no_questions, missing_answer_keys:<n>, question_count:<n>, no_audio,
+     *                            writing_tasks:<n>, writing_no_prompt, writing_no_image
      */
     public function moduleIssues(TestType $testType): array
     {
@@ -70,6 +71,10 @@ class MockBankService
             }
         }
 
+        if ($typeName === 'Writing') {
+            array_push($issues, ...$this->writingIssues($partIds->all()));
+        }
+
         if ($typeName === 'Listening') {
             $test = $testType->test;
             $partsWithoutAudio = Part::withoutEagerLoads()->whereIn('id', $partIds)
@@ -79,6 +84,47 @@ class MockBankService
             if (empty($test?->audio_path) && $partsWithoutAudio > 0) {
                 $issues[] = 'no_audio';
             }
+        }
+
+        return $issues;
+    }
+
+    /**
+     * Writing is ready with two essay tasks that each have a prompt, and a Task 1 picture unless Task 1 is a
+     * General Training letter.
+     *
+     * @param  array<int, int>  $partIds
+     * @return array<int, string>
+     */
+    private function writingIssues(array $partIds): array
+    {
+        $tasks = Part::withoutEagerLoads()
+            ->whereIn('id', $partIds)
+            ->whereHas('sections', fn ($q) => $q->withoutEagerLoads()->whereHas('question_type', fn ($t) => $t->where('type', 'essay'))->whereHas('questions'))
+            ->with(['sections' => fn ($q) => $q->withoutEagerLoads()->select('id', 'part_id', 'textarea')])
+            ->orderBy('id')
+            ->get(['id', 'textarea']);
+
+        if ($tasks->isEmpty()) {
+            return ['writing_tasks:0'];
+        }
+
+        $issues = [];
+        if ($tasks->count() !== 2) {
+            $issues[] = 'writing_tasks:'.$tasks->count();
+        }
+
+        $html = fn (Part $part) => $part->textarea.' '.$part->sections->pluck('textarea')->implode(' ');
+        $text = fn (Part $part) => trim(preg_replace('/\s+/', ' ', strip_tags($html($part))));
+
+        if ($tasks->contains(fn (Part $part) => mb_strlen($text($part)) < 20)) {
+            $issues[] = 'writing_no_prompt';
+        }
+
+        $first = $tasks->first();
+        $isLetter = (bool) preg_match('/\b(write|writing)\s+(a|an)\s+(\w+\s+)?letter\b|\bDear\s+(Sir|Madam|[A-Z])/i', $text($first));
+        if (! $isLetter && ! preg_match('/<img\b/i', $html($first))) {
+            $issues[] = 'writing_no_image';
         }
 
         return $issues;

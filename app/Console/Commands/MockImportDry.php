@@ -14,13 +14,14 @@ use Throwable;
 class MockImportDry extends Command
 {
     protected $signature = 'mock:import-dry
-        {module : Listening or Reading}
+        {module : Listening, Reading or Writing}
         {paper : Path of the question paper (.pdf, .docx or .txt)}
         {answers? : Path of the answer key}
         {--provider= : gemini or openai (default: services.mock_import.provider)}
-        {--json= : Also write the normalised result as JSON to this file}';
+        {--json= : Also write the normalised result as JSON to this file}
+        {--image-dir= : Writing: copy the extracted Task 1 picture into this directory}';
 
-    protected $description = 'Parse a Listening / Reading paper with the AI importer without writing to the database';
+    protected $description = 'Parse a Listening / Reading / Writing paper with the AI importer without writing to the database';
 
     public function handle(MockTestPdfParser $parser, GeminiService $gemini): int
     {
@@ -36,7 +37,7 @@ class MockImportDry extends Command
             }
         }
 
-        $provider = $this->option('provider') ?: MockTestPdfParser::provider();
+        $provider = $module === 'Writing' ? 'gemini' : ($this->option('provider') ?: MockTestPdfParser::provider());
         $model = $provider === 'gemini' ? $gemini->model() : (string) config('services.openai.import_model');
         $this->info("Parsing {$module} with {$provider} ({$model})…");
 
@@ -49,6 +50,10 @@ class MockImportDry extends Command
             return self::FAILURE;
         }
         $seconds = round(microtime(true) - $started, 1);
+
+        if ($module === 'Writing') {
+            return $this->writing($result, $seconds);
+        }
 
         foreach ($result['parts'] as $part) {
             $passage = mb_strlen(trim(strip_tags($part['textarea'])));
@@ -80,14 +85,7 @@ class MockImportDry extends Command
             "{$seconds}s",
         ]]);
 
-        if ($result['warnings'] === []) {
-            $this->info('No warnings.');
-        } else {
-            $this->warn('Warnings:');
-            foreach ($result['warnings'] as $warning) {
-                $this->line("  - {$warning}");
-            }
-        }
+        $this->printWarnings($result['warnings']);
 
         if ($path = $this->option('json')) {
             file_put_contents($path, json_encode($result, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES));
@@ -95,6 +93,72 @@ class MockImportDry extends Command
         }
 
         return self::SUCCESS;
+    }
+
+    /**
+     * @param  array<string, mixed>  $result
+     */
+    private function writing(array $result, float $seconds): int
+    {
+        foreach ($result['tasks'] as $task) {
+            $this->newLine();
+            $this->line("<options=bold>Task {$task['number']}</> (page {$task['page']}, {$task['minutes']} minutes, at least {$task['min_words']} words)");
+            $this->line('  Prompt: '.$task['prompt']);
+
+            if ($task['number'] !== 1) {
+                continue;
+            }
+
+            $this->line("  Visual: {$task['visual_kind']}".($task['visual_description'] !== '' ? " — {$task['visual_description']}" : ''));
+            if ($task['visual_box'] !== []) {
+                $this->line('  Box on the page (ymin, xmin, ymax, xmax / 1000): '.implode(', ', $task['visual_box']));
+            }
+            $image = $task['image'];
+            if ($image === null) {
+                $this->line('  Image: '.(in_array($task['visual_kind'], ['letter', 'none'], true) ? 'not needed (letter task)' : 'NOT extracted'.($task['image_error'] ? " ({$task['image_error']})" : '')));
+
+                continue;
+            }
+
+            $path = $image['path'];
+            if ($dir = $this->option('image-dir')) {
+                @mkdir($dir, 0775, true);
+                $copy = rtrim($dir, '/').'/writing-task1.'.$image['extension'];
+                copy($path, $copy);
+                @unlink($path);
+                $path = $copy;
+            }
+            $how = $image['source'] === 'embedded' ? 'embedded image' : 'page rendered with Ghostscript and cropped';
+            $this->line("  Image: {$how}, page {$image['page']}, {$image['width']}x{$image['height']} {$image['extension']} -> {$path}");
+        }
+
+        $this->newLine();
+        $this->line('Parts: '.count($result['parts'])." ({$seconds}s)");
+        $this->printWarnings($result['warnings']);
+
+        if ($path = $this->option('json')) {
+            file_put_contents($path, json_encode($result, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES));
+            $this->line("JSON written to {$path}");
+        }
+
+        return self::SUCCESS;
+    }
+
+    /**
+     * @param  array<int, string>  $warnings
+     */
+    private function printWarnings(array $warnings): void
+    {
+        if ($warnings === []) {
+            $this->info('No warnings.');
+
+            return;
+        }
+
+        $this->warn('Warnings:');
+        foreach ($warnings as $warning) {
+            $this->line("  - {$warning}");
+        }
     }
 
     /**

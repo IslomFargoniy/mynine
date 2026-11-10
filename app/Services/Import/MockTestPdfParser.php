@@ -5,9 +5,12 @@ namespace App\Services\Import;
 use App\Services\GeminiService;
 use App\Services\OpenAIService;
 use InvalidArgumentException;
+use RuntimeException;
 
 /**
  * A Listening / Reading paper (+ answer key) -> normalised parts via the AI.
+ * A Writing paper (Task 1 + Task 2, no key) always goes to Gemini and its Task 1 picture is cut out of the
+ * PDF (WritingPaperNormalizer).
  *
  * Provider "gemini" (config services.mock_import.provider): the PDFs go to Gemini as files, so the
  * model sees the layout; .docx / .txt uploads are sent as extracted text. One call per module (a
@@ -20,7 +23,10 @@ use InvalidArgumentException;
  */
 class MockTestPdfParser
 {
-    public const MODULES = ['Listening', 'Reading'];
+    public const MODULES = ['Listening', 'Reading', 'Writing'];
+
+    /** Modules that use the answer key file. */
+    public const KEYED_MODULES = ['Listening', 'Reading'];
 
     /** Above this many characters a Reading paper is parsed passage by passage. */
     public const SPLIT_THRESHOLD = 12000;
@@ -30,6 +36,7 @@ class MockTestPdfParser
         private readonly MockImportNormalizer $normalizer,
         private readonly GeminiService $gemini,
         private readonly DocumentTextExtractor $extractor,
+        private readonly WritingPaperNormalizer $writing,
     ) {}
 
     public static function provider(): string
@@ -45,6 +52,10 @@ class MockTestPdfParser
     public function parseFiles(string $module, string $paperPath, ?string $answersPath = null, ?string $provider = null): array
     {
         $this->assertModule($module);
+
+        if ($module === 'Writing') {
+            return $this->parseWriting($paperPath);
+        }
 
         if (($provider ?? self::provider()) !== 'gemini') {
             $answers = $answersPath !== null ? $this->extractor->extract($answersPath) : '';
@@ -78,6 +89,23 @@ class MockTestPdfParser
         $merged = $this->mergeMissing($responses, $extra, $missing);
 
         return $this->normalizer->normalize($module, [$merged]);
+    }
+
+    /**
+     * Writing paper -> "Task 1" / "Task 2" parts (Gemini only: it reads the PDF layout and locates the picture).
+     *
+     * @return array{parts: array<int, array<string, mixed>>, warnings: array<int, string>, questions: int, numbers: array<int, int>, tasks: array<int, array<string, mixed>>}
+     */
+    public function parseWriting(string $paperPath): array
+    {
+        if (! GeminiService::configured()) {
+            throw new RuntimeException('The Writing import needs Google Gemini: set GEMINI_API_KEY.');
+        }
+
+        $response = $this->gemini->parseWritingPaper($this->geminiDocument($paperPath));
+        $isPdf = strtolower(pathinfo($paperPath, PATHINFO_EXTENSION)) === 'pdf';
+
+        return $this->writing->normalize($response, $isPdf ? $paperPath : null);
     }
 
     /**
@@ -218,6 +246,9 @@ class MockTestPdfParser
     public function parse(string $module, string $text, string $answerKeyText = ''): array
     {
         $this->assertModule($module);
+        if ($module === 'Writing') {
+            throw new InvalidArgumentException('Writing papers are parsed with parseFiles() (Gemini).');
+        }
 
         $responses = [];
         foreach ($this->chunks($module, $text) as $scope => $chunk) {
@@ -258,7 +289,7 @@ class MockTestPdfParser
     private function assertModule(string $module): void
     {
         if (! in_array($module, self::MODULES, true)) {
-            throw new InvalidArgumentException("PDF import supports Listening and Reading only, not {$module}.");
+            throw new InvalidArgumentException("PDF import supports Listening, Reading and Writing only, not {$module}.");
         }
     }
 }

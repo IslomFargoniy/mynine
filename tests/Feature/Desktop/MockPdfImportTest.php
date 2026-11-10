@@ -2,6 +2,7 @@
 
 use App\Jobs\ImportMockModuleJob;
 use App\Models\Attempt;
+use App\Models\Image;
 use App\Models\Option;
 use App\Models\Part;
 use App\Models\Question;
@@ -17,9 +18,12 @@ use App\Services\Import\DocumentTextExtractor;
 use App\Services\Import\MockImportNormalizer;
 use App\Services\Import\MockTestImporter;
 use App\Services\Import\MockTestPdfParser;
+use App\Services\Import\PdfImageExtractor;
+use App\Services\Import\WritingPaperNormalizer;
 use App\Services\MockBankService;
 use App\Services\OpenAIService;
 use Barryvdh\DomPDF\Facade\Pdf;
+use Dompdf\Dompdf;
 use GuzzleHttp\Promise\PromiseInterface;
 use GuzzleHttp\Psr7\Response;
 use Illuminate\Http\UploadedFile;
@@ -920,4 +924,289 @@ test('big PDFs go through the gemini Files API upload', function () {
     expect($part)->toBe(['file_data' => ['mime_type' => 'application/pdf', 'file_uri' => 'https://generativelanguage.googleapis.com/v1beta/files/abc']]);
     Http::assertSent(fn ($r) => str_ends_with($r->url(), '/upload/v1beta/files') && $r->hasHeader('X-Goog-Upload-Command', 'start') && $r->hasHeader('x-goog-api-key', 'test-gemini-key'));
     Http::assertSent(fn ($r) => $r->url() === 'https://upload.example.test/session-1' && $r->hasHeader('X-Goog-Upload-Command', 'upload, finalize'));
+});
+
+/*
+|--------------------------------------------------------------------------
+| Writing (Task 1 + Task 2, Task 1 picture cut out of the PDF)
+|--------------------------------------------------------------------------
+*/
+
+/**
+ * A 3-page Writing paper made with dompdf: cover, Task 1 (with a JPEG / PNG bar chart, or none), Task 2.
+ *
+ * @return array{path: string, image: string|null}
+ */
+function writingPaperPdf(?string $format = 'jpeg'): array
+{
+    // dompdf is slow and keeps memory: render each variant once per run.
+    static $made = [];
+    if (isset($made[$format ?? 'none']) && is_file($made[$format ?? 'none']['path'])) {
+        return $made[$format ?? 'none'];
+    }
+
+    $dir = sys_get_temp_dir().'/'.uniqid('writing-fixture-');
+    mkdir($dir);
+
+    $chart = imagecreatetruecolor(400, 250);
+    imagefill($chart, 0, 0, 0xFFFFFF);
+    imagefilledrectangle($chart, 50, 50, 150, 200, 0x3366CC);
+    imagefilledrectangle($chart, 200, 100, 300, 200, 0xCC3333);
+    ob_start();
+    $format === 'png' ? imagepng($chart) : imagejpeg($chart, null, 90);
+    $bytes = (string) ob_get_clean();
+
+    $picture = '';
+    if ($format !== null) {
+        $file = "{$dir}/chart.".($format === 'png' ? 'png' : 'jpg');
+        file_put_contents($file, $bytes);
+        $picture = '<img src="'.$file.'" style="width: 400px">';
+    }
+
+    $html = '<p>INTERNATIONAL ENGLISH LANGUAGE TESTING SYSTEM - Writing - 1 hour</p>'
+        .'<div style="page-break-after: always"></div>'
+        .'<p><strong>WRITING TASK 1</strong></p><p>You should spend about 20 minutes on this task.</p>'
+        .'<p>The chart below shows the number of visitors to two museums in 2020.</p>'
+        .'<p>Summarise the information by selecting and reporting the main features, and make comparisons where relevant.</p>'
+        .'<p>Write at least 150 words.</p>'.$picture
+        .'<div style="page-break-after: always"></div>'
+        .'<p><strong>WRITING TASK 2</strong></p><p>You should spend about 40 minutes on this task.</p>'
+        .'<p>Some people think museums should be free. To what extent do you agree or disagree?</p>'
+        .'<p>Write at least 250 words.</p>';
+
+    // A standalone Dompdf with a core font: small PDFs, no options shared with other tests.
+    $dompdf = new Dompdf(['chroot' => $dir, 'defaultFont' => 'Helvetica']);
+    $dompdf->loadHtml('<html><body style="font-family: Helvetica">'.$html.'</body></html>');
+    $dompdf->render();
+    $pdf = (string) $dompdf->output();
+    $path = "{$dir}/writing.pdf";
+    file_put_contents($path, $pdf);
+
+    return $made[$format ?? 'none'] = ['path' => $path, 'image' => $format !== null ? $bytes : null];
+}
+
+/**
+ * Gemini-shaped Writing JSON (as returned for the paper above).
+ *
+ * @param  array<string, mixed>  $task1
+ * @return array<string, mixed>
+ */
+function writingAiJson(array $task1 = []): array
+{
+    return ['tasks' => [
+        array_merge([
+            'number' => 1, 'page' => 2, 'minutes' => 20, 'min_words' => 150,
+            'prompt_html' => '<p><strong>WRITING TASK 1</strong></p><p>You should spend about 20 minutes on this task.</p><p>The chart below shows the number of visitors to two museums in 2020.</p><p>Summarise the information by selecting and reporting the main features, and make comparisons where relevant.</p><p>Write at least 150 words.</p>',
+            'visual_kind' => 'bar_chart',
+            'visual_description' => 'Bar chart of visitors to Museum A (blue) and Museum B (red) in 2020.',
+            'visual_box' => [150, 80, 470, 760],
+        ], $task1),
+        [
+            'number' => 2, 'page' => 3, 'minutes' => 40, 'min_words' => 250,
+            'prompt_html' => '<p>Some people think museums should be free. <script>alert(1)</script>To what extent do you agree or disagree?</p>',
+            'visual_kind' => 'none', 'visual_description' => '', 'visual_box' => [],
+        ],
+    ]];
+}
+
+/**
+ * A stand-in "gs" that writes a white letter page (small, 50 dpi) with a red block where the chart is.
+ */
+function fakeGhostscript(): string
+{
+    $script = sys_get_temp_dir().'/'.uniqid('fake-gs-');
+    file_put_contents($script, '#!'.PHP_BINARY."\n".<<<'PHP'
+<?php
+$out = null;
+foreach ($argv as $arg) {
+    if (str_starts_with($arg, '-sOutputFile=')) {
+        $out = substr($arg, 13);
+    }
+}
+$page = imagecreatetruecolor(425, 550);
+imagefill($page, 0, 0, 0xFFFFFF);
+imagefilledrectangle($page, 85, 165, 340, 330, 0xFF0000);
+imagepng($page, $out);
+PHP);
+    chmod($script, 0755);
+
+    return $script;
+}
+
+test('a writing paper becomes Task 1 / Task 2 essay parts with the embedded JPEG as the Task 1 picture', function () {
+    useGemini();
+    Storage::fake('local');
+    Storage::fake('public');
+    ['test' => $test, 'writing' => $writing] = makeBankTest();
+    $paper = writingPaperPdf('jpeg');
+
+    $import = TestImport::create(['test_id' => $test->id, 'status' => TestImport::QUEUED, 'modules' => ['Writing' => ['status' => 'queued']]]);
+    $dir = ImportMockModuleJob::directory($test->id, $import->id);
+    Storage::disk('local')->put("{$dir}/writing.pdf", file_get_contents($paper['path']));
+    Storage::disk('local')->put("{$dir}/answers.pdf", "%PDF-1.4\nkey\n%%EOF");
+    $import->forceFill(['files' => ['writing' => "{$dir}/writing.pdf", 'answers' => "{$dir}/answers.pdf"]])->save();
+
+    Http::fake(['generativelanguage.googleapis.com/*' => geminiReply(writingAiJson())]);
+
+    app()->call([new ImportMockModuleJob($import->id, 'Writing'), 'handle']);
+
+    expect($import->fresh()->modules['Writing'])->toMatchArray(['status' => TestImport::DONE, 'parts' => 2, 'questions' => 2, 'warnings' => []]);
+
+    // One request: the paper only (the answer key is for Listening / Reading), with the Writing schema.
+    Http::assertSentCount(1);
+    $request = Http::recorded()[0][0];
+    $parts = $request['contents'][0]['parts'];
+    expect(collect($parts)->whereNotNull('inline_data')->count())->toBe(1)
+        ->and($parts[1]['inline_data']['data'])->toBe(base64_encode(file_get_contents($paper['path'])))
+        ->and($request['generationConfig']['responseSchema']['properties'])->toHaveKey('tasks');
+
+    $partsDb = Part::where('test_type_id', $writing->id)->orderBy('id')->get();
+    expect($partsDb->pluck('name')->all())->toBe(['Task 1', 'Task 2'])
+        ->and($partsDb->pluck('minute')->all())->toBe([20, 40]);
+
+    [$task1, $task2] = $partsDb;
+    $image = Image::where('part_id', $task1->id)->sole();
+    expect($image->image_path)->toStartWith('images/imports/')->toEndWith('.jpg');
+    Storage::disk('public')->assertExists($image->image_path);
+    expect(Storage::disk('public')->get($image->image_path))->toBe($paper['image']);
+
+    $src = '/storage/'.$image->image_path;
+    expect($task1->textarea)->toStartWith('<p><strong>WRITING TASK 1</strong></p><p>You should spend about 20 minutes on this task.</p><p>The chart below')
+        ->toContain('<p>Write at least 150 words.</p><p><img src="'.$src.'" alt="Bar chart of visitors to Museum A (blue) and Museum B (red) in 2020."')
+        ->and(substr_count($task1->textarea, 'Write at least'))->toBe(1)
+        ->and(substr_count($task1->textarea, 'WRITING TASK'))->toBe(1)
+        ->and($task2->textarea)->toBe('<p><strong>WRITING TASK 2</strong></p><p>You should spend about 40 minutes on this task.</p><p>Some people think museums should be free. To what extent do you agree or disagree?</p><p>Write at least 250 words.</p>');
+
+    // Section: the prompt the AI evaluation and the review page read (+ picture + a note for the examiner).
+    $section1 = Section::where('part_id', $task1->id)->with('question_type')->sole();
+    expect($section1->question_type->type)->toBe('essay')
+        ->and($section1->textarea)->toStartWith('<p>The chart below')
+        ->toContain($src)
+        ->toContain('Picture (description for the examiner): Bar chart of visitors')
+        ->and(Question::where('section_id', $section1->id)->sole()->only(['order', 'textarea', 'answer_text']))->toBe(['order' => 1, 'textarea' => null, 'answer_text' => null]);
+
+    expect(app(MockBankService::class)->moduleIssues($writing->fresh()))->toBe([]);
+
+    // Replacing the module removes the old imported picture once the new one is stored.
+    Http::fake(['generativelanguage.googleapis.com/*' => geminiReply(writingAiJson())]);
+    $result = app(MockTestPdfParser::class)->parseFiles('Writing', $paper['path']);
+    app(MockTestImporter::class)->import($writing->fresh(), $result['parts'], true);
+    Storage::disk('public')->assertMissing($image->image_path);
+    expect(Image::count())->toBe(1)
+        ->and(file_exists($result['tasks'][0]['image']['path']))->toBeFalse();
+});
+
+test('a PNG chart (FlateDecode with PNG predictors) is rebuilt as a PNG with GD', function () {
+    $paper = writingPaperPdf('png');
+    $extractor = new PdfImageExtractor;
+
+    expect($extractor->embedded($paper['path'], 1))->toBeNull()
+        ->and($extractor->lastError)->toContain('no embedded picture');
+
+    $image = $extractor->embedded($paper['path'], 2);
+    expect($image)->toMatchArray(['extension' => 'png', 'width' => 400, 'height' => 250, 'source' => 'embedded']);
+
+    $gd = imagecreatefromstring($image['data']);
+    expect(imagecolorat($gd, 100, 100))->toBe(0x3366CC)
+        ->and(imagecolorat($gd, 250, 150))->toBe(0xCC3333)
+        ->and(imagecolorat($gd, 10, 10))->toBe(0xFFFFFF);
+
+    // A shape filter keeps a wide banner from being taken for the chart.
+    expect($extractor->embedded($paper['path'], 2, 5.0))->toBeNull();
+});
+
+test('a vector chart is rendered with ghostscript and cropped to the box the AI gave', function () {
+    useGemini();
+    $paper = writingPaperPdf(null);
+    config(['services.mock_import.ghostscript' => $gs = fakeGhostscript()]);
+    Http::fake(['*' => geminiReply(writingAiJson(['visual_box' => [300, 200, 600, 800]]))]);
+
+    $result = app(MockTestPdfParser::class)->parseFiles('Writing', $paper['path']);
+    @unlink($gs);
+
+    $image = $result['tasks'][0]['image'];
+    expect($result['warnings'])->toBe([])
+        ->and($image)->toMatchArray(['source' => 'rendered', 'extension' => 'png', 'page' => 2])
+        ->and($image['width'])->toBeGreaterThan(260)->toBeLessThan(276)
+        ->and($image['height'])->toBeGreaterThan(175)->toBeLessThan(190);
+
+    $gd = imagecreatefrompng($image['path']);
+    expect(imagecolorat($gd, intdiv($image['width'], 2), intdiv($image['height'], 2)))->toBe(0xFF0000)
+        ->and(imagecolorat($gd, 2, 2))->toBe(0xFFFFFF)
+        ->and($result['parts'][0]['textarea'])->toContain(WritingPaperNormalizer::IMAGE_TOKEN);
+    @unlink($image['path']);
+});
+
+test('without a picture in the PDF and no ghostscript the text is imported with a warning', function () {
+    useGemini();
+    Storage::fake('public');
+    ['writing' => $writing] = makeBankTest();
+    $paper = writingPaperPdf(null);
+    config(['services.mock_import.ghostscript' => '/nonexistent/gs']);
+    Http::fake(['*' => geminiReply(writingAiJson())]);
+
+    $result = app(MockTestPdfParser::class)->parseFiles('Writing', $paper['path']);
+
+    expect($result['tasks'][0]['image'])->toBeNull()
+        ->and($result['warnings'])->toHaveCount(1)
+        ->and($result['warnings'][0])->toStartWith('Task 1 image could not be extracted — upload it in the module editor.')
+        ->and($result['parts'][0]['textarea'])->not->toContain(WritingPaperNormalizer::IMAGE_TOKEN);
+
+    app(MockTestImporter::class)->import($writing, $result['parts'], false);
+    expect(Part::where('test_type_id', $writing->id)->first()->textarea)->not->toContain('<img')
+        ->and(app(MockBankService::class)->moduleIssues($writing->fresh()))->toBe(['writing_no_image']);
+});
+
+test('a General Training letter task needs no picture', function () {
+    useGemini();
+    ['writing' => $writing] = makeBankTest();
+    $paper = writingPaperPdf(null);
+    Http::fake(['*' => geminiReply(writingAiJson([
+        'prompt_html' => '<p>You recently stayed at a hotel and left a bag there.</p><p>Write a letter to the hotel manager. In your letter</p><ul><li>describe the bag</li><li>say what you would like the manager to do</li></ul><p>Begin your letter as follows: <em>Dear Sir or Madam,</em></p>',
+        'visual_kind' => 'letter', 'visual_description' => '', 'visual_box' => [],
+    ]))]);
+
+    $result = app(MockTestPdfParser::class)->parseFiles('Writing', $paper['path']);
+    expect($result['warnings'])->toBe([])
+        ->and($result['parts'][0]['textarea'])->toContain('<ul><li>describe the bag</li>')
+        ->and($result['parts'][0]['sections'][0]['textarea'])->not->toContain('Picture (description');
+
+    app(MockTestImporter::class)->import($writing, $result['parts'], false);
+    expect(app(MockBankService::class)->moduleIssues($writing->fresh()))->toBe([]);
+});
+
+test('writing readiness wants two essay tasks with text', function () {
+    ['writing' => $writing] = makeBankTest();
+    $part = Part::create(['test_type_id' => $writing->id, 'name' => 'Task 1', 'textarea' => '<p>Short</p>']);
+    $section = makeSection($part, 'essay', '');
+    Question::create(['section_id' => $section->id, 'order' => 1]);
+
+    expect(app(MockBankService::class)->moduleIssues($writing))->toBe(['writing_tasks:1', 'writing_no_prompt', 'writing_no_image']);
+});
+
+test('the upload accepts a writing paper and queues a Writing job', function () {
+    Storage::fake('local');
+    Queue::fake();
+    ['test' => $test] = makeBankTest();
+
+    $this->actingAs($this->admin)->post(route('mock-bank.import', $test), [
+        'writing_file' => UploadedFile::fake()->create('Writing Test 7.pdf', 100, 'application/pdf'),
+    ])->assertSessionHasNoErrors();
+
+    $import = TestImport::firstOrFail();
+    expect(array_keys($import->modules))->toBe(['Writing'])
+        ->and($import->files)->toBe(['writing' => "imports/{$test->id}/{$import->id}/writing.pdf"]);
+    Queue::assertPushed(ImportMockModuleJob::class, fn ($job) => $job->module === 'Writing');
+
+    $this->actingAs($this->admin)->post(route('mock-bank.import', $test), [
+        'writing_file' => UploadedFile::fake()->create('w.exe', 10),
+    ])->assertSessionHasErrors('writing_file');
+});
+
+test('the writing import needs a gemini key', function () {
+    config(['services.gemini.key' => '']);
+    $paper = writingPaperPdf(null);
+
+    expect(fn () => app(MockTestPdfParser::class)->parseFiles('Writing', $paper['path']))
+        ->toThrow(RuntimeException::class, 'GEMINI_API_KEY');
 });

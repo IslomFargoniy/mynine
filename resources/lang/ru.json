@@ -796,24 +796,29 @@
                 "no_questions": "Нет вопросов",
                 "missing_answer_keys": "Вопросов без ключа: {{count}}",
                 "no_audio": "Нет аудио Listening",
-                "question_count": "Вопросов: {{count}} из 40"
+                "question_count": "Вопросов: {{count}} из 40",
+                "writing_tasks": "Заданий Writing: {{count}} из 2",
+                "writing_no_prompt": "В задании Writing нет текста задания",
+                "writing_no_image": "Нет изображения Writing Task 1"
             },
             "edit_module": "Открыть редактор модуля (части и вопросы)",
             "import": {
                 "button": "Импорт из PDF",
                 "title": "Импорт из PDF",
-                "description": "Загрузите PDF издательства. ИИ прочитает вопросы и ключ ответов и заполнит модули Listening и Reading. Это займёт несколько минут; страницу можно закрыть.",
+                "description": "Загрузите PDF издательства. ИИ прочитает вопросы и ключ ответов и заполнит модули Listening, Reading и Writing. Это займёт несколько минут; страницу можно закрыть.",
                 "listening_file": "Listening — бланк вопросов",
                 "reading_file": "Reading — бланк вопросов",
+                "writing_file": "Writing — бланк заданий",
+                "writing_hint": "Task 1 и Task 2 станут двумя частями; график / схема Task 1 вырезается из PDF.",
                 "answers_file": "Ключ ответов (необязательно)",
-                "answers_hint": "Без отдельного ключа ответы берутся из самого файла с вопросами (если они там есть); иначе остаются пустыми и отмечаются как отсутствующие.",
+                "answers_hint": "Только для Listening и Reading. Без отдельного ключа ответы берутся из самого файла с вопросами (если они там есть); иначе остаются пустыми и отмечаются как отсутствующие.",
                 "listening_audio": "Аудио Listening (mp3, необязательно)",
-                "file_types": "PDF, DOCX или TXT, до 20 МБ. Загрузите хотя бы Listening или Reading.",
+                "file_types": "PDF, DOCX или TXT, до 20 МБ. Загрузите хотя бы Listening, Reading или Writing.",
                 "replace": "Заменить существующие части",
                 "replace_hint": "Без этого модуль, в котором уже есть части, не импортируется.",
                 "has_content": "В {{modules}} уже есть содержимое.",
-                "writing_note": "Задания Writing добавляются вручную в редакторе модуля. Изображения (карты, схемы, графики) не импортируются — добавьте их в редакторе модуля.",
-                "need_file": "Выберите файл Listening или Reading.",
+                "writing_note": "Изображения в Listening и Reading (карты, схемы) не импортируются — добавьте их в редакторе модуля. Если изображение Writing Task 1 не удаётся вырезать из PDF, импорт сообщит об этом; загрузите его в редакторе модуля.",
+                "need_file": "Выберите файл Listening, Reading или Writing.",
                 "submit": "Начать импорт",
                 "heading": "Импорт PDF",
                 "summary": "частей: {{parts}}, вопросов: {{questions}}",
@@ -1002,7 +1007,7 @@
             "hint": "Минимум 6 символов. Admin и Ресепшн используют его, чтобы выйти с заблокированного экрана. ПК хранят его и для офлайн-проверки."
         }
     },
-    "Upload a Listening or a Reading file.": "Загрузите файл Listening или Reading.",
+    "Upload a Listening, Reading or Writing file.": "Загрузите файл Listening, Reading или Writing.",
     "An import of this test is still running.": "Импорт этого теста ещё выполняется.",
     "Import started. It takes a few minutes; the status is shown on the test card.": "Импорт запущен. Это займёт несколько минут; статус показан на карточке теста."
 }

@@ -10,7 +10,7 @@ use Illuminate\Support\Facades\DB;
 /**
  * A Mock Bank "Import from PDF" run.
  *
- * files:   ['listening' => 'imports/{test}/{import}/listening.pdf', 'reading' => …, 'answers' => …]
+ * files:   ['listening' => 'imports/{test}/{import}/listening.pdf', 'reading' => …, 'writing' => …, 'answers' => …]
  * modules: ['Listening' => ['status' => 'queued|running|done|failed', 'message' => ?string,
  *           'warnings' => string[], 'parts' => int, 'questions' => int], 'Reading' => …]
  */

@@ -610,6 +610,14 @@ class MockImportNormalizer
      */
     private function html(string $html): string
     {
+        return self::cleanHtml($html);
+    }
+
+    /**
+     * AI HTML -> the small tag set the exam rooms render, without attributes, scripts or styles.
+     */
+    public static function cleanHtml(string $html): string
+    {
         $html = preg_replace('#<(script|style)\b[^>]*>.*?</\1>#is', '', $html);
         $html = strip_tags($html, self::ALLOWED_TAGS);
         $html = preg_replace('#<(/?)(\w+)\b[^>]*?(/?)>#', '<$1$2$3>', $html);

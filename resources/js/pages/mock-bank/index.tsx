@@ -156,13 +156,15 @@ function ImportPdfDialog({ test }: { test: BankTestRow }) {
     const { data, setData, post, processing, errors, reset, clearErrors, progress } = useForm<{
         listening_file: File | null;
         reading_file: File | null;
+        writing_file: File | null;
         answers_file: File | null;
         listening_audio: File | null;
         replace: boolean;
-    }>({ listening_file: null, reading_file: null, answers_file: null, listening_audio: null, replace: false });
+    }>({ listening_file: null, reading_file: null, writing_file: null, answers_file: null, listening_audio: null, replace: false });
 
     const running = test.import?.status === 'queued' || test.import?.status === 'running';
-    const filled = test.modules.filter((m) => ['Listening', 'Reading'].includes(m.type) && m.parts_count > 0).map((m) => m.type);
+    const filled = test.modules.filter((m) => ['Listening', 'Reading', 'Writing'].includes(m.type) && m.parts_count > 0).map((m) => m.type);
+    const hasFile = Boolean(data.listening_file || data.reading_file || data.writing_file);
     const docs = '.pdf,.docx,.txt';
 
     const submit: FormEventHandler = (e) => {
@@ -201,6 +203,7 @@ function ImportPdfDialog({ test }: { test: BankTestRow }) {
                 <form onSubmit={submit} className="space-y-3">
                     <FileField id={`listening_file_${test.id}`} label={t('exam_admin.bank.import.listening_file')} hint={t('exam_admin.bank.import.file_types')} accept={docs} error={errors.listening_file} onChange={(f) => setData('listening_file', f)} />
                     <FileField id={`reading_file_${test.id}`} label={t('exam_admin.bank.import.reading_file')} accept={docs} error={errors.reading_file} onChange={(f) => setData('reading_file', f)} />
+                    <FileField id={`writing_file_${test.id}`} label={t('exam_admin.bank.import.writing_file')} hint={t('exam_admin.bank.import.writing_hint')} accept={docs} error={errors.writing_file} onChange={(f) => setData('writing_file', f)} />
                     <FileField id={`answers_file_${test.id}`} label={t('exam_admin.bank.import.answers_file')} hint={t('exam_admin.bank.import.answers_hint')} accept={docs} error={errors.answers_file} onChange={(f) => setData('answers_file', f)} />
                     <FileField id={`listening_audio_${test.id}`} label={t('exam_admin.bank.import.listening_audio')} accept="audio/*,.mp3" error={errors.listening_audio} onChange={(f) => setData('listening_audio', f)} />
 
@@ -234,8 +237,8 @@ function ImportPdfDialog({ test }: { test: BankTestRow }) {
                     <DialogFooter>
                         <Button
                             type="submit"
-                            disabled={processing || (!data.listening_file && !data.reading_file)}
-                            title={!data.listening_file && !data.reading_file ? t('exam_admin.bank.import.need_file') : undefined}
+                            disabled={processing || !hasFile}
+                            title={!hasFile ? t('exam_admin.bank.import.need_file') : undefined}
                             className="rounded-xl bg-indigo-600 text-white hover:bg-indigo-700"
                         >
                             {processing && <Loader2 className="h-4 w-4 animate-spin" />}

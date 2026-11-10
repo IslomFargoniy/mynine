@@ -98,7 +98,7 @@ class MockBankController extends Controller
         ]);
 
         if ($data['status'] === Test::BANK_READY && ! $this->bank->testReadiness($test)['ready']) {
-            return back()->with('error', "Test tayyor emas: har bir modulda partlar, javob kalitlari va (Listening uchun) audio bo'lishi kerak.");
+            return back()->with('error', "Test tayyor emas: har bir modulda partlar, javob kalitlari, (Listening uchun) audio va (Writing uchun) 2 ta topshiriq hamda Task 1 rasmi bo'lishi kerak.");
         }
 
         $test->forceFill(['bank_status' => $data['status']])->save();
@@ -139,6 +139,7 @@ class MockBankController extends Controller
         $data = $request->validate([
             'listening_file' => $document,
             'reading_file' => $document,
+            'writing_file' => $document,
             'answers_file' => $document,
             'listening_audio' => ['nullable', 'file', 'mimes:mp3,wav,ogg,m4a,aac,mpeg,mpga', 'max:51200'],
             'replace' => ['nullable', 'boolean'],
@@ -146,7 +147,7 @@ class MockBankController extends Controller
 
         $modules = array_values(array_filter(MockTestPdfParser::MODULES, fn ($m) => $request->hasFile(strtolower($m).'_file')));
         if ($modules === []) {
-            throw ValidationException::withMessages(['listening_file' => __('Upload a Listening or a Reading file.')]);
+            throw ValidationException::withMessages(['listening_file' => __('Upload a Listening, Reading or Writing file.')]);
         }
 
         if (TestImport::where('test_id', $test->id)->whereIn('status', [TestImport::QUEUED, TestImport::RUNNING])->exists()) {
@@ -177,7 +178,7 @@ class MockBankController extends Controller
 
         $dir = ImportMockModuleJob::directory($test->id, $import->id);
         $files = [];
-        foreach (['listening', 'reading', 'answers'] as $key) {
+        foreach (['listening', 'reading', 'writing', 'answers'] as $key) {
             if ($request->hasFile("{$key}_file")) {
                 $file = $request->file("{$key}_file");
                 $files[$key] = $file->storeAs($dir, $key.'.'.strtolower($file->getClientOriginalExtension()), 'local');
@@ -193,7 +194,7 @@ class MockBankController extends Controller
     }
 
     /**
-     * The test's Listening / Reading module, created when the test does not have it yet.
+     * The test's Listening / Reading / Writing module, created when the test does not have it yet.
      */
     private function moduleOf(Test $test, string $module): TestType
     {
