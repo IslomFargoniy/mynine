@@ -229,7 +229,7 @@ mark.highlight {
     --success: #047857;
     --warning: #b45309;
 
-    --border: rgba(255, 255, 255, 0.75);
+    --border: rgba(15, 23, 42, 0.12);
     --input: rgba(51, 65, 85, 0.28);
     --ring: #6366f1;
     /* Hairlines inside panels (table rows, separators) — the white glass edge is invisible there. */
@@ -257,7 +257,7 @@ mark.highlight {
     --glass-strong-bg: rgba(255, 255, 255, 0.86);
     --glass-subtle-bg: rgba(255, 255, 255, 0.6);
     --glass-thumb: rgba(255, 255, 255, 0.9);
-    --glass-edge: rgba(255, 255, 255, 0.75);
+    --glass-edge: rgba(15, 23, 42, 0.12);
     --glass-dash: rgba(51, 65, 85, 0.35);
     --glass-blur: blur(28px) saturate(170%);
     --glass-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.9), 0 12px 40px rgba(15, 23, 42, 0.1);
@@ -302,7 +302,7 @@ mark.highlight {
     --success: #6ee7b7;
     --warning: #fcd34d;
 
-    --border: rgba(255, 255, 255, 0.14);
+    --border: rgba(255, 255, 255, 0.18);
     --input: rgba(255, 255, 255, 0.2);
     --ring: #818cf8;
     --divider: rgba(255, 255, 255, 0.09);
@@ -320,7 +320,7 @@ mark.highlight {
     --glass-strong-bg: rgba(15, 20, 34, 0.88);
     --glass-subtle-bg: rgba(255, 255, 255, 0.07);
     --glass-thumb: rgba(255, 255, 255, 0.16);
-    --glass-edge: rgba(255, 255, 255, 0.14);
+    --glass-edge: rgba(255, 255, 255, 0.18);
     --glass-dash: rgba(203, 213, 225, 0.35);
     --glass-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.1), 0 12px 40px rgba(0, 0, 0, 0.45);
     --glass-pill-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.08), 0 2px 10px rgba(0, 0, 0, 0.3);
