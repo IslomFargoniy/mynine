@@ -264,7 +264,7 @@ test('listening AI JSON becomes rows with the answer key applied by question num
         ->and($result['warnings'])->toContain('Found 2 parts; a full Listening paper has 4.');
 
     $counts = app(MockTestImporter::class)->import($module, $result['parts'], false);
-    expect($counts)->toBe(['parts' => 2, 'questions' => 10]);
+    expect($counts)->toBe(['parts' => 2, 'questions' => 12]);
 
     $parts = Part::where('test_type_id', $module->id)->orderBy('id')->get();
     expect($parts->pluck('name')->all())->toBe(['Part 1', 'Part 2'])
@@ -488,7 +488,7 @@ test('the job moves queued -> running -> done, stores warnings and deletes the f
     $import->refresh();
     expect($import->status)->toBe(TestImport::RUNNING) // Reading is still queued
         ->and($import->modules['Listening']['status'])->toBe(TestImport::DONE)
-        ->and($import->modules['Listening']['questions'])->toBe(10)
+        ->and($import->modules['Listening']['questions'])->toBe(12)
         ->and($import->modules['Listening']['warnings'])->toContain('Found 12 questions; a full Listening paper has 40.');
     Storage::disk('local')->assertExists("{$dir}/answers.txt");
 

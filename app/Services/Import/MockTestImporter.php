@@ -82,7 +82,10 @@ class MockTestImporter
                             'textarea' => $questionData['textarea'],
                             'answer_text' => $questionData['answer_text'],
                         ]);
-                        $questionCount++;
+                        // Count question NUMBERS: a "choose TWO" question covers as many numbers as it has
+                        // correct options (same rule as the exam payload and the readiness check).
+                        $options = collect($questionData['options']);
+                        $questionCount += $options->isEmpty() ? 1 : max(1, $options->where('is_correct', true)->count());
 
                         foreach ($questionData['options'] as $optionData) {
                             Option::create([
