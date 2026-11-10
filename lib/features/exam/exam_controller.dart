@@ -45,6 +45,11 @@ class ExamController extends ChangeNotifier {
   final DeviceRepository device;
   final ConnectionStatus connection;
 
+  /// Zone the controller was created in. Persistence triggered by UI events
+  /// runs here, so SQLite writes never depend on the zone of the gesture that
+  /// caused them (relevant for widget tests running in a fake-async zone).
+  final Zone _zone = Zone.current;
+
   // ---- State ---------------------------------------------------------------------
 
   ExamStage _stage = ExamStage.idle;
@@ -522,10 +527,10 @@ class ExamController extends ChangeNotifier {
     if (debounce) {
       _debounces[questionId] = Timer(const Duration(milliseconds: 600), () {
         _debounces.remove(questionId);
-        unawaited(_commit(questionId));
+        _zone.run(() => unawaited(_commit(questionId)));
       });
     } else {
-      unawaited(_commit(questionId));
+      _zone.run(() => unawaited(_commit(questionId)));
     }
     notifyListeners();
   }
@@ -767,8 +772,17 @@ class ExamController extends ChangeNotifier {
     sync.kick();
   }
 
+  bool _disposed = false;
+
+  /// Async work (heartbeats, syncs) can complete after dispose: ignore it.
+  @override
+  void notifyListeners() {
+    if (!_disposed) super.notifyListeners();
+  }
+
   @override
   void dispose() {
+    _disposed = true;
     _stopTimers();
     for (final t in _debounces.values) {
       t.cancel();
