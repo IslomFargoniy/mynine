@@ -67,3 +67,63 @@ test('sitemap contains landing pages and all articles', function () {
     $parsed = simplexml_load_string($xml);
     expect($parsed)->not->toBeFalse();
 });
+
+test('optional faq front matter is parsed, and malformed or missing faq stays backward compatible', function () {
+    $dir = sys_get_temp_dir().'/blog-faq-'.uniqid();
+    mkdir($dir);
+    file_put_contents($dir.'/with-faq.md', <<<'MD'
+---
+title: "With FAQ"
+date: 2026-10-20
+faq:
+  - q: "Birinchi savol?"
+    a: "Birinchi javob."
+  - q: "Javobsiz savol"
+  - "noto'g'ri element"
+---
+
+Matn.
+MD);
+    file_put_contents($dir.'/without-faq.md', "---\ntitle: \"Without\"\ndate: 2026-10-21\n---\n\nMatn.\n");
+
+    $repo = new BlogRepository($dir);
+
+    expect($repo->find('with-faq')['faq'])->toBe([['q' => 'Birinchi savol?', 'a' => 'Birinchi javob.']])
+        ->and($repo->find('without-faq')['faq'])->toBe([]);
+
+    array_map('unlink', glob($dir.'/*.md'));
+    rmdir($dir);
+});
+
+test('articles with faq render a visible faq and valid FAQPage structured data', function () {
+    $withFaq = app(BlogRepository::class)->all()->filter(fn ($a) => $a['faq'] !== []);
+    expect($withFaq)->not->toBeEmpty();
+
+    foreach ($withFaq as $article) {
+        $html = $this->get(route('blog.show', $article['slug']))->assertOk()
+            ->assertSee('id="faq"', false)
+            ->assertSee(e($article['faq'][0]['q']), false)
+            ->getContent();
+
+        preg_match_all('/<script type="application\/ld\+json">(.*?)<\/script>/s', $html, $m);
+        $types = collect($m[1])->map(function ($json) use ($article) {
+            $data = json_decode(trim($json), true);
+            expect($data)->toBeArray("Invalid JSON-LD in {$article['slug']}");
+
+            return $data['@type'];
+        });
+        expect($types->all())->toContain('BlogPosting', 'FAQPage', 'BreadcrumbList');
+
+        $faq = collect($m[1])->map(fn ($j) => json_decode(trim($j), true))->firstWhere('@type', 'FAQPage');
+        expect($faq['mainEntity'])->toHaveCount(count($article['faq']));
+    }
+});
+
+test('articles without faq do not emit FAQPage markup', function () {
+    $article = app(BlogRepository::class)->all()->first(fn ($a) => $a['faq'] === []);
+    if (! $article) {
+        $this->markTestSkipped('every article has an faq');
+    }
+
+    $this->get(route('blog.show', $article['slug']))->assertOk()->assertDontSee('"@type":"FAQPage"', false);
+});

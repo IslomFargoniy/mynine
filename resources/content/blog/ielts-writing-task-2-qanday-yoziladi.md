@@ -66,7 +66,7 @@ Rejasiz yozish — tuzilmasi buzilgan inshoning eng ko'p sababi. 5 daqiqalik rej
 
 **Coherence and Cohesion.** Har bir paragrafda bitta g'oya. Bog'lovchilarni o'rinli ishlating (*however, as a result, for instance*), lekin har gapni ular bilan boshlamang — haddan tashqari ko'p bog'lovchi ham ball pasaytiradi.
 
-**Lexical Resource.** Bir so'zni qayta-qayta takrorlamang, mavzuga oid aniq so'zlarni ishlating (*tuition fees, government funding, access to higher education*). Murakkab so'zni noto'g'ri ishlatgandan ko'ra oddiy so'zni to'g'ri ishlatgan yaxshi.
+**Lexical Resource.** Bir so'zni qayta-qayta takrorlamang, mavzuga oid aniq so'zlarni ishlating (*tuition fees, government funding, access to higher education*). Murakkab so'zni noto'g'ri ishlatgandan ko'ra oddiy so'zni to'g'ri ishlatgan yaxshi. Kollokatsiyalar bilan o'rganish uchun: [IELTS uchun 50 ta akademik so'z](/blog/ielts-uchun-akademik-sozlar).
 
 **Grammatical Range and Accuracy.** Murakkab gaplar (*which, although, if*), passiv va shart gaplarni aralashtiring. Eng ko'p xatolar: artikllar (*a/the*), ko'plik (*-s*), fe'l va ega moslashuvi, zamonlar.
 

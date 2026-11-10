@@ -6,7 +6,7 @@ category: "Tayyorgarlik"
 keywords: "IELTS tayyorlanish rejasi, IELTS 3 oyda, IELTS ga qanday tayyorlanish, IELTS mustaqil tayyorlanish, IELTS reja, IELTS study plan"
 ---
 
-"IELTS'ga qancha vaqtda tayyorlanish mumkin?" degan savolga yagona javob yo'q: bu boshlang'ich darajangiz va maqsad ballingizga bog'liq. Taxminiy mo'ljal — **bir band ko'tarilish uchun 2–3 oy muntazam mashq**. Agar hozir 5.5 atrofida bo'lsangiz va 6.5 kerak bo'lsa, quyidagi 12 haftalik reja aynan siz uchun.
+"IELTS'ga qancha vaqtda tayyorlanish mumkin?" degan savolga yagona javob yo'q: bu boshlang'ich darajangiz va maqsad ballingizga bog'liq. Taxminiy mo'ljal — **bir band ko'tarilish uchun 2–3 oy muntazam mashq**. Agar hozir 5.5 atrofida bo'lsangiz va 6.5 kerak bo'lsa, quyidagi 12 haftalik reja aynan siz uchun. Maqsadingiz 7.0 bo'lsa, [IELTS 7.0 olish uchun reja](/blog/ielts-7-olish-uchun-reja)ni ham o'qing.
 
 Reja kuniga **1.5–2 soat**, haftasiga 6 kun mashq qilishga mo'ljallangan.
 
@@ -31,7 +31,7 @@ Maqsad — har bir bo'limning formatini va savol turlarini to'liq o'rganish.
 - **Reading** (har kuni 30 daqiqa): har hafta bitta savol turiga e'tibor — 1-hafta T/F/NG, 2-hafta Matching Headings, 3-hafta Completion, 4-hafta Multiple Choice. [Reading strategiyalari](/blog/ielts-reading-strategiyalari).
 - **Writing** (haftasiga 3 marta): Task 2 tuzilmasini o'rganing, har hafta 2 ta insho rejasi va 1 ta to'liq insho. [Task 2 qo'llanmasi](/blog/ielts-writing-task-2-qanday-yoziladi).
 - **Speaking** (har kuni 15 daqiqa): Part 1 savollariga ovoz yozib javob berish.
-- **So'z boyligi** (har kuni 15 daqiqa): mavzular bo'yicha 10–15 ta yangi so'z — ta'lim, atrof-muhit, texnologiya, sog'liq, ish.
+- **So'z boyligi** (har kuni 15 daqiqa): mavzular bo'yicha 10–15 ta yangi so'z — ta'lim, atrof-muhit, texnologiya, sog'liq, ish. Usul va boshlang'ich ro'yxat: [IELTS uchun 50 ta akademik so'z](/blog/ielts-uchun-akademik-sozlar).
 
 **4-hafta oxirida:** ikkinchi mock test.
 

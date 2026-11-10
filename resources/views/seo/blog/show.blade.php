@@ -23,11 +23,17 @@
             </div>
         </header>
 
-        @if (count($article['toc']) > 2)
+        @php
+            $toc = $article['toc'];
+            if ($article['faq']) {
+                $toc[] = ['id' => 'faq', 'title' => "Ko'p beriladigan savollar"];
+            }
+        @endphp
+        @if (count($toc) > 2)
             <nav class="mt-8 rounded-2xl border border-gray-100 bg-gray-50 p-5" aria-label="Mundarija">
                 <p class="mb-2 text-sm font-semibold text-gray-900">Mundarija</p>
                 <ol class="list-decimal space-y-1 pl-5 text-sm text-gray-700">
-                    @foreach ($article['toc'] as $item)
+                    @foreach ($toc as $item)
                         <li><a href="#{{ $item['id'] }}" class="hover:text-[#6556ff]">{{ $item['title'] }}</a></li>
                     @endforeach
                 </ol>
@@ -37,6 +43,23 @@
         <div class="prose prose-lg mt-8 max-w-none prose-headings:scroll-mt-24 prose-headings:font-bold prose-a:text-[#6556ff] prose-table:text-base">
             {!! $article['html'] !!}
         </div>
+
+        @if ($article['faq'])
+            <section class="mt-12 scroll-mt-24" id="faq" aria-labelledby="faq-title">
+                <h2 id="faq-title" class="text-2xl font-bold text-gray-900">Ko'p beriladigan savollar</h2>
+                <div class="mt-6 divide-y divide-gray-100 rounded-2xl border border-gray-100">
+                    @foreach ($article['faq'] as $item)
+                        <details class="group p-5" @if ($loop->first) open @endif>
+                            <summary class="flex cursor-pointer list-none items-center justify-between gap-4">
+                                <h3 class="text-lg font-semibold text-gray-900">{{ $item['q'] }}</h3>
+                                <span class="text-2xl text-[#6556ff] transition group-open:rotate-45" aria-hidden="true">+</span>
+                            </summary>
+                            <p class="mt-3 text-gray-600">{{ $item['a'] }}</p>
+                        </details>
+                    @endforeach
+                </div>
+            </section>
+        @endif
 
         <aside class="mt-12 rounded-2xl bg-[#6556ff]/5 p-6">
             <p class="text-lg font-bold text-gray-900">Bilimingizni sinab ko'ring</p>
@@ -78,5 +101,18 @@
             'keywords' => $article['keywords'],
         ], JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE) !!}
     </script>
+    @if ($article['faq'])
+    <script type="application/ld+json">
+        {!! json_encode([
+            '@context' => 'https://schema.org',
+            '@type' => 'FAQPage',
+            'mainEntity' => collect($article['faq'])->map(fn ($f) => [
+                '@type' => 'Question',
+                'name' => $f['q'],
+                'acceptedAnswer' => ['@type' => 'Answer', 'text' => $f['a']],
+            ])->all(),
+        ], JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE) !!}
+    </script>
+    @endif
     @endpush
 @endsection

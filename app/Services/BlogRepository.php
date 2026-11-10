@@ -84,7 +84,28 @@ class BlogRepository
             'reading_minutes' => max(1, (int) ceil($words / 200)),
             'html' => $html,
             'toc' => $this->tableOfContents($html),
+            'faq' => $this->faq($meta['faq'] ?? []),
         ];
+    }
+
+    /**
+     * Optional `faq:` front matter: a list of {q, a} pairs rendered as a visible FAQ and FAQPage JSON-LD.
+     * Malformed entries are skipped so a typo never breaks the article.
+     *
+     * @return array<int, array{q: string, a: string}>
+     */
+    private function faq(mixed $items): array
+    {
+        if (! is_array($items)) {
+            return [];
+        }
+
+        return collect($items)
+            ->filter(fn ($item) => is_array($item) && is_string($item['q'] ?? null) && is_string($item['a'] ?? null))
+            ->map(fn (array $item) => ['q' => trim($item['q']), 'a' => trim($item['a'])])
+            ->filter(fn (array $item) => $item['q'] !== '' && $item['a'] !== '')
+            ->values()
+            ->all();
     }
 
     /**

@@ -8,7 +8,7 @@ keywords: "IELTS Listening maslahatlar, IELTS Listening strategiya, IELTS Listen
 
 Listening — IELTS'dagi eng "tez qaytaradigan" bo'lim: to'g'ri strategiya bilan bir necha hafta ichida 1 band'gacha ko'tarilish mumkin. Chunki bu yerda ko'p ball bilmaslikdan emas, e'tiborsizlikdan yo'qotiladi: imlo xatosi, ortiqcha so'z, eshitilgan birinchi javobni yozib qo'yish.
 
-Quyida eng foydali 10 ta maslahat.
+Quyida eng foydali 10 ta maslahat. Har bir qism va savol turining batafsil tahlili: [IELTS Listening savol turlari](/blog/ielts-listening-savol-turlari).
 
 ## 1. Har bir qismdan oldin savollarni o'qing
 

@@ -47,7 +47,7 @@ Matnda: *"The museum, which opened in 1998, attracts over a million visitors eac
 
 Asosiy qoida: o'z bilimingiz yoki mantiqqa asoslanmang, faqat matnga qarang. "Muzeylar odatda pullik" degan o'y — Not Given savolida tuzoq.
 
-*Yes / No / Not Given* ham xuddi shunday ishlaydi, faqat u faktlar emas, muallifning fikri haqida.
+*Yes / No / Not Given* ham xuddi shunday ishlaydi, faqat u faktlar emas, muallifning fikri haqida. 10 ta tahlilli misol va tuzoqlar: [True/False/Not Given va Yes/No/Not Given farqi](/blog/true-false-not-given-yes-no-not-given-farqi).
 
 ## Matching Headings
 
@@ -57,6 +57,8 @@ Har bir paragrafga sarlavha tanlash kerak. Maslahatlar:
 2. Paragrafning **asosiy fikrini** qidiring, mayda detallarga emas. Sarlavhalardagi so'zlar paragrafdagi bitta detalga mos kelishi mumkin — bu ko'pincha tuzoq.
 3. Asosiy fikr ko'pincha paragrafning birinchi yoki oxirgi gapida bo'ladi.
 4. Ishlatilgan sarlavhani o'chirib boring; odatda sarlavhalar paragraflardan ko'p bo'ladi.
+
+Bosqichma-bosqich usul va to'liq misol: [Matching Headings strategiyasi](/blog/ielts-matching-headings-strategiyasi).
 
 ## Sentence va Summary Completion
 

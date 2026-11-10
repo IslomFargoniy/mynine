@@ -45,7 +45,7 @@ Mock testning eng foydali qismi — testdan keyingi bir soat. Har bir xatoni quy
 | E'tiborsizlik | Imlo, so'z limiti | Tekshirish odatini shakllantirish |
 | Vaqt | Matnga ulgurmaslik | Vaqt rejasini qayta ko'rib chiqish |
 
-Qaysi turdagi xatolar ko'p bo'lsa, keyingi 2–3 hafta o'sha yo'nalishga e'tibor bering.
+Qaysi turdagi xatolar ko'p bo'lsa, keyingi 2–3 hafta o'sha yo'nalishga e'tibor bering. Har bir bo'lim bahosini qanday o'qish va imtihonga tayyorlikni qanday aniqlash haqida: [mock test natijasini talqin qilish](/blog/onlayn-ielts-mock-test-natijasini-talqin-qilish).
 
 ## Onlayn mock testning afzalliklari
 

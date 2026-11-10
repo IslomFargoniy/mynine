@@ -30,6 +30,8 @@ Sizga mavzu yozilgan kartochka (cue card) beriladi, masalan: *Describe a place y
 - Hikoyaga detal qo'shing: qachon, kim bilan, nima ko'rdingiz, nimani his qildingiz.
 - 2 daqiqa to'lmasdan to'xtab qolsangiz, imtihonchi qo'shimcha savol berishi mumkin. Shuning uchun uyda taymer bilan mashq qiling.
 
+Uchta to'liq namunaviy javob va 5 qismli tuzilma: [Speaking Part 2 cue card namunalari](/blog/ielts-speaking-part-2-cue-card-namunalari).
+
 ### Part 3 — muhokama (4–5 daqiqa)
 
 Part 2 mavzusiga bog'liq, lekin umumiyroq va mavhumroq savollar. Masalan, sayohat haqida gapirgan bo'lsangiz: *How has tourism changed in your country? Can tourism harm the environment?*

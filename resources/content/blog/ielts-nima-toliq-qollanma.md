@@ -19,7 +19,7 @@ IELTS ikki turda topshiriladi:
 
 Ikkala turda ham Listening va Speaking bir xil. Farq Reading va Writing bo'limlarida: Academic'da matnlar ilmiy-ommabop jurnallardan olinadi, Writing Task 1 da esa grafik yoki jadvalni tasvirlaysiz. General Training'da kundalik hayotga oid matnlar va Task 1 da xat yozish bor.
 
-Qaysi turni topshirish kerakligini bilmasangiz, hujjat topshirayotgan universitet yoki tashkilot talablarini tekshiring.
+Qaysi turni topshirish kerakligini bilmasangiz, hujjat topshirayotgan universitet yoki tashkilot talablarini tekshiring. Ikki tur farqi jadval va misollar bilan: [IELTS Academic va General Training farqi](/blog/ielts-academic-va-general-farqi).
 
 ## Imtihon tuzilishi
 
@@ -90,7 +90,7 @@ O'z ballingizni hisoblash uchun [IELTS ball kalkulyatori](/ielts-ball-kalkulyato
 
 ## Sertifikat qancha amal qiladi
 
-IELTS natijasi (Test Report Form) odatda **2 yil** davomida tan olinadi. Bu muddatdan keyin ko'pchilik tashkilotlar yangi sertifikat so'raydi, shuning uchun imtihonni hujjat topshirish rejangizga yaqin vaqtga belgilang.
+IELTS natijasi (Test Report Form) odatda **2 yil** davomida tan olinadi. Bu muddatdan keyin ko'pchilik tashkilotlar yangi sertifikat so'raydi, shuning uchun imtihonni hujjat topshirish rejangizga yaqin vaqtga belgilang. Natija qachon chiqishi va qayta topshirish haqida: [IELTS natijasi qachon chiqadi](/blog/ielts-natijasi-qachon-chiqadi), ro'yxatdan o'tish bosqichlari esa [bu maqolada](/blog/ielts-imtihoniga-royxatdan-otish).
 
 ## Xulosa
 

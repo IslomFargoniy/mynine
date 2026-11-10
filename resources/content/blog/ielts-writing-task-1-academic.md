@@ -79,4 +79,4 @@ Har bir raqamni ketma-ket sanab chiqish — eng ko'p uchraydigan xato. Buning o'
 
 Har kuni bitta grafikni 20 daqiqada tasvirlab, keyin overview borligini, ma'lumot guruhlanganini va kamida 3 ta solishtirma ibora ishlatilganini tekshiring. To'liq Writing bo'limini (Task 1 + Task 2) 60 daqiqada imtihon sharoitida yozish va AI tahlilini olish uchun [Mynine mock test](/ielts-mock-test)dan foydalaning.
 
-Task 2 haqida: [IELTS Writing Task 2: insho tuzilishi va namunaviy reja](/blog/ielts-writing-task-2-qanday-yoziladi).
+Task 2 haqida: [IELTS Writing Task 2: insho tuzilishi va namunaviy reja](/blog/ielts-writing-task-2-qanday-yoziladi). General Training topshirsangiz, Task 1 da grafik emas, xat yoziladi: [General Training letter yozish](/blog/ielts-general-training-letter-yozish).

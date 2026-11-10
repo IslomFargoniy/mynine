@@ -93,7 +93,7 @@ Umumiy ball to'rt bo'lim bahosining o'rtacha arifmetigi. Natija quyidagicha yaxl
 | 6.5 | 6.5 | 5.5 | 6.0 | 6.125 | **6.0** |
 | 7.5 | 7.0 | 6.5 | 7.0 | 7.0 | **7.0** |
 
-Birinchi misolga e'tibor bering: Writing 5.0 bo'lsa ham, boshqa bo'limlar uni "tortib" overall 6.5 ga yetkazdi. Lekin ko'p universitetlar har bir bo'lim uchun ham minimal ball talab qiladi, shuning uchun bitta zaif bo'lim bilan qolmaslik kerak.
+Birinchi misolga e'tibor bering: Writing 5.0 bo'lsa ham, boshqa bo'limlar uni "tortib" overall 6.5 ga yetkazdi. Lekin ko'p universitetlar har bir bo'lim uchun ham minimal ball talab qiladi, shuning uchun bitta zaif bo'lim bilan qolmaslik kerak. Overall 7.0 ga qanday yetish haqida: [IELTS 7.0 olish uchun reja](/blog/ielts-7-olish-uchun-reja).
 
 ## Ballingizni hozir hisoblang
 
