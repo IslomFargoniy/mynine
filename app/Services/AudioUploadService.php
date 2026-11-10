@@ -57,4 +57,28 @@ class AudioUploadService
             }
         }
     }
+
+    /**
+     * Absolute filesystem path of a stored audio file ("media/audio/x.mp3" on the private disk or legacy
+     * "storage/audio/x.mp3" on the public disk), or null when the file is missing.
+     */
+    public function absolutePath(?string $storedPath): ?string
+    {
+        if (! $storedPath) {
+            return null;
+        }
+
+        $relative = preg_replace('#^/?(media|storage)/#', '', $storedPath);
+        if (! str_starts_with($relative, self::DIRECTORY.'/') || str_contains($relative, '..')) {
+            return null;
+        }
+
+        foreach ([self::DISK, 'public'] as $disk) {
+            if (Storage::disk($disk)->exists($relative)) {
+                return Storage::disk($disk)->path($relative);
+            }
+        }
+
+        return null;
+    }
 }

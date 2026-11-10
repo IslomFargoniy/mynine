@@ -203,3 +203,89 @@ Streams audio with `Range` support; only for tests/parts of the current attempt.
 
 Monitor actions (`Admin` unless noted): `POST /monitor/attempts/{attempt}/extra-time {minutes}`, `/pause`, `/resume`,
 `/force-submit`, `/unlock` (Admin + Reception). Device list, releases upload, settings live under the web admin.
+
+---
+
+## Implementation notes (server, v1)
+
+Additive clarifications of the contract above, as implemented on branch `feat/desktop-mock-system`.
+
+**Errors and limits**
+- Extra codes besides the list above: `forbidden` 403, `not_found` 404, `method_not_allowed` 405, `too_many_requests` 429,
+  `server_error` 500. `validation_failed` also carries Laravel's `errors` object.
+- Throttles: `/device/register` 30/min per IP; `/exam/login` 10/min per device **and** 60/min per IP; `/device/unlock`
+  5/min per device; every other device/exam endpoint 300/min per device; `/app/*` 300/min per IP.
+- The `X-Mynine-Client` check (426 `client_outdated`) runs on `/exam/*` only (login included). `/app/*` and `/device/*`
+  never return 426, so an outdated PC can still heartbeat and update. A missing or malformed header counts as outdated
+  while a `min_version` exists.
+
+**App / device**
+- `GET /app/version`: `update_available` compares `latest.version` with `current`, falling back to the version in
+  `X-Mynine-Client`; with neither it is `true` whenever a release exists. `current` must be `x.y.z` (else 422).
+- `POST /device/register`: the token is 64 random characters; only its SHA-256 is stored. Re-registering a blocked
+  `machine_id` returns 403 `device_blocked`.
+- `POST /device/unlock` 422 body is `{ "ok": false, "message": "...", "code": "invalid_password" }`.
+- `POST /device/heartbeat` `unlock` is delivered for the attempt last started on this PC (so a PC already back on the code
+  screen after submit can be unlocked remotely).
+- Remote unlock (both heartbeats) is one-shot: it is cleared when delivered and expires 15 min after the monitor request.
+
+**Exam auth**
+- The exam token only works from the PC the attempt is bound to (`attempts.device_id`); other PCs get 401.
+- Login on an already finished attempt → 409 `attempt_finished`. A mock with neither modules nor a test → 422 `mock_not_active`.
+- A force-submitted attempt keeps its token valid so `/exam/heartbeat` can report `finished: true`; `/exam/submit` then
+  answers `completed` and revokes it.
+
+**Exam payloads**
+- `attempt.status` is `in_progress` or `completed`.
+- Parts are ordered by id inside a module, sections and questions by id inside a part (same as the web exam room).
+- `questions[].number` is the **first** question number the question covers. Additive field `questions[].number_count`
+  = how many numbers it covers (1, or the number of answers for "choose TWO/THREE" questions); `parts[].question_count`
+  is the sum for the part. Numbering restarts at 1 for each module.
+- `audio` (module) is `null` when the test has no audio file; `prefetch.audio` lists only files that exist on the server.
+- `prefetch.images` are absolute URLs taken from `<img src>` in the part/section/question/option HTML (`data:` URIs skipped).
+- `GET /exam/prefetch` on a finished attempt → 409 `attempt_finished`. `GET /exam/parts/{id}` and the audio endpoints answer
+  403 `forbidden` for anything outside the attempt's Listening/Reading/Writing modules, 404 `not_found` if the file is missing.
+
+**Modules**
+- `start`: a type that is not one of the attempt's modules → 404 `not_found`. An already started module returns its timer
+  (even if submitted). Otherwise 409 `attempt_finished` / `paused`, and 409 `module_locked` unless every earlier module
+  is submitted (a module whose time ran out is auto-submitted 30 s after its `finished_at`).
+- `submit`: not started → 409 `module_locked`; while paused → 409 `paused`; repeating it is a no-op returning `submitted`.
+- `POST /exam/submit` while paused → 409 `paused`.
+
+**Answers**
+- The whole batch is refused with 409 `attempt_finished` when the attempt is finished.
+- Items for parts of modules that are not started yet, or questions not in that part → `rejected` / `invalid_question`.
+- The server keeps the last applied `client_uuid` + `changed_at` (ms precision) per question. Re-sending that uuid →
+  `duplicate`; an item older than the stored change → `stale` (this also covers re-sending an older, already superseded
+  uuid). Equal `changed_at` → the later request wins.
+- `option_ids`: for single-choice questions only the first id is kept; ids that do not belong to the question are ignored.
+  `option_ids: []` clears the selection.
+- Pause: items with `changed_at` ≥ the pause time → `rejected` / `paused`; items changed before the pause are still
+  accepted. While paused the server clock for time checks stands still.
+- Grace: after `finished_at`, an item is accepted only if its `changed_at` ≤ `finished_at` and the server time is
+  ≤ `finished_at` + 30 s. So a module can report `in_progress` for up to 30 s past `finished_at`.
+
+**Violations**
+- Deduplicated by `client_uuid` per attempt. `accepted` = number of items acknowledged (duplicates included).
+  `detail` is an object with at most 20 keys. They are accepted even after the attempt is finished.
+
+**Monitor (web)**
+- Routes: `POST /monitor/attempts/{attempt}/{extra-time|pause|resume|force-submit|unlock}` (session auth, redirect back
+  with a flash message). `extra-time` takes `minutes` 1–120 and extends every started, unsubmitted module and its parts.
+- Resume moves every unsubmitted `attempt_types.finished_at` and every `attempt_parts.finished_at` still running at pause
+  time forward by the whole seconds the attempt was paused.
+
+**Storage additions** (not listed in ARCHITECTURE.md): `attempt_answers.client_uuid`, `attempt_answers.client_changed_at`
+(datetime(3)) + index (`attempt_part_id`, `question_id`); `attempt_violations.client_uuid` with unique (`attempt_id`,
+`client_uuid`); index on `mock_students.phone`. `devices.current_attempt_id` has no foreign key.
+The exit password is set with `php artisan desktop:exit-password <password>` (minimum 6 characters, 16-byte salt).
+
+### Device approval (added by coordinator)
+- A newly registered PC has `is_approved = false`. Until an Admin approves it in the web panel,
+  `POST /exam/login` and `GET /device/config` return **403 `device_not_approved`** (message names the PC).
+  `/device/heartbeat`, `/device/unlock` and `/app/*` keep working, so the PC shows up as "pending" in the admin device list.
+- **Re-registering** an existing `machine_id` rotates the token **and drops the approval** (someone who learns an approved
+  PC's machine id cannot take over its approval). The app must therefore register only once and keep its token; on
+  `device_not_approved` it shows "This PC is waiting for administrator approval: <name>" on the code screen and retries
+  `GET /device/config` every 30 s.

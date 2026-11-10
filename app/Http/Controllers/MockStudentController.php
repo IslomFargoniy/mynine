@@ -2,9 +2,10 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Attempt;
 use App\Models\Mock;
 use App\Models\MockStudent;
+use App\Services\ExamService;
+use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Validation\ValidationException;
@@ -76,7 +77,7 @@ class MockStudentController extends Controller
     /**
      * Public endpoint for candidates entering mock exam via Candidate Code (MSXXXXXX)
      */
-    public function enter(Request $request)
+    public function enter(Request $request, ExamService $exam)
     {
         $request->validate([
             'code' => 'required|string',
@@ -106,10 +107,20 @@ class MockStudentController extends Controller
             ]);
         }
 
+        if ($mock->require_desktop) {
+            $message = 'Ushbu Mock test faqat Mynine Desktop ilovasi orqali topshiriladi. Imtihon kompyuteridagi ilovaga kodingizni kiriting.';
+            if ($request->isMethod('get')) {
+                return redirect('/?error='.urlencode($message));
+            }
+            throw ValidationException::withMessages([
+                'code' => [$message],
+            ]);
+        }
+
         $now = now();
 
-        if ($mock->started_at && $now->lt(\Carbon\Carbon::parse($mock->started_at))) {
-            $formattedStart = \Carbon\Carbon::parse($mock->started_at)->format('d.m.Y H:i');
+        if ($mock->started_at && $now->lt(Carbon::parse($mock->started_at))) {
+            $formattedStart = Carbon::parse($mock->started_at)->format('d.m.Y H:i');
             if ($request->isMethod('get')) {
                 return redirect('/?error='.urlencode("Ushbu Mock test hali boshlanmagan! Boshlanish vaqti: {$formattedStart}"));
             }
@@ -118,8 +129,8 @@ class MockStudentController extends Controller
             ]);
         }
 
-        if ($mock->finished_at && $now->gt(\Carbon\Carbon::parse($mock->finished_at))) {
-            $formattedFinish = \Carbon\Carbon::parse($mock->finished_at)->format('d.m.Y H:i');
+        if ($mock->finished_at && $now->gt(Carbon::parse($mock->finished_at))) {
+            $formattedFinish = Carbon::parse($mock->finished_at)->format('d.m.Y H:i');
             if ($request->isMethod('get')) {
                 return redirect('/?error='.urlencode("Ushbu Mock test vaqti tugagan! Yakunlangan vaqti: {$formattedFinish}"));
             }
@@ -134,17 +145,15 @@ class MockStudentController extends Controller
             $student->save();
         }
 
-        // Get or create attempt
-        $attempt = Attempt::where('mock_student_id', $student->id)->first();
+        if (! $student->checked_in_at) {
+            $student->checked_in_at = now();
+            $student->save();
+        }
 
+        $attempt = $exam->findOrCreateMockAttempt($student, ['user_id' => Auth::check() ? Auth::id() : null]);
         if (! $attempt) {
-            $attempt = Attempt::create([
-                'name' => $student->name,
-                'mock_id' => $student->mock_id,
-                'mock_student_id' => $student->id,
-                'user_id' => Auth::check() ? Auth::id() : null,
-                'test_id' => $student->mock->test_id,
-                'started_at' => now(),
+            throw ValidationException::withMessages([
+                'code' => ['Ushbu Mock test hozirda faol emas!'],
             ]);
         }
 

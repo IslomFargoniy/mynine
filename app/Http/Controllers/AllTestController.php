@@ -25,6 +25,7 @@ class AllTestController extends Controller
                     },
                 ])
                     ->withCount('attempts')
+                    ->practice()
                     ->where('active', 1)
                     ->where('open', 1)
                     ->orderBy('id', 'asc');
@@ -32,7 +33,8 @@ class AllTestController extends Controller
         ])
             ->whereHas('tests', function ($query) {
                 $query->where(function ($q) {
-                    $q->where('active', 1)
+                    $q->practice()
+                        ->where('active', 1)
                         ->where('open', 1);
                 });
             })

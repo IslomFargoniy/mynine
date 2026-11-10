@@ -7,11 +7,14 @@ use App\Jobs\EvaluateEssayJob;
 use App\Models\Attempt;
 use App\Models\AttemptAnswer;
 use App\Models\AttemptPart;
-use App\Models\Option;
+use App\Models\Question;
+use App\Services\ExamService;
 use Illuminate\Http\JsonResponse;
 
 class AttemptAnswerController extends Controller
 {
+    public function __construct(private readonly ExamService $exam) {}
+
     /**
      * Save (or overwrite) the candidate's answer for one question.
      */
@@ -20,55 +23,38 @@ class AttemptAnswerController extends Controller
         $attempt = Attempt::findOrFail($request->attempt_id);
         $this->authorize('participate', $attempt);
 
-        $attemptPart = AttemptPart::with(['part.test_type.type'])
+        $attemptPart = AttemptPart::with(['part' => fn ($q) => $q->withoutEagerLoads()->with('test_type')])
             ->where('part_id', $request->part_id)
             ->where('attempt_id', $attempt->id)
             ->firstOrFail();
 
-        $attemptType = $attempt->attempt_types
-            ->firstWhere('type_id', $attemptPart->part->test_type->type_id);
+        abort_unless($attempt->allowsPart($attemptPart->part), 403);
 
-        if ($attemptType && $attemptType->finished_at && $attemptType->finished_at < now()) {
-            if (! $attemptType->is_submitted) {
-                $attemptType->finish();
-                foreach ($attempt->essayAnswersForEvaluation($attemptType->type_id) as $answer) {
-                    EvaluateEssayJob::dispatch($answer->id);
-                }
-            }
+        $question = Question::withoutEagerLoads()->findOrFail($request->question_id);
 
-            return response()->json([
-                'success' => false,
-                'error' => 'Time is up for this test type! You cannot submit answers. ⏰',
-            ], 422);
-        }
-
-        // The question must belong to the part being answered
-        $question = \App\Models\Question::with('section.question_type')->findOrFail($request->question_id);
-        abort_unless((int) $question->section->part_id === (int) $attemptPart->part_id, 422, 'Question does not belong to this part.');
-
-        $attemptAnswer = AttemptAnswer::updateOrCreate(
-            ['attempt_part_id' => $attemptPart->id, 'question_id' => $question->id],
-            ['answer_text' => $request->answer_text]
+        $result = $this->exam->saveAnswer(
+            $attempt,
+            $attemptPart,
+            $question,
+            $request->answer_text,
+            is_array($request->options) ? $request->options : null,
         );
 
-        if (is_array($request->options)) {
-            $attemptAnswer->attempt_answer_options()->delete();
-
-            $isMultiple = $question->section->question_type->type === 'multiple_response';
-            $optionIds = $isMultiple ? $request->options : array_slice($request->options, 0, 1);
-
-            $options = Option::whereIn('id', $optionIds)->where('question_id', $question->id)->get()->keyBy('id');
-            foreach ($optionIds as $optionId) {
-                $option = $options->get($optionId);
-                if (! $option) {
-                    continue;
-                }
-                $attemptAnswer->attempt_answer_options()->create([
-                    'option_id' => $option->id,
-                    'is_correct' => $option->is_correct ? 1 : 0,
-                ]);
-            }
+        if ($result['status'] === ExamService::REJECTED) {
+            return match ($result['reason']) {
+                'invalid_question' => abort(422, 'Question does not belong to this part.'),
+                'paused' => response()->json([
+                    'success' => false,
+                    'error' => 'The exam is paused. Please wait.',
+                ], 409),
+                default => response()->json([
+                    'success' => false,
+                    'error' => 'Time is up for this test type! You cannot submit answers. ⏰',
+                ], 422),
+            };
         }
+
+        $attemptAnswer = $result['answer'];
 
         return response()->json([
             'success' => true,

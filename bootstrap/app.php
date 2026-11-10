@@ -1,15 +1,25 @@
 <?php
 
+use App\Exceptions\ApiException;
+use App\Http\Middleware\Desktop\AuthenticateCandidate;
+use App\Http\Middleware\Desktop\AuthenticateDevice;
+use App\Http\Middleware\Desktop\EnsureClientVersion;
 use App\Http\Middleware\HandleAppearance;
 use App\Http\Middleware\HandleInertiaRequests;
 use App\Http\Middleware\SetLocale;
+use Illuminate\Auth\AuthenticationException;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
+use Illuminate\Http\Exceptions\HttpResponseException;
+use Illuminate\Http\Exceptions\ThrottleRequestsException;
 use Illuminate\Http\Middleware\AddLinkHeadersForPreloadedAssets;
+use Illuminate\Http\Request;
+use Illuminate\Validation\ValidationException;
 use Spatie\Permission\Middleware\PermissionMiddleware;
 use Spatie\Permission\Middleware\RoleMiddleware;
 use Spatie\Permission\Middleware\RoleOrPermissionMiddleware;
+use Symfony\Component\HttpKernel\Exception\HttpExceptionInterface;
 
 return Application::configure(basePath: dirname(__DIR__))
     ->withRouting(
@@ -32,6 +42,9 @@ return Application::configure(basePath: dirname(__DIR__))
             'role' => RoleMiddleware::class,
             'permission' => PermissionMiddleware::class,
             'role_or_permission' => RoleOrPermissionMiddleware::class,
+            'desktop.device' => AuthenticateDevice::class,
+            'desktop.client' => EnsureClientVersion::class,
+            'desktop.candidate' => AuthenticateCandidate::class,
         ]);
 
         // Telegram webhooks and the WebApp login (verified via initData signature) cannot carry a CSRF token.
@@ -42,5 +55,37 @@ return Application::configure(basePath: dirname(__DIR__))
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions) {
-        //
+        $exceptions->dontReport(ApiException::class);
+
+        // Desktop API (docs/desktop/API.md): every error is { "message": "...", "code": "<machine_code>" }.
+        $exceptions->render(function (Throwable $e, Request $request) {
+            if (! $request->is('api/v1/*')) {
+                return null;
+            }
+
+            return match (true) {
+                $e instanceof HttpResponseException => null,
+                $e instanceof ValidationException => response()->json([
+                    'message' => $e->getMessage(),
+                    'code' => 'validation_failed',
+                    'errors' => $e->errors(),
+                ], 422),
+                $e instanceof AuthenticationException => response()->json(['message' => 'Unauthenticated.', 'code' => 'unauthenticated'], 401),
+                $e instanceof ThrottleRequestsException => response()->json(
+                    ['message' => 'Too many requests.', 'code' => 'too_many_requests'], 429, $e->getHeaders()
+                ),
+                $e instanceof HttpExceptionInterface => response()->json([
+                    'message' => $e->getMessage() ?: 'Request failed.',
+                    'code' => match ($e->getStatusCode()) {
+                        401 => 'unauthenticated',
+                        403 => 'forbidden',
+                        404 => 'not_found',
+                        405 => 'method_not_allowed',
+                        default => 'http_error',
+                    },
+                ], $e->getStatusCode(), $e->getHeaders()),
+                config('app.debug') => null,
+                default => response()->json(['message' => 'Server error.', 'code' => 'server_error'], 500),
+            };
+        });
     })->create();

@@ -3,6 +3,8 @@
 namespace App\Models;
 
 use App\Models\User\User;
+use Carbon\Carbon;
+use Database\Factories\MockFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
@@ -10,7 +12,7 @@ class Mock extends Model
 {
     use HasFactory;
 
-    /** @use HasFactory<\Database\Factories\MockFactory> */
+    /** @use HasFactory<MockFactory> */
     protected $fillable = [
         'name',
         'comment',
@@ -20,6 +22,15 @@ class Mock extends Model
         'user_id',
         'slug',
         'active',
+        'require_desktop',
+        'speaking_starts_at',
+        'speaking_slot_minutes',
+    ];
+
+    protected $casts = [
+        'require_desktop' => 'boolean',
+        'speaking_starts_at' => 'datetime',
+        'speaking_slot_minutes' => 'integer',
     ];
 
     protected $with = [
@@ -36,10 +47,10 @@ class Mock extends Model
             return 'inactive';
         }
         $now = now();
-        if ($this->started_at && $now->lt(\Carbon\Carbon::parse($this->started_at))) {
+        if ($this->started_at && $now->lt(Carbon::parse($this->started_at))) {
             return 'scheduled';
         }
-        if ($this->finished_at && $now->gt(\Carbon\Carbon::parse($this->finished_at))) {
+        if ($this->finished_at && $now->gt(Carbon::parse($this->finished_at))) {
             return 'expired';
         }
 
@@ -59,6 +70,14 @@ class Mock extends Model
     public function attempts()
     {
         return $this->hasMany(Attempt::class, 'mock_id');
+    }
+
+    /**
+     * One Mock Bank module (test_types row) per type. Empty for legacy single-test mocks.
+     */
+    public function modules()
+    {
+        return $this->hasMany(MockModule::class, 'mock_id');
     }
 
     public function students()

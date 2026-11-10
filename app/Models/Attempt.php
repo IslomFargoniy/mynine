@@ -3,13 +3,15 @@
 namespace App\Models;
 
 use App\Jobs\EvaluateEssayJob;
+use Database\Factories\AttemptsFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 
 class Attempt extends Model
 {
-    /** @use HasFactory<\Database\Factories\AttemptsFactory> */
+    /** @use HasFactory<AttemptsFactory> */
     use HasFactory;
 
     protected $fillable = [
@@ -22,7 +24,25 @@ class Attempt extends Model
         'finished_at',
         'status',
         'tab_switch_count',
+        'device_id',
+        'last_heartbeat_at',
+        'paused_at',
+        'unlock_requested_at',
     ];
+
+    protected $casts = [
+        'last_heartbeat_at' => 'datetime',
+        'paused_at' => 'datetime',
+        'unlock_requested_at' => 'datetime',
+    ];
+
+    /**
+     * Desktop exam modules in the fixed order (Speaking is never part of the desktop exam).
+     */
+    public const DESKTOP_MODULE_ORDER = ['Listening', 'Reading', 'Writing'];
+
+    /** @var array<int>|null|false false = not resolved yet */
+    private array|null|false $cachedModuleTestTypeIds = false;
 
     public function mockStudent()
     {
@@ -42,6 +62,97 @@ class Attempt extends Model
     public function test()
     {
         return $this->belongsTo(Test::class, 'test_id');
+    }
+
+    public function device()
+    {
+        return $this->belongsTo(Device::class, 'device_id');
+    }
+
+    public function violations()
+    {
+        return $this->hasMany(AttemptViolation::class, 'attempt_id');
+    }
+
+    public function isPaused(): bool
+    {
+        return $this->paused_at !== null;
+    }
+
+    /**
+     * test_type ids this attempt may touch, or null when the attempt is bound to attempts.test_id
+     * (practice attempts and legacy single-test mocks).
+     *
+     * @return array<int>|null
+     */
+    public function moduleTestTypeIds(): ?array
+    {
+        if ($this->cachedModuleTestTypeIds !== false) {
+            return $this->cachedModuleTestTypeIds;
+        }
+
+        $ids = $this->mock_id
+            ? MockModule::where('mock_id', $this->mock_id)->pluck('test_type_id')
+            : collect();
+
+        return $this->cachedModuleTestTypeIds = $ids->isEmpty() ? null : $ids->map(fn ($id) => (int) $id)->all();
+    }
+
+    public function allowsTestType(TestType $testType): bool
+    {
+        $moduleIds = $this->moduleTestTypeIds();
+        if ($moduleIds !== null) {
+            return in_array((int) $testType->id, $moduleIds, true);
+        }
+
+        return (int) $testType->test_id === (int) $this->test_id;
+    }
+
+    public function allowsPart(Part $part): bool
+    {
+        $moduleIds = $this->moduleTestTypeIds();
+        if ($moduleIds !== null) {
+            return in_array((int) $part->test_type_id, $moduleIds, true);
+        }
+
+        $testId = $part->relationLoaded('test_type')
+            ? $part->test_type?->test_id
+            : TestType::withoutEagerLoads()->whereKey($part->test_type_id)->value('test_id');
+
+        return $testId !== null && (int) $testId === (int) $this->test_id;
+    }
+
+    /**
+     * All modules of this attempt (any type that has parts), from mock_modules or from attempts.test_id.
+     *
+     * @return \Illuminate\Database\Eloquent\Collection<int, TestType>
+     */
+    public function moduleTestTypes()
+    {
+        $moduleIds = $this->moduleTestTypeIds();
+
+        $query = TestType::query()->with(['test', 'type'])->whereHas('parts');
+        $moduleIds !== null
+            ? $query->whereIn('id', $moduleIds)
+            : $query->where('test_id', $this->test_id);
+
+        return $query->orderBy('id')->get();
+    }
+
+    /**
+     * Listening, Reading, Writing modules of the attempt in exam order.
+     *
+     * @return Collection<int, TestType>
+     */
+    public function examModules()
+    {
+        $order = array_flip(self::DESKTOP_MODULE_ORDER);
+
+        return $this->moduleTestTypes()
+            ->filter(fn (TestType $tt) => isset($order[$tt->type?->name]))
+            ->unique('type_id')
+            ->sortBy(fn (TestType $tt) => $order[$tt->type->name])
+            ->values();
     }
 
     public function attempt_parts()

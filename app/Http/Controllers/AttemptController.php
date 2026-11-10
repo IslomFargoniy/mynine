@@ -4,9 +4,14 @@ namespace App\Http\Controllers;
 
 use App\Http\Requests\StoreAttemptRequest;
 use App\Models\Attempt;
+use App\Models\Folder;
+use App\Models\Mock;
+use App\Models\Test;
+use Carbon\Carbon;
 use Dompdf\Dompdf;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
 use Inertia\Inertia;
 
@@ -76,13 +81,13 @@ class AttemptController extends Controller
         $data = $data->paginate($per_page);
 
         // Filter dropdown options for search
-        $mocks_query = \App\Models\Mock::select('id', 'name');
-        $tests_query = \App\Models\Test::select('id', 'name');
-        $folders_query = \App\Models\Folder::select('id', 'name');
+        $mocks_query = Mock::select('id', 'name');
+        $tests_query = Test::select('id', 'name');
+        $folders_query = Folder::select('id', 'name');
 
         if (! Auth::user()->hasRole('Admin')) {
             $mocks_query->where('active', 1);
-            $tests_query->where('active', 1)->where('open', 1);
+            $tests_query->practice()->where('active', 1)->where('open', 1);
             $folders_query->where('active', 1);
         }
 
@@ -104,7 +109,12 @@ class AttemptController extends Controller
     {
         try {
 
-            $test = \App\Models\Test::with('folder')->findOrFail($request->test_id);
+            $test = Test::with('folder')->findOrFail($request->test_id);
+
+            // Mock Bank tests are reachable only through a mock attempt (candidate code / desktop app).
+            if ($test->isMock()) {
+                throw new \Exception(__('error.unauthorized_attempt'));
+            }
 
             if (! $request->mock_id) {
                 if (! Auth::user()->can('attempt', $test)) {
@@ -119,7 +129,7 @@ class AttemptController extends Controller
                     $active->finish();
                 }
             } else {
-                $mock = \App\Models\Mock::findOrFail($request->mock_id);
+                $mock = Mock::findOrFail($request->mock_id);
                 if ((int) $mock->test_id !== (int) $test->id) {
                     throw new \Exception('Mock test boshqa testga tegishli!');
                 }
@@ -127,10 +137,10 @@ class AttemptController extends Controller
                     case 'inactive':
                         throw new \Exception('Ushbu Mock test hozirda faol emas!');
                     case 'scheduled':
-                        $formattedStart = \Carbon\Carbon::parse($mock->started_at)->format('d.m.Y H:i');
+                        $formattedStart = Carbon::parse($mock->started_at)->format('d.m.Y H:i');
                         throw new \Exception("Ushbu Mock test hali boshlanmagan! Boshlanish vaqti: {$formattedStart}");
                     case 'expired':
-                        $formattedFinish = \Carbon\Carbon::parse($mock->finished_at)->format('d.m.Y H:i');
+                        $formattedFinish = Carbon::parse($mock->finished_at)->format('d.m.Y H:i');
                         throw new \Exception("Ushbu Mock test vaqti tugagan! Yakunlangan vaqti: {$formattedFinish}");
                 }
             }
@@ -235,7 +245,7 @@ class AttemptController extends Controller
 
         try {
             // AttemptObserver::deleting removes answers, options, parts and types
-            \Illuminate\Support\Facades\DB::transaction(fn () => $attempt->delete());
+            DB::transaction(fn () => $attempt->delete());
 
             return redirect()->route('attempt.index')->with('success', __('deleted_successfully') ?? "Natija o'chirildi");
         } catch (\Exception $e) {

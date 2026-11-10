@@ -2,13 +2,14 @@
 
 namespace App\Models;
 
+use Database\Factories\AttemptTypeFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\DB;
 
 class AttemptType extends Model
 {
-    /** @use HasFactory<\Database\Factories\AttemptTypeFactory> */
+    /** @use HasFactory<AttemptTypeFactory> */
     use HasFactory;
 
     protected $fillable = [
@@ -20,6 +21,8 @@ class AttemptType extends Model
         'comment',
         'started_at',
         'finished_at',
+        'reviewed_at',
+        'reviewed_by',
     ];
 
     protected $with = [
@@ -34,6 +37,11 @@ class AttemptType extends Model
     public function type()
     {
         return $this->belongsTo(Type::class, 'type_id');
+    }
+
+    public function reviewer()
+    {
+        return $this->belongsTo(User\User::class, 'reviewed_by');
     }
 
     // AttemptType modelida
@@ -74,7 +82,7 @@ class AttemptType extends Model
      */
     public static function calculateIsCorrectCount($attempt_id, $type_id)
     {
-        $answers = \App\Models\AttemptAnswer::query()
+        $answers = AttemptAnswer::query()
             ->whereHas('attempt_part', function ($query) use ($attempt_id, $type_id) {
                 $query->where('attempt_id', $attempt_id)
                     ->whereHas('part.test_type', function ($q) use ($type_id) {

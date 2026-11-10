@@ -2,17 +2,23 @@
 
 namespace App\Models;
 
+use Database\Factories\TestTypeFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
 class TestType extends Model
 {
-    /** @use HasFactory<\Database\Factories\TestTypeFactory> */
+    /** @use HasFactory<TestTypeFactory> */
     use HasFactory;
 
     protected $fillable = [
         'test_id',
         'type_id',
+        'last_used_at',
+    ];
+
+    protected $casts = [
+        'last_used_at' => 'datetime',
     ];
 
     protected $with = ['test', 'type'];

@@ -16,6 +16,7 @@ use App\Http\Controllers\LandingPageController;
 use App\Http\Controllers\MediaController;
 use App\Http\Controllers\MockController;
 use App\Http\Controllers\MockStudentController;
+use App\Http\Controllers\MonitorController;
 use App\Http\Controllers\OptionController;
 use App\Http\Controllers\PartController;
 use App\Http\Controllers\PracticeController;
@@ -136,6 +137,26 @@ Route::middleware([EnsureCandidateOrAuthenticated::class])->group(function () {
     Route::get('media/audio/{filename}', [MediaController::class, 'audio'])
         ->where('filename', '[A-Za-z0-9._-]+')
         ->name('media.audio');
+});
+
+/*
+|--------------------------------------------------------------------------
+| Live monitor actions (desktop exam). Admin; remote unlock also Reception.
+| Rules: docs/desktop/ARCHITECTURE.md, API.md "Admin-side".
+|--------------------------------------------------------------------------
+*/
+
+Route::middleware(['auth', 'verified'])->prefix('monitor/attempts/{attempt}')->name('monitor.')->group(function () {
+    Route::middleware('role:Admin')->group(function () {
+        Route::post('extra-time', [MonitorController::class, 'extraTime'])->name('extra-time');
+        Route::post('pause', [MonitorController::class, 'pause'])->name('pause');
+        Route::post('resume', [MonitorController::class, 'resume'])->name('resume');
+        Route::post('force-submit', [MonitorController::class, 'forceSubmit'])->name('force-submit');
+    });
+
+    Route::post('unlock', [MonitorController::class, 'unlock'])
+        ->middleware('role:Admin|Reception')
+        ->name('unlock');
 });
 
 require __DIR__.'/settings.php';

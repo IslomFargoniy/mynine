@@ -18,6 +18,7 @@ class LandingPageController extends Controller
                     },
                 ])
                 ->withCount('attempts')
+                ->practice()
                 ->where('active', 1)
                 ->where('open', 1)
                 ->whereHas('folder', function ($query) {
