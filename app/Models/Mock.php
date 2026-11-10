@@ -84,4 +84,36 @@ class Mock extends Model
     {
         return $this->hasMany(MockStudent::class, 'mock_id');
     }
+
+    /**
+     * test_type ids the candidates of this mock sit: mock_modules, or (legacy mocks) every module of mocks.test_id that has parts.
+     *
+     * @return array<int>
+     */
+    public function moduleTestTypeIds(): array
+    {
+        $ids = $this->modules()->pluck('test_type_id');
+
+        if ($ids->isEmpty() && $this->test_id) {
+            $ids = TestType::withoutEagerLoads()->where('test_id', $this->test_id)->whereHas('parts')->pluck('id');
+        }
+
+        return $ids->map(fn ($id) => (int) $id)->all();
+    }
+
+    /**
+     * Type names of the mock's modules (e.g. Listening, Reading, Writing).
+     *
+     * @return array<string>
+     */
+    public function moduleTypeNames(): array
+    {
+        return TestType::withoutEagerLoads()
+            ->whereIn('test_types.id', $this->moduleTestTypeIds())
+            ->join('types', 'types.id', '=', 'test_types.type_id')
+            ->pluck('types.name')
+            ->unique()
+            ->values()
+            ->all();
+    }
 }

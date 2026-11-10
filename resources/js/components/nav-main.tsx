@@ -3,18 +3,19 @@ import { type NavItem } from '@/types';
 import { router, usePage } from '@inertiajs/react';
 import { useTranslation } from 'react-i18next';
 
-export function NavMain({ items = [] }: { items: NavItem[] }) {
+export function NavMain({ items = [], label }: { items: NavItem[]; label?: string }) {
     const { t } = useTranslation();
     const page = usePage();
 
     return (
         <SidebarGroup className="px-3 py-0">
             <SidebarGroupLabel className="text-[10px] font-bold uppercase tracking-[0.1em] text-gray-400 dark:text-gray-500 mb-2 px-3">
-                {t('sidebar.platform') ?? 'Platform'}
+                {label ?? t('sidebar.platform') ?? 'Platform'}
             </SidebarGroupLabel>
             <SidebarMenu className="gap-1.5">
                 {items.map((item) => {
-                    const isActive = page.url.startsWith(item.href) || (item.href === '/dashboard' && page.url === '/');
+                    const path = page.url.split('?')[0];
+                    const isActive = path === item.href || path.startsWith(item.href + '/') || (item.href === '/dashboard' && page.url === '/');
 
                     return (
                         <SidebarMenuItem key={item.title}>

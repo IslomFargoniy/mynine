@@ -272,7 +272,9 @@ Additive clarifications of the contract above, as implemented on branch `feat/de
 
 **Monitor (web)**
 - Routes: `POST /monitor/attempts/{attempt}/{extra-time|pause|resume|force-submit|unlock}` (session auth, redirect back
-  with a flash message). `extra-time` takes `minutes` 1–120 and extends every started, unsubmitted module and its parts.
+  with a flash message). Requests with `Accept: application/json` (and no `X-Inertia` header) get
+  `{ "ok": bool, "message": "...", "attempt": {...monitor row...} }` instead (409 when the action could not be applied).
+  The monitor page itself is `GET /monitor?mock_id=` (Admin + Reception). `extra-time` takes `minutes` 1–120 and extends every started, unsubmitted module and its parts.
 - Resume moves every unsubmitted `attempt_types.finished_at` and every `attempt_parts.finished_at` still running at pause
   time forward by the whole seconds the attempt was paused.
 

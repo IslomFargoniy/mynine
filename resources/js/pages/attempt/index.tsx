@@ -10,10 +10,9 @@ import { useTranslation } from 'react-i18next';
 import MobileSearchModal from '@/components/MobileSearchModal';
 
 export default function Attempt() {
-    const { attempt, users, teachers, mocks, tests, folders, filters, isAdmin } = usePage<{ 
+    const { attempt, users, mocks, tests, folders, filters, isAdmin } = usePage<{ 
         attempt: AttemptPaginate,
         users: User[],
-        teachers?: User[],
         mocks: Mock[],
         tests: Test[],
         folders?: Folder[],
@@ -32,7 +31,6 @@ export default function Attempt() {
     // Form handling for search and per_page
     const { data, setData } = useForm<SearchData>({
         search: filters?.search || '',
-        teacher_id: filters?.teacher_id || '',
         user_id: filters?.user_id || '',
         mock_id: filters?.mock_id || '',
         test_id: filters?.test_id || '',
@@ -111,7 +109,6 @@ export default function Attempt() {
                         setData={setData}
                         handleSubmit={handleSubmit}
                         users={users}
-                        teachers={teachers}
                         mocks={mocks}
                         tests={tests}
                         folders={folders}
@@ -123,7 +120,6 @@ export default function Attempt() {
                             setData={setData} 
                             data={data} 
                             users={users}
-                            teachers={teachers}
                             mocks={mocks}
                             tests={tests}
                             folders={folders}

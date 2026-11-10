@@ -20,6 +20,12 @@ return [
 
     'heartbeat_seconds' => 20,
 
+    // Web admin: a Mock Bank module is not auto-picked again for this many days (manual pick warns).
+    'module_reuse_days' => 14,
+
+    // Web admin: a PC / attempt counts as online when it was seen within this many seconds.
+    'online_seconds' => 60,
+
     'violation_batch_seconds' => 10,
 
     'banned_processes' => [

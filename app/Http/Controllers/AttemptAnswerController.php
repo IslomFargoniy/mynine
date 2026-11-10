@@ -7,6 +7,7 @@ use App\Jobs\EvaluateEssayJob;
 use App\Models\Attempt;
 use App\Models\AttemptAnswer;
 use App\Models\AttemptPart;
+use App\Models\AttemptType;
 use App\Models\Question;
 use App\Services\ExamService;
 use Illuminate\Http\JsonResponse;
@@ -78,6 +79,15 @@ class AttemptAnswerController extends Controller
 
         if (empty($attemptAnswer->answer_text) || mb_strlen($attemptAnswer->answer_text) < 10) {
             return back()->with('error', 'Insho matni yetarli emas.');
+        }
+
+        // A new AI band invalidates an earlier Admin confirmation of this Writing module,
+        // so the result cannot be printed until it is confirmed again.
+        $typeId = $attemptAnswer->attempt_part?->part?->test_type?->type_id;
+        if ($typeId) {
+            AttemptType::where('attempt_id', $attempt->id)
+                ->where('type_id', $typeId)
+                ->update(['reviewed_at' => null, 'reviewed_by' => null]);
         }
 
         EvaluateEssayJob::dispatch($attemptAnswer->id);

@@ -16,6 +16,7 @@ use App\Observers\TestObserver;
 use App\Observers\UserObserver;
 use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\ServiceProvider;
 
@@ -43,6 +44,8 @@ class AppServiceProvider extends ServiceProvider
         Test::observe(TestObserver::class);
 
         $this->configureDesktopRateLimits();
+
+        Gate::define('manage-desktop-settings', fn (User $user) => $user->hasRole('Admin'));
     }
 
     /**

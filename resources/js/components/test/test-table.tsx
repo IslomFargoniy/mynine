@@ -21,7 +21,6 @@ const TestTable = ({ ...folder }: Folder) => {
     const { auth } = usePage().props as unknown as { auth?: Auth };
 
     const isAdmin = auth?.user?.roles?.some(role => role.name === 'Admin');
-    const isTeacher = auth?.user?.roles?.some(role => role.name === 'Teacher');
 
     const handleUpdateClick = (testData: Test) => {
         setSelectedTest(testData); // Set the selected test data
@@ -60,7 +59,7 @@ const TestTable = ({ ...folder }: Folder) => {
                 <h2 className="text-xl font-semibold text-gray-800 dark:text-gray-100">
                     {t('tests')}
                 </h2>
-                {(isAdmin || isTeacher) && (
+                {isAdmin && (
                     <CreateTestModal folder_id={folder.id} />
                 )}
             </div>
@@ -102,6 +101,11 @@ const TestTable = ({ ...folder }: Folder) => {
                                 <h3 className="line-clamp-1 text-lg font-bold text-gray-900 dark:text-white group-hover:text-blue-600 transition-colors">
                                     {item.name}
                                 </h3>
+                                {item.purpose === 'mock' && (
+                                    <span className="mt-1 inline-flex rounded-full bg-indigo-50 px-2 py-0.5 text-[10px] font-bold text-indigo-700 dark:bg-indigo-950/40 dark:text-indigo-300">
+                                        {t('exam_admin.nav.mock_bank')} · {t(`exam_admin.bank.status.${item.bank_status ?? 'draft'}`)}
+                                    </span>
+                                )}
                             </div>
 
                             {/* Comment */}
@@ -136,7 +140,7 @@ const TestTable = ({ ...folder }: Folder) => {
                             )}
 
                             {/* Actions */}
-                            {(isAdmin || isTeacher) && (
+                            {isAdmin && (
                                 <div className="flex items-center gap-2 pt-2 mt-auto border-t border-gray-100 dark:border-gray-800">
                                     <button
                                         type="button"

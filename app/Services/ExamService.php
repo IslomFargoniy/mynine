@@ -401,6 +401,27 @@ class ExamService
     }
 
     /**
+     * Manual (examiner) band for a module, e.g. Speaking. Creates the attempt_type when missing.
+     */
+    public function storeManualScore(Attempt $attempt, int $typeId, float $score, ?string $comment): AttemptType
+    {
+        $attemptType = AttemptType::updateOrCreate(
+            ['attempt_id' => $attempt->id, 'type_id' => $typeId],
+            [
+                'score' => $score,
+                'comment' => $comment,
+                'started_at' => now(),
+                'finished_at' => now(),
+                'is_submitted' => true,
+            ]
+        );
+
+        $attemptType->recalculateIsCorrectCount();
+
+        return $attemptType;
+    }
+
+    /**
      * Mark a remote unlock as delivered; true only once per request and only while fresh.
      */
     public function consumeUnlock(?int $attemptId): bool

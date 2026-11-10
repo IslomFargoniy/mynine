@@ -9,10 +9,9 @@ import { useTranslation } from 'react-i18next';
 import MobileSearchModal from '@/components/MobileSearchModal';
 
 export default function User() {
-    const { user, roles, teachers, filters, isAdmin } = usePage<{
+    const { user, roles, filters, isAdmin } = usePage<{
         user: UserPaginate,
         roles: Role[],
-        teachers?: UserType[],
         filters: any,
         isAdmin: boolean
     }>().props;
@@ -29,7 +28,6 @@ export default function User() {
     const { data, setData } = useForm<SearchData>({
         search: filters?.search || '',
         role: filters?.role || '',
-        teacher_id: filters?.teacher_id || '',
         from: filters?.from || '',
         to: filters?.to || '',
         per_page: filters?.per_page || user.per_page,
@@ -53,7 +51,6 @@ export default function User() {
                         setData={setData}
                         handleSubmit={handleSubmit}
                         roles={roles}
-                        teachers={teachers}
                         isAdmin={isAdmin}
                     />
                     <div className="hidden lg:block w-full">
@@ -62,7 +59,6 @@ export default function User() {
                             setData={setData} 
                             data={data} 
                             roles={roles}
-                            teachers={teachers}
                             isAdmin={isAdmin}
                         />
                     </div>

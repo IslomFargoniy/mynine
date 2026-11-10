@@ -4,11 +4,14 @@ namespace App\Http\Controllers;
 
 use App\Http\Requests\StoreMockRequest;
 use App\Http\Requests\UpdateMockRequest;
+use App\Models\Attempt;
+use App\Models\Folder;
 use App\Models\Mock;
 use App\Models\Test;
+use App\Services\MockBankService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Validation\ValidationException;
+use Illuminate\Support\Facades\DB;
 use Inertia\Inertia;
 
 class MockController extends Controller
@@ -25,6 +28,8 @@ class MockController extends Controller
 
         $mock = Mock::with([
             'students.attempt',
+            'modules.type',
+            'modules.testType.test:id,name',
             'test.folder',
             'user:id,name',
         ]);
@@ -73,13 +78,13 @@ class MockController extends Controller
             });
         }
 
-        $mock = $mock->select('id', 'test_id', 'user_id', 'name', 'comment', 'active', 'started_at', 'finished_at', 'created_at')
+        $mock = $mock->select('id', 'test_id', 'user_id', 'name', 'comment', 'active', 'require_desktop', 'started_at', 'finished_at', 'created_at')
             ->orderBy('id', 'desc')
             ->paginate($per_page);
 
         // Filter tests and folders based on role for search dropdowns
         $tests_query = Test::query()->select('id', 'name', 'folder_id')->with('folder:id,name');
-        $folders_query = \App\Models\Folder::select('id', 'name');
+        $folders_query = Folder::select('id', 'name');
 
         if (! Auth::user()->hasRole('Admin')) {
             $tests_query->where('active', 1)->where('open', 1);
@@ -97,42 +102,33 @@ class MockController extends Controller
     }
 
     /**
-     * Show the form for creating a new resource.
+     * Mock form: one ready Mock Bank module per type, auto pick, desktop and speaking settings.
      */
-    public function create()
+    public function create(MockBankService $bank)
     {
-        //
+        $this->authorize('create', Mock::class);
+
+        return Inertia::render('mock/form', [
+            'mock' => null,
+            ...$this->formProps($bank),
+        ]);
     }
 
     /**
      * Store a newly created resource in storage.
      */
-    public function store(StoreMockRequest $request)
+    public function store(StoreMockRequest $request, MockBankService $bank)
     {
         $this->authorize('create', Mock::class);
 
-        try {
+        $mock = DB::transaction(function () use ($request, $bank) {
+            $mock = Mock::create(collect($request->validated())->except('modules')->all());
+            $bank->syncModules($mock, $request->moduleIds());
 
-            if (! Auth::user()->hasRole('Admin')) {
-                $mock = Mock::query()->where('user_id', Auth::id())
-                    ->whereMonth('created_at', now()->month)
-                    ->whereYear('created_at', now()->year)
-                    ->count();
+            return $mock;
+        });
 
-                if ($mock >= 3) {
-                    throw new \Exception(__('error.max_mocks_reached'));
-                }
-            }
-
-            Mock::create($request->validated());
-
-            return back()->with('success', __('success.mock_created'));
-        } catch (\Exception $e) {
-            // Proper Inertia error response
-            throw ValidationException::withMessages([
-                'error' => [$e->getMessage()],
-            ]);
-        }
+        return redirect()->route('mock.show', $mock)->with('success', __('success.mock_created'));
     }
 
     /**
@@ -145,6 +141,8 @@ class MockController extends Controller
         $mock->load([
             'test.folder',
             'user:id,name',
+            'modules.testType.test:id,name',
+            'modules.type',
             'students.attempt.attempt_types.type',
             'students.attempt.user',
             'students.attempt.mock',
@@ -165,29 +163,61 @@ class MockController extends Controller
     /**
      * Show the form for editing the specified resource.
      */
-    public function edit(Mock $mock)
+    public function edit(Mock $mock, MockBankService $bank)
     {
-        //
+        $this->authorize('update', $mock);
+
+        $mock->load(['modules.testType.test:id,name', 'modules.type', 'test:id,name']);
+
+        return Inertia::render('mock/form', [
+            'mock' => $mock,
+            ...$this->formProps($bank),
+        ]);
     }
 
     /**
      * Update the specified resource in storage.
      */
-    public function update(UpdateMockRequest $request, Mock $mock)
+    public function update(UpdateMockRequest $request, Mock $mock, MockBankService $bank)
     {
         $this->authorize('update', $mock);
 
-        try {
+        DB::transaction(function () use ($request, $mock, $bank) {
+            $data = collect($request->validated())->except('modules')->all();
+            $mock->update($data);
 
-            $mock->update($request->validated());
+            if ($request->moduleIds() !== []) {
+                $bank->syncModules($mock, $request->moduleIds());
+            }
+        });
 
-            return back()->with('success', __('success.mock_updated'));
-        } catch (\Exception $e) {
-            // Proper Inertia error response
-            throw ValidationException::withMessages([
-                'error' => [$e->getMessage()],
-            ]);
-        }
+        return redirect()->route('mock.show', $mock)->with('success', __('success.mock_updated'));
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    private function formProps(MockBankService $bank): array
+    {
+        $available = $bank->availableModules();
+        $uses = $bank->usageCounts($available->pluck('id')->all());
+
+        $modules = $available->map(fn ($tt) => [
+            'id' => $tt->id,
+            'type' => $tt->type?->name,
+            'type_id' => $tt->type_id,
+            'test_id' => $tt->test_id,
+            'test_name' => $tt->test?->name,
+            'last_used_at' => $tt->last_used_at?->toIso8601String(),
+            'recently_used' => $bank->isRecentlyUsed($tt),
+            'uses' => $uses[$tt->id] ?? 0,
+        ])->values();
+
+        return [
+            'modules' => $modules,
+            'autoPick' => collect($bank->autoPick())->map(fn ($tt) => $tt?->id)->all(),
+            'reuseDays' => $bank->reuseDays(),
+        ];
     }
 
     /**
@@ -198,9 +228,10 @@ class MockController extends Controller
         $this->authorize('delete', $mock);
 
         try {
-            \Illuminate\Support\Facades\DB::transaction(function () use ($mock) {
+            DB::transaction(function () use ($mock) {
                 // Detach/nullify attempts so history is preserved without FK error
-                \App\Models\Attempt::where('mock_id', $mock->id)->update(['mock_id' => null]);
+                Attempt::where('mock_id', $mock->id)->update(['mock_id' => null]);
+                $mock->modules()->delete();
                 // Delete associated mock students
                 $mock->students()->delete();
                 // Delete the mock

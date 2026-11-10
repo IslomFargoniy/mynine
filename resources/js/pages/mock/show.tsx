@@ -3,7 +3,8 @@ import AppLayout from '@/layouts/app-layout';
 import { Head, Link, useForm, usePage } from '@inertiajs/react';
 import { type BreadcrumbItem } from '@/types';
 import { useTranslation } from 'react-i18next';
-import { Users, CheckCircle2, Clock, Activity, FileText, ArrowLeft, FileSpreadsheet, Eye, FileDown, Award, Trash2 } from 'lucide-react';
+import { Users, CheckCircle2, Clock, Activity, FileText, ArrowLeft, FileSpreadsheet, Eye, FileDown, Award, Trash2, Pencil, ConciergeBell, Mic, Monitor } from 'lucide-react';
+import { ModuleBadge } from '@/components/exam-admin/shared';
 import { format } from 'date-fns';
 import { toast } from 'sonner';
 
@@ -89,12 +90,42 @@ export default function MockShow() {
                                     {isActive ? '● Faol' : '○ Nofaol'}
                                 </span>
                             </div>
-                            <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5 flex items-center gap-1.5">
-                                <span className="font-semibold text-indigo-600 dark:text-indigo-400">{mock.test?.folder?.name}</span>
-                                <span>/</span>
-                                <span>{mock.test?.name}</span>
-                            </p>
+                            {mock.modules && mock.modules.length > 0 ? (
+                                <div className="mt-1 flex flex-wrap items-center gap-1">
+                                    {mock.modules.map((module: any) => (
+                                        <ModuleBadge key={module.id} type={module.type?.name}>
+                                            {module.type?.name} · {module.test_type?.test?.name}
+                                        </ModuleBadge>
+                                    ))}
+                                    {mock.require_desktop && (
+                                        <span className="inline-flex items-center gap-1 rounded-lg border border-gray-200 px-1.5 py-0.5 text-[10px] font-bold text-gray-500 dark:border-gray-700">
+                                            <Monitor className="h-3 w-3" /> {t('exam_admin.mock_form.require_desktop')}
+                                        </span>
+                                    )}
+                                </div>
+                            ) : (
+                                <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5 flex items-center gap-1.5">
+                                    <span className="font-semibold text-indigo-600 dark:text-indigo-400">{mock.test?.folder?.name}</span>
+                                    <span>/</span>
+                                    <span>{mock.test?.name}</span>
+                                </p>
+                            )}
                         </div>
+                    </div>
+
+                    <div className="flex flex-wrap items-center gap-2">
+                        <Link href={route('mock.edit', mock.id)} className="inline-flex h-10 items-center gap-1.5 rounded-xl bg-blue-50 px-3 text-xs font-bold text-blue-700 hover:bg-blue-100 dark:bg-blue-900/30 dark:text-blue-300">
+                            <Pencil className="h-4 w-4" /> {t('exam_admin.common.edit')}
+                        </Link>
+                        <Link href={route('reception.index', { mock_id: mock.id, date: (mock.started_at ?? '').slice(0, 10) || undefined })} className="inline-flex h-10 items-center gap-1.5 rounded-xl bg-gray-100 px-3 text-xs font-bold text-gray-700 hover:bg-gray-200 dark:bg-gray-800 dark:text-gray-200">
+                            <ConciergeBell className="h-4 w-4" /> {t('exam_admin.nav.reception')}
+                        </Link>
+                        <Link href={route('monitor.index', { mock_id: mock.id })} className="inline-flex h-10 items-center gap-1.5 rounded-xl bg-gray-100 px-3 text-xs font-bold text-gray-700 hover:bg-gray-200 dark:bg-gray-800 dark:text-gray-200">
+                            <Activity className="h-4 w-4" /> {t('exam_admin.nav.monitor')}
+                        </Link>
+                        <Link href={route('speaking.index', { mock_id: mock.id })} className="inline-flex h-10 items-center gap-1.5 rounded-xl bg-gray-100 px-3 text-xs font-bold text-gray-700 hover:bg-gray-200 dark:bg-gray-800 dark:text-gray-200">
+                            <Mic className="h-4 w-4" /> {t('exam_admin.nav.speaking')}
+                        </Link>
                     </div>
 
                     {attempts.length > 0 && (
