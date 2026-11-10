@@ -953,7 +953,9 @@
             "rename": "Nomini o'zgartirish",
             "rename_prompt": "Kompyuterning yangi nomi",
             "block_confirm": "{{name}} bloklansinmi? U imtihon o'tkaza olmaydi.",
-            "delete_confirm": "{{name}} o'chirilsinmi? U qaytadan ro'yxatdan o'tishi kerak bo'ladi."
+            "delete_confirm": "{{name}} o'chirilsinmi? U qaytadan ro'yxatdan o'tishi kerak bo'ladi.",
+            "download_installer": "Ilovani yuklab olish {{version}}",
+            "installer_missing": "O'rnatuvchi hali yuklanmagan"
         },
         "settings": {
             "description": "Mynine desktop imtihon ilovasining markaz bo'yicha sozlamalari.",

@@ -578,3 +578,25 @@ test('re-running AI on a confirmed Writing clears the confirmation', function ()
 
     expect($writing->fresh()->reviewed_at)->toBeNull();
 });
+
+test('the devices page offers the published installer for download', function () {
+    useReleaseManifest(releaseManifestData(['version' => '9.9.9', 'file' => 'mynine-setup-9.9.9.exe', 'size' => 3]));
+
+    $this->actingAs($this->admin)->get(route('desktop.devices.index'))->assertOk()
+        ->assertInertia(fn ($page) => $page->where('installer.version', '9.9.9')
+            ->where('installer.url', asset('desktop/mynine-setup-9.9.9.exe'))
+            ->where('installer.available', false));
+
+    $file = public_path('desktop/mynine-setup-9.9.9.exe');
+    file_put_contents($file, 'exe');
+    try {
+        $this->actingAs($this->admin)->get(route('desktop.devices.index'))
+            ->assertInertia(fn ($page) => $page->where('installer.available', true));
+    } finally {
+        @unlink($file);
+    }
+
+    useReleaseManifest(null);
+    $this->actingAs($this->admin)->get(route('desktop.devices.index'))
+        ->assertInertia(fn ($page) => $page->where('installer', null));
+});

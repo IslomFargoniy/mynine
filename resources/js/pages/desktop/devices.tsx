@@ -4,7 +4,7 @@ import AppLayout from '@/layouts/app-layout';
 import { cn } from '@/lib/utils';
 import { type BreadcrumbItem } from '@/types';
 import { Head, router, usePage } from '@inertiajs/react';
-import { Ban, CheckCircle2, Monitor, Pencil, ShieldCheck, Trash2 } from 'lucide-react';
+import { Ban, CheckCircle2, Download, Monitor, Pencil, ShieldCheck, Trash2 } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 
 interface DeviceRow {
@@ -27,11 +27,12 @@ interface DeviceRow {
 interface PageProps {
     devices: DeviceRow[];
     latestVersion: string | null;
+    installer: { version: string; file: string; url: string; size: number; sha256: string; available: boolean } | null;
     [key: string]: unknown;
 }
 
 export default function DevicesIndex() {
-    const { devices, latestVersion } = usePage<PageProps>().props;
+    const { devices, latestVersion, installer } = usePage<PageProps>().props;
     const { t } = useTranslation();
 
     useAutoRefresh(['devices'], 15000);
@@ -66,7 +67,24 @@ export default function DevicesIndex() {
                         online: devices.filter((d) => d.online).length,
                         latest: latestVersion ?? '—',
                     })}
+                    actions={
+                        installer?.available ? (
+                            <Button asChild size="sm">
+                                <a href={installer.url} download>
+                                    <Download className="h-4 w-4" />
+                                    {t('exam_admin.devices.download_installer', { version: installer.version })}
+                                    {installer.size > 0 && <span className="opacity-70">({(installer.size / 1048576).toFixed(1)} MB)</span>}
+                                </a>
+                            </Button>
+                        ) : (
+                            <span className="text-xs text-gray-400">{t('exam_admin.devices.installer_missing')}</span>
+                        )
+                    }
                 />
+
+                {installer?.available && installer.sha256 && (
+                    <p className="font-mono text-[10px] break-all text-gray-400">SHA-256: {installer.sha256}</p>
+                )}
 
                 {pending.length > 0 && (
                     <div className="rounded-xl border border-amber-200 bg-amber-50 p-3 text-xs font-semibold text-amber-800 dark:border-amber-800/50 dark:bg-amber-950/30 dark:text-amber-300">

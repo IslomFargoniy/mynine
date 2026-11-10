@@ -21,6 +21,8 @@ class DeviceController extends Controller
 
         $online = (int) config('desktop.online_seconds', 60);
         $latest = $manifest->latestVersion();
+        $release = $manifest->get();
+        $installerPath = $release ? public_path('desktop/'.$release['file']) : null;
 
         $devices = Device::query()
             ->with(['currentAttempt' => fn ($q) => $q->select('id', 'name', 'mock_id', 'mock_student_id', 'finished_at')->with('mock:id,name')])
@@ -51,6 +53,15 @@ class DeviceController extends Controller
         return Inertia::render('desktop/devices', [
             'devices' => $devices,
             'latestVersion' => $latest,
+            // Installer published in public/desktop (served as a static file by nginx).
+            'installer' => $release ? [
+                'version' => $release['version'],
+                'file' => $release['file'],
+                'url' => asset('desktop/'.$release['file']),
+                'size' => $release['size'],
+                'sha256' => $release['sha256'],
+                'available' => $installerPath !== null && is_file($installerPath),
+            ] : null,
         ]);
     }
 

@@ -953,7 +953,9 @@
             "rename": "Rename",
             "rename_prompt": "New PC name",
             "block_confirm": "Block {{name}}? It will not be able to run exams.",
-            "delete_confirm": "Delete {{name}}? It will have to register again."
+            "delete_confirm": "Delete {{name}}? It will have to register again.",
+            "download_installer": "Download app {{version}}",
+            "installer_missing": "Installer not uploaded yet"
         },
         "settings": {
             "description": "Center-wide settings of the Mynine desktop exam app.",
