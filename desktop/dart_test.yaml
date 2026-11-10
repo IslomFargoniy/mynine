@@ -1,0 +1,4 @@
+tags:
+  golden:
+    # Goldens are rendered on macOS; text shaping differs per OS.
+    description: Layout goldens of the exam room (macOS only).
