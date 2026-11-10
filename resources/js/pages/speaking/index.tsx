@@ -46,7 +46,7 @@ function SlotEditor({ candidate }: { candidate: SpeakingCandidate }) {
         <div className="flex items-center gap-1">
             <input
                 type="datetime-local"
-                className="h-8 rounded-lg border border-gray-200 bg-white px-2 text-xs dark:border-gray-700 dark:bg-gray-900"
+                className="h-8 rounded-lg border border-border bg-card px-2 text-xs"
                 value={value}
                 onChange={(e) => setValue(e.target.value)}
             />
@@ -115,7 +115,7 @@ function ScoreDialog({ candidate, criteria, onClose }: { candidate: SpeakingCand
                     ))}
                     <textarea
                         rows={3}
-                        className="w-full rounded-xl border border-gray-200 bg-white p-2 text-xs dark:border-gray-700 dark:bg-gray-900"
+                        className="w-full rounded-xl border border-border bg-card p-2 text-xs"
                         placeholder={t('exam_admin.speaking.note')}
                         value={note}
                         onChange={(e) => setNote(e.target.value)}
@@ -204,7 +204,7 @@ export default function SpeakingIndex() {
                 ) : (
                     <Panel className="overflow-x-auto p-0">
                         <table className="w-full text-left text-xs">
-                            <thead className="bg-gray-50 text-[10px] font-bold text-gray-500 uppercase dark:bg-gray-800/60 dark:text-gray-400">
+                            <thead className="bg-muted text-[10px] font-bold text-muted-foreground uppercase">
                                 <tr>
                                     <th className="px-3 py-2.5">{t('exam_admin.speaking.slot')}</th>
                                     <th className="px-3 py-2.5">{t('exam_admin.common.candidate')}</th>
@@ -221,13 +221,13 @@ export default function SpeakingIndex() {
                                         </td>
                                         <td className="px-3 py-2">
                                             <div className="font-bold">{c.name}</div>
-                                            <div className="font-mono text-[11px] text-indigo-600">{c.code}</div>
+                                            <div className="font-mono text-[11px] text-indigo-600 dark:text-indigo-400">{c.code}</div>
                                         </td>
                                         <td className="px-3 py-2">
                                             {c.written_done ? (
                                                 <CheckCircle2 className="h-4 w-4 text-emerald-500" />
                                             ) : (
-                                                <span className="text-[11px] text-gray-400">{t('exam_admin.speaking.not_yet')}</span>
+                                                <span className="text-[11px] text-muted-foreground">{t('exam_admin.speaking.not_yet')}</span>
                                             )}
                                         </td>
                                         <td className="px-3 py-2 text-lg font-black text-violet-700 dark:text-violet-300">{fmtBand(c.band)}</td>

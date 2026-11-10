@@ -84,11 +84,11 @@ export default function UpdateSectionModal({ section, open, setOpen }: UpdateSec
     return (
         <Dialog open={open} onOpenChange={setOpen}>
             <DialogContent className="sm:max-w-6xl w-full h-[80vh] max-h-[80vh] flex flex-col p-0 overflow-hidden dark:border-gray-700">
-                <div className="px-5 py-3 border-b border-gray-100 dark:border-gray-800 shrink-0 bg-white dark:bg-gray-900">
-                    <DialogTitle className="text-base font-bold text-gray-900 dark:text-gray-100">
+                <div className="px-5 py-3 border-b border-border shrink-0 bg-card">
+                    <DialogTitle className="text-base font-bold text-foreground">
                         {t('modal.update_title') || "Bo'limni tahrirlash"}
                     </DialogTitle>
-                    <DialogDescription className="text-xs text-gray-500 dark:text-gray-400">
+                    <DialogDescription className="text-xs text-muted-foreground">
                         {t('modal.update_description') || "Bo'lim ma'lumotlarini va savol turini yangilang."}
                     </DialogDescription>
                 </div>
@@ -100,7 +100,7 @@ export default function UpdateSectionModal({ section, open, setOpen }: UpdateSec
                             {/* Question Type + Guide Trigger */}
                             <div className="space-y-1">
                                 <div className="flex items-center justify-between gap-2">
-                                    <Label htmlFor="question_type" className="text-xs font-semibold text-gray-700 dark:text-gray-200">
+                                    <Label htmlFor="question_type" className="text-xs font-semibold text-foreground/80">
                                         {t('question_type')} *
                                     </Label>
                                     {selectedTypeObj && (
@@ -131,7 +131,7 @@ export default function UpdateSectionModal({ section, open, setOpen }: UpdateSec
                                     </div>
                                     <div className="grid grid-cols-2 gap-3">
                                         <div>
-                                            <Label htmlFor="from_option" className="text-[11px] font-semibold text-gray-700 dark:text-gray-300">
+                                            <Label htmlFor="from_option" className="text-[11px] font-semibold text-foreground/80">
                                                 {t('from_char_or_num') || "Boshlanish harfi / soni (From)"}
                                             </Label>
                                             <Input
@@ -145,7 +145,7 @@ export default function UpdateSectionModal({ section, open, setOpen }: UpdateSec
                                             <InputError message={errors.from_option} />
                                         </div>
                                         <div>
-                                            <Label htmlFor="to_option" className="text-[11px] font-semibold text-gray-700 dark:text-gray-300">
+                                            <Label htmlFor="to_option" className="text-[11px] font-semibold text-foreground/80">
                                                 {t('to_char_or_num') || "Tugash harfi / soni (To)"}
                                             </Label>
                                             <Input
@@ -174,7 +174,7 @@ export default function UpdateSectionModal({ section, open, setOpen }: UpdateSec
                         {/* O'ng tomon: TinyMCE Editor */}
                         <div className="lg:col-span-7 space-y-1.5 flex flex-col h-full">
                             <div className="flex items-center justify-between">
-                                <Label className="text-xs font-semibold text-gray-700 dark:text-gray-200">
+                                <Label className="text-xs font-semibold text-foreground/80">
                                     {t('section_instructions') || "Bo'lim Yo'riqnomasi / Matni"} *
                                 </Label>
                                 {isCompleteOrDrag && (
@@ -201,7 +201,7 @@ export default function UpdateSectionModal({ section, open, setOpen }: UpdateSec
                     </div>
                 </form>
 
-                <DialogFooter className="px-5 py-2.5 border-t border-gray-100 dark:border-gray-800 shrink-0 bg-gray-50/90 dark:bg-gray-900 flex items-center justify-end gap-2.5">
+                <DialogFooter className="px-5 py-2.5 border-t border-border shrink-0 bg-gray-50/90 dark:bg-gray-900 flex items-center justify-end gap-2.5">
                     <DialogClose asChild>
                         <Button
                             type="button"

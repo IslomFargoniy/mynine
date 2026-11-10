@@ -66,11 +66,12 @@ export function useAppearance() {
     }, []);
 
     useEffect(() => {
+        // Only sync the selector's state. The theme itself is applied once at boot by
+        // initializeTheme(); re-applying it here on every mount would fight the Telegram Mini App
+        // (which sets the class from its own colour scheme) and the exam room (forced light).
         const savedAppearance = localStorage.getItem('appearance') as Appearance | null;
-        updateAppearance(savedAppearance || 'system');
-
-        return () => mediaQuery()?.removeEventListener('change', handleSystemThemeChange);
-    }, [updateAppearance]);
+        setAppearance(savedAppearance || 'system');
+    }, []);
 
     return { appearance, updateAppearance } as const;
 }

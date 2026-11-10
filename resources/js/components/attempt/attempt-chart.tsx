@@ -11,6 +11,7 @@ import {
 } from 'chart.js';
 import { Attempt } from '@/types';
 import { useTranslation } from 'react-i18next';
+import { useIsDark } from '@/hooks/use-is-dark';
 
 ChartJS.register(CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend);
 
@@ -18,6 +19,11 @@ export default function AttemptsChart({ attempts }: { attempts: Attempt[] }) {
 
 
     const { t } = useTranslation();
+    const isDark = useIsDark();
+    // Chart.js draws on a canvas, so theme colours must be passed explicitly.
+    const tickColor = isDark ? '#94a3b8' : '#64748b';
+    const legendColor = isDark ? '#e2e8f0' : '#334155';
+    const gridColor = isDark ? 'rgba(255, 255, 255, 0.06)' : 'rgba(0, 0, 0, 0.05)';
 
     // Extract labels (attempt dates)
     const labels = attempts.map(a =>
@@ -69,6 +75,7 @@ export default function AttemptsChart({ attempts }: { attempts: Attempt[] }) {
                 labels: {
                     usePointStyle: true,
                     padding: 20,
+                    color: legendColor,
                     font: {
                         size: 12,
                         weight: '500'
@@ -94,16 +101,18 @@ export default function AttemptsChart({ attempts }: { attempts: Attempt[] }) {
                     display: false
                 },
                 ticks: {
+                    color: tickColor,
                     font: { size: 11 }
                 }
             },
             y: {
                 beginAtZero: true,
                 grid: {
-                    color: 'rgba(0, 0, 0, 0.05)',
+                    color: gridColor,
                 },
                 ticks: {
                     stepSize: 10,
+                    color: tickColor,
                     font: { size: 11 }
                 }
             }

@@ -1,10 +1,11 @@
-import { useAppearance } from '@/hooks/use-appearance';
+import { useIsDark } from '@/hooks/use-is-dark';
 import Chart from 'react-apexcharts';
 import { Attempt } from '@/types';
 
 
 export default function AttemptsChart({ attempts }: { attempts: Attempt[] }) {
-    const { appearance } = useAppearance();
+    const isDark = useIsDark();
+    const axisLabel = isDark ? '#94a3b8' : '#64748b';
     if (!attempts || attempts.length === 0) return null;
 
     const labels = attempts.map(a => 
@@ -28,9 +29,7 @@ export default function AttemptsChart({ attempts }: { attempts: Attempt[] }) {
             animations: { enabled: true }
         },
         theme: {
-            mode: appearance === 'system' 
-                ? (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light')
-                : (appearance as 'light' | 'dark')
+            mode: isDark ? 'dark' : 'light'
         },
         dataLabels: { enabled: false },
         stroke: {
@@ -52,7 +51,7 @@ export default function AttemptsChart({ attempts }: { attempts: Attempt[] }) {
             categories: labels,
             labels: {
                 style: {
-                    colors: '#94a3b8',
+                    colors: axisLabel,
                     fontSize: '12px'
                 }
             },
@@ -62,23 +61,23 @@ export default function AttemptsChart({ attempts }: { attempts: Attempt[] }) {
         yaxis: {
             labels: {
                 style: {
-                    colors: '#94a3b8',
+                    colors: axisLabel,
                     fontSize: '12px'
                 }
             }
         },
         grid: {
-            borderColor: 'rgba(148, 163, 184, 0.1)',
+            borderColor: isDark ? 'rgba(255, 255, 255, 0.06)' : 'rgba(0, 0, 0, 0.06)',
             strokeDashArray: 4,
         },
         tooltip: {
-            theme: 'dark',
+            theme: isDark ? 'dark' : 'light',
             x: { show: true },
         },
         markers: {
             size: 5,
             colors: ['#6366f1'],
-            strokeColors: '#fff',
+            strokeColors: isDark ? '#0f172a' : '#fff',
             strokeWidth: 2,
             hover: { size: 7 }
         }

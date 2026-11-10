@@ -51,7 +51,7 @@ const UserFirmTable = ({ user, firms }: UserFirmTableProps) => {
 
             {/* Table */}
             <div className="overflow-x-auto">
-                <table className="border-collapse w-full text-sm text-left text-gray-800 dark:text-gray-100">
+                <table className="border-collapse w-full text-sm text-left text-foreground">
                     <thead className="bg-gray-100 dark:bg-gray-700">
                     <tr>
                         <td className="border border-gray-300 dark:border-gray-600 px-4 py-2">{t('n')}</td>
@@ -74,7 +74,7 @@ const UserFirmTable = ({ user, firms }: UserFirmTableProps) => {
                                     <div className="inline-flex shadow-sm">
                                         <button
                                             onClick={() => handleDeleteClick(item)}
-                                            className="bg-red-500 px-3 py-2 text-sm font-medium text-white-700 border border-gray-400 hover:text-black hover:bg-gray-100 focus:z-10 rounded"
+                                            className="bg-red-500 px-3 py-2 text-sm font-medium text-white border border-red-600 hover:bg-red-600 focus:z-10 rounded"
                                         >
                                             <TrashIcon className="w-4 h-4" />
                                         </button>

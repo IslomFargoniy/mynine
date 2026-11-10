@@ -90,10 +90,10 @@ export default function Dashboard() {
                 <div className="relative overflow-hidden rounded-3xl bg-primary/5 p-8 border border-primary/10 backdrop-blur-sm">
                     <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-6">
                         <div>
-                            <h1 className="text-3xl font-bold tracking-tight text-gray-900 dark:text-white">
+                            <h1 className="text-3xl font-bold tracking-tight text-foreground">
                                 {t('welcome_back')}, <span className="text-primary">{user.name.split(' ')[0]}</span>! 👋
                             </h1>
-                            <p className="mt-2 text-gray-600 dark:text-gray-400 max-w-md">
+                            <p className="mt-2 text-muted-foreground max-w-md">
                                 {t('ready_to_practice')} {t('performance_overview')}
                             </p>
                         </div>
@@ -121,7 +121,7 @@ export default function Dashboard() {
                                     <Trophy className="size-6" />
                                 </div>
                                 <div>
-                                    <p className="text-sm font-medium text-gray-500 dark:text-gray-400">{t('total_tests')}</p>
+                                    <p className="text-sm font-medium text-muted-foreground">{t('total_tests')}</p>
                                     <h3 className="text-2xl font-bold">{user.total_attempts_count}</h3>
                                 </div>
                             </div>
@@ -136,7 +136,7 @@ export default function Dashboard() {
                                     <TrendingUp className="size-6" />
                                 </div>
                                 <div>
-                                    <p className="text-sm font-medium text-gray-500 dark:text-gray-400">{t('totalAttempts')}</p>
+                                    <p className="text-sm font-medium text-muted-foreground">{t('totalAttempts')}</p>
                                     <h3 className="text-2xl font-bold">{user.attempts_count_this_month}</h3>
                                 </div>
                             </div>
@@ -151,7 +151,7 @@ export default function Dashboard() {
                                     <Target className="size-6" />
                                 </div>
                                 <div>
-                                    <p className="text-sm font-medium text-gray-500 dark:text-gray-400">{t('reading_avg') || 'Reading Avg'}</p>
+                                    <p className="text-sm font-medium text-muted-foreground">{t('reading_avg') || 'Reading Avg'}</p>
                                     <h3 className="text-2xl font-bold">{readingAvg}</h3>
                                 </div>
                             </div>
@@ -166,7 +166,7 @@ export default function Dashboard() {
                                     <Target className="size-6" />
                                 </div>
                                 <div>
-                                    <p className="text-sm font-medium text-gray-500 dark:text-gray-400">{t('listening_avg') || 'Listening Avg'}</p>
+                                    <p className="text-sm font-medium text-muted-foreground">{t('listening_avg') || 'Listening Avg'}</p>
                                     <h3 className="text-2xl font-bold">{listeningAvg}</h3>
                                 </div>
                             </div>
@@ -177,7 +177,7 @@ export default function Dashboard() {
                 {/* Recent Activity */}
                 <div className="mb-6">
                     <Card className="border-none shadow-sm rounded-3xl overflow-hidden">
-                        <CardHeader className="flex flex-row items-center justify-between border-b border-gray-100 dark:border-neutral-800 pb-4">
+                        <CardHeader className="flex flex-row items-center justify-between border-b border-border pb-4">
                             <CardTitle className="text-lg font-bold flex items-center gap-2">
                                 <History className="size-5 text-primary" />
                                 {t('recent_activity')}
@@ -200,14 +200,14 @@ export default function Dashboard() {
                                             className="flex items-center justify-between p-5 hover:bg-gray-50 dark:hover:bg-neutral-800/50 transition-colors group"
                                         >
                                             <div className="flex items-center gap-4">
-                                                <div className="p-2.5 rounded-xl bg-gray-100 dark:bg-neutral-800 text-gray-500 group-hover:bg-primary/10 group-hover:text-primary transition-colors">
+                                                <div className="p-2.5 rounded-xl bg-muted text-muted-foreground group-hover:bg-primary/10 group-hover:text-primary transition-colors">
                                                     <Clock className="size-5" />
                                                 </div>
                                                 <div>
-                                                    <p className="font-semibold text-gray-900 dark:text-white line-clamp-1">
+                                                    <p className="font-semibold text-foreground line-clamp-1">
                                                         {attempt.test?.name || attempt.name}
                                                     </p>
-                                                    <p className="text-xs text-gray-500 mt-0.5">
+                                                    <p className="text-xs text-muted-foreground mt-0.5">
                                                         {new Date(attempt.finished_at!).toLocaleDateString(undefined, { 
                                                             month: 'short', 
                                                             day: 'numeric',
@@ -219,7 +219,7 @@ export default function Dashboard() {
                                             </div>
                                             <div className="flex items-center gap-3">
                                                 <div className="flex flex-col items-end">
-                                                    <span className="text-xs font-medium text-gray-400 capitalize">
+                                                    <span className="text-xs font-medium text-muted-foreground capitalize">
                                                         {t(String(attempt.status ?? 'finished'))}
                                                     </span>
                                                     <div className="flex items-center gap-1 text-green-600 dark:text-green-400 font-bold">
@@ -229,16 +229,16 @@ export default function Dashboard() {
                                                         </span>
                                                     </div>
                                                 </div>
-                                                <ArrowRight className="size-4 text-gray-300 group-hover:text-primary group-hover:translate-x-1 transition-all" />
+                                                <ArrowRight className="size-4 text-muted-foreground/50 group-hover:text-primary group-hover:translate-x-1 transition-all" />
                                             </div>
                                         </Link>
                                     ))
                                 ) : (
                                     <div className="flex flex-col items-center justify-center p-12 text-center">
-                                        <div className="p-4 rounded-full bg-gray-50 dark:bg-neutral-800 mb-4">
-                                            <LayoutDashboard className="size-8 text-gray-300" />
+                                        <div className="p-4 rounded-full bg-muted mb-4">
+                                            <LayoutDashboard className="size-8 text-muted-foreground/50" />
                                         </div>
-                                        <p className="text-gray-500 font-medium">{t('no_recent_activity')}</p>
+                                        <p className="text-muted-foreground font-medium">{t('no_recent_activity')}</p>
                                     </div>
                                 )}
                             </div>
@@ -255,7 +255,7 @@ export default function Dashboard() {
                             <div className="rounded-[2rem] border border-border bg-card p-6 shadow-sm">
                                 <h3 className="text-lg font-bold mb-4 flex items-center gap-2">
                                     <TrendingUp className="size-5 text-primary" />
-                                    {t('performance_overview')} <span className="text-sm font-normal text-gray-400 ml-1">{t('last_30_days') || "(last 30 days)"}</span>
+                                    {t('performance_overview')} <span className="text-sm font-normal text-muted-foreground ml-1">{t('last_30_days') || "(last 30 days)"}</span>
                                 </h3>
                                 <div className="w-full">
                                     <AttemptsChart attempts={user.attempts || []} />

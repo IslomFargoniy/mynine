@@ -136,7 +136,7 @@ export default function CreateUserModal() {
                                     reset();
                                     clearErrors();
                                 }}
-                                className="bg-gray-100 text-gray-900 hover:bg-gray-200 dark:bg-gray-800 dark:text-gray-100 dark:hover:bg-gray-700"
+                                className="bg-muted text-foreground hover:bg-gray-200 dark:hover:bg-gray-700"
                             >
                                 {t('cancel')}
                             </Button>

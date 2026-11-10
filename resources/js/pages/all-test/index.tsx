@@ -128,7 +128,7 @@ export default function AllTest() {
                 {/* Scroll Sentinel */}
                 <div ref={sentinelRef} className="h-10 flex justify-center items-center">
                     {loading && (
-                        <div className="flex items-center gap-2 text-sm text-gray-500 py-4">
+                        <div className="flex items-center gap-2 text-sm text-muted-foreground py-4">
                             <span className="animate-spin inline-block w-5 h-5 border-2 border-t-transparent border-blue-600 rounded-full"></span>
                             <span>{t('loading')}</span>
                         </div>

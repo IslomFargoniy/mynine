@@ -42,26 +42,26 @@ const SocialSignIn = () => {
             <div className="flex gap-4">
                 <button
                     onClick={() => signIn('google')}
-                    className="group relative flex w-full items-center justify-center gap-3 overflow-hidden rounded-2xl bg-white dark:bg-gray-900 border border-gray-100 dark:border-white/5 p-3.5 shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-xl active:scale-95"
+                    className="group relative flex w-full items-center justify-center gap-3 overflow-hidden rounded-2xl bg-card border border-border p-3.5 shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-xl active:scale-95"
                 >
                     <div className="absolute inset-0 bg-gradient-to-tr from-blue-500/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
                     <Icon icon="logos:google-icon" className="text-xl" />
-                    <span className="text-sm font-bold text-gray-700 dark:text-gray-300">Google</span>
+                    <span className="text-sm font-bold text-foreground/80">Google</span>
                 </button>
 
                 <button
                     onClick={() => signIn('github')}
-                    className="group relative flex w-full items-center justify-center gap-3 overflow-hidden rounded-2xl bg-white dark:bg-gray-900 border border-gray-100 dark:border-white/5 p-3.5 shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-xl active:scale-95"
+                    className="group relative flex w-full items-center justify-center gap-3 overflow-hidden rounded-2xl bg-card border border-border p-3.5 shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-xl active:scale-95"
                 >
                     <div className="absolute inset-0 bg-gradient-to-tr from-gray-500/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
-                    <Icon icon="mdi:github" className="text-xl text-gray-900 dark:text-white" />
-                    <span className="text-sm font-bold text-gray-700 dark:text-gray-300">GitHub</span>
+                    <Icon icon="mdi:github" className="text-xl text-foreground" />
+                    <span className="text-sm font-bold text-foreground/80">GitHub</span>
                 </button>
             </div>
 
             <div className="relative flex items-center gap-4">
                 <div className="h-px flex-1 bg-gray-100 dark:bg-white/5" />
-                <span className="text-[10px] font-black uppercase tracking-widest text-gray-400">{t('login.or') || 'OR'}</span>
+                <span className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">{t('login.or') || 'OR'}</span>
                 <div className="h-px flex-1 bg-gray-100 dark:bg-white/5" />
             </div>
 

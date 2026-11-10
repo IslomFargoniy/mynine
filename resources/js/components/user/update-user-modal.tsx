@@ -80,11 +80,11 @@ export default function UpdateUserModal({ roles, user, open, setOpen }: UpdateUs
         <Dialog open={open} onOpenChange={setOpen}>
 
             <DialogContent className="sm:max-w-lg w-full dark:border-gray-700">
-                <DialogHeader className="space-y-1 pb-2 border-b border-gray-100 dark:border-gray-800">
-                    <DialogTitle className="text-lg font-bold text-gray-900 dark:text-gray-100">
+                <DialogHeader className="space-y-1 pb-2 border-b border-border">
+                    <DialogTitle className="text-lg font-bold text-foreground">
                         {t('modal.update_user_title')}
                     </DialogTitle>
-                    <DialogDescription className="text-xs text-gray-500 dark:text-gray-400">
+                    <DialogDescription className="text-xs text-muted-foreground">
                         {t('modal.update_user_desc')}
                     </DialogDescription>
                 </DialogHeader>
@@ -188,7 +188,7 @@ export default function UpdateUserModal({ roles, user, open, setOpen }: UpdateUs
                                     reset();
                                     clearErrors();
                                 }}
-                                className="bg-gray-100 text-gray-900 hover:bg-gray-200 dark:bg-gray-800 dark:text-gray-100 dark:hover:bg-gray-700"
+                                className="bg-muted text-foreground hover:bg-gray-200 dark:hover:bg-gray-700"
                             >
                                 {t('cancel')}
                             </Button>

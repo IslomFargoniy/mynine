@@ -53,11 +53,11 @@ export default function SectionQuestion({
     })();
 
     return (
-        <div className="p-4 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 shadow-2xs space-y-3">
+        <div className="p-4 rounded-xl border border-border bg-card shadow-2xs space-y-3">
             {/* Header: Question Number, Prompt & Action Buttons */}
             <div className="flex items-start justify-between gap-3">
                 <div className="flex-1 min-w-0">
-                    <h3 className="font-bold text-sm text-gray-900 dark:text-gray-100 leading-snug">
+                    <h3 className="font-bold text-sm text-foreground leading-snug">
                         <span className="text-blue-600 dark:text-blue-400 mr-1.5">{questionNumberStr}.</span>
                         {question.textarea}
                     </h3>

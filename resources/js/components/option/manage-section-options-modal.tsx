@@ -155,22 +155,22 @@ export default function ManageSectionOptionsModal({
 
             <DialogContent className="sm:max-w-2xl w-full max-h-[85vh] flex flex-col p-0 overflow-hidden dark:border-gray-700">
                 {/* Header */}
-                <div className="px-5 py-3 border-b border-gray-100 dark:border-gray-800 shrink-0 bg-white dark:bg-gray-900 flex items-center justify-between">
+                <div className="px-5 py-3 border-b border-border shrink-0 bg-card flex items-center justify-between">
                     <div>
-                        <DialogTitle className="text-base font-bold text-gray-900 dark:text-gray-100 flex items-center gap-2">
+                        <DialogTitle className="text-base font-bold text-foreground flex items-center gap-2">
                             <span>{t('manage_incorrect_options') || "Noto'g'ri variantlar (Distractors)"}</span>
                             <span className="px-2 py-0.5 rounded-full bg-blue-100 dark:bg-blue-900/60 text-blue-800 dark:text-blue-200 text-xs font-semibold">
                                 {currentCount} ta variant
                             </span>
                         </DialogTitle>
-                        <DialogDescription className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
+                        <DialogDescription className="text-xs text-muted-foreground mt-0.5">
                             Sudrab joylashtirish (Drag & Drop) uchun barcha qo'shimcha chalg'ituvchi variantlarni bitta joyda kiriting va tahrirlang.
                         </DialogDescription>
                     </div>
                 </div>
 
                 {/* Mode Selector Tabs */}
-                <div className="px-5 pt-3 pb-1 border-b border-gray-100 dark:border-gray-800 flex items-center justify-between gap-2 bg-gray-50/70 dark:bg-gray-900/50 shrink-0">
+                <div className="px-5 pt-3 pb-1 border-b border-border flex items-center justify-between gap-2 bg-gray-50/70 dark:bg-gray-900/50 shrink-0">
                     <div className="flex items-center gap-1.5 p-0.5 bg-gray-200/70 dark:bg-gray-800 rounded-lg">
                         <button
                             type="button"
@@ -178,7 +178,7 @@ export default function ManageSectionOptionsModal({
                             className={`flex items-center gap-1.5 px-3 py-1 text-xs font-semibold rounded-md transition-colors ${
                                 mode === 'list'
                                     ? 'bg-white dark:bg-gray-700 text-blue-600 dark:text-blue-400 shadow-xs'
-                                    : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200'
+                                    : 'text-muted-foreground hover:text-gray-900 dark:hover:text-gray-200'
                             }`}
                         >
                             <List className="w-3.5 h-3.5" />
@@ -190,7 +190,7 @@ export default function ManageSectionOptionsModal({
                             className={`flex items-center gap-1.5 px-3 py-1 text-xs font-semibold rounded-md transition-colors ${
                                 mode === 'bulk'
                                     ? 'bg-white dark:bg-gray-700 text-blue-600 dark:text-blue-400 shadow-xs'
-                                    : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200'
+                                    : 'text-muted-foreground hover:text-gray-900 dark:hover:text-gray-200'
                             }`}
                         >
                             <AlignLeft className="w-3.5 h-3.5" />
@@ -216,7 +216,7 @@ export default function ManageSectionOptionsModal({
                                 return (
                                     <div
                                         key={idx}
-                                        className="flex items-center gap-2 p-1.5 rounded-lg bg-gray-50 dark:bg-gray-800/60 border border-gray-200 dark:border-gray-700 transition-all hover:border-blue-300 dark:hover:border-blue-700"
+                                        className="flex items-center gap-2 p-1.5 rounded-lg bg-muted border border-border transition-all hover:border-blue-300 dark:hover:border-blue-700"
                                     >
                                         {/* Letter badge */}
                                         <span className="w-6 h-6 shrink-0 rounded-md bg-blue-600 text-white dark:bg-blue-500 font-bold font-mono text-xs flex items-center justify-center">
@@ -229,7 +229,7 @@ export default function ManageSectionOptionsModal({
                                             value={optionText}
                                             onChange={(e) => handleRowChange(idx, e.target.value)}
                                             placeholder={`${t('option_row_placeholder') || "Variant matnini kiriting..."} (Masalan: vast range)`}
-                                            className="h-8 text-xs flex-1 bg-white dark:bg-gray-900"
+                                            className="h-8 text-xs flex-1 bg-card"
                                             autoFocus={idx === optionsList.length - 1 && optionText === ''}
                                         />
 
@@ -282,7 +282,7 @@ export default function ManageSectionOptionsModal({
                         </div>
                     ) : (
                         <div className="space-y-2">
-                            <div className="text-xs text-gray-500 dark:text-gray-400 flex items-center justify-between">
+                            <div className="text-xs text-muted-foreground flex items-center justify-between">
                                 <span>Har bir variantni alohida yangi qatordan yozing yoki nusxalab qo'ying:</span>
                                 <span className="font-semibold text-blue-600 dark:text-blue-400">{currentCount} ta qator</span>
                             </div>
@@ -291,9 +291,9 @@ export default function ManageSectionOptionsModal({
                                 value={bulkText}
                                 onChange={(e) => setBulkText(e.target.value)}
                                 placeholder={t('options_bulk_placeholder')}
-                                className="w-full rounded-lg border border-gray-300 bg-white p-3 font-mono text-xs leading-relaxed min-h-[220px] dark:border-gray-700 dark:bg-gray-900 dark:text-white focus:border-blue-500 focus:ring-1 focus:ring-blue-500/20 shadow-xs outline-none"
+                                className="w-full rounded-lg border border-gray-300 bg-card p-3 font-mono text-xs leading-relaxed min-h-[220px] dark:border-gray-700 dark:text-white focus:border-blue-500 focus:ring-1 focus:ring-blue-500/20 shadow-xs outline-none"
                             />
-                            <p className="text-[11px] text-gray-400">
+                            <p className="text-[11px] text-muted-foreground">
                                 💡 Maslahat: Har bir qatorda bittadan noto'g'ri so'z/ibora yoziladi. Prefikslar (A), 1.) avtomatik tozalanadi.
                             </p>
                         </div>
@@ -301,7 +301,7 @@ export default function ManageSectionOptionsModal({
                 </form>
 
                 {/* Footer */}
-                <DialogFooter className="px-5 py-2.5 border-t border-gray-100 dark:border-gray-800 shrink-0 bg-gray-50/90 dark:bg-gray-900 flex items-center justify-end gap-2.5">
+                <DialogFooter className="px-5 py-2.5 border-t border-border shrink-0 bg-gray-50/90 dark:bg-gray-900 flex items-center justify-end gap-2.5">
                     <DialogClose asChild>
                         <Button
                             type="button"

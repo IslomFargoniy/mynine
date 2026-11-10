@@ -1,7 +1,7 @@
 import React from 'react';
 import Chart from 'react-apexcharts';
 import { WeeklyStatItem } from '@/types';
-import { useAppearance } from '@/hooks/use-appearance';
+import { useIsDark } from '@/hooks/use-is-dark';
 
 interface Props {
     title: string;
@@ -9,7 +9,8 @@ interface Props {
 }
 
 export default function WeeklyAttemptsChart({ title, data: chartData }: Props) {
-    const { appearance } = useAppearance();
+    const isDark = useIsDark();
+    const axisLabel = isDark ? '#94a3b8' : '#64748b';
     
     const weekdays = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
     const dataPoints = [1, 2, 3, 4, 5, 6, 7].map(dayRaw => {
@@ -17,7 +18,6 @@ export default function WeeklyAttemptsChart({ title, data: chartData }: Props) {
         return item ? Number(item.items_count) : 0;
     });
 
-    const isDark = appearance === 'dark' || (appearance === 'system' && window.matchMedia('(prefers-color-scheme: dark)').matches);
 
     const options: ApexCharts.ApexOptions = {
         chart: {
@@ -36,7 +36,7 @@ export default function WeeklyAttemptsChart({ title, data: chartData }: Props) {
             style: {
                 fontSize: '14px',
                 fontWeight: 'bold',
-                color: isDark ? '#94a3b8' : '#64748b'
+                color: axisLabel
             }
         },
         plotOptions: {
@@ -49,18 +49,18 @@ export default function WeeklyAttemptsChart({ title, data: chartData }: Props) {
         xaxis: {
             categories: weekdays,
             labels: {
-                style: { colors: '#94a3b8', fontSize: '12px' }
+                style: { colors: axisLabel, fontSize: '12px' }
             },
             axisBorder: { show: false },
             axisTicks: { show: false },
         },
         yaxis: {
             labels: {
-                style: { colors: '#94a3b8', fontSize: '11px' }
+                style: { colors: axisLabel, fontSize: '11px' }
             }
         },
         grid: {
-            borderColor: isDark ? 'rgba(255, 255, 255, 0.05)' : 'rgba(0, 0, 0, 0.05)',
+            borderColor: isDark ? 'rgba(255, 255, 255, 0.06)' : 'rgba(0, 0, 0, 0.06)',
             strokeDashArray: 4,
         },
         colors: ['#8b5cf6'],

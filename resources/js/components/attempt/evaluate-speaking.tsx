@@ -88,7 +88,7 @@ export default function EvaluateSpeaking({ attempt }: UpdateFolderModalProps) {
                     </div>
 
                     <div className="mb-4">
-                        <Label htmlFor="comment" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+                        <Label htmlFor="comment" className="block text-sm font-medium text-foreground/80">
                             {t('comment')}
                         </Label>
                         <Textarea
@@ -96,7 +96,7 @@ export default function EvaluateSpeaking({ attempt }: UpdateFolderModalProps) {
                             value={data.comment}
                             onChange={(e) => setData('comment', e.target.value)}
                             className="mt-1 block w-full rounded-lg border border-gray-300 dark:border-gray-600
-                   bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100
+                   bg-white dark:bg-gray-800 text-foreground 
                    shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm p-2"
                             rows={4}
                         />
@@ -104,11 +104,11 @@ export default function EvaluateSpeaking({ attempt }: UpdateFolderModalProps) {
                     </div>
 
 
-                    <DialogFooter className="flex justify-end gap-3 pt-4 border-t border-gray-200 dark:border-gray-700">
+                    <DialogFooter className="flex justify-end gap-3 pt-4 border-t border-border">
                         <DialogClose asChild>
                             <Button
                                 variant="secondary"
-                                className="bg-gray-100 text-gray-700 hover:bg-gray-200 dark:bg-gray-800 dark:text-gray-300 dark:hover:bg-gray-700"
+                                className="bg-muted text-foreground/80 hover:bg-gray-200 dark:hover:bg-gray-700"
                                 onClick={() => {
                                     reset();
                                     clearErrors();

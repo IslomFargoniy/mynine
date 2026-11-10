@@ -12,7 +12,7 @@ interface AuthLayoutProps {
 
 export default function AuthSimpleLayout({ children, title, description }: PropsWithChildren<AuthLayoutProps>) {
     return (
-        <div className="relative min-h-svh flex flex-col items-center justify-center p-6 md:p-10 overflow-hidden bg-white dark:bg-gray-950 transition-colors duration-500">
+        <div className="relative min-h-svh flex flex-col items-center justify-center p-6 md:p-10 overflow-hidden bg-card transition-colors duration-500">
             {/* Premium Background Elements */}
             <div className="absolute inset-0 overflow-hidden z-0">
                 <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] bg-blue-500/10 dark:bg-blue-600/10 blur-[120px] rounded-full animate-pulse" />
@@ -36,8 +36,8 @@ export default function AuthSimpleLayout({ children, title, description }: Props
                         </Link>
 
                         <div className="space-y-2 text-center">
-                            <h1 className="text-3xl font-black tracking-tight text-gray-900 dark:text-white">{title}</h1>
-                            <p className="text-gray-500 dark:text-gray-400 text-sm font-medium">{description}</p>
+                            <h1 className="text-3xl font-black tracking-tight text-foreground">{title}</h1>
+                            <p className="text-muted-foreground text-sm font-medium">{description}</p>
                         </div>
                     </div>
                     {children}
@@ -49,7 +49,7 @@ export default function AuthSimpleLayout({ children, title, description }: Props
                 <div className="sm:hidden">
                     <LanguageBar placement="top" />
                 </div>
-                <p className="text-gray-400 dark:text-gray-600 text-[10px] uppercase tracking-widest font-bold">
+                <p className="text-muted-foreground text-[10px] uppercase tracking-widest font-bold">
                     &copy; 2025 Mynine Academy. All Rights Reserved.
                 </p>
             </div>

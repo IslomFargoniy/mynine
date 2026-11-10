@@ -104,13 +104,13 @@ export default function UpdateOptionModal({
                     <InputError message={errors.is_correct} />
 
                     {/* Footer */}
-                    <DialogFooter className="flex justify-end gap-3 pt-4 border-t border-gray-200 dark:border-gray-700">
+                    <DialogFooter className="flex justify-end gap-3 pt-4 border-t border-border">
                         <DialogClose asChild>
                             <Button
                                 type="button"
                                 variant="secondary"
-                                className="bg-gray-100 text-gray-700 hover:bg-gray-200
-                           dark:bg-gray-800 dark:text-gray-300 dark:hover:bg-gray-700"
+                                className="bg-muted text-foreground/80 hover:bg-gray-200
+                             dark:hover:bg-gray-700"
                                 onClick={() => {
                                     reset();
                                     clearErrors();

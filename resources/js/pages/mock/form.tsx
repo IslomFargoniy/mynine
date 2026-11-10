@@ -50,7 +50,7 @@ function DateTimeField({ id, value, onChange }: { id: string; value: string; onC
             timeFormat="HH:mm"
             timeIntervals={5}
             dateFormat="yyyy-MM-dd HH:mm"
-            className="h-9 w-full rounded-md border border-gray-200 bg-transparent px-3 text-sm dark:border-gray-700"
+            className="h-9 w-full rounded-md border border-border bg-transparent px-3 text-sm"
             wrapperClassName="w-full"
         />
     );
@@ -147,7 +147,7 @@ export default function MockForm() {
                     actions={
                         <Link
                             href={isEdit ? route('mock.show', mock.id) : route('mock.index')}
-                            className="inline-flex items-center gap-1.5 rounded-xl bg-gray-100 px-3 py-2 text-xs font-bold text-gray-600 hover:bg-gray-200 dark:bg-gray-800 dark:text-gray-300"
+                            className="inline-flex items-center gap-1.5 rounded-xl bg-muted px-3 py-2 text-xs font-bold text-foreground/80 hover:bg-gray-200 dark:hover:bg-gray-700"
                         >
                             <ArrowLeft className="h-4 w-4" />
                             {t('exam_admin.common.back')}
@@ -176,17 +176,17 @@ export default function MockForm() {
                         <DateTimeField id="finished_at" value={data.finished_at} onChange={(v) => setData('finished_at', v)} />
                         <InputError message={errors.finished_at} />
                     </div>
-                    <label className="flex cursor-pointer items-center gap-3 rounded-xl border border-gray-200 p-3 dark:border-gray-700">
+                    <label className="flex cursor-pointer items-center gap-3 rounded-xl border border-border p-3">
                         <input type="checkbox" className="h-4 w-4 accent-indigo-600" checked={data.require_desktop} onChange={(e) => setData('require_desktop', e.target.checked)} />
                         <span>
                             <span className="flex items-center gap-1.5 text-sm font-bold">
                                 <Monitor className="h-4 w-4 text-indigo-500" />
                                 {t('exam_admin.mock_form.require_desktop')}
                             </span>
-                            <span className="text-[11px] text-gray-500">{t('exam_admin.mock_form.require_desktop_hint')}</span>
+                            <span className="text-[11px] text-muted-foreground">{t('exam_admin.mock_form.require_desktop_hint')}</span>
                         </span>
                     </label>
-                    <label className="flex cursor-pointer items-center gap-3 rounded-xl border border-gray-200 p-3 dark:border-gray-700">
+                    <label className="flex cursor-pointer items-center gap-3 rounded-xl border border-border p-3">
                         <input type="checkbox" className="h-4 w-4 accent-indigo-600" checked={data.active === 1} onChange={(e) => setData('active', e.target.checked ? 1 : 0)} />
                         <span className="text-sm font-bold">{t('exam_admin.mock_form.active')}</span>
                     </label>
@@ -195,8 +195,8 @@ export default function MockForm() {
                 <Panel className="space-y-4">
                     <div className="flex flex-wrap items-center justify-between gap-2">
                         <div>
-                            <h2 className="text-sm font-black text-gray-900 dark:text-white">{t('exam_admin.mock_form.modules')}</h2>
-                            <p className="text-[11px] text-gray-500">{t('exam_admin.mock_form.modules_hint', { days: reuseDays })}</p>
+                            <h2 className="text-sm font-black text-foreground">{t('exam_admin.mock_form.modules')}</h2>
+                            <p className="text-[11px] text-muted-foreground">{t('exam_admin.mock_form.modules_hint', { days: reuseDays })}</p>
                         </div>
                         <Button type="button" variant="outline" className="rounded-xl text-xs" onClick={applyAutoPick}>
                             <Wand2 className="h-4 w-4 text-indigo-500" />
@@ -228,12 +228,12 @@ export default function MockForm() {
                                         ))}
                                     </select>
                                     {selected && (
-                                        <div className="space-y-1 text-[11px] text-gray-500">
+                                        <div className="space-y-1 text-[11px] text-muted-foreground">
                                             <div>
                                                 {t('exam_admin.bank.used')}: <b>{selected.uses}</b> · {t('exam_admin.bank.last_used')}: <b>{fmtDateTime(selected.last_used_at, 'dd.MM.yyyy')}</b>
                                             </div>
                                             {selected.recently_used && (
-                                                <div className="flex items-center gap-1 font-semibold text-amber-600">
+                                                <div className="flex items-center gap-1 font-semibold text-amber-600 dark:text-amber-400">
                                                     <AlertTriangle className="h-3.5 w-3.5" />
                                                     {t('exam_admin.mock_form.recent_warning', { days: reuseDays })}
                                                 </div>

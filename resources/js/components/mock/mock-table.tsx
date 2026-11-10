@@ -25,7 +25,7 @@ const MockTable = ({ tests, searchData, ...mock }: MockTableProps) => {
         const status = (item as any).status || (item.active ? 'active' : 'inactive');
         if (!item.active || status === 'inactive') {
             return (
-                <span className="inline-flex items-center rounded-full bg-gray-50 px-2 py-0.5 text-[10px] font-bold text-gray-500 dark:bg-gray-800 dark:text-gray-400">
+                <span className="inline-flex items-center rounded-full bg-muted px-2 py-0.5 text-[10px] font-bold text-muted-foreground">
                     <MinusCircle className="mr-1 h-3 w-3" /> {t('inactive') || 'Nofaol'}
                 </span>
             );
@@ -78,7 +78,7 @@ const MockTable = ({ tests, searchData, ...mock }: MockTableProps) => {
     return (
         <div>
             <div className="mb-4 flex items-center justify-between">
-                <h2 className="text-xl font-semibold text-gray-800 dark:text-gray-100">{t('mock')}</h2>
+                <h2 className="text-xl font-semibold text-foreground">{t('mock')}</h2>
                 <Link
                     href={route('mock.create')}
                     className="inline-flex cursor-pointer items-center gap-2 rounded-xl bg-blue-600 px-4 py-2.5 text-xs font-bold text-white shadow-xs transition-all hover:bg-blue-700 active:scale-95"
@@ -96,7 +96,7 @@ const MockTable = ({ tests, searchData, ...mock }: MockTableProps) => {
                     return (
                         <div
                             key={item.id}
-                            className="group flex flex-col justify-between rounded-2xl border-2 border-gray-200 bg-white p-6 shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-xl dark:border-gray-700 dark:bg-gray-900"
+                            className="group flex flex-col justify-between rounded-2xl border-2 border-border bg-card p-6 shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-xl"
                         >
                             {/* Header */}
                             <div className="mb-4">
@@ -106,7 +106,7 @@ const MockTable = ({ tests, searchData, ...mock }: MockTableProps) => {
                                     </span>
                                     {renderStatusBadge(item)}
                                 </div>
-                                <h3 className="line-clamp-1 text-xl font-bold text-gray-900 dark:text-white group-hover:text-blue-600 transition-colors">
+                                <h3 className="line-clamp-1 text-xl font-bold text-foreground group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">
                                     <Link href={`/mock/${item.id}`}>{item.name}</Link>
                                 </h3>
                                 {item.modules && item.modules.length > 0 ? (
@@ -117,14 +117,14 @@ const MockTable = ({ tests, searchData, ...mock }: MockTableProps) => {
                                             </ModuleBadge>
                                         ))}
                                         {item.require_desktop && (
-                                            <span className="inline-flex items-center gap-1 rounded-lg border border-gray-200 px-1.5 py-0.5 text-[10px] font-bold text-gray-500 dark:border-gray-700">
+                                            <span className="inline-flex items-center gap-1 rounded-lg border border-border px-1.5 py-0.5 text-[10px] font-bold text-muted-foreground">
                                                 <Monitor className="h-3 w-3" />
                                             </span>
                                         )}
                                     </div>
                                 ) : (
-                                    <div className="mt-1 flex items-center text-xs text-gray-500 dark:text-gray-400">
-                                        <span className="font-semibold text-blue-600/70">{item.test?.folder?.name}</span>
+                                    <div className="mt-1 flex items-center text-xs text-muted-foreground">
+                                        <span className="font-semibold text-blue-600/70 dark:text-blue-400/70">{item.test?.folder?.name}</span>
                                         <span className="mx-2 opacity-30">/</span>
                                         <span className="truncate">{item.test?.name}</span>
                                     </div>
@@ -133,29 +133,29 @@ const MockTable = ({ tests, searchData, ...mock }: MockTableProps) => {
 
                             {/* Comment */}
                             <div className="mb-6 flex-grow">
-                                <p className="line-clamp-3 text-sm leading-relaxed text-gray-600 dark:text-gray-400 italic">
+                                <p className="line-clamp-3 text-sm leading-relaxed text-muted-foreground italic">
                                     {item.comment || t('no_comment')}
                                 </p>
                             </div>
 
                             {/* Dates */}
-                            <div className="mb-6 space-y-2 rounded-xl bg-gray-50 p-3 dark:bg-gray-800/50">
+                            <div className="mb-6 space-y-2 rounded-xl bg-muted p-3">
                                 <div className="flex justify-between text-[11px]">
-                                    <span className="text-gray-500">{t('started_at')}</span>
-                                    <span className="font-mono font-medium text-gray-700 dark:text-gray-300">
+                                    <span className="text-muted-foreground">{t('started_at')}</span>
+                                    <span className="font-mono font-medium text-foreground/80">
                                         {format(new Date(item.started_at), 'MMM dd, HH:mm')}
                                     </span>
                                 </div>
                                 <div className="flex justify-between text-[11px]">
-                                    <span className="text-gray-500">{t('finished_at')}</span>
-                                    <span className="font-mono font-medium text-gray-700 dark:text-gray-300">
+                                    <span className="text-muted-foreground">{t('finished_at')}</span>
+                                    <span className="font-mono font-medium text-foreground/80">
                                         {format(new Date(item.finished_at), 'MMM dd, HH:mm')}
                                     </span>
                                 </div>
                             </div>
 
                             {/* Actions */}
-                            <div className="flex items-center justify-between gap-2 pt-3 border-t border-gray-100 dark:border-gray-800">
+                            <div className="flex items-center justify-between gap-2 pt-3 border-t border-border">
                                 <MockStudentManager
                                     mockId={item.id}
                                     mockName={item.name}
@@ -190,7 +190,7 @@ const MockTable = ({ tests, searchData, ...mock }: MockTableProps) => {
             {selectedMock && openDelete && <DeleteItemModal item={selectedMock} open={openDelete} setOpen={setOpenDelete} onDelete={handleDelete} />}
 
             {/* Pagination */}
-            <div className="mt-6 flex items-center justify-between text-sm text-gray-600 dark:text-gray-300">
+            <div className="mt-6 flex items-center justify-between text-sm text-foreground/80">
                 <div>
                     {t('showing', {
                         from: mock.from,
@@ -207,8 +207,8 @@ const MockTable = ({ tests, searchData, ...mock }: MockTableProps) => {
                                 link.active
                                     ? 'bg-blue-600 text-white'
                                     : !link.url
-                                      ? 'cursor-not-allowed text-gray-400 dark:text-gray-500'
-                                      : 'border border-gray-300 bg-white text-gray-700 hover:bg-gray-100 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-200 dark:hover:bg-gray-700'
+                                      ? 'cursor-not-allowed text-muted-foreground'
+                                      : 'border border-gray-300 bg-white text-foreground/80 hover:bg-gray-100 dark:border-gray-600 dark:bg-gray-800 dark:hover:bg-gray-700'
                             }`}
                             dangerouslySetInnerHTML={{ __html: link.label }}
                         />

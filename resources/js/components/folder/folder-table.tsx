@@ -58,7 +58,7 @@ const FolderTable = ({ searchData, ...folder }: FolderTableProps) => {
     return (
         <div>
             <div className="flex justify-between items-center mb-4">
-                <h2 className="text-xl font-semibold text-gray-800 dark:text-gray-100">
+                <h2 className="text-xl font-semibold text-foreground">
                     {t('folder')}
                 </h2>
                 {isAdmin && <CreateFolderModal />}
@@ -73,29 +73,29 @@ const FolderTable = ({ searchData, ...folder }: FolderTableProps) => {
                     return (
                         <div
                             key={item.id}
-                            className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-2xl p-5 shadow-xs hover:shadow-md transition-all flex flex-col justify-between"
+                            className="bg-card border border-border rounded-2xl p-5 shadow-xs hover:shadow-md transition-all flex flex-col justify-between"
                         >
                             {/* Header */}
                             <div className="flex justify-between items-start gap-2">
-                                <h3 className="text-base font-bold text-gray-900 dark:text-gray-100 line-clamp-1 hover:text-blue-600 dark:hover:text-blue-400 transition-colors">
+                                <h3 className="text-base font-bold text-foreground line-clamp-1 hover:text-blue-600 dark:hover:text-blue-400 transition-colors">
                                     <Link href={`/folder/${item.id}`}>
                                         {item.name}
                                     </Link>
                                 </h3>
-                                <span className="text-[11px] font-semibold text-gray-400 dark:text-gray-500 shrink-0">#{globalIndex}</span>
+                                <span className="text-[11px] font-semibold text-muted-foreground shrink-0">#{globalIndex}</span>
                             </div>
 
                             {/* Comment */}
-                            <p className="mt-1.5 text-xs text-gray-500 dark:text-gray-400 line-clamp-2 min-h-[32px]">
+                            <p className="mt-1.5 text-xs text-muted-foreground line-clamp-2 min-h-[32px]">
                                 {item.comment || t('no_comment')}
                             </p>
 
                             {/* Status */}
-                            <div className="mt-4 flex items-center justify-between border-t border-gray-100 dark:border-gray-800/60 pt-3">
+                            <div className="mt-4 flex items-center justify-between border-t border-border pt-3">
                                 <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-bold ${
                                     item.active == 1
                                         ? 'bg-emerald-50 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800/40'
-                                        : 'bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400'
+                                        : 'bg-muted text-muted-foreground'
                                 }`}>
                                     {item.active == 1 ? (
                                         <CheckCircle className="w-3.5 h-3.5" />
@@ -152,7 +152,7 @@ const FolderTable = ({ searchData, ...folder }: FolderTableProps) => {
             )}
 
             {/* Pagination */}
-            <div className="mt-6 flex justify-between items-center text-sm text-gray-600 dark:text-gray-300">
+            <div className="mt-6 flex justify-between items-center text-sm text-foreground/80">
                 <div>
                     {t('showing', {
                         from: folder.from,
@@ -169,8 +169,8 @@ const FolderTable = ({ searchData, ...folder }: FolderTableProps) => {
                                 link.active
                                     ? 'bg-blue-600 text-white'
                                     : !link.url
-                                        ? 'text-gray-400 dark:text-gray-500 cursor-not-allowed'
-                                        : 'bg-white dark:bg-gray-800 dark:text-gray-200 text-gray-700 border border-gray-300 dark:border-gray-600 hover:bg-gray-100 dark:hover:bg-gray-700'
+                                        ? 'text-muted-foreground cursor-not-allowed'
+                                        : 'bg-white dark:bg-gray-800 text-foreground/80 border border-gray-300 dark:border-gray-600 hover:bg-gray-100 dark:hover:bg-gray-700'
                             }`}
                             dangerouslySetInnerHTML={{ __html: link.label }}
                         />

@@ -56,7 +56,7 @@ const TestTable = ({ ...folder }: Folder) => {
         <div>
             {/* Header with Create Button */}
             <div className="flex justify-between items-center mb-4">
-                <h2 className="text-xl font-semibold text-gray-800 dark:text-gray-100">
+                <h2 className="text-xl font-semibold text-foreground">
                     {t('tests')}
                 </h2>
                 {isAdmin && (
@@ -73,7 +73,7 @@ const TestTable = ({ ...folder }: Folder) => {
                     return (
                         <div
                             key={item.id}
-                            className="group flex flex-col justify-between rounded-2xl border-2 border-gray-200 bg-white p-6 shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-xl dark:border-gray-700 dark:bg-gray-900"
+                            className="group flex flex-col justify-between rounded-2xl border-2 border-border bg-card p-6 shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-xl"
                         >
                             {/* Header */}
                             <div className="mb-4">
@@ -87,18 +87,18 @@ const TestTable = ({ ...folder }: Folder) => {
                                                 {t('active')}
                                             </span>
                                         ) : (
-                                            <span className="inline-flex items-center rounded-full bg-gray-50 px-2 py-0.5 text-[10px] font-bold text-gray-500 dark:bg-gray-800 dark:text-gray-400">
+                                            <span className="inline-flex items-center rounded-full bg-muted px-2 py-0.5 text-[10px] font-bold text-muted-foreground">
                                                 {t('inactive')}
                                             </span>
                                         )}
                                         {isAdmin && (
-                                            <span className={`inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-bold ${item.open == 1 ? 'bg-blue-50 text-blue-700' : 'bg-amber-50 text-amber-700'}`}>
+                                            <span className={`inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-bold ${item.open == 1 ? 'bg-blue-50 text-blue-700 dark:text-blue-400 dark:bg-blue-950/40' : 'bg-amber-50 text-amber-700 dark:text-amber-400 dark:bg-amber-950/40'}`}>
                                                 {item.open == 1 ? t('open') : t('closed') ?? 'Closed'}
                                             </span>
                                         )}
                                     </div>
                                 </div>
-                                <h3 className="line-clamp-1 text-lg font-bold text-gray-900 dark:text-white group-hover:text-blue-600 transition-colors">
+                                <h3 className="line-clamp-1 text-lg font-bold text-foreground group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">
                                     {item.name}
                                 </h3>
                                 {item.purpose === 'mock' && (
@@ -110,7 +110,7 @@ const TestTable = ({ ...folder }: Folder) => {
 
                             {/* Comment */}
                             <div className="mb-4">
-                                <p className="line-clamp-2 text-xs leading-relaxed text-gray-500 dark:text-gray-400">
+                                <p className="line-clamp-2 text-xs leading-relaxed text-muted-foreground">
                                     {item.comment || t('no_comment')}
                                 </p>
                             </div>
@@ -122,7 +122,7 @@ const TestTable = ({ ...folder }: Folder) => {
                                         <Link 
                                             key={idx} 
                                             href={`/test-type/${i.id}`}
-                                            className="inline-flex items-center px-2 py-1 rounded-md bg-gray-50 dark:bg-gray-800 text-[10px] font-semibold text-gray-600 dark:text-gray-300 border border-gray-100 dark:border-gray-700 hover:border-blue-500 hover:text-blue-600 transition-all"
+                                            className="inline-flex items-center px-2 py-1 rounded-md bg-muted text-[10px] font-semibold text-foreground/80 border border-border hover:border-blue-500 hover:text-blue-600 transition-all"
                                         >
                                             {i.type?.name}
                                         </Link>
@@ -132,7 +132,7 @@ const TestTable = ({ ...folder }: Folder) => {
 
                             {/* Audio Player */}
                             {item.audio_path && (
-                                <div className="mb-6 p-2 rounded-xl bg-gray-50 dark:bg-gray-800/40 border border-gray-100 dark:border-gray-700">
+                                <div className="mb-6 p-2 rounded-xl bg-gray-50 dark:bg-gray-800/40 border border-border">
                                     <audio className="w-full h-8" controls>
                                         <source src={`/${item.audio_path}`} type="audio/mpeg" />
                                     </audio>
@@ -141,7 +141,7 @@ const TestTable = ({ ...folder }: Folder) => {
 
                             {/* Actions */}
                             {isAdmin && (
-                                <div className="flex items-center gap-2 pt-2 mt-auto border-t border-gray-100 dark:border-gray-800">
+                                <div className="flex items-center gap-2 pt-2 mt-auto border-t border-border">
                                     <button
                                         type="button"
                                         onClick={() => handleUpdateClick(item)}

@@ -58,9 +58,9 @@ const UserTable = ({ roles, searchData, ...user }: UserTableProps) => {
     return (
         <div>
             {/* Table Container */}
-            <div className="overflow-x-auto rounded-2xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 shadow-xs">
+            <div className="overflow-x-auto rounded-2xl border border-border bg-card shadow-xs">
                 <table className="w-full text-xs text-left border-collapse">
-                    <thead className="bg-gray-50 dark:bg-gray-800/60 text-gray-500 dark:text-gray-400 font-bold uppercase text-[10px] tracking-wider border-b border-gray-200 dark:border-gray-800">
+                    <thead className="bg-muted text-muted-foreground font-bold uppercase text-[10px] tracking-wider border-b border-border">
                     <tr>
                         <th className="px-4 py-3 font-bold">{t('n')}</th>
                         <th className="px-4 py-3 font-bold">{t('name')}</th>
@@ -79,20 +79,20 @@ const UserTable = ({ roles, searchData, ...user }: UserTableProps) => {
                         const globalIndex = (user.current_page - 1) * user.per_page + index + 1;
                         return (
                             <tr key={item.id} className="hover:bg-gray-50/50 dark:hover:bg-gray-800/40 transition-colors">
-                                <td className="px-4 py-3 font-semibold text-gray-400 dark:text-gray-500">#{globalIndex}</td>
-                                <td className="px-4 py-3 font-bold text-gray-900 dark:text-gray-100">
+                                <td className="px-4 py-3 font-semibold text-muted-foreground">#{globalIndex}</td>
+                                <td className="px-4 py-3 font-bold text-foreground">
                                     <Link href={`/user/${item.id}`} className="hover:text-blue-600 dark:hover:text-blue-400 transition-colors">
                                         {item.name}
-                                        <span className="ml-1.5 text-[11px] font-medium text-gray-400 dark:text-gray-500">
+                                        <span className="ml-1.5 text-[11px] font-medium text-muted-foreground">
                                             ( {item.roles?.map((role) => role.name).join(', ')} )
                                         </span>
                                     </Link>
                                 </td>
-                                <td className="px-4 py-3 text-gray-600 dark:text-gray-300 font-medium">{item.username || '-'}</td>
-                                <td className="px-4 py-3 text-gray-600 dark:text-gray-300 font-medium">{item.telegram_id || '-'}</td>
-                                <td className="px-4 py-3 text-gray-600 dark:text-gray-300 font-medium">{item.phone || '-'}</td>
-                                <td className="px-4 py-3 text-gray-600 dark:text-gray-300 font-medium">{item.email || '-'}</td>
-                                <td className="px-4 py-3 text-gray-500 dark:text-gray-400 text-[11px]">
+                                <td className="px-4 py-3 text-foreground/80 font-medium">{item.username || '-'}</td>
+                                <td className="px-4 py-3 text-foreground/80 font-medium">{item.telegram_id || '-'}</td>
+                                <td className="px-4 py-3 text-foreground/80 font-medium">{item.phone || '-'}</td>
+                                <td className="px-4 py-3 text-foreground/80 font-medium">{item.email || '-'}</td>
+                                <td className="px-4 py-3 text-muted-foreground text-[11px]">
                                     {new Date(item.created_at).toLocaleString('sv-SE').replace('T', ' ')}
                                 </td>
                                 <td className="px-4 py-3 text-right">
@@ -144,7 +144,7 @@ const UserTable = ({ roles, searchData, ...user }: UserTableProps) => {
             )}
 
                 {/* Pagination */}
-                <div className="mt-4 flex justify-between items-center text-sm text-gray-600 dark:text-gray-300">
+                <div className="mt-4 flex justify-between items-center text-sm text-foreground/80">
                     <div>
                         {t('showing', {
                             from: user.from,
@@ -161,8 +161,8 @@ const UserTable = ({ roles, searchData, ...user }: UserTableProps) => {
                                     link.active
                                         ? 'bg-blue-600 text-white'
                                         : !link.url
-                                            ? 'text-gray-400 dark:text-gray-500 cursor-not-allowed'
-                                            : 'bg-white dark:bg-gray-800 dark:text-gray-200 text-gray-700 border border-gray-300 dark:border-gray-600 hover:bg-gray-100 dark:hover:bg-gray-700'
+                                            ? 'text-muted-foreground cursor-not-allowed'
+                                            : 'bg-white dark:bg-gray-800 text-foreground/80 border border-gray-300 dark:border-gray-600 hover:bg-gray-100 dark:hover:bg-gray-700'
                                 }`}
                                 dangerouslySetInnerHTML={{ __html: link.label }}
                             />

@@ -73,8 +73,8 @@ export default function EditPart() {
         <AppLayout breadcrumbs={breadcrumbs}>
             <Head title={`${part.name || t('edit_part')} - ${testName}`} />
             <div className="flex h-full flex-1 flex-col gap-4 rounded-xl p-4 overflow-y-auto">
-                <div className="flex items-center justify-between pb-2 border-b border-gray-100 dark:border-gray-800">
-                    <h1 className="text-base font-bold text-gray-900 dark:text-gray-100">
+                <div className="flex items-center justify-between pb-2 border-b border-border">
+                    <h1 className="text-base font-bold text-foreground">
                         {part.name || t('edit_part')}
                     </h1>
                 </div>
@@ -141,8 +141,8 @@ export default function EditPart() {
                             <Button
                                 type="button"
                                 onClick={() => router.visit(route('test-type.show', part.test_type_id))}
-                                className="bg-gray-100 text-gray-800 hover:bg-gray-200
-                   dark:bg-gray-800 dark:text-gray-200 dark:hover:bg-gray-700"
+                                className="bg-muted text-foreground hover:bg-gray-200
+                     dark:hover:bg-gray-700"
                             >
                                 {t('cancel')}
                             </Button>

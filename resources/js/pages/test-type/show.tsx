@@ -76,7 +76,7 @@ export default function TestTypeShow() {
             <div className="flex flex-col overflow-hidden" style={{ height: 'calc(100vh - 112px)' }}>
 
                 {/* ══════════ STICKY SUBHEADER ══════════ */}
-                <div className="flex-none flex items-center justify-between gap-3 px-4 py-2 bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-700 z-30">
+                <div className="flex-none flex items-center justify-between gap-3 px-4 py-2 bg-card border-b border-border z-30">
                     {/* Part pills */}
                     <div className="flex items-center gap-1.5 overflow-x-auto hide-scrollbar flex-1">
                         {parts.map((part: Part, idx: number) => (
@@ -86,7 +86,7 @@ export default function TestTypeShow() {
                                 className={`px-4 py-1 rounded-full text-sm font-medium transition-all whitespace-nowrap border ${
                                     selectedPartId === part.id
                                         ? 'bg-blue-600 text-white border-blue-600 shadow-sm'
-                                        : 'bg-white dark:bg-gray-800 text-gray-600 dark:text-gray-300 border-gray-200 dark:border-gray-700 hover:border-blue-300 hover:text-blue-600'
+                                        : 'bg-white dark:bg-gray-800 text-foreground/80 border-border hover:border-blue-300 hover:text-blue-600'
                                 }`}
                             >
                                 {part.name || `Part ${idx + 1}`}
@@ -113,12 +113,12 @@ export default function TestTypeShow() {
                         {!isListening && (
                             <>
                                 <div
-                                    className="flex flex-col h-full bg-white dark:bg-gray-900 border-r border-gray-200 dark:border-gray-700 overflow-hidden"
+                                    className="flex flex-col h-full bg-card border-r border-border overflow-hidden"
                                     style={{ width: `${leftWidth}%` }}
                                 >
                                     {/* Part header */}
-                                    <div className="flex items-center justify-between px-4 py-2.5 border-b border-gray-100 dark:border-gray-800 bg-gray-50 dark:bg-gray-800 shrink-0">
-                                        <h2 className="font-bold text-sm text-gray-800 dark:text-gray-100 truncate">
+                                    <div className="flex items-center justify-between px-4 py-2.5 border-b border-border bg-muted shrink-0">
+                                        <h2 className="font-bold text-sm text-foreground truncate">
                                             {selectedPart.name}
                                         </h2>
                                         <PartComponent part={selectedPart} partIndex={ci} testType={testType} />
@@ -131,7 +131,7 @@ export default function TestTypeShow() {
                                                 dangerouslySetInnerHTML={{ __html: cleanTinyMce(selectedPart.textarea) }}
                                             />
                                         ) : (
-                                            <div className="flex flex-col items-center justify-center h-full text-gray-300 dark:text-gray-600 gap-2">
+                                            <div className="flex flex-col items-center justify-center h-full text-muted-foreground/60 gap-2">
                                                 <p className="text-sm">{t('no_passage') ?? 'No passage text yet.'}</p>
                                                 <button
                                                     type="button"
@@ -162,8 +162,8 @@ export default function TestTypeShow() {
                         >
                             {/* Listening: part actions in right panel header */}
                             {isListening && (
-                                <div className="flex items-center justify-between px-4 py-2.5 border-b border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 shrink-0">
-                                    <h2 className="font-bold text-sm text-gray-800 dark:text-gray-100">
+                                <div className="flex items-center justify-between px-4 py-2.5 border-b border-border bg-card shrink-0">
+                                    <h2 className="font-bold text-sm text-foreground">
                                         {selectedPart.name}
                                     </h2>
                                     <PartComponent part={selectedPart} partIndex={ci} />
@@ -173,7 +173,7 @@ export default function TestTypeShow() {
                             {/* Section list */}
                             <div className="flex-1 overflow-y-auto p-4 space-y-3">
                                 {selectedPart.sections.length === 0 ? (
-                                    <div className="flex flex-col items-center justify-center h-48 text-gray-400 dark:text-gray-600 gap-2">
+                                    <div className="flex flex-col items-center justify-center h-48 text-muted-foreground gap-2">
                                         <Plus className="w-10 h-10 opacity-20" />
                                         <p className="text-sm text-center">
                                             {t('no_sections') ?? 'No sections yet. Add a section below.'}
@@ -202,7 +202,7 @@ export default function TestTypeShow() {
                             </div>
 
                             {/* Sticky bottom toolbar */}
-                            <div className="shrink-0 flex items-center gap-3 px-4 py-3 border-t border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900">
+                            <div className="shrink-0 flex items-center gap-3 px-4 py-3 border-t border-border bg-card">
                                 <CreateSectionModal part={selectedPart} question_types={question_types} />
                                 <ImportAiModal part={selectedPart} />
                             </div>

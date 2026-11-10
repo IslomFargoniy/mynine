@@ -7,7 +7,7 @@ import AppearanceToggleDropdown from '@/components/appearance-dropdown';
 export function AppSidebarHeader({ breadcrumbs = [] }: { breadcrumbs?: BreadcrumbItemType[] }) {
     return (
         <div className="fixed top-0 z-50 block w-full dark:bg-black bg-white">
-            <header className="flex justify-between items-center h-14 px-6 border-b-2 border-gray-200 dark:border-gray-800">
+            <header className="flex justify-between items-center h-14 px-6 border-b-2 border-border">
                 <div className="flex items-center gap-2">
                     <SidebarTrigger className="-ml-1" />
                     <Breadcrumbs breadcrumbs={breadcrumbs} />

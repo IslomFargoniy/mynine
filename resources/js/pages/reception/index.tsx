@@ -130,7 +130,7 @@ export default function ReceptionIndex() {
                             visit({});
                         }}
                     >
-                        <Search className="absolute top-1/2 left-3 h-3.5 w-3.5 -translate-y-1/2 text-gray-400" />
+                        <Search className="absolute top-1/2 left-3 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground" />
                         <input className={`${inputClass} pl-8`} value={search} onChange={(e) => setSearch(e.target.value)} placeholder={t('exam_admin.reception.search')} />
                     </form>
                     <Button
@@ -148,7 +148,7 @@ export default function ReceptionIndex() {
                     {['not_arrived', 'checked_in', 'in_exam', 'written_done', 'speaking_waiting', 'result_ready', 'delivered'].map((status) => (
                         <span key={status} className="inline-flex items-center gap-1.5">
                             <CandidateStatusBadge status={status} />
-                            <b className="text-xs text-gray-600 dark:text-gray-300">{counts[status] ?? 0}</b>
+                            <b className="text-xs text-foreground/80">{counts[status] ?? 0}</b>
                         </span>
                     ))}
                 </div>
@@ -160,7 +160,7 @@ export default function ReceptionIndex() {
                 ) : (
                     <Panel className="overflow-x-auto p-0">
                         <table className="w-full text-left text-xs">
-                            <thead className="bg-gray-50 text-[10px] font-bold text-gray-500 uppercase dark:bg-gray-800/60 dark:text-gray-400">
+                            <thead className="bg-muted text-[10px] font-bold text-muted-foreground uppercase">
                                 <tr>
                                     <th className="px-3 py-2.5">
                                         <input
@@ -185,12 +185,12 @@ export default function ReceptionIndex() {
                                             <input type="checkbox" className="accent-indigo-600" checked={selected.includes(c.id)} onChange={() => toggle(c.id)} />
                                         </td>
                                         <td className="px-3 py-2.5">
-                                            <div className="font-bold text-gray-900 dark:text-white">{c.name}</div>
-                                            <div className="font-mono text-[11px] text-gray-500">{c.phone ?? '—'}</div>
+                                            <div className="font-bold text-foreground">{c.name}</div>
+                                            <div className="font-mono text-[11px] text-muted-foreground">{c.phone ?? '—'}</div>
                                             {!filters.mock_id && mocks.length > 1 && <div className="text-[10px] text-indigo-500">{c.mock_name}</div>}
                                             {c.repeats.length > 0 && (
                                                 <div
-                                                    className="mt-0.5 flex items-center gap-1 text-[10px] font-bold text-amber-600"
+                                                    className="mt-0.5 flex items-center gap-1 text-[10px] font-bold text-amber-600 dark:text-amber-400"
                                                     title={c.repeats.map((r) => `${r.type} — ${r.test} (${r.date ?? ''})`).join('\n')}
                                                 >
                                                     <AlertTriangle className="h-3 w-3" />
@@ -202,12 +202,12 @@ export default function ReceptionIndex() {
                                         <td className="px-3 py-2.5">
                                             <CandidateStatusBadge status={c.status} module={c.current_module} />
                                             {c.status === 'delivered' && c.delivered_by && (
-                                                <div className="mt-0.5 text-[10px] text-gray-400">
+                                                <div className="mt-0.5 text-[10px] text-muted-foreground">
                                                     {c.delivered_by} · {fmtDateTime(c.result_delivered_at, 'HH:mm')}
                                                 </div>
                                             )}
                                             {!c.result_ready && c.status !== 'not_arrived' && c.status !== 'checked_in' && c.missing.length > 0 && (
-                                                <div className="mt-0.5 text-[10px] text-gray-400">
+                                                <div className="mt-0.5 text-[10px] text-muted-foreground">
                                                     {t('exam_admin.reception.waiting_for')}: {c.missing.map((m) => t(`exam_admin.reception.missing.${m}`)).join(', ')}
                                                 </div>
                                             )}
@@ -233,7 +233,7 @@ export default function ReceptionIndex() {
                                                 </Button>
                                                 {c.result_ready && (
                                                     <Button size="sm" variant="outline" onClick={() => printResults([c.id])} className="h-7 rounded-lg px-2 text-[11px]">
-                                                        <FileText className="h-3.5 w-3.5 text-emerald-600" />
+                                                        <FileText className="h-3.5 w-3.5 text-emerald-600 dark:text-emerald-400" />
                                                         {c.result_printed_at ? t('exam_admin.reception.reprint') : t('exam_admin.reception.print_result')}
                                                     </Button>
                                                 )}

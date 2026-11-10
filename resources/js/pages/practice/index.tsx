@@ -1,7 +1,7 @@
 import { Head, router, usePage } from '@inertiajs/react';
 import { Attempt, Part, Question, Section, TestType } from '@/types';
 import { useTranslation } from 'react-i18next';
-import React, { ReactElement, useEffect, useState, useMemo, useCallback } from 'react';
+import React, { ReactElement, useEffect, useLayoutEffect, useState, useMemo, useCallback } from 'react';
 import PracticePart from '@/components/practice/practice-part';
 import PracticeSection from '@/components/practice/practice-section';
 import PracticeEssay from '@/components/practice/practice-essay';
@@ -57,8 +57,9 @@ export default function Practice() {
         enabled: !!selectedPart,
     });
 
-    // Disable global dark mode on practice page so site theme doesn't ruin practice contrast
-    useEffect(() => {
+    // Disable global dark mode on practice page so site theme doesn't ruin practice contrast.
+    // Layout effect so the class is removed before the first paint (no dark flash).
+    useLayoutEffect(() => {
         const root = document.documentElement;
         const hadDarkClass = root.classList.contains('dark');
 

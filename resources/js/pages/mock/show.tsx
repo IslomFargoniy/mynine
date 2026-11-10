@@ -73,19 +73,19 @@ export default function MockShow() {
                     <div className="flex items-center gap-3">
                         <Link
                             href={route('mock.index')}
-                            className="p-2 rounded-xl bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors"
+                            className="p-2 rounded-xl bg-muted text-foreground/80 hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors"
                         >
                             <ArrowLeft className="w-5 h-5" />
                         </Link>
                         <div>
                             <div className="flex items-center gap-2">
-                                <h1 className="text-2xl font-black text-gray-900 dark:text-white">
+                                <h1 className="text-2xl font-black text-foreground">
                                     {mock.name}
                                 </h1>
                                 <span className={`px-2.5 py-0.5 rounded-full text-xs font-bold ${
                                     isActive
                                         ? 'bg-emerald-50 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800/40'
-                                        : 'bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400'
+                                        : 'bg-muted text-muted-foreground'
                                 }`}>
                                     {isActive ? '● Faol' : '○ Nofaol'}
                                 </span>
@@ -98,13 +98,13 @@ export default function MockShow() {
                                         </ModuleBadge>
                                     ))}
                                     {mock.require_desktop && (
-                                        <span className="inline-flex items-center gap-1 rounded-lg border border-gray-200 px-1.5 py-0.5 text-[10px] font-bold text-gray-500 dark:border-gray-700">
+                                        <span className="inline-flex items-center gap-1 rounded-lg border border-border px-1.5 py-0.5 text-[10px] font-bold text-muted-foreground">
                                             <Monitor className="h-3 w-3" /> {t('exam_admin.mock_form.require_desktop')}
                                         </span>
                                     )}
                                 </div>
                             ) : (
-                                <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5 flex items-center gap-1.5">
+                                <p className="text-xs text-muted-foreground mt-0.5 flex items-center gap-1.5">
                                     <span className="font-semibold text-indigo-600 dark:text-indigo-400">{mock.test?.folder?.name}</span>
                                     <span>/</span>
                                     <span>{mock.test?.name}</span>
@@ -117,13 +117,13 @@ export default function MockShow() {
                         <Link href={route('mock.edit', mock.id)} className="inline-flex h-10 items-center gap-1.5 rounded-xl bg-blue-50 px-3 text-xs font-bold text-blue-700 hover:bg-blue-100 dark:bg-blue-900/30 dark:text-blue-300">
                             <Pencil className="h-4 w-4" /> {t('exam_admin.common.edit')}
                         </Link>
-                        <Link href={route('reception.index', { mock_id: mock.id, date: (mock.started_at ?? '').slice(0, 10) || undefined })} className="inline-flex h-10 items-center gap-1.5 rounded-xl bg-gray-100 px-3 text-xs font-bold text-gray-700 hover:bg-gray-200 dark:bg-gray-800 dark:text-gray-200">
+                        <Link href={route('reception.index', { mock_id: mock.id, date: (mock.started_at ?? '').slice(0, 10) || undefined })} className="inline-flex h-10 items-center gap-1.5 rounded-xl bg-muted px-3 text-xs font-bold text-foreground/80 hover:bg-gray-200 dark:hover:bg-gray-700">
                             <ConciergeBell className="h-4 w-4" /> {t('exam_admin.nav.reception')}
                         </Link>
-                        <Link href={route('monitor.index', { mock_id: mock.id })} className="inline-flex h-10 items-center gap-1.5 rounded-xl bg-gray-100 px-3 text-xs font-bold text-gray-700 hover:bg-gray-200 dark:bg-gray-800 dark:text-gray-200">
+                        <Link href={route('monitor.index', { mock_id: mock.id })} className="inline-flex h-10 items-center gap-1.5 rounded-xl bg-muted px-3 text-xs font-bold text-foreground/80 hover:bg-gray-200 dark:hover:bg-gray-700">
                             <Activity className="h-4 w-4" /> {t('exam_admin.nav.monitor')}
                         </Link>
-                        <Link href={route('speaking.index', { mock_id: mock.id })} className="inline-flex h-10 items-center gap-1.5 rounded-xl bg-gray-100 px-3 text-xs font-bold text-gray-700 hover:bg-gray-200 dark:bg-gray-800 dark:text-gray-200">
+                        <Link href={route('speaking.index', { mock_id: mock.id })} className="inline-flex h-10 items-center gap-1.5 rounded-xl bg-muted px-3 text-xs font-bold text-foreground/80 hover:bg-gray-200 dark:hover:bg-gray-700">
                             <Mic className="h-4 w-4" /> {t('exam_admin.nav.speaking')}
                         </Link>
                     </div>
@@ -135,7 +135,7 @@ export default function MockShow() {
                                 variant="outline"
                                 className="h-10 px-4 rounded-xl border-green-200 bg-green-50/50 text-green-700 hover:bg-green-100 dark:border-green-900/30 dark:bg-green-900/20 dark:text-green-400 gap-2 font-bold text-xs shadow-xs"
                             >
-                                <FileSpreadsheet className="w-4 h-4 text-green-600" />
+                                <FileSpreadsheet className="w-4 h-4 text-green-600 dark:text-green-400" />
                                 Natijalarni Excelga Yuklash
                             </Button>
                         </div>
@@ -144,51 +144,51 @@ export default function MockShow() {
 
                 {/* Quick Stats Grid */}
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-                    <div className="rounded-2xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 p-4 shadow-xs flex items-center gap-3.5">
+                    <div className="rounded-2xl border border-border bg-card p-4 shadow-xs flex items-center gap-3.5">
                         <div className="p-3 rounded-xl bg-indigo-50 dark:bg-indigo-950/40 text-indigo-600 dark:text-indigo-400">
                             <Users className="w-5 h-5" />
                         </div>
                         <div>
-                            <p className="text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Jami O'quvchilar</p>
-                            <h3 className="text-xl font-black text-gray-900 dark:text-white mt-0.5">{totalStudents} ta</h3>
+                            <p className="text-xs font-bold text-muted-foreground uppercase tracking-wider">Jami O'quvchilar</p>
+                            <h3 className="text-xl font-black text-foreground mt-0.5">{totalStudents} ta</h3>
                         </div>
                     </div>
 
-                    <div className="rounded-2xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 p-4 shadow-xs flex items-center gap-3.5">
+                    <div className="rounded-2xl border border-border bg-card p-4 shadow-xs flex items-center gap-3.5">
                         <div className="p-3 rounded-xl bg-emerald-50 dark:bg-emerald-950/40 text-emerald-600 dark:text-emerald-400">
                             <CheckCircle2 className="w-5 h-5" />
                         </div>
                         <div>
-                            <p className="text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Qatnashganlar</p>
+                            <p className="text-xs font-bold text-muted-foreground uppercase tracking-wider">Qatnashganlar</p>
                             <h3 className="text-xl font-black text-emerald-600 dark:text-emerald-400 mt-0.5">
-                                {attendedStudents} ta <span className="text-xs text-gray-400 font-normal">({totalStudents > 0 ? Math.round((attendedStudents/totalStudents)*100) : 0}%)</span>
+                                {attendedStudents} ta <span className="text-xs text-muted-foreground font-normal">({totalStudents > 0 ? Math.round((attendedStudents/totalStudents)*100) : 0}%)</span>
                             </h3>
                         </div>
                     </div>
 
-                    <div className="rounded-2xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 p-4 shadow-xs flex items-center gap-3.5">
+                    <div className="rounded-2xl border border-border bg-card p-4 shadow-xs flex items-center gap-3.5">
                         <div className="p-3 rounded-xl bg-amber-50 dark:bg-amber-950/40 text-amber-600 dark:text-amber-400">
                             <Clock className="w-5 h-5" />
                         </div>
                         <div>
-                            <p className="text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Kutilayotganlar</p>
+                            <p className="text-xs font-bold text-muted-foreground uppercase tracking-wider">Kutilayotganlar</p>
                             <h3 className="text-xl font-black text-amber-600 dark:text-amber-400 mt-0.5">{pendingStudents} ta</h3>
                         </div>
                     </div>
 
-                    <div className="rounded-2xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 p-4 shadow-xs flex items-center gap-3.5">
+                    <div className="rounded-2xl border border-border bg-card p-4 shadow-xs flex items-center gap-3.5">
                         <div className="p-3 rounded-xl bg-blue-50 dark:bg-blue-950/40 text-blue-600 dark:text-blue-400">
                             <Activity className="w-5 h-5" />
                         </div>
                         <div>
-                            <p className="text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Topshirilgan Urinishlar</p>
-                            <h3 className="text-xl font-black text-gray-900 dark:text-white mt-0.5">{attempts.length} ta</h3>
+                            <p className="text-xs font-bold text-muted-foreground uppercase tracking-wider">Topshirilgan Urinishlar</p>
+                            <h3 className="text-xl font-black text-foreground mt-0.5">{attempts.length} ta</h3>
                         </div>
                     </div>
                 </div>
 
                 {/* Tabs Navigation */}
-                <div className="flex border-b border-gray-200 dark:border-gray-800">
+                <div className="flex border-b border-border">
                     <button
                         onClick={() => setActiveTab('students')}
                         className={`px-5 py-3 font-bold text-xs flex items-center gap-2 border-b-2 transition-all cursor-pointer ${
@@ -216,9 +216,9 @@ export default function MockShow() {
 
                 {/* Tab Content */}
                 {activeTab === 'students' && (
-                    <div className="rounded-2xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 p-5 shadow-xs">
+                    <div className="rounded-2xl border border-border bg-card p-5 shadow-xs">
                         <div className="flex items-center justify-between mb-4">
-                            <h3 className="text-sm font-bold text-gray-900 dark:text-white">
+                            <h3 className="text-sm font-bold text-foreground">
                                 O'quvchilar Ro'yxati va Imtihon Kodlari
                             </h3>
                             <MockStudentManager
@@ -229,15 +229,15 @@ export default function MockShow() {
                         </div>
 
                         {students.length === 0 ? (
-                            <div className="text-center py-12 border border-dashed border-gray-200 dark:border-gray-800 rounded-xl text-xs text-gray-400 space-y-3">
-                                <Users className="w-8 h-8 mx-auto text-gray-300 dark:text-gray-600" />
+                            <div className="text-center py-12 border border-dashed border-border rounded-xl text-xs text-muted-foreground space-y-3">
+                                <Users className="w-8 h-8 mx-auto text-muted-foreground/60" />
                                 <p>Hali o'quvchilar biriktirilmagan.</p>
                                 <p className="text-[11px]">"O'quvchilar" tugmasini bosib, yangi nomzodlarni qo'shing.</p>
                             </div>
                         ) : (
-                            <div className="overflow-x-auto rounded-xl border border-gray-200 dark:border-gray-800">
+                            <div className="overflow-x-auto rounded-xl border border-border">
                                 <table className="w-full text-xs text-left">
-                                    <thead className="bg-gray-50 dark:bg-gray-800/80 text-gray-500 dark:text-gray-400 font-bold uppercase text-[10px]">
+                                    <thead className="bg-muted text-muted-foreground font-bold uppercase text-[10px]">
                                         <tr>
                                             <th className="px-4 py-3">#</th>
                                             <th className="px-4 py-3">O'quvchi Ismi</th>
@@ -251,7 +251,7 @@ export default function MockShow() {
                                             <th className="px-4 py-3 text-right">Amallar</th>
                                         </tr>
                                     </thead>
-                                    <tbody className="divide-y divide-gray-100 dark:divide-gray-800 bg-white dark:bg-gray-900">
+                                    <tbody className="divide-y divide-gray-100 dark:divide-gray-800 bg-card">
                                         {students.map((st: any, idx: number) => {
                                             const attempt = st.attempt;
                                             const scores = extractAttemptScores(attempt);
@@ -259,8 +259,8 @@ export default function MockShow() {
 
                                             return (
                                                 <tr key={st.id} className="hover:bg-gray-50/50 dark:hover:bg-gray-800/40">
-                                                    <td className="px-4 py-3 font-mono text-gray-400">{idx + 1}</td>
-                                                    <td className="px-4 py-3 font-bold text-gray-900 dark:text-gray-100">{st.name}</td>
+                                                    <td className="px-4 py-3 font-mono text-muted-foreground">{idx + 1}</td>
+                                                    <td className="px-4 py-3 font-bold text-foreground">{st.name}</td>
                                                     <td className="px-4 py-3 font-mono font-bold text-indigo-600 dark:text-indigo-400">
                                                         <span className="px-2 py-0.5 rounded-lg bg-indigo-50 dark:bg-indigo-950/40 border border-indigo-200 dark:border-indigo-800/40 text-[11px]">
                                                             {st.code}
@@ -281,11 +281,11 @@ export default function MockShow() {
                                                     <td className="px-4 py-3 text-center">
                                                         {scores.listening !== null ? (
                                                             <div className="inline-flex flex-col items-center">
-                                                                <span className="font-bold text-gray-900 dark:text-gray-100">{scores.listeningBand?.toFixed(1)}</span>
-                                                                <span className="text-[9px] text-gray-400 font-mono">({scores.listening}/40)</span>
+                                                                <span className="font-bold text-foreground">{scores.listeningBand?.toFixed(1)}</span>
+                                                                <span className="text-[9px] text-muted-foreground font-mono">({scores.listening}/40)</span>
                                                             </div>
                                                         ) : (
-                                                            <span className="text-gray-300 dark:text-gray-600 font-mono">-</span>
+                                                            <span className="text-muted-foreground/60 font-mono">-</span>
                                                         )}
                                                     </td>
 
@@ -293,29 +293,29 @@ export default function MockShow() {
                                                     <td className="px-4 py-3 text-center">
                                                         {scores.reading !== null ? (
                                                             <div className="inline-flex flex-col items-center">
-                                                                <span className="font-bold text-gray-900 dark:text-gray-100">{scores.readingBand?.toFixed(1)}</span>
-                                                                <span className="text-[9px] text-gray-400 font-mono">({scores.reading}/40)</span>
+                                                                <span className="font-bold text-foreground">{scores.readingBand?.toFixed(1)}</span>
+                                                                <span className="text-[9px] text-muted-foreground font-mono">({scores.reading}/40)</span>
                                                             </div>
                                                         ) : (
-                                                            <span className="text-gray-300 dark:text-gray-600 font-mono">-</span>
+                                                            <span className="text-muted-foreground/60 font-mono">-</span>
                                                         )}
                                                     </td>
 
                                                     {/* Writing Score */}
                                                     <td className="px-4 py-3 text-center">
                                                         {scores.writingBand !== null ? (
-                                                            <span className="font-bold text-gray-900 dark:text-gray-100">{scores.writingBand.toFixed(1)}</span>
+                                                            <span className="font-bold text-foreground">{scores.writingBand.toFixed(1)}</span>
                                                         ) : (
-                                                            <span className="text-gray-300 dark:text-gray-600 font-mono">-</span>
+                                                            <span className="text-muted-foreground/60 font-mono">-</span>
                                                         )}
                                                     </td>
 
                                                     {/* Speaking Score */}
                                                     <td className="px-4 py-3 text-center">
                                                         {scores.speakingBand !== null ? (
-                                                            <span className="font-bold text-gray-900 dark:text-gray-100">{scores.speakingBand.toFixed(1)}</span>
+                                                            <span className="font-bold text-foreground">{scores.speakingBand.toFixed(1)}</span>
                                                         ) : (
-                                                            <span className="text-gray-300 dark:text-gray-600 font-mono">-</span>
+                                                            <span className="text-muted-foreground/60 font-mono">-</span>
                                                         )}
                                                     </td>
 
@@ -327,9 +327,9 @@ export default function MockShow() {
                                                                 {scores.overallBand.toFixed(1)}
                                                             </span>
                                                         ) : isFinished ? (
-                                                            <span className="text-emerald-600 font-bold text-[10px]">Baholanmoqda</span>
+                                                            <span className="text-emerald-600 font-bold text-[10px] dark:text-emerald-400">Baholanmoqda</span>
                                                         ) : (
-                                                            <span className="text-gray-300 dark:text-gray-600 font-mono">-</span>
+                                                            <span className="text-muted-foreground/60 font-mono">-</span>
                                                         )}
                                                     </td>
 
@@ -353,7 +353,7 @@ export default function MockShow() {
                                                                 </button>
                                                             </div>
                                                         ) : (
-                                                            <span className="text-gray-400 italic text-[11px]">Boshlanmagan</span>
+                                                            <span className="text-muted-foreground italic text-[11px]">Boshlanmagan</span>
                                                         )}
                                                     </td>
                                                 </tr>
@@ -367,9 +367,9 @@ export default function MockShow() {
                 )}
 
                 {activeTab === 'attempts' && (
-                    <div className="rounded-2xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 p-5 shadow-xs">
+                    <div className="rounded-2xl border border-border bg-card p-5 shadow-xs">
                         <div className="flex items-center justify-between mb-4">
-                            <h3 className="text-sm font-bold text-gray-900 dark:text-white">
+                            <h3 className="text-sm font-bold text-foreground">
                                 Imtihon Urinishlari Ro'yxati
                             </h3>
                             {attempts.length > 0 && (
@@ -378,22 +378,22 @@ export default function MockShow() {
                                     variant="outline"
                                     className="h-8 px-3 rounded-xl border-green-200 bg-green-50/50 text-green-700 hover:bg-green-100 dark:border-green-900/30 dark:bg-green-900/20 dark:text-green-400 gap-1.5 font-bold text-xs shadow-xs"
                                 >
-                                    <FileSpreadsheet className="w-3.5 h-3.5 text-green-600" />
+                                    <FileSpreadsheet className="w-3.5 h-3.5 text-green-600 dark:text-green-400" />
                                     Excelga Yuklash
                                 </Button>
                             )}
                         </div>
 
                         {attempts.length === 0 ? (
-                            <div className="text-center py-12 border border-dashed border-gray-200 dark:border-gray-800 rounded-xl text-xs text-gray-400 space-y-3">
-                                <FileText className="w-8 h-8 mx-auto text-gray-300 dark:text-gray-600" />
+                            <div className="text-center py-12 border border-dashed border-border rounded-xl text-xs text-muted-foreground space-y-3">
+                                <FileText className="w-8 h-8 mx-auto text-muted-foreground/60" />
                                 <p>Hali imtihon topshirganlar yo'q.</p>
                                 <p className="text-[11px]">O'quvchilar imtihonni topshirgandan so'ng natijalar bu yerda ko'rinadi.</p>
                             </div>
                         ) : (
-                            <div className="overflow-x-auto rounded-xl border border-gray-200 dark:border-gray-800">
+                            <div className="overflow-x-auto rounded-xl border border-border">
                                 <table className="w-full text-xs text-left">
-                                    <thead className="bg-gray-50 dark:bg-gray-800/80 text-gray-500 dark:text-gray-400 font-bold uppercase text-[10px]">
+                                    <thead className="bg-muted text-muted-foreground font-bold uppercase text-[10px]">
                                         <tr>
                                             <th className="px-4 py-3">#</th>
                                             <th className="px-4 py-3">O'quvchi Ismi</th>
@@ -407,7 +407,7 @@ export default function MockShow() {
                                             <th className="px-4 py-3 text-right">Amallar</th>
                                         </tr>
                                     </thead>
-                                    <tbody className="divide-y divide-gray-100 dark:divide-gray-800 bg-white dark:bg-gray-900">
+                                    <tbody className="divide-y divide-gray-100 dark:divide-gray-800 bg-card">
                                         {attempts.map((item: any, idx: number) => {
                                             const scores = extractAttemptScores(item);
                                             const isFinished = !!item.finished_at;
@@ -416,11 +416,11 @@ export default function MockShow() {
 
                                             return (
                                                 <tr key={item.id} className="hover:bg-gray-50/50 dark:hover:bg-gray-800/40">
-                                                    <td className="px-4 py-3 font-mono text-gray-400">{idx + 1}</td>
-                                                    <td className="px-4 py-3 font-bold text-gray-900 dark:text-gray-100">
+                                                    <td className="px-4 py-3 font-mono text-muted-foreground">{idx + 1}</td>
+                                                    <td className="px-4 py-3 font-bold text-foreground">
                                                         <div>{studentName}</div>
                                                         {item.user?.email && (
-                                                            <span className="text-[10px] text-gray-400 font-normal">{item.user.email}</span>
+                                                            <span className="text-[10px] text-muted-foreground font-normal">{item.user.email}</span>
                                                         )}
                                                     </td>
                                                     <td className="px-4 py-3 font-mono font-bold text-indigo-600 dark:text-indigo-400">
@@ -429,7 +429,7 @@ export default function MockShow() {
                                                                 {studentCode}
                                                             </span>
                                                         ) : (
-                                                            <span className="text-gray-300 dark:text-gray-600 font-mono text-[11px]">-</span>
+                                                            <span className="text-muted-foreground/60 font-mono text-[11px]">-</span>
                                                         )}
                                                     </td>
                                                     <td className="px-4 py-3 text-center">
@@ -443,11 +443,11 @@ export default function MockShow() {
                                                                 {isFinished ? 'Tugatildi' : 'Jarayonda'}
                                                             </span>
                                                             {item.finished_at ? (
-                                                                <span className="text-[9px] text-gray-400 font-mono">
+                                                                <span className="text-[9px] text-muted-foreground font-mono">
                                                                     {format(new Date(item.finished_at), 'dd.MM.yyyy HH:mm')}
                                                                 </span>
                                                             ) : item.started_at ? (
-                                                                <span className="text-[9px] text-gray-400 font-mono">
+                                                                <span className="text-[9px] text-muted-foreground font-mono">
                                                                     {format(new Date(item.started_at), 'dd.MM.yyyy HH:mm')}
                                                                 </span>
                                                             ) : null}
@@ -458,11 +458,11 @@ export default function MockShow() {
                                                     <td className="px-4 py-3 text-center">
                                                         {scores.listening !== null ? (
                                                             <div className="inline-flex flex-col items-center">
-                                                                <span className="font-bold text-gray-900 dark:text-gray-100">{scores.listeningBand?.toFixed(1)}</span>
-                                                                <span className="text-[9px] text-gray-400 font-mono">({scores.listening}/40)</span>
+                                                                <span className="font-bold text-foreground">{scores.listeningBand?.toFixed(1)}</span>
+                                                                <span className="text-[9px] text-muted-foreground font-mono">({scores.listening}/40)</span>
                                                             </div>
                                                         ) : (
-                                                            <span className="text-gray-300 dark:text-gray-600 font-mono">-</span>
+                                                            <span className="text-muted-foreground/60 font-mono">-</span>
                                                         )}
                                                     </td>
 
@@ -470,29 +470,29 @@ export default function MockShow() {
                                                     <td className="px-4 py-3 text-center">
                                                         {scores.reading !== null ? (
                                                             <div className="inline-flex flex-col items-center">
-                                                                <span className="font-bold text-gray-900 dark:text-gray-100">{scores.readingBand?.toFixed(1)}</span>
-                                                                <span className="text-[9px] text-gray-400 font-mono">({scores.reading}/40)</span>
+                                                                <span className="font-bold text-foreground">{scores.readingBand?.toFixed(1)}</span>
+                                                                <span className="text-[9px] text-muted-foreground font-mono">({scores.reading}/40)</span>
                                                             </div>
                                                         ) : (
-                                                            <span className="text-gray-300 dark:text-gray-600 font-mono">-</span>
+                                                            <span className="text-muted-foreground/60 font-mono">-</span>
                                                         )}
                                                     </td>
 
                                                     {/* Writing Score */}
                                                     <td className="px-4 py-3 text-center">
                                                         {scores.writingBand !== null ? (
-                                                            <span className="font-bold text-gray-900 dark:text-gray-100">{scores.writingBand.toFixed(1)}</span>
+                                                            <span className="font-bold text-foreground">{scores.writingBand.toFixed(1)}</span>
                                                         ) : (
-                                                            <span className="text-gray-300 dark:text-gray-600 font-mono">-</span>
+                                                            <span className="text-muted-foreground/60 font-mono">-</span>
                                                         )}
                                                     </td>
 
                                                     {/* Speaking Score */}
                                                     <td className="px-4 py-3 text-center">
                                                         {scores.speakingBand !== null ? (
-                                                            <span className="font-bold text-gray-900 dark:text-gray-100">{scores.speakingBand.toFixed(1)}</span>
+                                                            <span className="font-bold text-foreground">{scores.speakingBand.toFixed(1)}</span>
                                                         ) : (
-                                                            <span className="text-gray-300 dark:text-gray-600 font-mono">-</span>
+                                                            <span className="text-muted-foreground/60 font-mono">-</span>
                                                         )}
                                                     </td>
 
@@ -504,9 +504,9 @@ export default function MockShow() {
                                                                 {scores.overallBand.toFixed(1)}
                                                             </span>
                                                         ) : isFinished ? (
-                                                            <span className="text-emerald-600 font-bold text-[10px]">Baholanmoqda</span>
+                                                            <span className="text-emerald-600 font-bold text-[10px] dark:text-emerald-400">Baholanmoqda</span>
                                                         ) : (
-                                                            <span className="text-gray-300 dark:text-gray-600 font-mono">-</span>
+                                                            <span className="text-muted-foreground/60 font-mono">-</span>
                                                         )}
                                                     </td>
 
@@ -541,7 +541,7 @@ export default function MockShow() {
                                                             {isAdmin && (
                                                                 <button
                                                                     onClick={() => handleDeleteAttemptClick(item)}
-                                                                    className="p-1.5 rounded-lg bg-gray-50 dark:bg-gray-800 text-gray-500 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-950/40 dark:hover:text-red-400 transition-colors"
+                                                                    className="p-1.5 rounded-lg bg-muted text-gray-500 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-950/40 dark:hover:text-red-400 transition-colors"
                                                                     title="O'chirish"
                                                                 >
                                                                     <Trash2 className="w-4 h-4" />

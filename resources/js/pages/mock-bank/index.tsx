@@ -63,7 +63,7 @@ interface PageProps {
 }
 
 const statusTone: Record<string, string> = {
-    draft: 'bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-300',
+    draft: 'bg-muted text-foreground/80',
     ready: 'bg-emerald-50 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-300',
     archived: 'bg-rose-50 text-rose-700 dark:bg-rose-950/40 dark:text-rose-300',
 };
@@ -125,7 +125,7 @@ function CreateMockTestDialog() {
 }
 
 const importTone: Record<ImportStatus, string> = {
-    queued: 'bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-300',
+    queued: 'bg-muted text-foreground/80',
     running: 'bg-indigo-50 text-indigo-700 dark:bg-indigo-950/40 dark:text-indigo-300',
     done: 'bg-emerald-50 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-300',
     failed: 'bg-rose-50 text-rose-700 dark:bg-rose-950/40 dark:text-rose-300',
@@ -144,7 +144,7 @@ function FileField({ id, label, hint, accept, error, onChange }: { id: string; l
                 {label}
             </Label>
             <input id={id} type="file" accept={accept} className={cn(inputClass, 'mt-1 cursor-pointer py-1.5 file:mr-3 file:rounded-lg file:border-0 file:bg-indigo-50 file:px-2 file:py-1 file:text-xs file:font-bold file:text-indigo-700')} onChange={(e) => onChange(e.target.files?.[0] ?? null)} />
-            {hint && <p className="mt-1 text-[11px] text-gray-500">{hint}</p>}
+            {hint && <p className="mt-1 text-[11px] text-muted-foreground">{hint}</p>}
             <InputError message={error} />
         </div>
     );
@@ -204,16 +204,16 @@ function ImportPdfDialog({ test }: { test: BankTestRow }) {
                     <FileField id={`answers_file_${test.id}`} label={t('exam_admin.bank.import.answers_file')} hint={t('exam_admin.bank.import.answers_hint')} accept={docs} error={errors.answers_file} onChange={(f) => setData('answers_file', f)} />
                     <FileField id={`listening_audio_${test.id}`} label={t('exam_admin.bank.import.listening_audio')} accept="audio/*,.mp3" error={errors.listening_audio} onChange={(f) => setData('listening_audio', f)} />
 
-                    <div className="rounded-xl border border-gray-200 p-3 dark:border-gray-800">
+                    <div className="rounded-xl border border-border p-3">
                         <div className="flex items-center gap-2">
                             <Checkbox id={`replace_${test.id}`} checked={data.replace} onCheckedChange={(v) => setData('replace', v === true)} />
                             <Label htmlFor={`replace_${test.id}`} className="text-xs font-bold">
                                 {t('exam_admin.bank.import.replace')}
                             </Label>
                         </div>
-                        <p className="mt-1 text-[11px] text-gray-500">{t('exam_admin.bank.import.replace_hint')}</p>
+                        <p className="mt-1 text-[11px] text-muted-foreground">{t('exam_admin.bank.import.replace_hint')}</p>
                         {filled.length > 0 && (
-                            <p className="mt-1 flex items-center gap-1 text-[11px] font-semibold text-amber-600">
+                            <p className="mt-1 flex items-center gap-1 text-[11px] font-semibold text-amber-600 dark:text-amber-400">
                                 <AlertTriangle className="h-3 w-3" />
                                 {t('exam_admin.bank.import.has_content', { modules: filled.join(', ') })}
                             </p>
@@ -226,7 +226,7 @@ function ImportPdfDialog({ test }: { test: BankTestRow }) {
                     </p>
 
                     {progress && (
-                        <div className="h-1.5 overflow-hidden rounded-full bg-gray-100 dark:bg-gray-800">
+                        <div className="h-1.5 overflow-hidden rounded-full bg-muted">
                             <div className="h-full bg-indigo-600 transition-all" style={{ width: `${progress.percentage ?? 0}%` }} />
                         </div>
                     )}
@@ -252,14 +252,14 @@ function ImportStatusPanel({ data }: { data: ImportRow }) {
     const { t } = useTranslation();
 
     return (
-        <div className="rounded-xl border border-gray-200 bg-gray-50/60 p-3 text-xs dark:border-gray-800 dark:bg-gray-900/40">
+        <div className="rounded-xl border border-border bg-gray-50/60 p-3 text-xs dark:bg-gray-900/40">
             <div className="flex flex-wrap items-center gap-2">
-                <span className="font-bold text-gray-700 dark:text-gray-200">{t('exam_admin.bank.import.heading')}</span>
+                <span className="font-bold text-foreground/80">{t('exam_admin.bank.import.heading')}</span>
                 <span className={cn('inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-bold', importTone[data.status])}>
                     <ImportStatusIcon status={data.status} />
                     {t(`exam_admin.bank.import.status.${data.status}`)}
                 </span>
-                <span className="text-[11px] text-gray-400">{fmtDateTime(data.finished_at ?? data.created_at)}</span>
+                <span className="text-[11px] text-muted-foreground">{fmtDateTime(data.finished_at ?? data.created_at)}</span>
             </div>
             <div className="mt-2 space-y-2">
                 {data.modules.map((module) => (
@@ -271,10 +271,10 @@ function ImportStatusPanel({ data }: { data: ImportRow }) {
                                 {t(`exam_admin.bank.import.status.${module.status}`)}
                             </span>
                             {module.status === 'done' && (
-                                <span className="text-[11px] text-gray-500">{t('exam_admin.bank.import.summary', { parts: module.parts ?? 0, questions: module.questions ?? 0 })}</span>
+                                <span className="text-[11px] text-muted-foreground">{t('exam_admin.bank.import.summary', { parts: module.parts ?? 0, questions: module.questions ?? 0 })}</span>
                             )}
                         </div>
-                        {module.message && <p className="mt-1 text-[11px] font-semibold text-rose-600">{module.message}</p>}
+                        {module.message && <p className="mt-1 text-[11px] font-semibold text-rose-600 dark:text-rose-400">{module.message}</p>}
                         {module.warnings.length > 0 && (
                             <ul className="mt-1 space-y-0.5 text-[11px] text-amber-700 dark:text-amber-300">
                                 {module.warnings.map((warning, i) => (
@@ -285,7 +285,7 @@ function ImportStatusPanel({ data }: { data: ImportRow }) {
                     </div>
                 ))}
             </div>
-            {data.status === 'done' && <p className="mt-2 text-[11px] text-gray-500">{t('exam_admin.bank.import.review_hint')}</p>}
+            {data.status === 'done' && <p className="mt-2 text-[11px] text-muted-foreground">{t('exam_admin.bank.import.review_hint')}</p>}
         </div>
     );
 }
@@ -328,7 +328,7 @@ function MoveToPracticeDialog({ test, folders }: { test: BankTestRow; folders: P
                     <div>
                         <Label htmlFor={`move_folder_${test.id}`}>{t('exam_admin.bank.folder')}</Label>
                         {folders.length === 0 ? (
-                            <p className="mt-1 text-xs text-amber-600">{t('exam_admin.bank.move.no_folders')}</p>
+                            <p className="mt-1 text-xs text-amber-600 dark:text-amber-400">{t('exam_admin.bank.move.no_folders')}</p>
                         ) : (
                             <select
                                 id={`move_folder_${test.id}`}
@@ -404,7 +404,7 @@ export default function MockBankIndex() {
                                     'rounded-xl px-3 py-1.5 text-xs font-bold transition-colors',
                                     (filters.status ?? '') === status
                                         ? 'bg-indigo-600 text-white'
-                                        : 'bg-gray-100 text-gray-600 hover:bg-gray-200 dark:bg-gray-800 dark:text-gray-300',
+                                        : 'bg-muted text-foreground/80 hover:bg-gray-200 dark:hover:bg-gray-700',
                                 )}
                             >
                                 {status ? t(`exam_admin.bank.status.${status}`) : t('exam_admin.common.all')}
@@ -418,7 +418,7 @@ export default function MockBankIndex() {
                             applyFilters({});
                         }}
                     >
-                        <Search className="absolute top-1/2 left-3 h-3.5 w-3.5 -translate-y-1/2 text-gray-400" />
+                        <Search className="absolute top-1/2 left-3 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground" />
                         <input className={`${inputClass} pl-8`} value={search} onChange={(e) => setSearch(e.target.value)} placeholder={t('exam_admin.common.search')} />
                     </form>
                 </Panel>
@@ -432,12 +432,12 @@ export default function MockBankIndex() {
                                 <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
                                     <div>
                                         <div className="flex flex-wrap items-center gap-2">
-                                            <h3 className="text-base font-black text-gray-900 dark:text-white">{test.name}</h3>
+                                            <h3 className="text-base font-black text-foreground">{test.name}</h3>
                                             <span className={cn('rounded-full px-2.5 py-0.5 text-[10px] font-bold', statusTone[test.bank_status])}>
                                                 {t(`exam_admin.bank.status.${test.bank_status}`)}
                                             </span>
                                         </div>
-                                        <p className="mt-0.5 text-[11px] text-gray-500">
+                                        <p className="mt-0.5 text-[11px] text-muted-foreground">
                                             #{test.id} · {fmtDateTime(test.created_at, 'dd.MM.yyyy')}
                                         </p>
                                     </div>
@@ -445,7 +445,7 @@ export default function MockBankIndex() {
                                         <ImportPdfDialog test={test} />
                                         <Link
                                             href={test.edit_module_id ? route('test-type.show', test.edit_module_id) : route('test.show', test.id)}
-                                            className="inline-flex items-center gap-1 rounded-xl bg-gray-100 px-3 py-1.5 text-xs font-bold text-gray-700 hover:bg-gray-200 dark:bg-gray-800 dark:text-gray-200"
+                                            className="inline-flex items-center gap-1 rounded-xl bg-muted px-3 py-1.5 text-xs font-bold text-foreground/80 hover:bg-gray-200 dark:hover:bg-gray-700"
                                         >
                                             <Pencil className="h-3.5 w-3.5" />
                                             {t('exam_admin.bank.edit_content')}
@@ -481,7 +481,7 @@ export default function MockBankIndex() {
                                 {test.import && <ImportStatusPanel data={test.import} />}
 
                                 <div className="grid gap-2 md:grid-cols-3">
-                                    {test.modules.length === 0 && <p className="text-xs text-gray-400">{t('exam_admin.bank.no_modules')}</p>}
+                                    {test.modules.length === 0 && <p className="text-xs text-muted-foreground">{t('exam_admin.bank.no_modules')}</p>}
                                     {test.modules.map((module) => (
                                         <Link
                                             key={module.id}
@@ -490,7 +490,7 @@ export default function MockBankIndex() {
                                             className={cn(
                                                 'block rounded-xl border p-3 text-xs transition hover:border-indigo-300 hover:shadow-sm',
                                                 module.parts_count === 0
-                                                    ? 'border-dashed border-gray-200 opacity-60 dark:border-gray-800'
+                                                    ? 'border-dashed border-border opacity-60'
                                                     : module.ready
                                                       ? 'border-emerald-200 dark:border-emerald-900/50'
                                                       : 'border-amber-200 dark:border-amber-900/50',
@@ -500,30 +500,30 @@ export default function MockBankIndex() {
                                                 <ModuleBadge type={module.type} />
                                                 {module.parts_count > 0 &&
                                                     (module.ready ? (
-                                                        <span className="flex items-center gap-1 text-[10px] font-bold text-emerald-600">
+                                                        <span className="flex items-center gap-1 text-[10px] font-bold text-emerald-600 dark:text-emerald-400">
                                                             <CheckCircle2 className="h-3 w-3" /> {t('exam_admin.bank.module_ready')}
                                                         </span>
                                                     ) : (
-                                                        <span className="flex items-center gap-1 text-[10px] font-bold text-amber-600">
+                                                        <span className="flex items-center gap-1 text-[10px] font-bold text-amber-600 dark:text-amber-400">
                                                             <AlertTriangle className="h-3 w-3" /> {t('exam_admin.bank.module_not_ready')}
                                                         </span>
                                                     ))}
                                             </div>
-                                            <div className="mt-2 space-y-0.5 text-[11px] text-gray-500">
+                                            <div className="mt-2 space-y-0.5 text-[11px] text-muted-foreground">
                                                 <div>
                                                     {t('exam_admin.bank.parts')}: <b>{module.parts_count}</b> · {t('exam_admin.bank.used')}: <b>{module.uses}</b>
                                                 </div>
-                                                <div className={module.recently_used ? 'font-semibold text-amber-600' : ''}>
+                                                <div className={module.recently_used ? 'font-semibold text-amber-600 dark:text-amber-400' : ''}>
                                                     {t('exam_admin.bank.last_used')}: <b>{fmtDateTime(module.last_used_at, 'dd.MM.yyyy')}</b>
                                                 </div>
                                                 {module.parts_count > 0 &&
                                                     module.issues.map((issue) => (
-                                                        <div key={issue} className="text-rose-600">
+                                                        <div key={issue} className="text-rose-600 dark:text-rose-400">
                                                             • {issueLabel(issue)}
                                                         </div>
                                                     ))}
                                             </div>
-                                            <div className="mt-2 text-[10px] font-bold text-indigo-600">{t('exam_admin.bank.edit_module')} →</div>
+                                            <div className="mt-2 text-[10px] font-bold text-indigo-600 dark:text-indigo-400">{t('exam_admin.bank.edit_module')} →</div>
                                         </Link>
                                     ))}
                                 </div>

@@ -13,6 +13,14 @@ import { initializeTheme } from './hooks/use-appearance';
 import { Toaster } from 'sonner';
 import { initTelegramWebApp } from './hooks/use-telegram';
 import { TelegramThemeProvider } from './components/telegram-theme-provider';
+import { useIsDark } from './hooks/use-is-dark';
+
+// Sonner defaults to the light theme; follow the <html class="dark"> state instead.
+function ThemedToaster() {
+    const isDark = useIsDark();
+
+    return <Toaster richColors position="bottom-right" theme={isDark ? 'dark' : 'light'} />;
+}
 
 initTelegramWebApp();
 
@@ -27,7 +35,7 @@ createInertiaApp({
         root.render(
             <TelegramThemeProvider>
                 <App {...props} />
-                <Toaster richColors position="bottom-right" />
+                <ThemedToaster />
             </TelegramThemeProvider>
         );
     },

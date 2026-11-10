@@ -51,7 +51,7 @@ export default function PartSection({ section, globalIndex }: SectionUpdateProps
     const typeName = section.question_type?.name ?? section.question_type?.type ?? 'Section';
 
     return (
-        <div className="rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 overflow-hidden shadow-sm">
+        <div className="rounded-xl border border-border bg-card overflow-hidden shadow-sm">
 
             {/* Section Header */}
             <div
@@ -64,12 +64,12 @@ export default function PartSection({ section, globalIndex }: SectionUpdateProps
                         <span className="inline-block px-2 py-0.5 text-[11px] font-semibold bg-blue-50 dark:bg-blue-900/40 text-blue-700 dark:text-blue-300 rounded-full border border-blue-100 dark:border-blue-800 whitespace-nowrap">
                             {typeName}
                         </span>
-                        <span className="text-xs text-gray-400 dark:text-gray-500 whitespace-nowrap">
+                        <span className="text-xs text-muted-foreground whitespace-nowrap">
                             {questionRange} · {questionCount} {t('question') ?? 'questions'}
                         </span>
                     </div>
                     {section.textarea && (
-                        <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5 truncate">
+                        <p className="text-xs text-muted-foreground mt-0.5 truncate">
                             {section.textarea.replace(/<[^>]*>/g, '').trim().slice(0, 80)}
                         </p>
                     )}
@@ -94,14 +94,14 @@ export default function PartSection({ section, globalIndex }: SectionUpdateProps
                 </div>
 
                 {/* Chevron */}
-                <div className="shrink-0 text-gray-400 dark:text-gray-500">
+                <div className="shrink-0 text-muted-foreground">
                     {isOpen ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
                 </div>
             </div>
 
             {/* Section Body */}
             {isOpen && (
-                <div className="border-t border-gray-100 dark:border-gray-800 px-4 py-3 space-y-3 bg-gray-50/50 dark:bg-gray-950/30">
+                <div className="border-t border-border px-4 py-3 space-y-3 bg-gray-50/50 dark:bg-gray-950/30">
                     {/* Section instruction text */}
                     {section.textarea && (
                         <div
@@ -112,13 +112,13 @@ export default function PartSection({ section, globalIndex }: SectionUpdateProps
 
                     {/* Options (drag_and_drop) */}
                     {section.question_type?.type === 'drag_and_drop' && (
-                        <div className="p-3 rounded-xl bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 shadow-2xs space-y-2.5">
+                        <div className="p-3 rounded-xl bg-card border border-border shadow-2xs space-y-2.5">
                             <div className="flex items-center justify-between flex-wrap gap-2">
                                 <div className="flex items-center gap-2">
-                                    <span className="text-xs font-bold uppercase tracking-wider text-gray-700 dark:text-gray-300">
+                                    <span className="text-xs font-bold uppercase tracking-wider text-foreground/80">
                                         {t('incorrect_options')}
                                     </span>
-                                    <span className="px-2 py-0.5 rounded-full text-[11px] font-bold bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400">
+                                    <span className="px-2 py-0.5 rounded-full text-[11px] font-bold bg-muted text-muted-foreground">
                                         {section.options?.length ?? 0} {t('option')}
                                     </span>
                                 </div>
@@ -133,7 +133,7 @@ export default function PartSection({ section, globalIndex }: SectionUpdateProps
                                     ))}
                                 </div>
                             ) : (
-                                <div className="p-3 text-center rounded-lg border border-dashed border-gray-200 dark:border-gray-800 text-xs text-gray-500 dark:text-gray-400">
+                                <div className="p-3 text-center rounded-lg border border-dashed border-border text-xs text-muted-foreground">
                                     {t('no_incorrect_options') || "Hozircha noto'g'ri variantlar qo'shilmagan"}
                                 </div>
                             )}

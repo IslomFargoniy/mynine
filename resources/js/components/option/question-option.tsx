@@ -36,12 +36,12 @@ export default function QuestionOption({ option, index, question_type }: Questio
     };
 
     return (
-        <div className="group flex items-center justify-between py-1.5 px-3 rounded-lg bg-gray-50 dark:bg-gray-800/50 border border-gray-100 dark:border-gray-800 text-sm hover:border-blue-200 dark:hover:border-blue-800 transition-colors">
+        <div className="group flex items-center justify-between py-1.5 px-3 rounded-lg bg-muted border border-border text-sm hover:border-blue-200 dark:hover:border-blue-800 transition-colors">
             <div className="flex items-center gap-2 min-w-0 flex-1">
-                <span className="w-5 h-5 rounded font-bold font-mono text-[11px] bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 flex items-center justify-center shrink-0">
+                <span className="w-5 h-5 rounded font-bold font-mono text-[11px] bg-gray-200 dark:bg-gray-700 text-foreground/80 flex items-center justify-center shrink-0">
                     {letter}
                 </span>
-                <span className="text-gray-800 dark:text-gray-200 font-medium truncate text-xs">
+                <span className="text-foreground font-medium truncate text-xs">
                     {option.textarea}
                 </span>
             </div>
@@ -60,7 +60,7 @@ export default function QuestionOption({ option, index, question_type }: Questio
                     <button
                         type="button"
                         onClick={() => setOpenEdit(true)}
-                        className="p-1 rounded text-gray-400 hover:text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-950/50 transition-colors"
+                        className="p-1 rounded text-muted-foreground hover:text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-950/50 transition-colors"
                         title={t('edit') || "Tahrirlash"}
                     >
                         <Edit2 className="w-3 h-3" />
@@ -68,7 +68,7 @@ export default function QuestionOption({ option, index, question_type }: Questio
                     <button
                         type="button"
                         onClick={() => setOpenDelete(true)}
-                        className="p-1 rounded text-gray-400 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-950/50 transition-colors"
+                        className="p-1 rounded text-muted-foreground hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-950/50 transition-colors"
                         title={t('delete') || "O'chirish"}
                     >
                         <Trash2 className="w-3 h-3" />

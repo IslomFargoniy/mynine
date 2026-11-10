@@ -151,10 +151,10 @@ export default function UpdateQuestionModal({ question, section, open, setOpen }
     return (
         <Dialog open={open} onOpenChange={setOpen}>
             <DialogContent className="sm:max-w-4xl w-full overflow-y-auto dark:border-gray-700">
-                <DialogTitle className="text-lg font-bold text-gray-900 dark:text-gray-100">
+                <DialogTitle className="text-lg font-bold text-foreground">
                     {t('modal.update_title') || "Savolni tahrirlash"}
                 </DialogTitle>
-                <DialogDescription className="text-xs text-gray-500 dark:text-gray-400">
+                <DialogDescription className="text-xs text-muted-foreground">
                     Savol matni va barcha variantlarini bir joyda tahrirlang.
                 </DialogDescription>
 
@@ -163,7 +163,7 @@ export default function UpdateQuestionModal({ question, section, open, setOpen }
                     {/* Question Prompt Textarea + Guide trigger */}
                     <div className="space-y-1">
                         <div className="flex items-center justify-between gap-2">
-                            <Label htmlFor="textarea" className="text-sm font-semibold text-gray-700 dark:text-gray-200">
+                            <Label htmlFor="textarea" className="text-sm font-semibold text-foreground/80">
                                 {t('question_prompt') || "Savol Matni / Prompt"} *
                             </Label>
                             <QuestionTypeGuide type={qType} />
@@ -222,7 +222,7 @@ export default function UpdateQuestionModal({ question, section, open, setOpen }
                         <div className="space-y-3">
                             {(qType === 'true_false' || qType === 'yes_no') ? (
                                 <div className="space-y-2">
-                                    <Label className="text-xs font-bold text-gray-700 dark:text-gray-300 uppercase tracking-wider">
+                                    <Label className="text-xs font-bold text-foreground/80 uppercase tracking-wider">
                                         To'g'ri javob variantini belgilang *
                                     </Label>
                                     <div className="grid grid-cols-3 gap-3">
@@ -233,10 +233,10 @@ export default function UpdateQuestionModal({ question, section, open, setOpen }
                                                 className={`flex items-center justify-between p-3 border rounded-xl cursor-pointer select-none transition-all ${
                                                     option.is_correct
                                                         ? 'border-blue-600 bg-blue-50 dark:bg-blue-950/60 dark:border-blue-500 ring-2 ring-blue-600/20'
-                                                        : 'border-gray-200 hover:bg-gray-50 dark:border-gray-700 dark:hover:bg-gray-800'
+                                                        : 'border-border hover:bg-gray-50 dark:hover:bg-gray-800'
                                                 }`}
                                             >
-                                                <span className="font-bold text-sm text-gray-900 dark:text-white">
+                                                <span className="font-bold text-sm text-foreground">
                                                     {option.textarea}
                                                 </span>
                                                 <div className={`w-5 h-5 rounded-full border flex items-center justify-center transition-colors ${
@@ -253,7 +253,7 @@ export default function UpdateQuestionModal({ question, section, open, setOpen }
                             ) : (
                                 <div className="space-y-3">
                                     <div className="flex items-center justify-between">
-                                        <Label className="text-sm font-bold text-gray-800 dark:text-gray-200">
+                                        <Label className="text-sm font-bold text-foreground">
                                             Javob Variantlari (Options)
                                         </Label>
                                         <Button
@@ -308,7 +308,7 @@ export default function UpdateQuestionModal({ question, section, open, setOpen }
                                                             updateOption(index, 'is_correct', checked === true)
                                                         }
                                                     />
-                                                    <span className="text-xs font-semibold text-gray-700 dark:text-gray-300">
+                                                    <span className="text-xs font-semibold text-foreground/80">
                                                         {t('correct') || "To'g'ri"}
                                                     </span>
                                                 </label>
@@ -330,7 +330,7 @@ export default function UpdateQuestionModal({ question, section, open, setOpen }
                                     <button
                                         type="button"
                                         onClick={addOption}
-                                        className="w-full py-2 border-2 border-dashed border-gray-300 dark:border-gray-700 hover:border-blue-500 dark:hover:border-blue-400 hover:bg-blue-50/50 dark:hover:bg-blue-950/30 text-gray-600 dark:text-gray-300 hover:text-blue-600 rounded-lg text-xs font-semibold flex items-center justify-center gap-1.5 transition-all cursor-pointer"
+                                        className="w-full py-2 border-2 border-dashed border-gray-300 dark:border-gray-700 hover:border-blue-500 dark:hover:border-blue-400 hover:bg-blue-50/50 dark:hover:bg-blue-950/30 text-foreground/80 hover:text-blue-600 rounded-lg text-xs font-semibold flex items-center justify-center gap-1.5 transition-all cursor-pointer"
                                     >
                                         <Plus className="w-4 h-4" />
                                         {t('add_option') || "Yangi variant qo'shish"}
@@ -341,7 +341,7 @@ export default function UpdateQuestionModal({ question, section, open, setOpen }
                     )}
 
                     {/* Modal Footer */}
-                    <DialogFooter className="flex items-center justify-end gap-3 pt-4 border-t border-gray-200 dark:border-gray-700">
+                    <DialogFooter className="flex items-center justify-end gap-3 pt-4 border-t border-border">
                         <DialogClose asChild>
                             <Button
                                 type="button"

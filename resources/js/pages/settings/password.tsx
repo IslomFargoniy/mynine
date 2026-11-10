@@ -123,7 +123,7 @@ export default function Password() {
                                 leave="transition ease-in-out"
                                 leaveTo="opacity-0"
                             >
-                                <p className="text-sm text-neutral-600">{t('password_settings.saved')}</p>
+                                <p className="text-sm text-muted-foreground">{t('password_settings.saved')}</p>
                             </Transition>
                         </div>
                     </form>

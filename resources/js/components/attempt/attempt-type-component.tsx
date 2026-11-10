@@ -132,8 +132,8 @@ const AttemptTypeComponent = ({ attempt_type }: { attempt_type: AttemptType }) =
         <div className="space-y-6">
             {/* Question Types Accuracy Analytics (For Reading / Listening) */}
             {attempt_type.type?.name !== 'Writing' && attempt_type.type?.name !== 'Speaking' && questionTypeStats.length > 0 && (
-                <div className="p-4 bg-gray-50 dark:bg-gray-800/60 rounded-xl border border-gray-200 dark:border-gray-700">
-                    <h4 className="text-xs font-bold uppercase tracking-wider text-gray-500 dark:text-gray-400 mb-3">
+                <div className="p-4 bg-muted rounded-xl border border-border">
+                    <h4 className="text-xs font-bold uppercase tracking-wider text-muted-foreground mb-3">
                         {t('question_types_analytics') || 'Savol turlari boʻyicha aniqlik darajasi'}
                     </h4>
                     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
@@ -145,13 +145,13 @@ const AttemptTypeComponent = ({ attempt_type }: { attempt_type: AttemptType }) =
                             return (
                                 <div
                                     key={i}
-                                    className="p-3 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg space-y-1.5 shadow-2xs"
+                                    className="p-3 bg-white dark:bg-gray-800 border border-border rounded-lg space-y-1.5 shadow-2xs"
                                 >
                                     <div className="flex items-center justify-between text-xs font-medium">
-                                        <span className="font-bold text-gray-800 dark:text-gray-200 truncate pr-2" title={stat.name}>
+                                        <span className="font-bold text-foreground truncate pr-2" title={stat.name}>
                                             {stat.name}
                                         </span>
-                                        <span className="font-mono font-bold text-gray-900 dark:text-white shrink-0">
+                                        <span className="font-mono font-bold text-foreground shrink-0">
                                             {stat.correct} / {stat.total} ({pct}%)
                                         </span>
                                     </div>
@@ -171,7 +171,7 @@ const AttemptTypeComponent = ({ attempt_type }: { attempt_type: AttemptType }) =
             )}
 
             <div className="overflow-x-auto">
-                <table className="border-collapse w-full text-sm text-left text-gray-800 dark:text-gray-100">
+                <table className="border-collapse w-full text-sm text-left text-foreground">
                     <thead className="bg-gray-100 dark:bg-gray-700">
                     <tr>
                         <td className="border border-gray-300 dark:border-gray-600 px-4 py-2">
@@ -280,18 +280,18 @@ const AttemptTypeComponent = ({ attempt_type }: { attempt_type: AttemptType }) =
                                                             <td className="border border-gray-300 dark:border-gray-600 px-4 py-2">
                                                                 {question.options.length === 0 ? (
                                                                     checkAnswerCorrect(question.answer_text, question.attempt_answer?.answer_text) ? (
-                                                                        <CheckCircle className="text-green-600" />
+                                                                        <CheckCircle className="text-green-600 dark:text-green-400" />
                                                                     ) : (
-                                                                        <Minus className="text-red-600" />
+                                                                        <Minus className="text-red-600 dark:text-red-400" />
                                                                     )
                                                                 ) : (
                                                                     question.attempt_answer?.attempt_answer_options?.map((opt, idx) => (
                                                                         <div key={idx}>
                                                                             {opt.option.is_correct === 1 ? (
                                                                                 <CheckCircle
-                                                                                    className="text-green-600" />
+                                                                                    className="text-green-600 dark:text-green-400" />
                                                                             ) : (
-                                                                                <Minus className="text-red-600" />
+                                                                                <Minus className="text-red-600 dark:text-red-400" />
                                                                             )}
                                                                         </div>
                                                                     ))

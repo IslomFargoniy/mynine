@@ -116,9 +116,9 @@ export function AppSidebar() {
         <Sidebar 
             collapsible="icon" 
             variant="inset"
-            className="border-r border-gray-100 dark:border-white/5 bg-sidebar/80 dark:bg-sidebar/50 backdrop-blur-xl"
+            className="border-r border-border bg-sidebar/80 dark:bg-sidebar/50 backdrop-blur-xl"
         >
-            <SidebarHeader className="border-b border-gray-100/50 dark:border-white/5 py-4 px-4">
+            <SidebarHeader className="border-b border-border/50 py-4 px-4">
                 <SidebarMenu>
                     <SidebarMenuItem>
                         <SidebarMenuButton size="lg" asChild className="hover:bg-transparent active:bg-transparent">
@@ -130,14 +130,14 @@ export function AppSidebar() {
                 </SidebarMenu>
             </SidebarHeader>
 
-            <SidebarContent className="py-4">
+            <SidebarContent className="py-4 [scrollbar-gutter:stable] [scrollbar-width:thin] group-data-[collapsible=icon]:[scrollbar-gutter:auto]">
                 {groups.map((group, index) => (
                     <NavMain key={group.label ?? index} items={group.items} label={group.label} />
                 ))}
             </SidebarContent>
 
-            <SidebarFooter className="border-t border-gray-100/50 dark:border-gray-800/50 p-4">
-                <NavFooter items={footerNavItems} className="mb-4 opacity-70 hover:opacity-100 transition-opacity" />
+            <SidebarFooter className="border-t border-border/50 shrink-0 px-4 py-2">
+                <NavFooter items={footerNavItems} className="mb-1 py-0 opacity-70 hover:opacity-100 transition-opacity" />
                 <NavUser />
             </SidebarFooter>
         </Sidebar>

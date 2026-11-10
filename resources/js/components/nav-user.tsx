@@ -23,7 +23,7 @@ export function NavUser() {
                         >
                             <div className="flex items-center gap-3 w-full overflow-hidden">
                                 <UserInfo user={auth.user} />
-                                <ChevronsUpDown className="ml-auto size-3.5 text-gray-400 group-hover:text-primary transition-colors" />
+                                <ChevronsUpDown className="ml-auto size-3.5 text-muted-foreground group-hover:text-primary transition-colors" />
                             </div>
                         </SidebarMenuButton>
                     </DropdownMenuTrigger>

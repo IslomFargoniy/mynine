@@ -131,7 +131,7 @@ export default function Profile() {
                         {/*        </p>*/}
 
                         {/*        {status === 'verification-link-sent' && (*/}
-                        {/*            <div className="mt-2 text-sm font-medium text-green-600">*/}
+                        {/*            <div className="mt-2 text-sm font-medium text-green-600 dark:text-green-400">*/}
                         {/*                {t('profile_settings.verification_link_sent')}*/}
                         {/*            </div>*/}
                         {/*        )}*/}
@@ -148,7 +148,7 @@ export default function Profile() {
                                 leave="transition ease-in-out"
                                 leaveTo="opacity-0"
                             >
-                                <p className="text-sm text-neutral-600">{t('profile_settings.saved')}</p>
+                                <p className="text-sm text-muted-foreground">{t('profile_settings.saved')}</p>
                             </Transition>
                         </div>
                     </form>

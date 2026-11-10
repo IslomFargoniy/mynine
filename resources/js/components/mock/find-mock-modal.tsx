@@ -63,18 +63,18 @@ export default function FindMockModal() {
                 </button>
             </DialogTrigger>
 
-            <DialogContent className="sm:max-w-md w-full rounded-2xl border border-gray-200 dark:border-gray-800 shadow-2xl bg-white dark:bg-gray-900 p-0 overflow-hidden">
+            <DialogContent className="sm:max-w-md w-full rounded-2xl border border-border shadow-2xl bg-card p-0 overflow-hidden">
                 {/* Header */}
-                <header className="border-b border-gray-100 dark:border-gray-800 bg-gray-50/80 dark:bg-gray-800/40 p-6">
+                <header className="border-b border-border bg-gray-50/80 dark:bg-gray-800/40 p-6">
                     <div className="flex items-center gap-3.5">
                         <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-indigo-600 text-white shadow-xs">
                             <LayoutGrid className="h-5 w-5" />
                         </div>
                         <div>
-                            <DialogTitle className="text-lg font-extrabold text-gray-900 dark:text-white">
+                            <DialogTitle className="text-lg font-extrabold text-foreground">
                                 Imtihonga Kirish (Mock Exam)
                             </DialogTitle>
-                            <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
+                            <p className="text-xs text-muted-foreground mt-0.5">
                                 Sizga berilgan imtihon kodini kiriting
                             </p>
                         </div>
@@ -83,14 +83,14 @@ export default function FindMockModal() {
 
                 <form onSubmit={submit} className="p-6 space-y-4">
                     <div className="space-y-2">
-                        <Label htmlFor="code-input" className="text-xs font-bold text-gray-700 dark:text-gray-200">
+                        <Label htmlFor="code-input" className="text-xs font-bold text-foreground/80">
                             Nomzod Kodingiz *
                         </Label>
                         <Input
                             id="code-input"
                             ref={codeInput}
                             placeholder="Masalan: TEST1-849201"
-                            className="h-11 rounded-xl border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 px-4 font-mono font-bold text-sm tracking-wider uppercase"
+                            className="h-11 rounded-xl border-border bg-white dark:bg-gray-800 px-4 font-mono font-bold text-sm tracking-wider uppercase"
                             value={data.code}
                             onChange={(e) => setData('code', e.target.value.toUpperCase())}
                             disabled={processing}
@@ -99,7 +99,7 @@ export default function FindMockModal() {
                         <InputError message={errors.code} />
                     </div>
 
-                    <DialogFooter className="flex items-center justify-end gap-2 pt-3 border-t border-gray-100 dark:border-gray-800">
+                    <DialogFooter className="flex items-center justify-end gap-2 pt-3 border-t border-border">
                         <DialogClose asChild>
                             <Button
                                 type="button"

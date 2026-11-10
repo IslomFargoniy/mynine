@@ -58,19 +58,19 @@ export default function CreateFolderModal() {
                 </button>
             </DialogTrigger>
 
-            <DialogContent className="sm:max-w-lg w-full rounded-2xl border border-gray-200 dark:border-gray-800 shadow-2xl bg-white dark:bg-gray-900">
-                <DialogHeader className="space-y-1 pb-2 border-b border-gray-100 dark:border-gray-800">
-                    <DialogTitle className="text-lg font-bold text-gray-900 dark:text-gray-100">
+            <DialogContent className="sm:max-w-lg w-full rounded-2xl border border-border shadow-2xl bg-card">
+                <DialogHeader className="space-y-1 pb-2 border-b border-border">
+                    <DialogTitle className="text-lg font-bold text-foreground">
                         {t('modal.create_folder_title')}
                     </DialogTitle>
-                    <DialogDescription className="text-xs text-gray-500 dark:text-gray-400">
+                    <DialogDescription className="text-xs text-muted-foreground">
                         {t('modal.create_folder_desc')}
                     </DialogDescription>
                 </DialogHeader>
 
                 <form onSubmit={submit} className="space-y-4 mt-2">
                     <div className="space-y-1">
-                        <Label htmlFor="name" className="text-sm font-semibold text-gray-700 dark:text-gray-200">
+                        <Label htmlFor="name" className="text-sm font-semibold text-foreground/80">
                             {t('name')} *
                         </Label>
                         <Input
@@ -85,7 +85,7 @@ export default function CreateFolderModal() {
                     </div>
 
                     <div className="space-y-1">
-                        <Label htmlFor="comment" className="text-sm font-semibold text-gray-700 dark:text-gray-200">
+                        <Label htmlFor="comment" className="text-sm font-semibold text-foreground/80">
                             {t('comment')}
                         </Label>
                         <Input
@@ -97,7 +97,7 @@ export default function CreateFolderModal() {
                         <InputError message={errors.comment} />
                     </div>
 
-                    <DialogFooter className="flex items-center justify-end gap-3 pt-4 mt-4 border-t border-gray-100 dark:border-gray-800">
+                    <DialogFooter className="flex items-center justify-end gap-3 pt-4 mt-4 border-t border-border">
                         <DialogClose asChild>
                             <Button
                                 type="button"

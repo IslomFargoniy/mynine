@@ -128,7 +128,9 @@ export default function TextareaEditor({
                         "link image media table emoticons | alignleft aligncenter " +
                         "alignright alignjustify | bullist numlist outdent indent | " +
                         "removeformat | code fullscreen preview | help",
-                    content_style: "body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; font-size: 16px; line-height: 1.6; color: #1e293b; padding: 12px; }",
+                    // The editor content stays light in both app themes on purpose: passages are rendered
+                    // in the (always light) exam room, so this is a WYSIWYG preview of that page.
+                    content_style: "body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; font-size: 16px; line-height: 1.6; color: #1e293b; background-color: #ffffff; padding: 12px; }",
                 }}
             />
 

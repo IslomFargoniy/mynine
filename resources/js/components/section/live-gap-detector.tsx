@@ -103,7 +103,7 @@ export default function LiveGapDetector({
             {/* Warnings if any */}
             {hasUnclosedBracket && (
                 <div className="flex items-center gap-1.5 p-2 rounded-md bg-amber-100/90 dark:bg-amber-950/80 border border-amber-300 dark:border-amber-700 text-amber-900 dark:text-amber-200 text-xs font-semibold animate-pulse">
-                    <AlertTriangle className="w-3.5 h-3.5 text-amber-600 shrink-0" />
+                    <AlertTriangle className="w-3.5 h-3.5 text-amber-600 shrink-0 dark:text-amber-400" />
                     <span>
                         {t('unclosed_bracket_warning') || "Diqqat: Ochilgan, ammo yopilmagan { qavs mavjud!"}
                     </span>
@@ -112,7 +112,7 @@ export default function LiveGapDetector({
 
             {hasEmptyBracket && (
                 <div className="flex items-center gap-1.5 p-2 rounded-md bg-amber-50 dark:bg-amber-950/50 border border-amber-200 dark:border-amber-800 text-amber-800 dark:text-amber-300 text-xs font-medium">
-                    <AlertTriangle className="w-3.5 h-3.5 text-amber-600 shrink-0" />
+                    <AlertTriangle className="w-3.5 h-3.5 text-amber-600 shrink-0 dark:text-amber-400" />
                     <span>
                         {t('empty_bracket_warning') || "Bo'sh qavs {} aniqlandi."}
                     </span>
@@ -130,7 +130,7 @@ export default function LiveGapDetector({
                                 className={`p-1.5 rounded-md border flex items-center gap-1.5 text-xs transition-all ${
                                     isMulti
                                         ? 'bg-purple-50/70 border-purple-200 dark:bg-purple-950/40 dark:border-purple-800 text-purple-900 dark:text-purple-200'
-                                        : 'bg-white/90 border-gray-200 dark:bg-gray-800/90 dark:border-gray-700 text-gray-800 dark:text-gray-100'
+                                        : 'bg-white/90 border-border dark:bg-gray-800/90 text-foreground'
                                 } shadow-2xs`}
                             >
                                 <span className="shrink-0 px-1 py-0.2 rounded font-mono font-bold bg-blue-600 text-white text-[10px]">
@@ -163,12 +163,12 @@ export default function LiveGapDetector({
                     })}
                 </div>
             ) : (
-                <div className="p-2 bg-white/70 dark:bg-gray-900/50 rounded-md border border-dashed border-blue-200 dark:border-blue-900 text-xs text-gray-600 dark:text-gray-400 space-y-0.5">
+                <div className="p-2 bg-white/70 dark:bg-gray-900/50 rounded-md border border-dashed border-blue-200 dark:border-blue-900 text-xs text-muted-foreground space-y-0.5">
                     <div className="flex items-center gap-1 font-semibold text-blue-900 dark:text-blue-200 text-[11px]">
                         <HelpCircle className="w-3 h-3 text-blue-600 dark:text-blue-400 shrink-0" />
                         <span>{t('how_to_create_gaps') || "Bo'sh joylarni kiritish:"}</span>
                     </div>
-                    <p className="text-[11px] leading-snug text-gray-600 dark:text-gray-400">
+                    <p className="text-[11px] leading-snug text-muted-foreground">
                         {t('gaps_instructions_hint') || "Matn ichida to'g'ri javobni { javob } yoki { 14000 / 14,000 } shaklida yozing."}
                     </p>
                 </div>

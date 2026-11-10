@@ -52,7 +52,7 @@ export default function QuestionTypeGuide({ type, defaultOpen = false }: Questio
     }
 
     return (
-        <div className="rounded-xl border border-blue-200 bg-blue-50/70 dark:bg-blue-950/40 dark:border-blue-800 p-3.5 space-y-2.5 text-sm text-gray-800 dark:text-gray-200 animate-in fade-in zoom-in-95 duration-150 relative">
+        <div className="rounded-xl border border-blue-200 bg-blue-50/70 dark:bg-blue-950/40 dark:border-blue-800 p-3.5 space-y-2.5 text-sm text-foreground animate-in fade-in zoom-in-95 duration-150 relative">
             <div className="flex items-center justify-between gap-2">
                 <div className="flex items-center gap-2 font-bold text-blue-900 dark:text-blue-200">
                     <span className="w-5 h-5 rounded-full bg-blue-600 dark:bg-blue-500 text-white flex items-center justify-center font-bold text-xs shrink-0 shadow-xs">
@@ -63,7 +63,7 @@ export default function QuestionTypeGuide({ type, defaultOpen = false }: Questio
                 <button
                     type="button"
                     onClick={() => setIsOpen(false)}
-                    className="p-1 rounded-md text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 hover:bg-blue-100 dark:hover:bg-blue-900/60 transition-colors cursor-pointer"
+                    className="p-1 rounded-md text-muted-foreground hover:text-gray-700 dark:hover:text-gray-200 hover:bg-blue-100 dark:hover:bg-blue-900/60 transition-colors cursor-pointer"
                     title={t('guide.close') || "Yopish"}
                 >
                     <X className="w-4 h-4" />
@@ -71,13 +71,13 @@ export default function QuestionTypeGuide({ type, defaultOpen = false }: Questio
             </div>
 
             {desc && (
-                <p className="text-xs text-gray-600 dark:text-gray-300 leading-relaxed">
+                <p className="text-xs text-foreground/80 leading-relaxed">
                     {desc}
                 </p>
             )}
 
             {steps.length > 0 && (
-                <ul className="space-y-1 text-xs text-gray-700 dark:text-gray-300 pl-1">
+                <ul className="space-y-1 text-xs text-foreground/80 pl-1">
                     {steps.map((step, i) => (
                         <li key={i} className="flex items-start gap-1.5">
                             <span className="font-semibold text-blue-600 dark:text-blue-400 shrink-0">•</span>
@@ -89,7 +89,7 @@ export default function QuestionTypeGuide({ type, defaultOpen = false }: Questio
 
             {hasWarning && (
                 <div className="flex items-center gap-1.5 p-2 rounded-lg bg-amber-100/80 dark:bg-amber-950/60 border border-amber-300 dark:border-amber-800 text-amber-900 dark:text-amber-200 text-xs font-semibold">
-                    <AlertTriangle className="w-4 h-4 text-amber-600 shrink-0" />
+                    <AlertTriangle className="w-4 h-4 text-amber-600 shrink-0 dark:text-amber-400" />
                     <span>{warning}</span>
                 </div>
             )}

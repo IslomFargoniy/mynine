@@ -31,11 +31,11 @@ export default function AllTestCard({
                         <div key={folder.id} className="relative">
                             {/* Folder Header */}
                             <div className="mb-6 flex flex-col gap-1 border-l-4 border-blue-600 pl-4">
-                                <h2 className="text-2xl font-black tracking-tight text-gray-900 dark:text-white uppercase">
+                                <h2 className="text-2xl font-black tracking-tight text-foreground uppercase">
                                     {folder.name}
                                 </h2>
                                 {folder.comment && (
-                                    <p className="text-sm font-medium text-gray-500 dark:text-gray-400 italic">
+                                    <p className="text-sm font-medium text-muted-foreground italic">
                                         {folder.comment}
                                     </p>
                                 )}
@@ -46,18 +46,18 @@ export default function AllTestCard({
                                 {folder.tests.map((test) => (
                                     <div
                                         key={test.id}
-                                        className="group flex flex-col justify-between rounded-2xl border-2 border-gray-200 bg-white p-5 shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-xl dark:border-gray-700 dark:bg-gray-900"
+                                        className="group flex flex-col justify-between rounded-2xl border-2 border-border bg-card p-5 shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-xl"
                                     >
                                         <div className="mb-4">
                                             <div className="flex items-start justify-between mb-2">
-                                                <h3 className="line-clamp-2 text-lg font-bold text-gray-900 dark:text-white group-hover:text-blue-600 transition-colors">
+                                                <h3 className="line-clamp-2 text-lg font-bold text-foreground group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">
                                                     {test.name}
                                                 </h3>
                                                 <CreateAttemptModal test={test} />
                                             </div>
 
                                             {test.comment && (
-                                                <p className="mb-4 text-xs font-medium text-gray-500 dark:text-gray-400 line-clamp-1">
+                                                <p className="mb-4 text-xs font-medium text-muted-foreground line-clamp-1">
                                                     {test.comment}
                                                 </p>
                                             )}
@@ -67,7 +67,7 @@ export default function AllTestCard({
                                                 {test.types.map((skill) => (
                                                     <span
                                                         key={skill.id}
-                                                        className="px-2 py-0.5 rounded-md bg-gray-50 dark:bg-gray-800 text-[10px] font-bold text-gray-600 dark:text-gray-400 border border-gray-100 dark:border-gray-700"
+                                                        className="px-2 py-0.5 rounded-md bg-muted text-[10px] font-bold text-muted-foreground border border-border"
                                                     >
                                                         {skill.type.name}
                                                     </span>
@@ -76,8 +76,8 @@ export default function AllTestCard({
                                         </div>
 
                                         {/* Footer Info */}
-                                        <div className="flex items-center justify-between pt-3 border-t border-gray-50 dark:border-gray-800">
-                                            <div className="flex items-center gap-1.5 text-xs font-bold text-gray-400 dark:text-gray-500 uppercase tracking-tighter">
+                                        <div className="flex items-center justify-between pt-3 border-t border-border">
+                                            <div className="flex items-center gap-1.5 text-xs font-bold text-muted-foreground uppercase tracking-tighter">
                                                 <Icon icon="solar:users-group-rounded-linear" className="text-lg" />
                                                 <span>{test.attempts_count} {t('total_attempts')}</span>
                                             </div>
@@ -89,17 +89,17 @@ export default function AllTestCard({
                         </div>
                     ))
             ) : (
-                <div className="flex flex-col items-center justify-center py-20 bg-gray-50 dark:bg-gray-800/30 rounded-3xl border border-dashed border-gray-200 dark:border-gray-700">
-                    <Icon icon="solar:folder-error-linear" className="text-6xl text-gray-300 mb-4" />
-                    <p className="text-xl font-bold text-gray-400">{t('no_tests_found')}</p>
+                <div className="flex flex-col items-center justify-center py-20 bg-gray-50 dark:bg-gray-800/30 rounded-3xl border border-dashed border-border">
+                    <Icon icon="solar:folder-error-linear" className="text-6xl text-muted-foreground/50 mb-4" />
+                    <p className="text-xl font-bold text-muted-foreground">{t('no_tests_found')}</p>
                 </div>
             )}
 
 
             {/* Pagination */}
             {!hidePagination && (
-                <div className="mt-12 px-6 py-4 bg-white dark:bg-gray-900 rounded-2xl border border-gray-100 dark:border-gray-800 flex flex-col sm:flex-row justify-between items-center gap-4 shadow-sm">
-                    <div className="text-sm font-medium text-gray-500 dark:text-gray-400">
+                <div className="mt-12 px-6 py-4 bg-card rounded-2xl border border-border flex flex-col sm:flex-row justify-between items-center gap-4 shadow-sm">
+                    <div className="text-sm font-medium text-muted-foreground">
                         {t('showing', { from, to, total })}
                     </div>
                     <div className="flex gap-1 overflow-x-auto pb-2 sm:pb-0">
@@ -111,8 +111,8 @@ export default function AllTestCard({
                                     link.active
                                         ? 'bg-blue-600 text-white shadow-lg'
                                         : !link.url
-                                            ? 'text-gray-300 dark:text-gray-600 cursor-not-allowed border border-transparent'
-                                            : 'bg-white dark:bg-gray-800 text-gray-600 dark:text-gray-400 border border-gray-100 dark:border-gray-700 hover:border-blue-500 hover:text-blue-600'
+                                            ? 'text-muted-foreground/60 cursor-not-allowed border border-transparent'
+                                            : 'bg-white dark:bg-gray-800 text-muted-foreground border border-border hover:border-blue-500 hover:text-blue-600'
                                 }`}
                                 dangerouslySetInnerHTML={{ __html: link.label }}
                             />

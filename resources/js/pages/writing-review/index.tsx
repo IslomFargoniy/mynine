@@ -84,47 +84,47 @@ function ReviewCard({ item }: { item: ReviewItem }) {
         <Panel className="space-y-4">
             <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
                 <div>
-                    <div className="text-base font-black text-gray-900 dark:text-white">{item.candidate}</div>
-                    <div className="text-[11px] text-gray-500">
-                        <span className="font-mono text-indigo-600">{item.code}</span> · {item.mock} · {fmtDateTime(item.finished_at)}
+                    <div className="text-base font-black text-foreground">{item.candidate}</div>
+                    <div className="text-[11px] text-muted-foreground">
+                        <span className="font-mono text-indigo-600 dark:text-indigo-400">{item.code}</span> · {item.mock} · {fmtDateTime(item.finished_at)}
                     </div>
                 </div>
                 <div className="flex items-center gap-3">
                     <div className="text-right">
-                        <div className="text-[10px] font-bold text-gray-400 uppercase">{t('exam_admin.writing.ai_band')}</div>
-                        <div className="text-xl font-black text-amber-600">{fmtBand(item.ai_band)}</div>
+                        <div className="text-[10px] font-bold text-muted-foreground uppercase">{t('exam_admin.writing.ai_band')}</div>
+                        <div className="text-xl font-black text-amber-600 dark:text-amber-400">{fmtBand(item.ai_band)}</div>
                     </div>
                     {item.reviewed_at && (
                         <div className="text-right">
-                            <div className="text-[10px] font-bold text-gray-400 uppercase">{t('exam_admin.writing.confirmed')}</div>
-                            <div className="text-xl font-black text-emerald-600">{fmtBand(item.band)}</div>
-                            <div className="text-[10px] text-gray-400">
+                            <div className="text-[10px] font-bold text-muted-foreground uppercase">{t('exam_admin.writing.confirmed')}</div>
+                            <div className="text-xl font-black text-emerald-600 dark:text-emerald-400">{fmtBand(item.band)}</div>
+                            <div className="text-[10px] text-muted-foreground">
                                 {item.reviewer} · {fmtDateTime(item.reviewed_at, 'dd.MM HH:mm')}
                             </div>
                         </div>
                     )}
-                    <Link href={route('attempt.show', item.attempt_id)} className="text-[11px] font-bold text-indigo-600 hover:underline">
+                    <Link href={route('attempt.show', item.attempt_id)} className="text-[11px] font-bold text-indigo-600 hover:underline dark:text-indigo-400">
                         {t('exam_admin.writing.open_attempt')}
                     </Link>
                 </div>
             </div>
 
-            {item.essays.length === 0 && <p className="text-xs text-gray-400">{t('exam_admin.writing.no_essays')}</p>}
+            {item.essays.length === 0 && <p className="text-xs text-muted-foreground">{t('exam_admin.writing.no_essays')}</p>}
 
             <div className="space-y-2">
                 {item.essays.map((essay) => (
-                    <div key={essay.id} className="rounded-xl border border-gray-200 dark:border-gray-800">
+                    <div key={essay.id} className="rounded-xl border border-border">
                         <div className="flex flex-wrap items-center justify-between gap-2 px-3 py-2">
                             <button type="button" className="text-left text-xs font-bold" onClick={() => setOpenEssay(openEssay === essay.id ? null : essay.id)}>
                                 {t('exam_admin.writing.task', { n: essay.task })} · {t('exam_admin.writing.words', { count: essay.words })}
                             </button>
                             <div className="flex items-center gap-2">
                                 {essay.ai_pending ? (
-                                    <span className="flex items-center gap-1 text-[11px] font-semibold text-amber-600">
+                                    <span className="flex items-center gap-1 text-[11px] font-semibold text-amber-600 dark:text-amber-400">
                                         <Loader2 className="h-3 w-3 animate-spin" /> {t('exam_admin.writing.ai_pending')}
                                     </span>
                                 ) : (
-                                    <span className="text-[11px] text-gray-500">
+                                    <span className="text-[11px] text-muted-foreground">
                                         AI: <b>{fmtBand(essay.score)}</b>
                                     </span>
                                 )}
@@ -147,9 +147,9 @@ function ReviewCard({ item }: { item: ReviewItem }) {
                             </div>
                         </div>
                         {openEssay === essay.id && (
-                            <div className="grid gap-3 border-t border-gray-100 p-3 lg:grid-cols-2 dark:border-gray-800">
+                            <div className="grid gap-3 border-t border-border p-3 lg:grid-cols-2">
                                 <div className="space-y-2">
-                                    {essay.prompt && <div className="rounded-lg bg-gray-50 p-2 text-[11px] text-gray-600 dark:bg-gray-800/50 dark:text-gray-300">{stripHtml(essay.prompt)}</div>}
+                                    {essay.prompt && <div className="rounded-lg bg-muted p-2 text-[11px] text-foreground/80">{stripHtml(essay.prompt)}</div>}
                                     <div className="max-h-80 overflow-y-auto text-xs leading-relaxed whitespace-pre-wrap">{essay.text || '—'}</div>
                                 </div>
                                 <div className="max-h-96 overflow-y-auto rounded-lg bg-amber-50/50 p-3 text-[11px] leading-relaxed whitespace-pre-wrap dark:bg-amber-950/20">
@@ -164,7 +164,7 @@ function ReviewCard({ item }: { item: ReviewItem }) {
                 ))}
             </div>
 
-            <div className="flex flex-wrap items-center justify-end gap-3 border-t border-gray-100 pt-3 dark:border-gray-800">
+            <div className="flex flex-wrap items-center justify-end gap-3 border-t border-border pt-3">
                 <label className="flex items-center gap-2 text-xs">
                     {t('exam_admin.writing.override')}
                     <select className={`${selectClass} h-8 w-20`} value={override} onChange={(e) => setOverride(e.target.value)}>
@@ -221,7 +221,7 @@ export default function WritingReviewIndex() {
                                     onClick={() => visit({ status })}
                                     className={cn(
                                         'rounded-xl px-3 py-1.5 text-xs font-bold',
-                                        filters.status === status ? 'bg-indigo-600 text-white' : 'bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-300',
+                                        filters.status === status ? 'bg-indigo-600 text-white' : 'bg-muted text-foreground/80',
                                     )}
                                 >
                                     {t(`exam_admin.writing.filter.${status}`)}
@@ -256,7 +256,7 @@ export default function WritingReviewIndex() {
                                 preserveScroll
                                 className={cn(
                                     'rounded-md px-3 py-1 text-xs',
-                                    link.active ? 'bg-indigo-600 text-white' : link.url ? 'border border-gray-200 dark:border-gray-700' : 'text-gray-400',
+                                    link.active ? 'bg-indigo-600 text-white' : link.url ? 'border border-border' : 'text-muted-foreground',
                                 )}
                                 dangerouslySetInnerHTML={{ __html: link.label }}
                             />

@@ -52,7 +52,7 @@ const MobileSearchModal = ({ data, setData, handleSubmit, roles, users, mocks, t
                             "h-10 px-4 border rounded-xl transition-all gap-2 font-bold text-xs uppercase tracking-wider relative",
                             hasActiveFilters 
                                 ? "border-blue-200 bg-blue-50/50 text-blue-600 dark:border-blue-900/50 dark:bg-blue-900/20 dark:text-blue-400" 
-                                : "border-gray-200 dark:border-gray-800 text-gray-600 dark:text-gray-400"
+                                : "border-border text-muted-foreground"
                         )}
                     >
                         <Filter className="h-4 w-4" />
@@ -62,7 +62,7 @@ const MobileSearchModal = ({ data, setData, handleSubmit, roles, users, mocks, t
                         )}
                     </Button>
                 </SheetTrigger>
-                <SheetContent side="bottom" className="rounded-t-[32px] border-t border-gray-100 dark:border-gray-800 p-6 min-h-[60vh] focus-visible:outline-none overflow-y-auto max-h-[90vh]">
+                <SheetContent side="bottom" className="rounded-t-[32px] border-t border-border p-6 min-h-[60vh] focus-visible:outline-none overflow-y-auto max-h-[90vh]">
                     <SheetHeader className="mb-6">
                         <SheetTitle className="text-xl font-black uppercase tracking-tight text-center flex items-center justify-center gap-2">
                             <Filter className="h-5 w-5 text-blue-500" />

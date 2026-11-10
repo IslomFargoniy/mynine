@@ -31,14 +31,14 @@ export default function DeleteItemModal({ item, open, setOpen, onDelete }: Delet
     return (
         <Dialog open={open} onOpenChange={setOpen}>
             <DialogContent className="sm:max-w-md w-full dark:border-gray-700">
-                <DialogHeader className="space-y-1 pb-2 border-b border-gray-100 dark:border-gray-800">
+                <DialogHeader className="space-y-1 pb-2 border-b border-border">
                     <div className="flex items-center gap-2 text-red-600 dark:text-red-400">
                         <AlertTriangle className="w-5 h-5 shrink-0" />
-                        <DialogTitle className="text-lg font-bold text-gray-900 dark:text-gray-100">
+                        <DialogTitle className="text-lg font-bold text-foreground">
                             {t('modal.delete_title') || "O'chirishni tasdiqlang"}
                         </DialogTitle>
                     </div>
-                    <DialogDescription className="text-xs text-gray-500 dark:text-gray-400">
+                    <DialogDescription className="text-xs text-muted-foreground">
                         {t('modal.delete_confirmation') || "Ushbu ma'lumotni o'chirishga ishonchingiz komilmi? Ushbu amalni ortga qaytarib bo'lmaydi."}
                     </DialogDescription>
                 </DialogHeader>
@@ -49,7 +49,7 @@ export default function DeleteItemModal({ item, open, setOpen, onDelete }: Delet
                     </div>
                 )}
 
-                <DialogFooter className="flex items-center justify-end gap-3 pt-3 mt-2 border-t border-gray-100 dark:border-gray-800">
+                <DialogFooter className="flex items-center justify-end gap-3 pt-3 mt-2 border-t border-border">
                     <DialogClose asChild>
                         <Button
                             type="button"

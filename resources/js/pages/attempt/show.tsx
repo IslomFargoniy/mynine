@@ -126,7 +126,7 @@ export default function AttemptShow() {
         if (overallBand >= 7.0) return { level: 'C1', title: 'Advanced / Fluent', color: 'bg-emerald-100 text-emerald-800 dark:bg-emerald-950/60 dark:text-emerald-300 border-emerald-300 dark:border-emerald-800' };
         if (overallBand >= 5.5) return { level: 'B2', title: 'Upper-Intermediate', color: 'bg-blue-100 text-blue-800 dark:bg-blue-950/60 dark:text-blue-300 border-blue-300 dark:border-blue-800' };
         if (overallBand >= 4.0) return { level: 'B1', title: 'Intermediate', color: 'bg-amber-100 text-amber-800 dark:bg-amber-950/60 dark:text-amber-300 border-amber-300 dark:border-amber-800' };
-        return { level: 'A2 / B0', title: 'Basic User', color: 'bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-300 border-gray-300 dark:border-gray-700' };
+        return { level: 'A2 / B0', title: 'Basic User', color: 'bg-muted text-foreground/80 border-gray-300 dark:border-gray-700' };
     })();
 
     return (
@@ -146,11 +146,11 @@ export default function AttemptShow() {
                 </div>
 
                 {/* Executive Result Hero Card */}
-                <div className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-2xl p-6 shadow-sm space-y-6">
-                    <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 pb-6 border-b border-gray-100 dark:border-gray-800">
+                <div className="bg-card border border-border rounded-2xl p-6 shadow-sm space-y-6">
+                    <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 pb-6 border-b border-border">
                         <div>
                             <div className="flex items-center gap-2 mb-1">
-                                <span className="text-xs font-bold uppercase tracking-wider text-gray-500 dark:text-gray-400">
+                                <span className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
                                     IELTS Practice Test Result
                                 </span>
                                 {attempt.tab_switch_count !== undefined && (
@@ -165,18 +165,18 @@ export default function AttemptShow() {
                                     </span>
                                 )}
                             </div>
-                            <h1 className="text-2xl md:text-3xl font-extrabold text-gray-900 dark:text-white">
+                            <h1 className="text-2xl md:text-3xl font-extrabold text-foreground">
                                 {attempt.user?.name}
                             </h1>
-                            <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
+                            <p className="text-sm text-muted-foreground mt-1">
                                 {attempt?.mock?.name} • {attempt?.test?.folder?.name} {attempt?.test?.name}
                             </p>
                         </div>
 
                         {/* Overall Band & CEFR Badge */}
-                        <div className="flex items-center gap-4 bg-gray-50 dark:bg-gray-800/80 p-4 rounded-2xl border border-gray-200 dark:border-gray-700 shrink-0">
-                            <div className="text-center pr-4 border-r border-gray-200 dark:border-gray-700">
-                                <span className="text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-widest block">
+                        <div className="flex items-center gap-4 bg-muted p-4 rounded-2xl border border-border shrink-0">
+                            <div className="text-center pr-4 border-r border-border">
+                                <span className="text-xs font-bold text-muted-foreground uppercase tracking-widest block">
                                     Overall Band
                                 </span>
                                 <span className="text-4xl font-black text-blue-600 dark:text-blue-400 font-mono">
@@ -184,13 +184,13 @@ export default function AttemptShow() {
                                 </span>
                             </div>
                             <div className="flex flex-col items-start">
-                                <span className="text-[10px] font-bold uppercase tracking-wider text-gray-500 dark:text-gray-400">
+                                <span className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
                                     CEFR Level
                                 </span>
                                 <span className={`inline-flex items-center px-2.5 py-1 rounded-lg text-sm font-extrabold border mt-0.5 ${cefr.color}`}>
                                     {cefr.level}
                                 </span>
-                                <span className="text-[11px] text-gray-500 dark:text-gray-400 font-medium mt-0.5">
+                                <span className="text-[11px] text-muted-foreground font-medium mt-0.5">
                                     {cefr.title}
                                 </span>
                             </div>
@@ -209,11 +209,11 @@ export default function AttemptShow() {
                             return (
                                 <div
                                     key={type.id}
-                                    className="p-5 border border-gray-200 dark:border-gray-800 rounded-xl bg-gray-50/50 dark:bg-gray-800/50 hover:bg-white dark:hover:bg-gray-800 transition-all flex flex-col justify-between"
+                                    className="p-5 border border-border rounded-xl bg-muted/50 hover:bg-white dark:hover:bg-gray-800 transition-all flex flex-col justify-between"
                                 >
                                     <div>
                                         <div className="flex items-center justify-between">
-                                            <span className="font-bold text-gray-900 dark:text-white text-base">
+                                            <span className="font-bold text-foreground text-base">
                                                 {type.type?.name}
                                             </span>
                                             <span className="text-xs font-mono font-bold px-2 py-0.5 bg-blue-100 dark:bg-blue-950/60 text-blue-800 dark:text-blue-300 rounded-md">
@@ -221,20 +221,20 @@ export default function AttemptShow() {
                                             </span>
                                         </div>
 
-                                        <div className="mt-3 text-sm text-gray-600 dark:text-gray-300">
+                                        <div className="mt-3 text-sm text-foreground/80">
                                             {isListening || isReading ? (
                                                 <div className="flex items-center justify-between text-xs">
                                                     <span>{t('correct_answers') || 'Toʻgʻri javoblar'}:</span>
-                                                    <strong className="font-mono text-sm text-gray-900 dark:text-white">
+                                                    <strong className="font-mono text-sm text-foreground">
                                                         {type.is_correct_count ?? 0} / 40
                                                     </strong>
                                                 </div>
                                             ) : isWriting ? (
-                                                <div className="text-xs text-gray-500 dark:text-gray-400">
+                                                <div className="text-xs text-muted-foreground">
                                                     AI & Examiner Evaluation
                                                 </div>
                                             ) : isSpeaking ? (
-                                                <div className="text-xs text-gray-500 dark:text-gray-400">
+                                                <div className="text-xs text-muted-foreground">
                                                     Examiner / AI Assessment
                                                 </div>
                                             ) : null}
@@ -242,7 +242,7 @@ export default function AttemptShow() {
                                     </div>
 
                                     {type.comment && (
-                                        <p className="text-xs text-gray-500 dark:text-gray-400 italic mt-3 pt-3 border-t border-gray-200 dark:border-gray-700 line-clamp-2">
+                                        <p className="text-xs text-muted-foreground italic mt-3 pt-3 border-t border-border line-clamp-2">
                                             "{type.comment}"
                                         </p>
                                     )}
@@ -263,12 +263,12 @@ export default function AttemptShow() {
                     {attempt.attempt_types.map((attemptType) => (
                         <div
                             key={attemptType.id}
-                            className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-2xl p-6 shadow-sm"
+                            className="bg-card border border-border rounded-2xl p-6 shadow-sm"
                         >
-                            <div className="flex items-center justify-between mb-4 pb-3 border-b border-gray-100 dark:border-gray-800">
-                                <h3 className="text-lg font-bold text-gray-900 dark:text-white flex items-center gap-2">
+                            <div className="flex items-center justify-between mb-4 pb-3 border-b border-border">
+                                <h3 className="text-lg font-bold text-foreground flex items-center gap-2">
                                     <span>{attemptType.type?.name}</span>
-                                    <span className="text-xs font-normal text-gray-500 dark:text-gray-400">
+                                    <span className="text-xs font-normal text-muted-foreground">
                                         ({t('detailed_breakdown') || 'Batafsil tahlil'})
                                     </span>
                                 </h3>

@@ -60,11 +60,11 @@ const PremiumFilters = ({ handleSubmit, setData, data, roles, users, mocks, test
         <div className="w-full">
             <form onSubmit={handleSubmit} className="flex flex-col gap-3">
                 {/* Single Row Container for Desktop */}
-                <div className="flex flex-col lg:flex-row items-stretch lg:items-center gap-2 bg-white dark:bg-gray-950 p-1.5 lg:p-1 rounded-2xl border border-gray-200 dark:border-gray-800 shadow-sm">
+                <div className="flex flex-col lg:flex-row items-stretch lg:items-center gap-2 bg-card p-1.5 lg:p-1 rounded-2xl border border-border shadow-sm">
                     
                     {/* Search Input - Main Field */}
                     <div className="relative flex-1 min-w-[140px]">
-                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-gray-400" />
+                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
                         <Input
                             type="text"
                             value={data.search || ''}
@@ -78,12 +78,12 @@ const PremiumFilters = ({ handleSubmit, setData, data, roles, users, mocks, test
                                 onClick={() => setData('search', '')}
                                 className="absolute right-2 top-1/2 -translate-y-1/2 p-1 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-full transition-colors"
                             >
-                                <X className="h-3 w-3 text-gray-400" />
+                                <X className="h-3 w-3 text-muted-foreground" />
                             </button>
                         )}
                     </div>
 
-                    <div className="hidden lg:flex items-center gap-1.5 h-6 px-1 border-l border-gray-200 dark:border-gray-800" />
+                    <div className="hidden lg:flex items-center gap-1.5 h-6 px-1 border-l border-border" />
 
                     {/* Integrated Filters - Single Row on Desktop */}
                     <div className="flex flex-wrap lg:flex-nowrap items-center gap-1 lg:gap-2 flex-grow">
@@ -93,7 +93,7 @@ const PremiumFilters = ({ handleSubmit, setData, data, roles, users, mocks, test
 
                             {users && (
                                 <Select value={String(data.user_id || '0')} onValueChange={(val) => setData('user_id', val === '0' ? '' : val)}>
-                                    <SelectTrigger className="h-8 w-auto min-w-[100px] max-w-[140px] rounded-lg border-gray-100 dark:border-gray-800 bg-gray-50/50 dark:bg-gray-900/50 text-[10px] font-bold px-2">
+                                    <SelectTrigger className="h-8 w-auto min-w-[100px] max-w-[140px] rounded-lg border-border bg-muted/50 text-[10px] font-bold px-2">
                                         <div className="flex items-center gap-1 truncate">
                                             <UserIcon className="h-3 w-3 text-blue-500 shrink-0" />
                                             <SelectValue placeholder={t('user')} />
@@ -108,7 +108,7 @@ const PremiumFilters = ({ handleSubmit, setData, data, roles, users, mocks, test
 
                             {mocks && (
                                 <Select value={String(data.mock_id || '0')} onValueChange={(val) => setData('mock_id', val === '0' ? '' : val)}>
-                                    <SelectTrigger className="h-8 w-auto min-w-[100px] max-w-[140px] rounded-lg border-gray-100 dark:border-gray-800 bg-gray-50/50 dark:bg-gray-900/50 text-[10px] font-bold px-2">
+                                    <SelectTrigger className="h-8 w-auto min-w-[100px] max-w-[140px] rounded-lg border-border bg-muted/50 text-[10px] font-bold px-2">
                                         <div className="flex items-center gap-1 truncate">
                                             <Layers className="h-3 w-3 text-orange-500 shrink-0" />
                                             <SelectValue placeholder={t('mock')} />
@@ -123,7 +123,7 @@ const PremiumFilters = ({ handleSubmit, setData, data, roles, users, mocks, test
 
                             {tests && (
                                 <Select value={String(data.test_id || '0')} onValueChange={(val) => setData('test_id', val === '0' ? '' : val)}>
-                                    <SelectTrigger className="h-8 w-auto min-w-[100px] max-w-[140px] rounded-lg border-gray-100 dark:border-gray-800 bg-gray-50/50 dark:bg-gray-900/50 text-[10px] font-bold px-2">
+                                    <SelectTrigger className="h-8 w-auto min-w-[100px] max-w-[140px] rounded-lg border-border bg-muted/50 text-[10px] font-bold px-2">
                                         <div className="flex items-center gap-1 truncate">
                                             <BookOpen className="h-3 w-3 text-green-500 shrink-0" />
                                             <SelectValue placeholder={t('test')} />
@@ -138,7 +138,7 @@ const PremiumFilters = ({ handleSubmit, setData, data, roles, users, mocks, test
 
                             {folders && (
                                 <Select value={String(data.folder_id || '0')} onValueChange={(val) => setData('folder_id', val === '0' ? '' : val)}>
-                                    <SelectTrigger className="h-8 w-auto min-w-[100px] max-w-[140px] rounded-lg border-gray-100 dark:border-gray-800 bg-gray-50/50 dark:bg-gray-900/50 text-[10px] font-bold px-2">
+                                    <SelectTrigger className="h-8 w-auto min-w-[100px] max-w-[140px] rounded-lg border-border bg-muted/50 text-[10px] font-bold px-2">
                                         <div className="flex items-center gap-1 truncate">
                                             <FolderIcon className="h-3 w-3 text-purple-500 shrink-0" />
                                             <SelectValue placeholder={t('folder')} />
@@ -153,7 +153,7 @@ const PremiumFilters = ({ handleSubmit, setData, data, roles, users, mocks, test
 
                             {roles && isAdmin && (
                                 <Select value={String(data.role || '0')} onValueChange={(val) => setData('role', val === '0' ? '' : val)}>
-                                    <SelectTrigger className="h-8 w-auto min-w-[80px] rounded-lg border-gray-100 dark:border-gray-800 bg-gray-50/50 dark:bg-gray-900/50 text-[10px] font-bold px-2">
+                                    <SelectTrigger className="h-8 w-auto min-w-[80px] rounded-lg border-border bg-muted/50 text-[10px] font-bold px-2">
                                         <div className="flex items-center gap-1 truncate">
                                             <ShieldCheck className="h-3 w-3 text-red-500 shrink-0" />
                                             <SelectValue placeholder={t('role')} />
@@ -168,7 +168,7 @@ const PremiumFilters = ({ handleSubmit, setData, data, roles, users, mocks, test
 
                             {/* Per Page Selector */}
                             <Select value={String(data.per_page || '10')} onValueChange={(val) => setData('per_page', val)}>
-                                <SelectTrigger className="h-8 w-[70px] rounded-lg border-gray-100 dark:border-gray-800 bg-gray-50/50 dark:bg-gray-900/50 text-[10px] font-bold px-2">
+                                <SelectTrigger className="h-8 w-[70px] rounded-lg border-border bg-muted/50 text-[10px] font-bold px-2">
                                     <div className="flex items-center gap-1 truncate">
                                         <ListOrdered className="h-3 w-3 text-purple-500 shrink-0" />
                                         <SelectValue placeholder="10" />
@@ -183,7 +183,7 @@ const PremiumFilters = ({ handleSubmit, setData, data, roles, users, mocks, test
                             </Select>
 
                             {/* Ultra Compact Date Pickers */}
-                            <div className="flex items-center gap-1 bg-gray-50/50 dark:bg-gray-900/50 border border-gray-100 dark:border-gray-800 rounded-lg px-2 h-8">
+                            <div className="flex items-center gap-1 bg-muted/50 border border-border rounded-lg px-2 h-8">
                                 <Calendar className="h-3 w-3 text-blue-500 shrink-0" />
                                 <DatePicker
                                     selected={data.from ? new Date(data.from) : null}
@@ -191,7 +191,7 @@ const PremiumFilters = ({ handleSubmit, setData, data, roles, users, mocks, test
                                     placeholderText={t('from')}
                                     className="w-[65px] bg-transparent border-none p-0 text-[10px] font-bold focus:ring-0 h-full"
                                 />
-                                <span className="text-gray-300 dark:text-gray-700 mx-0.5">-</span>
+                                <span className="text-muted-foreground/50 mx-0.5">-</span>
                                 <DatePicker
                                     selected={data.to ? new Date(data.to) : null}
                                     onChange={(date) => setData('to', date ? format(date, 'yyyy-MM-dd') : '')}
@@ -211,7 +211,7 @@ const PremiumFilters = ({ handleSubmit, setData, data, roles, users, mocks, test
                                     "h-10 px-4 flex-1 border rounded-xl transition-all gap-2 font-bold text-[11px] uppercase tracking-wider",
                                     isExpanded || hasActiveFilters 
                                         ? "border-blue-200 bg-blue-50/50 text-blue-600 dark:border-blue-900/50 dark:bg-blue-900/20 dark:text-blue-400" 
-                                        : "border-gray-200 dark:border-gray-800 text-gray-600 dark:text-gray-400"
+                                        : "border-border text-muted-foreground"
                                 )}
                             >
                                 <Filter className="h-4 w-4" />
@@ -248,15 +248,15 @@ const PremiumFilters = ({ handleSubmit, setData, data, roles, users, mocks, test
                     "overflow-hidden transition-all duration-300 ease-in-out lg:hidden",
                     isExpanded ? "max-h-[800px] opacity-100 visible" : "max-h-0 opacity-0 invisible"
                 )}>
-                    <div className="p-4 rounded-2xl border border-gray-100 dark:border-gray-800 bg-gray-50/50 dark:bg-gray-900/50 grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div className="p-4 rounded-2xl border border-border bg-muted/50 grid grid-cols-1 sm:grid-cols-2 gap-4">
 
                         {users && (
                             <div className="space-y-1.5">
-                                <label className="text-[9px] font-black uppercase tracking-widest text-gray-400 dark:text-gray-500 flex items-center gap-1.5 ml-1">
+                                <label className="text-[9px] font-black uppercase tracking-widest text-muted-foreground flex items-center gap-1.5 ml-1">
                                     <UserIcon className="h-3 w-3" /> {t('user')}
                                 </label>
                                 <Select value={String(data.user_id || '0')} onValueChange={(val) => setData('user_id', val === '0' ? '' : val)}>
-                                    <SelectTrigger className="h-10 rounded-xl bg-white dark:bg-gray-950 font-bold text-xs">
+                                    <SelectTrigger className="h-10 rounded-xl bg-card font-bold text-xs">
                                         <SelectValue placeholder={t('select_user')} />
                                     </SelectTrigger>
                                     <SelectContent className="rounded-xl">
@@ -269,11 +269,11 @@ const PremiumFilters = ({ handleSubmit, setData, data, roles, users, mocks, test
 
                         {mocks && (
                             <div className="space-y-1.5">
-                                <label className="text-[9px] font-black uppercase tracking-widest text-gray-400 dark:text-gray-500 flex items-center gap-1.5 ml-1">
+                                <label className="text-[9px] font-black uppercase tracking-widest text-muted-foreground flex items-center gap-1.5 ml-1">
                                     <Layers className="h-3 w-3" /> {t('mock')}
                                 </label>
                                 <Select value={String(data.mock_id || '0')} onValueChange={(val) => setData('mock_id', val === '0' ? '' : val)}>
-                                    <SelectTrigger className="h-10 rounded-xl bg-white dark:bg-gray-950 font-bold text-xs">
+                                    <SelectTrigger className="h-10 rounded-xl bg-card font-bold text-xs">
                                         <SelectValue placeholder={t('select_mock')} />
                                     </SelectTrigger>
                                     <SelectContent className="rounded-xl">
@@ -286,11 +286,11 @@ const PremiumFilters = ({ handleSubmit, setData, data, roles, users, mocks, test
 
                         {tests && (
                             <div className="space-y-1.5">
-                                <label className="text-[9px] font-black uppercase tracking-widest text-gray-400 dark:text-gray-500 flex items-center gap-1.5 ml-1">
+                                <label className="text-[9px] font-black uppercase tracking-widest text-muted-foreground flex items-center gap-1.5 ml-1">
                                     <BookOpen className="h-3 w-3" /> {t('test')}
                                 </label>
                                 <Select value={String(data.test_id || '0')} onValueChange={(val) => setData('test_id', val === '0' ? '' : val)}>
-                                    <SelectTrigger className="h-10 rounded-xl bg-white dark:bg-gray-950 font-bold text-xs">
+                                    <SelectTrigger className="h-10 rounded-xl bg-card font-bold text-xs">
                                         <SelectValue placeholder={t('select_test')} />
                                     </SelectTrigger>
                                     <SelectContent className="rounded-xl">
@@ -303,11 +303,11 @@ const PremiumFilters = ({ handleSubmit, setData, data, roles, users, mocks, test
 
                         {folders && (
                             <div className="space-y-1.5">
-                                <label className="text-[9px] font-black uppercase tracking-widest text-gray-400 dark:text-gray-500 flex items-center gap-1.5 ml-1">
+                                <label className="text-[9px] font-black uppercase tracking-widest text-muted-foreground flex items-center gap-1.5 ml-1">
                                     <FolderIcon className="h-3 w-3" /> {t('folder')}
                                 </label>
                                 <Select value={String(data.folder_id || '0')} onValueChange={(val) => setData('folder_id', val === '0' ? '' : val)}>
-                                    <SelectTrigger className="h-10 rounded-xl bg-white dark:bg-gray-950 font-bold text-xs">
+                                    <SelectTrigger className="h-10 rounded-xl bg-card font-bold text-xs">
                                         <SelectValue placeholder={t('select_folder')} />
                                     </SelectTrigger>
                                     <SelectContent className="rounded-xl">
@@ -320,11 +320,11 @@ const PremiumFilters = ({ handleSubmit, setData, data, roles, users, mocks, test
 
                         {roles && isAdmin && (
                             <div className="space-y-1.5">
-                                <label className="text-[9px] font-black uppercase tracking-widest text-gray-400 dark:text-gray-500 flex items-center gap-1.5 ml-1">
+                                <label className="text-[9px] font-black uppercase tracking-widest text-muted-foreground flex items-center gap-1.5 ml-1">
                                     <ShieldCheck className="h-3 w-3" /> {t('role')}
                                 </label>
                                 <Select value={String(data.role || '0')} onValueChange={(val) => setData('role', val === '0' ? '' : val)}>
-                                    <SelectTrigger className="h-10 rounded-xl bg-white dark:bg-gray-950 font-bold text-xs">
+                                    <SelectTrigger className="h-10 rounded-xl bg-card font-bold text-xs">
                                         <SelectValue placeholder={t('select_role')} />
                                     </SelectTrigger>
                                     <SelectContent className="rounded-xl">
@@ -336,7 +336,7 @@ const PremiumFilters = ({ handleSubmit, setData, data, roles, users, mocks, test
                         )}
 
                         <div className="space-y-1.5">
-                            <label className="text-[9px] font-black uppercase tracking-widest text-gray-400 dark:text-gray-500 flex items-center gap-1.5 ml-1">
+                            <label className="text-[9px] font-black uppercase tracking-widest text-muted-foreground flex items-center gap-1.5 ml-1">
                                 <Calendar className="h-3 w-3" /> {t('date_range')}
                             </label>
                             <div className="flex items-center gap-2">
@@ -344,23 +344,23 @@ const PremiumFilters = ({ handleSubmit, setData, data, roles, users, mocks, test
                                     selected={data.from ? new Date(data.from) : null}
                                     onChange={(date) => setData('from', date ? format(date, 'yyyy-MM-dd') : '')}
                                     placeholderText={t('from')}
-                                    className="flex-1 h-10 rounded-xl border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-950 text-xs font-bold"
+                                    className="flex-1 h-10 rounded-xl border-border bg-card text-xs font-bold"
                                 />
                                 <DatePicker
                                     selected={data.to ? new Date(data.to) : null}
                                     onChange={(date) => setData('to', date ? format(date, 'yyyy-MM-dd') : '')}
                                     placeholderText={t('to')}
-                                    className="flex-1 h-10 rounded-xl border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-950 text-xs font-bold"
+                                    className="flex-1 h-10 rounded-xl border-border bg-card text-xs font-bold"
                                 />
                             </div>
                         </div>
 
                         <div className="space-y-1.5">
-                            <label className="text-[9px] font-black uppercase tracking-widest text-gray-400 dark:text-gray-500 flex items-center gap-1.5 ml-1">
+                            <label className="text-[9px] font-black uppercase tracking-widest text-muted-foreground flex items-center gap-1.5 ml-1">
                                 <ListOrdered className="h-3 w-3" /> {t('per_page') ?? 'Per Page'}
                             </label>
                             <Select value={String(data.per_page || '10')} onValueChange={(val) => setData('per_page', val)}>
-                                <SelectTrigger className="h-10 rounded-xl bg-white dark:bg-gray-950 font-bold text-xs">
+                                <SelectTrigger className="h-10 rounded-xl bg-card font-bold text-xs">
                                     <SelectValue placeholder="10" />
                                 </SelectTrigger>
                                 <SelectContent className="rounded-xl">

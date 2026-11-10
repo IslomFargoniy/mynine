@@ -1,7 +1,7 @@
 import React from 'react';
 import Chart from 'react-apexcharts';
 import { HourlyStatItem } from '@/types';
-import { useAppearance } from '@/hooks/use-appearance';
+import { useIsDark } from '@/hooks/use-is-dark';
 
 interface Props {
     title: string;
@@ -9,7 +9,8 @@ interface Props {
 }
 
 export default function HourlyAttemptsChart({ title, data: chartData }: Props) {
-    const { appearance } = useAppearance();
+    const isDark = useIsDark();
+    const axisLabel = isDark ? '#94a3b8' : '#64748b';
     
     const hours = Array.from({ length: 24 }, (_, i) => i);
     const labels = hours.map(h => `${h.toString().padStart(2, '0')}:00`);
@@ -19,7 +20,6 @@ export default function HourlyAttemptsChart({ title, data: chartData }: Props) {
         return item ? Number(item.items_count) : 0;
     });
 
-    const isDark = appearance === 'dark' || (appearance === 'system' && window.matchMedia('(prefers-color-scheme: dark)').matches);
 
     const options: ApexCharts.ApexOptions = {
         chart: {
@@ -38,7 +38,7 @@ export default function HourlyAttemptsChart({ title, data: chartData }: Props) {
             style: {
                 fontSize: '14px',
                 fontWeight: 'bold',
-                color: isDark ? '#94a3b8' : '#64748b'
+                color: axisLabel
             }
         },
         plotOptions: {
@@ -51,7 +51,7 @@ export default function HourlyAttemptsChart({ title, data: chartData }: Props) {
         xaxis: {
             categories: labels,
             labels: {
-                style: { colors: '#94a3b8', fontSize: '10px' },
+                style: { colors: axisLabel, fontSize: '10px' },
                 rotate: -45,
             },
             axisBorder: { show: false },
@@ -59,11 +59,11 @@ export default function HourlyAttemptsChart({ title, data: chartData }: Props) {
         },
         yaxis: {
             labels: {
-                style: { colors: '#94a3b8', fontSize: '11px' }
+                style: { colors: axisLabel, fontSize: '11px' }
             }
         },
         grid: {
-            borderColor: isDark ? 'rgba(255, 255, 255, 0.05)' : 'rgba(0, 0, 0, 0.05)',
+            borderColor: isDark ? 'rgba(255, 255, 255, 0.06)' : 'rgba(0, 0, 0, 0.06)',
             strokeDashArray: 4,
         },
         colors: ['#3b82f6'],

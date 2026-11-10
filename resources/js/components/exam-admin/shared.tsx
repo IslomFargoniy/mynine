@@ -76,7 +76,7 @@ export function ModuleBadge({ type, className, children }: { type?: string | nul
         <span
             className={cn(
                 'inline-flex items-center gap-1 rounded-lg border px-2 py-0.5 text-[10px] font-bold',
-                moduleColor[type ?? ''] ?? 'border-gray-200 bg-gray-50 text-gray-600 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-300',
+                moduleColor[type ?? ''] ?? 'border-border bg-muted text-foreground/80',
                 className,
             )}
         >
@@ -91,8 +91,8 @@ export function PageHeader({ title, description, icon, actions }: { title: strin
             <div className="flex items-center gap-3">
                 {icon && <div className="rounded-xl bg-indigo-50 p-2.5 text-indigo-600 dark:bg-indigo-950/40 dark:text-indigo-400">{icon}</div>}
                 <div>
-                    <h1 className="text-xl font-black text-gray-900 dark:text-white">{title}</h1>
-                    {description && <p className="mt-0.5 text-xs text-gray-500 dark:text-gray-400">{description}</p>}
+                    <h1 className="text-xl font-black text-foreground">{title}</h1>
+                    {description && <p className="mt-0.5 text-xs text-muted-foreground">{description}</p>}
                 </div>
             </div>
             {actions && <div className="flex flex-wrap items-center gap-2">{actions}</div>}
@@ -101,17 +101,17 @@ export function PageHeader({ title, description, icon, actions }: { title: strin
 }
 
 export function Panel({ className, children }: { className?: string; children: ReactNode }) {
-    return <div className={cn('rounded-2xl border border-gray-200 bg-white p-4 shadow-xs dark:border-gray-800 dark:bg-gray-900', className)}>{children}</div>;
+    return <div className={cn('rounded-2xl border border-border bg-card p-4 shadow-xs', className)}>{children}</div>;
 }
 
 export function EmptyState({ children }: { children: ReactNode }) {
     return (
-        <div className="rounded-xl border border-dashed border-gray-200 py-10 text-center text-xs text-gray-400 dark:border-gray-800">{children}</div>
+        <div className="rounded-xl border border-dashed border-border py-10 text-center text-xs text-muted-foreground">{children}</div>
     );
 }
 
 const statusTone: Record<string, string> = {
-    not_arrived: 'bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-300',
+    not_arrived: 'bg-muted text-foreground/80',
     checked_in: 'bg-blue-50 text-blue-700 dark:bg-blue-950/40 dark:text-blue-300',
     in_exam: 'bg-indigo-50 text-indigo-700 dark:bg-indigo-950/40 dark:text-indigo-300',
     written_done: 'bg-amber-50 text-amber-700 dark:bg-amber-950/40 dark:text-amber-300',
@@ -140,7 +140,7 @@ export function OnlineDot({ online, label }: { online: boolean; label?: string }
 }
 
 export const selectClass =
-    'h-9 rounded-xl border border-gray-200 bg-white px-3 text-xs font-semibold text-gray-800 focus:ring-2 focus:ring-indigo-500/20 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-100';
+    'h-9 rounded-xl border border-border bg-card px-3 text-xs font-semibold text-foreground focus:ring-2 focus:ring-indigo-500/20';
 
 export const inputClass =
-    'h-9 w-full rounded-xl border border-gray-200 bg-white px-3 text-xs font-medium text-gray-900 focus:ring-2 focus:ring-indigo-500/20 dark:border-gray-700 dark:bg-gray-900 dark:text-white';
+    'h-9 w-full rounded-xl border border-border bg-card px-3 text-xs font-medium text-foreground focus:ring-2 focus:ring-indigo-500/20';

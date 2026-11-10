@@ -116,25 +116,25 @@ export default function MonitorIndex() {
                                 >
                                     <div className="flex items-start justify-between gap-2">
                                         <div>
-                                            <div className="font-bold text-gray-900 dark:text-white">{a.name}</div>
+                                            <div className="font-bold text-foreground">{a.name}</div>
                                             <div className="font-mono text-[11px] text-indigo-600 dark:text-indigo-400">{a.code ?? `#${a.id}`}</div>
                                         </div>
                                         <div className="text-right">
                                             {a.finished ? (
-                                                <span className="rounded-full bg-gray-100 px-2 py-0.5 text-[10px] font-bold text-gray-600 dark:bg-gray-800 dark:text-gray-300">
+                                                <span className="rounded-full bg-muted px-2 py-0.5 text-[10px] font-bold text-foreground/80">
                                                     {t('exam_admin.monitor.finished')}
                                                 </span>
                                             ) : (
                                                 <OnlineDot online={a.online} label={a.online ? t('exam_admin.monitor.online') : t('exam_admin.monitor.offline')} />
                                             )}
-                                            <div className="mt-0.5 text-[10px] text-gray-400">{a.device ?? t('exam_admin.monitor.web')}</div>
+                                            <div className="mt-0.5 text-[10px] text-muted-foreground">{a.device ?? t('exam_admin.monitor.web')}</div>
                                         </div>
                                     </div>
 
                                     <div className="flex flex-wrap items-center gap-2">
                                         {a.module ? <ModuleBadge type={a.module} /> : null}
                                         {a.modules_done.map((m) => (
-                                            <span key={m} className="text-[10px] font-semibold text-gray-400 line-through">
+                                            <span key={m} className="text-[10px] font-semibold text-muted-foreground line-through">
                                                 {m}
                                             </span>
                                         ))}
@@ -145,7 +145,7 @@ export default function MonitorIndex() {
                                         )}
                                         {a.unlock_requested && <span className="text-[10px] font-bold text-indigo-500">{t('exam_admin.monitor.unlock_sent')}</span>}
                                         {left !== null && !a.finished && (
-                                            <span className={cn('ml-auto flex items-center gap-1 font-mono text-sm font-black', left < 300 ? 'text-rose-600' : 'text-gray-800 dark:text-gray-100')}>
+                                            <span className={cn('ml-auto flex items-center gap-1 font-mono text-sm font-black', left < 300 ? 'text-rose-600 dark:text-rose-400' : 'text-foreground')}>
                                                 <Clock className="h-3.5 w-3.5" />
                                                 {fmtSeconds(left)}
                                             </span>
@@ -159,7 +159,7 @@ export default function MonitorIndex() {
                                             'flex w-full items-center justify-between rounded-xl px-3 py-2 text-left text-[11px] font-bold',
                                             a.violations_count > 0
                                                 ? 'bg-rose-50 text-rose-700 dark:bg-rose-950/30 dark:text-rose-300'
-                                                : 'bg-gray-50 text-gray-500 dark:bg-gray-800/50',
+                                                : 'bg-muted text-muted-foreground',
                                         )}
                                     >
                                         <span className="flex items-center gap-1.5">
@@ -177,26 +177,26 @@ export default function MonitorIndex() {
                                     {expanded === a.id && a.violations.length > 0 && (
                                         <ul className="max-h-48 space-y-1 overflow-y-auto text-[11px]">
                                             {a.violations.map((v) => (
-                                                <li key={v.id} className="flex gap-2 border-b border-gray-100 pb-1 dark:border-gray-800">
-                                                    <span className="font-mono text-gray-400">{fmtDateTime(v.occurred_at, 'HH:mm:ss')}</span>
+                                                <li key={v.id} className="flex gap-2 border-b border-border pb-1">
+                                                    <span className="font-mono text-muted-foreground">{fmtDateTime(v.occurred_at, 'HH:mm:ss')}</span>
                                                     <span className="font-semibold">{t(`exam_admin.violation.${v.type}`, { defaultValue: v.type })}</span>
-                                                    {v.detail && <span className="truncate text-gray-500">{JSON.stringify(v.detail)}</span>}
+                                                    {v.detail && <span className="truncate text-muted-foreground">{JSON.stringify(v.detail)}</span>}
                                                 </li>
                                             ))}
                                         </ul>
                                     )}
 
-                                    <div className="flex flex-wrap gap-1.5 border-t border-gray-100 pt-3 dark:border-gray-800">
+                                    <div className="flex flex-wrap gap-1.5 border-t border-border pt-3">
                                         {canControl && !a.finished && (
                                             <>
                                                 {a.paused ? (
                                                     <Button size="sm" variant="outline" disabled={busy === a.id} onClick={() => act(a, 'resume')} className="h-7 rounded-lg px-2 text-[11px]">
-                                                        <Play className="h-3.5 w-3.5 text-emerald-600" />
+                                                        <Play className="h-3.5 w-3.5 text-emerald-600 dark:text-emerald-400" />
                                                         {t('exam_admin.monitor.resume')}
                                                     </Button>
                                                 ) : (
                                                     <Button size="sm" variant="outline" disabled={busy === a.id} onClick={() => act(a, 'pause')} className="h-7 rounded-lg px-2 text-[11px]">
-                                                        <Pause className="h-3.5 w-3.5 text-amber-600" />
+                                                        <Pause className="h-3.5 w-3.5 text-amber-600 dark:text-amber-400" />
                                                         {t('exam_admin.monitor.pause')}
                                                     </Button>
                                                 )}
@@ -217,7 +217,7 @@ export default function MonitorIndex() {
                                                     size="sm"
                                                     variant="outline"
                                                     disabled={busy === a.id}
-                                                    className="h-7 rounded-lg border-rose-200 px-2 text-[11px] text-rose-600"
+                                                    className="h-7 rounded-lg border-rose-200 px-2 text-[11px] text-rose-600 dark:text-rose-400 dark:border-rose-900/60"
                                                     onClick={() => act(a, 'force-submit', {}, t('exam_admin.monitor.force_submit_confirm', { name: a.name }))}
                                                 >
                                                     <Send className="h-3.5 w-3.5" />

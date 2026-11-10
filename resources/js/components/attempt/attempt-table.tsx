@@ -54,13 +54,13 @@ const AttemptTable = ({ searchData, hidePagination, ...attempt }: AttemptTablePr
     };
 
     return (
-        <div className="bg-white dark:bg-gray-900 rounded-xl shadow-lg border-2 border-gray-200 dark:border-gray-700 overflow-hidden">
+        <div className="bg-card rounded-xl shadow-lg border-2 border-border overflow-hidden">
             {/* Header / Actions potentially here */}
             
             {/* Table Container */}
             <div className="overflow-x-auto">
                 <table className="w-full text-sm text-left">
-                    <thead className="bg-gray-50 dark:bg-gray-800/50 text-gray-600 dark:text-gray-400 font-medium border-b border-gray-200 dark:border-gray-700">
+                    <thead className="bg-muted text-muted-foreground font-medium border-b border-border">
                         <tr>
                             <th className="px-6 py-4 font-semibold uppercase tracking-wider">#</th>
                             {isAdmin && <th className="px-6 py-4 font-semibold uppercase tracking-wider">{t('user')}</th>}
@@ -88,18 +88,18 @@ const AttemptTable = ({ searchData, hidePagination, ...attempt }: AttemptTablePr
 
                             return (
                                 <tr key={item.id} className="hover:bg-gray-50 dark:hover:bg-gray-800/40 transition-colors group">
-                                    <td className="px-6 py-4 text-gray-500 dark:text-gray-400 font-mono">{globalIndex}</td>
+                                    <td className="px-6 py-4 text-muted-foreground font-mono">{globalIndex}</td>
                                     
                                     {isAdmin && (
                                         <td className="px-6 py-4">
                                             <div className="flex flex-col">
-                                                <span className="font-medium text-gray-900 dark:text-gray-100">{item?.user?.name}</span>
-                                                <span className="text-xs text-gray-500">{item?.user?.email}</span>
+                                                <span className="font-medium text-foreground">{item?.user?.name}</span>
+                                                <span className="text-xs text-muted-foreground">{item?.user?.email}</span>
                                             </div>
                                         </td>
                                     )}
 
-                                    <td className="px-6 py-4 font-medium text-gray-900 dark:text-gray-100">
+                                    <td className="px-6 py-4 font-medium text-foreground">
                                         {item.name || item.mock_student?.name || (item as any).mockStudent?.name || item.user?.name || "---"}
                                     </td>
 
@@ -108,7 +108,7 @@ const AttemptTable = ({ searchData, hidePagination, ...attempt }: AttemptTablePr
                                             <span className="font-semibold text-blue-600 dark:text-blue-400">
                                                 {item?.mock?.name || item?.test?.folder?.name}
                                             </span>
-                                            <span className="text-xs text-gray-500">
+                                            <span className="text-xs text-muted-foreground">
                                                 {item?.test?.name}
                                             </span>
                                         </div>
@@ -128,7 +128,7 @@ const AttemptTable = ({ searchData, hidePagination, ...attempt }: AttemptTablePr
 
                                     <td className="px-6 py-4">
                                         <div className="text-[10px] space-y-1.5 font-medium">
-                                            <div className="flex items-center text-gray-600 dark:text-gray-400">
+                                            <div className="flex items-center text-muted-foreground">
                                                 <span className="w-16 opacity-60 uppercase tracking-tighter">{t('start')}:</span>
                                                 <span className="font-bold">{item.started_at ? format(new Date(item.started_at), 'MMM dd, HH:mm') : '---'}</span>
                                             </div>
@@ -151,11 +151,11 @@ const AttemptTable = ({ searchData, hidePagination, ...attempt }: AttemptTablePr
                                                         : type.is_correct_count;
                                                 
                                                 return (
-                                                    <div key={type.id} className="flex justify-between items-center bg-gray-100 dark:bg-gray-800 px-1.5 py-0.5 rounded border border-gray-200 dark:border-gray-700">
+                                                    <div key={type.id} className="flex justify-between items-center bg-muted px-1.5 py-0.5 rounded border border-border">
                                                         <span className="opacity-70 truncate font-black text-[9px]" title={t(type.type.name.toLowerCase())}>
                                                             {t(type.type.name.toLowerCase())[0].toUpperCase()}
                                                         </span>
-                                                        <span className="font-black text-gray-800 dark:text-gray-200">{score}</span>
+                                                        <span className="font-black text-foreground">{score}</span>
                                                     </div>
                                                 );
                                             })}
@@ -168,7 +168,7 @@ const AttemptTable = ({ searchData, hidePagination, ...attempt }: AttemptTablePr
                                                 <>
                                                     <button
                                             onClick={() => window.location.href = route('attempt.show', item.id)}
-                                            className="flex items-center gap-1.5 px-3 py-1.5 bg-blue-50 text-blue-600 rounded-lg hover:bg-blue-600 hover:text-white transition-colors"
+                                            className="flex items-center gap-1.5 px-3 py-1.5 bg-blue-50 text-blue-600 rounded-lg hover:bg-blue-600 hover:text-white transition-colors dark:text-blue-400 dark:bg-blue-950/40"
                                         >
                                             <Icon icon="solar:eye-bold" className="text-lg" />
                                             <span className="font-semibold text-xs">{t('view_result')}</span>
@@ -176,7 +176,7 @@ const AttemptTable = ({ searchData, hidePagination, ...attempt }: AttemptTablePr
 
                                         <button
                                             onClick={() => window.open(route('attempt.pdf', item.id), '_blank')}
-                                            className="flex items-center gap-1.5 px-3 py-1.5 bg-gray-50 text-gray-600 rounded-lg hover:bg-gray-800 hover:text-white transition-colors"
+                                            className="flex items-center gap-1.5 px-3 py-1.5 bg-muted text-muted-foreground rounded-lg hover:bg-gray-800 hover:text-white dark:hover:bg-gray-700 transition-colors"
                                         >
                                             <Icon icon="solar:document-bold" className="text-lg" />
                                             <span className="font-semibold text-xs">{t('download_pdf')}</span>
@@ -213,8 +213,8 @@ const AttemptTable = ({ searchData, hidePagination, ...attempt }: AttemptTablePr
 
             {/* Pagination */}
             {!hidePagination && (
-                <div className="px-6 py-4 bg-gray-50 dark:bg-gray-800/30 border-t border-gray-200 dark:border-gray-700 flex flex-col sm:flex-row justify-between items-center gap-4">
-                    <div className="text-sm text-gray-500 dark:text-gray-400">
+                <div className="px-6 py-4 bg-gray-50 dark:bg-gray-800/30 border-t border-border flex flex-col sm:flex-row justify-between items-center gap-4">
+                    <div className="text-sm text-muted-foreground">
                         {t('showing', {
                             from: attempt.from,
                             to: attempt.to,
@@ -230,8 +230,8 @@ const AttemptTable = ({ searchData, hidePagination, ...attempt }: AttemptTablePr
                                     link.active
                                         ? 'bg-blue-600 text-white shadow-md'
                                         : !link.url
-                                            ? 'text-gray-300 dark:text-gray-600 cursor-not-allowed border border-transparent'
-                                            : 'bg-white dark:bg-gray-800 dark:text-gray-200 text-gray-700 border border-gray-200 dark:border-gray-700 hover:border-blue-500 hover:text-blue-600'
+                                            ? 'text-muted-foreground/60 cursor-not-allowed border border-transparent'
+                                            : 'bg-white dark:bg-gray-800 text-foreground/80 border border-border hover:border-blue-500 hover:text-blue-600'
                                 }`}
                                 dangerouslySetInnerHTML={{ __html: link.label }}
                             />

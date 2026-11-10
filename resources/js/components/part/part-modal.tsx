@@ -81,18 +81,18 @@ export default function PartModal({ testType, part, open, setOpen }: PartModalPr
 
     return (
         <Dialog open={open} onOpenChange={setOpen}>
-            <DialogContent className="sm:max-w-none w-screen h-screen rounded-none border-none p-0 overflow-hidden flex flex-col bg-white dark:bg-gray-900">
+            <DialogContent className="sm:max-w-none w-screen h-screen rounded-none border-none p-0 overflow-hidden flex flex-col bg-card">
 
                 {/* Sticky Full-Screen Header */}
-                <div className="flex items-center justify-between px-6 py-3.5 pr-14 border-b border-gray-200 dark:border-gray-800 bg-gray-50 dark:bg-gray-900 shrink-0">
+                <div className="flex items-center justify-between px-6 py-3.5 pr-14 border-b border-border bg-muted shrink-0">
                     <div className="flex items-center gap-3">
-                        <DialogTitle className="text-lg font-bold text-gray-900 dark:text-gray-100">
+                        <DialogTitle className="text-lg font-bold text-foreground">
                             {isEdit ? `${t('edit')} ${part?.name}` : `${t('add_part')} (${testType?.type?.name || ''})`}
                         </DialogTitle>
                         {testType?.test?.name && (
                             <>
-                                <span className="text-xs text-gray-400">|</span>
-                                <span className="text-xs font-semibold text-gray-500 dark:text-gray-400">
+                                <span className="text-xs text-muted-foreground">|</span>
+                                <span className="text-xs font-semibold text-muted-foreground">
                                     {testType?.test?.name} {testType?.type?.name ? `/ ${testType.type.name}` : ''}
                                 </span>
                             </>
@@ -107,7 +107,7 @@ export default function PartModal({ testType, part, open, setOpen }: PartModalPr
                         {/* Top Inputs: Name & Comment */}
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                             <div>
-                                <Label htmlFor="part_name" className="text-sm font-semibold text-gray-700 dark:text-gray-200">
+                                <Label htmlFor="part_name" className="text-sm font-semibold text-foreground/80">
                                     {t('name')} *
                                 </Label>
                                 <Input
@@ -122,7 +122,7 @@ export default function PartModal({ testType, part, open, setOpen }: PartModalPr
                             </div>
 
                             <div>
-                                <Label htmlFor="part_comment" className="text-sm font-semibold text-gray-700 dark:text-gray-200">
+                                <Label htmlFor="part_comment" className="text-sm font-semibold text-foreground/80">
                                     {t('comment')}
                                 </Label>
                                 <Input
@@ -138,7 +138,7 @@ export default function PartModal({ testType, part, open, setOpen }: PartModalPr
 
                         {/* TinyMCE Full Passage Editor */}
                         <div className="space-y-1.5 flex flex-col flex-1">
-                            <Label className="text-sm font-semibold text-gray-700 dark:text-gray-200">
+                            <Label className="text-sm font-semibold text-foreground/80">
                                 Passage Matni (Rich Text Editor)
                             </Label>
                             <TextareaEditor
@@ -150,7 +150,7 @@ export default function PartModal({ testType, part, open, setOpen }: PartModalPr
                     </div>
 
                     {/* Full-Screen Footer Bar */}
-                    <div className="shrink-0 flex items-center justify-end gap-3 px-6 py-3.5 border-t border-gray-200 dark:border-gray-800 bg-gray-50 dark:bg-gray-900">
+                    <div className="shrink-0 flex items-center justify-end gap-3 px-6 py-3.5 border-t border-border bg-muted">
                         <Button
                             type="button"
                             variant="outline"

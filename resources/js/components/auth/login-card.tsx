@@ -39,7 +39,7 @@ export default function LoginCard() {
             <form className="mt-5 flex flex-col gap-4" onSubmit={submit}>
                 <div className="grid gap-3">
                     <div className="grid gap-2">
-                        <Label htmlFor="email_or_phone" className="text-xs font-black uppercase tracking-widest text-gray-400 ml-1">
+                        <Label htmlFor="email_or_phone" className="text-xs font-black uppercase tracking-widest text-muted-foreground ml-1">
                             {t('login.email_or_phone')}
                         </Label>
                         <Input
@@ -52,13 +52,13 @@ export default function LoginCard() {
                             value={data.email_or_phone}
                             onChange={(e) => setData('email_or_phone', e.target.value)}
                             placeholder={t('login.email_placeholder')}
-                            className="h-12 rounded-2xl border-gray-100 bg-white/50 dark:bg-gray-800/50 dark:border-white/5 focus:ring-2 focus:ring-primary/20 transition-all font-medium"
+                            className="h-12 rounded-2xl border-border bg-white/50 dark:bg-gray-800/50 focus:ring-2 focus:ring-primary/20 transition-all font-medium"
                         />
                         <InputError message={errors.email_or_phone} />
                     </div>
 
                     <div className="grid gap-2">
-                        <Label htmlFor="password" className="text-xs font-black uppercase tracking-widest text-gray-400 ml-1">
+                        <Label htmlFor="password" className="text-xs font-black uppercase tracking-widest text-muted-foreground ml-1">
                             {t('login.password') || 'Password'}
                         </Label>
                         <Input
@@ -70,7 +70,7 @@ export default function LoginCard() {
                             value={data.password}
                             onChange={(e) => setData('password', e.target.value)}
                             placeholder={t('login.password_placeholder')}
-                            className="h-12 rounded-2xl border-gray-100 bg-white/50 dark:bg-gray-800/50 dark:border-white/5 focus:ring-2 focus:ring-primary/20 transition-all font-medium"
+                            className="h-12 rounded-2xl border-border bg-white/50 dark:bg-gray-800/50 focus:ring-2 focus:ring-primary/20 transition-all font-medium"
                         />
                         <InputError message={errors.password} />
                     </div>
@@ -85,7 +85,7 @@ export default function LoginCard() {
                                 tabIndex={3}
                                 className="rounded-md border-gray-300 dark:border-gray-600"
                             />
-                            <Label htmlFor="remember" className="text-sm font-bold text-gray-500 dark:text-gray-400 cursor-pointer">{t('login.remember')}</Label>
+                            <Label htmlFor="remember" className="text-sm font-bold text-muted-foreground cursor-pointer">{t('login.remember')}</Label>
                         </div>
                     </div>
 
@@ -110,7 +110,7 @@ export default function LoginCard() {
                 </div>
 
                 <div className="text-center text-sm font-semibold">
-                    <span className="text-gray-400">{t('login.no_account')} </span>
+                    <span className="text-muted-foreground">{t('login.no_account')} </span>
                     <Link href={route('register')} className="text-primary hover:underline transition-all underline-offset-4">
                         {t('login.signup')}
                     </Link>

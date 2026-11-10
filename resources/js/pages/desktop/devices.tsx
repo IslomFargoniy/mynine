@@ -77,13 +77,13 @@ export default function DevicesIndex() {
                                 </a>
                             </Button>
                         ) : (
-                            <span className="text-xs text-gray-400">{t('exam_admin.devices.installer_missing')}</span>
+                            <span className="text-xs text-muted-foreground">{t('exam_admin.devices.installer_missing')}</span>
                         )
                     }
                 />
 
                 {installer?.available && installer.sha256 && (
-                    <p className="font-mono text-[10px] break-all text-gray-400">SHA-256: {installer.sha256}</p>
+                    <p className="font-mono text-[10px] break-all text-muted-foreground">SHA-256: {installer.sha256}</p>
                 )}
 
                 {pending.length > 0 && (
@@ -97,7 +97,7 @@ export default function DevicesIndex() {
                 ) : (
                     <Panel className="overflow-x-auto p-0">
                         <table className="w-full text-left text-xs">
-                            <thead className="bg-gray-50 text-[10px] font-bold text-gray-500 uppercase dark:bg-gray-800/60 dark:text-gray-400">
+                            <thead className="bg-muted text-[10px] font-bold text-muted-foreground uppercase">
                                 <tr>
                                     <th className="px-3 py-2.5">{t('exam_admin.devices.pc')}</th>
                                     <th className="px-3 py-2.5">{t('exam_admin.common.status')}</th>
@@ -112,8 +112,8 @@ export default function DevicesIndex() {
                                 {devices.map((d) => (
                                     <tr key={d.id} className={cn(!d.is_approved && 'bg-amber-50/70 dark:bg-amber-950/20', d.is_blocked && 'bg-rose-50/60 dark:bg-rose-950/20')}>
                                         <td className="px-3 py-2.5">
-                                            <div className="font-bold text-gray-900 dark:text-white">{d.name}</div>
-                                            <div className="max-w-[180px] truncate font-mono text-[10px] text-gray-400" title={d.machine_id}>
+                                            <div className="font-bold text-foreground">{d.name}</div>
+                                            <div className="max-w-[180px] truncate font-mono text-[10px] text-muted-foreground" title={d.machine_id}>
                                                 {d.machine_id}
                                             </div>
                                         </td>
@@ -137,9 +137,9 @@ export default function DevicesIndex() {
                                             </div>
                                         </td>
                                         <td className="px-3 py-2.5 font-mono">
-                                            <span className={cn(d.outdated && 'font-bold text-amber-600')}>{d.app_version ?? '—'}</span>
+                                            <span className={cn(d.outdated && 'font-bold text-amber-600 dark:text-amber-400')}>{d.app_version ?? '—'}</span>
                                         </td>
-                                        <td className="px-3 py-2.5 text-[11px] text-gray-500">
+                                        <td className="px-3 py-2.5 text-[11px] text-muted-foreground">
                                             <div>{d.os_version ?? '—'}</div>
                                             <div className="font-mono">{d.ip ?? '—'}</div>
                                         </td>
@@ -148,7 +148,7 @@ export default function DevicesIndex() {
                                             {d.current_attempt ? (
                                                 <>
                                                     <div className="font-semibold">{d.current_attempt.name}</div>
-                                                    <div className="text-gray-400">{d.current_attempt.mock}</div>
+                                                    <div className="text-muted-foreground">{d.current_attempt.mock}</div>
                                                 </>
                                             ) : (
                                                 '—'
@@ -172,7 +172,7 @@ export default function DevicesIndex() {
                                                         size="sm"
                                                         variant="outline"
                                                         onClick={() => confirm(t('exam_admin.devices.block_confirm', { name: d.name })) && post('desktop.devices.block', d)}
-                                                        className="h-7 rounded-lg px-2 text-[11px] text-rose-600"
+                                                        className="h-7 rounded-lg px-2 text-[11px] text-rose-600 dark:text-rose-400"
                                                     >
                                                         <Ban className="h-3.5 w-3.5" />
                                                         {t('exam_admin.devices.block')}
@@ -181,7 +181,7 @@ export default function DevicesIndex() {
                                                 <Button size="sm" variant="outline" onClick={() => rename(d)} className="h-7 rounded-lg px-2" title={t('exam_admin.devices.rename')}>
                                                     <Pencil className="h-3.5 w-3.5" />
                                                 </Button>
-                                                <Button size="sm" variant="outline" onClick={() => remove(d)} className="h-7 rounded-lg px-2 text-rose-600" title={t('exam_admin.common.delete')}>
+                                                <Button size="sm" variant="outline" onClick={() => remove(d)} className="h-7 rounded-lg px-2 text-rose-600 dark:text-rose-400" title={t('exam_admin.common.delete')}>
                                                     <Trash2 className="h-3.5 w-3.5" />
                                                 </Button>
                                             </div>

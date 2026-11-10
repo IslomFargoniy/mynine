@@ -42,7 +42,7 @@ export default function RegisterCard() {
             <form className="mt-5 flex flex-col gap-4" onSubmit={submit}>
                 <div className="grid gap-3">
                     <div className="grid gap-2">
-                        <Label htmlFor="name" className="text-xs font-black uppercase tracking-widest text-gray-400 ml-1">
+                        <Label htmlFor="name" className="text-xs font-black uppercase tracking-widest text-muted-foreground ml-1">
                             {t('register.name')}
                         </Label>
                         <Input
@@ -56,13 +56,13 @@ export default function RegisterCard() {
                             onChange={(e) => setData('name', e.target.value)}
                             disabled={processing}
                             placeholder={t('register.name_placeholder')}
-                            className="h-12 rounded-2xl border-gray-100 bg-white/50 dark:bg-gray-800/50 dark:border-white/5 focus:ring-2 focus:ring-primary/20 transition-all font-medium"
+                            className="h-12 rounded-2xl border-border bg-white/50 dark:bg-gray-800/50 focus:ring-2 focus:ring-primary/20 transition-all font-medium"
                         />
                         <InputError message={errors.name} />
                     </div>
 
                     <div className="grid gap-2">
-                        <Label htmlFor="phone" className="text-xs font-black uppercase tracking-widest text-gray-400 ml-1">
+                        <Label htmlFor="phone" className="text-xs font-black uppercase tracking-widest text-muted-foreground ml-1">
                             {t('phone')}
                         </Label>
                         <Input
@@ -75,13 +75,13 @@ export default function RegisterCard() {
                             onChange={(e) => setData('phone', e.target.value)}
                             disabled={processing}
                             placeholder={t('phone')}
-                            className="h-12 rounded-2xl border-gray-100 bg-white/50 dark:bg-gray-800/50 dark:border-white/5 focus:ring-2 focus:ring-primary/20 transition-all font-medium"
+                            className="h-12 rounded-2xl border-border bg-white/50 dark:bg-gray-800/50 focus:ring-2 focus:ring-primary/20 transition-all font-medium"
                         />
                         <InputError message={errors.phone} />
                     </div>
 
                     <div className="grid gap-2">
-                        <Label htmlFor="email" className="text-xs font-black uppercase tracking-widest text-gray-400 ml-1">
+                        <Label htmlFor="email" className="text-xs font-black uppercase tracking-widest text-muted-foreground ml-1">
                             {t('register.email')}
                         </Label>
                         <Input
@@ -93,13 +93,13 @@ export default function RegisterCard() {
                             onChange={(e) => setData('email', e.target.value)}
                             disabled={processing}
                             placeholder={t('register.email_placeholder')}
-                            className="h-12 rounded-2xl border-gray-100 bg-white/50 dark:bg-gray-800/50 dark:border-white/5 focus:ring-2 focus:ring-primary/20 transition-all font-medium"
+                            className="h-12 rounded-2xl border-border bg-white/50 dark:bg-gray-800/50 focus:ring-2 focus:ring-primary/20 transition-all font-medium"
                         />
                         <InputError message={errors.email} />
                     </div>
 
                     <div className="grid gap-2">
-                        <Label htmlFor="password" className="text-xs font-black uppercase tracking-widest text-gray-400 ml-1">
+                        <Label htmlFor="password" className="text-xs font-black uppercase tracking-widest text-muted-foreground ml-1">
                             {t('register.password')}
                         </Label>
                         <Input
@@ -112,13 +112,13 @@ export default function RegisterCard() {
                             onChange={(e) => setData('password', e.target.value)}
                             disabled={processing}
                             placeholder={t('register.password_placeholder')}
-                            className="h-12 rounded-2xl border-gray-100 bg-white/50 dark:bg-gray-800/50 dark:border-white/5 focus:ring-2 focus:ring-primary/20 transition-all font-medium"
+                            className="h-12 rounded-2xl border-border bg-white/50 dark:bg-gray-800/50 focus:ring-2 focus:ring-primary/20 transition-all font-medium"
                         />
                         <InputError message={errors.password} />
                     </div>
 
                     <div className="grid gap-2">
-                        <Label htmlFor="password_confirmation" className="text-xs font-black uppercase tracking-widest text-gray-400 ml-1">
+                        <Label htmlFor="password_confirmation" className="text-xs font-black uppercase tracking-widest text-muted-foreground ml-1">
                             {t('register.password_confirmation')}
                         </Label>
                         <Input
@@ -131,7 +131,7 @@ export default function RegisterCard() {
                             onChange={(e) => setData('password_confirmation', e.target.value)}
                             disabled={processing}
                             placeholder={t('register.password_confirmation_placeholder')}
-                            className="h-12 rounded-2xl border-gray-100 bg-white/50 dark:bg-gray-800/50 dark:border-white/5 focus:ring-2 focus:ring-primary/20 transition-all font-medium"
+                            className="h-12 rounded-2xl border-border bg-white/50 dark:bg-gray-800/50 focus:ring-2 focus:ring-primary/20 transition-all font-medium"
                         />
                         <InputError message={errors.password_confirmation} />
                     </div>
@@ -157,7 +157,7 @@ export default function RegisterCard() {
                 </div>
 
                 <div className="text-center text-sm font-semibold">
-                    <span className="text-gray-400">{t('register.no_account')} </span>
+                    <span className="text-muted-foreground">{t('register.no_account')} </span>
                     <Link href={route('login')} className="text-primary hover:underline transition-all underline-offset-4">
                         {t('register.login')}
                     </Link>

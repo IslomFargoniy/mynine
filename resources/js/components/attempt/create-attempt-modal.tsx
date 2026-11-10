@@ -89,8 +89,8 @@ export default function CreateAttemptModal({ test, mock }: AttemptUpdateProps) {
 
             <DialogContent className="max-h-[90vh] overflow-y-auto dark:border-gray-400">
                 <DialogTitle>{t('start_with_name', { name: test.name })}</DialogTitle>
-                <DialogDescription className="space-y-2 text-gray-700 dark:text-gray-300" asChild>
-                    <div className="space-y-2 text-gray-700 dark:text-gray-300 text-sm">
+                <DialogDescription className="space-y-2 text-foreground/80" asChild>
+                    <div className="space-y-2 text-foreground/80 text-sm">
                         <p>{t('begin_test_warning')}</p>
                         <p>{t('test_start_warning')}</p>
                         <p>{t('do_not_refresh')}</p>
@@ -113,7 +113,7 @@ export default function CreateAttemptModal({ test, mock }: AttemptUpdateProps) {
                 <form onSubmit={submit} className="space-y-4">
                     {mock && (
                         <div className="space-y-2">
-                            <label htmlFor="name" className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                            <label htmlFor="name" className="text-sm font-medium text-foreground/80">
                                 {t('attempt_name')} <span className="text-red-500">*</span>
                             </label>
                             <input
@@ -146,7 +146,7 @@ export default function CreateAttemptModal({ test, mock }: AttemptUpdateProps) {
                                     reset();
                                     clearErrors();
                                 }}
-                                className="bg-gray-100 text-gray-900 hover:bg-gray-200 dark:bg-gray-800 dark:text-gray-100 dark:hover:bg-gray-700"
+                                className="bg-muted text-foreground hover:bg-gray-200 dark:hover:bg-gray-700"
                             >
                                 {t('cancel')}
                             </Button>

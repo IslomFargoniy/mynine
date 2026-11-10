@@ -60,7 +60,7 @@ const SearchForm = ({ handleSubmit, setData, data, roles }: SearchFormProps) => 
                     <select
                         value={data.role || ''}
                         onChange={handleRoleChange}
-                        className="px-4 py-2 text-sm font-medium text-gray-900 bg-white  border rounded  border-gray-200 hover:bg-gray-100 hover:text-blue-700 focus:z-10 focus:ring-2 focus:ring-blue-700 focus:text-blue-700 dark:bg-gray-800 dark:border-gray-700 dark:text-white dark:hover:text-white dark:hover:bg-gray-700 dark:focus:ring-blue-500 dark:focus:text-white"
+                        className="px-4 py-2 text-sm font-medium text-foreground bg-white border rounded border-border hover:bg-gray-100 hover:text-blue-700 focus:z-10 focus:ring-2 focus:ring-blue-700 focus:text-blue-700 dark:bg-gray-800 dark:hover:text-white dark:hover:bg-gray-700 dark:focus:ring-blue-500 dark:focus:text-white"
                     >
                         {data.role}
                         <option value="0">{t('role')}</option>
@@ -76,7 +76,7 @@ const SearchForm = ({ handleSubmit, setData, data, roles }: SearchFormProps) => 
                     <select
                         value={data.per_page}
                         onChange={handlePerPageChange}
-                        className="px-4 py-2 text-sm font-medium text-gray-900 bg-white border rounded border-gray-200 hover:bg-gray-100 hover:text-blue-700 focus:z-10 focus:ring-2 focus:ring-blue-700 focus:text-blue-700 dark:bg-gray-800 dark:border-gray-700 dark:text-white dark:hover:text-white dark:hover:bg-gray-700 dark:focus:ring-blue-500 dark:focus:text-white">
+                        className="px-4 py-2 text-sm font-medium text-foreground bg-white border rounded border-border hover:bg-gray-100 hover:text-blue-700 focus:z-10 focus:ring-2 focus:ring-blue-700 focus:text-blue-700 dark:bg-gray-800 dark:hover:text-white dark:hover:bg-gray-700 dark:focus:ring-blue-500 dark:focus:text-white">
 
                         <option value={10}>10</option>
                         <option value={25}>25</option>
@@ -110,7 +110,7 @@ const SearchForm = ({ handleSubmit, setData, data, roles }: SearchFormProps) => 
                             onChange={(to) => {
                                 setData('to', to ? format(to, 'yyyy-MM-dd') : '');
                             }}
-                            className="px-4 py-2 text-sm font-medium text-gray-900 bg-white  border rounded  border-gray-200 hover:bg-gray-100 hover:text-blue-700 focus:z-10 focus:ring-2 focus:ring-blue-700 focus:text-blue-700 dark:bg-gray-800 dark:border-gray-700 dark:text-white dark:hover:text-white dark:hover:bg-gray-700 dark:focus:ring-blue-500 dark:focus:text-white"
+                            className="px-4 py-2 text-sm font-medium text-foreground bg-white border rounded border-border hover:bg-gray-100 hover:text-blue-700 focus:z-10 focus:ring-2 focus:ring-blue-700 focus:text-blue-700 dark:bg-gray-800 dark:hover:text-white dark:hover:bg-gray-700 dark:focus:ring-blue-500 dark:focus:text-white"
                         />
                     }
                 </div>
@@ -122,7 +122,7 @@ const SearchForm = ({ handleSubmit, setData, data, roles }: SearchFormProps) => 
                         value={data.month}
                         max={format(new Date(), 'yyyy-MM')}
                         onChange={handleMonth}
-                        className="px-4 py-2 text-sm font-medium text-gray-900 bg-white  border rounded  border-gray-200 hover:bg-gray-100 hover:text-blue-700 focus:z-10 focus:ring-2 focus:ring-blue-700 focus:text-blue-700 dark:bg-gray-800 dark:border-gray-700 dark:text-white dark:hover:text-white dark:hover:bg-gray-700 dark:focus:ring-blue-500 dark:focus:text-white"
+                        className="px-4 py-2 text-sm font-medium text-foreground bg-white border rounded border-border hover:bg-gray-100 hover:text-blue-700 focus:z-10 focus:ring-2 focus:ring-blue-700 focus:text-blue-700 dark:bg-gray-800 dark:hover:text-white dark:hover:bg-gray-700 dark:focus:ring-blue-500 dark:focus:text-white"
                         placeholder={t('month')}
                     />
                 }
@@ -135,7 +135,7 @@ const SearchForm = ({ handleSubmit, setData, data, roles }: SearchFormProps) => 
                         onChange={(date) => {
                             setData('date', date ? format(date, 'yyyy-MM-dd') : '');
                         }}
-                        className="px-4 py-2 text-sm font-medium text-gray-900 bg-white  border rounded  border-gray-200 hover:bg-gray-100 hover:text-blue-700 focus:z-10 focus:ring-2 focus:ring-blue-700 focus:text-blue-700 dark:bg-gray-800 dark:border-gray-700 dark:text-white dark:hover:text-white dark:hover:bg-gray-700 dark:focus:ring-blue-500 dark:focus:text-white"
+                        className="px-4 py-2 text-sm font-medium text-foreground bg-white border rounded border-border hover:bg-gray-100 hover:text-blue-700 focus:z-10 focus:ring-2 focus:ring-blue-700 focus:text-blue-700 dark:bg-gray-800 dark:hover:text-white dark:hover:bg-gray-700 dark:focus:ring-blue-500 dark:focus:text-white"
                     />
                 }
 
@@ -143,7 +143,7 @@ const SearchForm = ({ handleSubmit, setData, data, roles }: SearchFormProps) => 
                 {/* Submit button to apply filter */}
                 <button
                     type="submit"
-                    className="flex items-center justify-center gap-2 bg-blue-700 hover:bg-blue-800 focus:outline-none dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-800 px-4 py-2 text-sm font-medium text-gray-900 border border-gray-200 rounded hover:text-blue-700 focus:z-10 focus:ring-2 focus:ring-blue-700 focus:text-blue-700 dark:border-gray-700 dark:text-white dark:hover:text-white dark:focus:text-white"
+                    className="flex items-center justify-center gap-2 bg-blue-700 hover:bg-blue-800 focus:outline-none dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-800 px-4 py-2 text-sm font-medium text-foreground border border-border rounded hover:text-blue-700 focus:z-10 focus:ring-2 focus:ring-blue-700 focus:text-blue-700 dark:hover:text-white dark:focus:text-white"
                 >
                     <Search className="text-white dark:text-white" size={20} />
                     <span className="lg:hidden">{t('search')}</span>

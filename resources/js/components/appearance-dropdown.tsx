@@ -39,18 +39,18 @@ export default function AppearanceToggleDropdown({ className = '', ...props }: H
                         type="button"
                         title={getLabel()}
                         aria-label={getLabel()}
-                        className="inline-flex items-center justify-center h-9 w-9 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700 transition-all cursor-pointer shadow-xs active:scale-95"
+                        className="inline-flex items-center justify-center h-9 w-9 rounded-xl border border-border bg-white dark:bg-gray-800 text-foreground/80 hover:bg-gray-50 dark:hover:bg-gray-700 transition-all cursor-pointer shadow-xs active:scale-95"
                     >
                         {getCurrentIcon()}
                     </button>
                 </DropdownMenuTrigger>
-                <DropdownMenuContent align="end" className="w-36 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 p-1 shadow-lg z-[70]">
+                <DropdownMenuContent align="end" className="w-36 rounded-xl border border-border bg-white dark:bg-gray-800 p-1 shadow-lg z-[70]">
                     <DropdownMenuItem
                         onClick={() => updateAppearance('light')}
                         className={`flex items-center justify-between px-3 py-2 text-xs font-semibold rounded-lg cursor-pointer transition-colors ${
                             appearance === 'light'
                                 ? 'bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400'
-                                : 'text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700'
+                                : 'text-foreground/80 hover:bg-gray-100 dark:hover:bg-gray-700'
                         }`}
                     >
                         <span className="flex items-center gap-2">
@@ -65,7 +65,7 @@ export default function AppearanceToggleDropdown({ className = '', ...props }: H
                         className={`flex items-center justify-between px-3 py-2 text-xs font-semibold rounded-lg cursor-pointer transition-colors ${
                             appearance === 'dark'
                                 ? 'bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400'
-                                : 'text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700'
+                                : 'text-foreground/80 hover:bg-gray-100 dark:hover:bg-gray-700'
                         }`}
                     >
                         <span className="flex items-center gap-2">
@@ -80,7 +80,7 @@ export default function AppearanceToggleDropdown({ className = '', ...props }: H
                         className={`flex items-center justify-between px-3 py-2 text-xs font-semibold rounded-lg cursor-pointer transition-colors ${
                             appearance === 'system'
                                 ? 'bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400'
-                                : 'text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700'
+                                : 'text-foreground/80 hover:bg-gray-100 dark:hover:bg-gray-700'
                         }`}
                     >
                         <span className="flex items-center gap-2">

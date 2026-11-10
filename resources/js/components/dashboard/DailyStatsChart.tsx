@@ -1,7 +1,7 @@
 import React from 'react';
 import Chart from 'react-apexcharts';
 import { StatItem } from '@/types';
-import { useAppearance } from '@/hooks/use-appearance';
+import { useIsDark } from '@/hooks/use-is-dark';
 
 interface Props {
     dailyUsers: StatItem[];
@@ -9,7 +9,8 @@ interface Props {
 }
 
 export default function DailyStatsChart({ dailyUsers, dailyAttempts }: Props) {
-    const { appearance } = useAppearance();
+    const isDark = useIsDark();
+    const axisLabel = isDark ? '#94a3b8' : '#64748b';
 
     const allDates = Array.from(new Set([
         ...dailyUsers.map(d => d.day_date),
@@ -37,7 +38,6 @@ export default function DailyStatsChart({ dailyUsers, dailyAttempts }: Props) {
         return Math.max(0, total - unique);
     });
 
-    const isDark = appearance === 'dark' || (appearance === 'system' && window.matchMedia('(prefers-color-scheme: dark)').matches);
 
     const options: ApexCharts.ApexOptions = {
         chart: {
@@ -62,18 +62,18 @@ export default function DailyStatsChart({ dailyUsers, dailyAttempts }: Props) {
         xaxis: {
             categories: labels,
             labels: {
-                style: { colors: '#94a3b8', fontSize: '12px' }
+                style: { colors: axisLabel, fontSize: '12px' }
             },
             axisBorder: { show: false },
             axisTicks: { show: false },
         },
         yaxis: {
             labels: {
-                style: { colors: '#94a3b8', fontSize: '12px' }
+                style: { colors: axisLabel, fontSize: '12px' }
             }
         },
         grid: {
-            borderColor: isDark ? 'rgba(255, 255, 255, 0.05)' : 'rgba(0, 0, 0, 0.05)',
+            borderColor: isDark ? 'rgba(255, 255, 255, 0.06)' : 'rgba(0, 0, 0, 0.06)',
             strokeDashArray: 4,
         },
         legend: {
