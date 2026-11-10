@@ -113,7 +113,7 @@ works. To hear audio on macOS: install CocoaPods and
 ## Releasing an update
 
 1. Bump `version:` in `pubspec.yaml` (semver, e.g. `1.2.0+12`).
-2. Push a tag `v1.2.0` (or run the `windows-build` workflow manually).
+2. Push a tag `desktop-v1.2.0` (or run the `desktop-windows-build` workflow manually; it lives in the repo root `.github/workflows/`).
 3. Download the artifact `mynine-setup-1.2.0` (installer + `.sha256`).
 4. In the mynine.uz admin → App releases, upload the installer with its version,
    notes and the SHA-256; tick **mandatory** if older versions must not start an exam

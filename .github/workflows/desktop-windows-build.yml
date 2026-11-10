@@ -1,15 +1,21 @@
-name: windows-build
+name: desktop-windows-build
 
+# Builds the Flutter desktop exam client in desktop/ (see desktop/README.md).
 on:
   push:
     branches: [main]
-    tags: ['v*']
+    tags: ['desktop-v*']
+    paths: ['desktop/**', '.github/workflows/desktop-windows-build.yml']
   pull_request:
+    paths: ['desktop/**', '.github/workflows/desktop-windows-build.yml']
   workflow_dispatch:
 
 jobs:
   build:
     runs-on: windows-latest
+    defaults:
+      run:
+        working-directory: desktop
     steps:
       - uses: actions/checkout@v4
 
@@ -66,6 +72,6 @@ jobs:
         with:
           name: mynine-setup-${{ steps.version.outputs.version }}
           path: |
-            build/installer/mynine-setup-*.exe
-            build/installer/mynine-setup-*.exe.sha256
+            desktop/build/installer/mynine-setup-*.exe
+            desktop/build/installer/mynine-setup-*.exe.sha256
           if-no-files-found: error
