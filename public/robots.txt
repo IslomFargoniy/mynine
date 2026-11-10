@@ -1,7 +1,5 @@
 User-agent: *
 Allow: /$
-Allow: /login
-Allow: /register
 Disallow: /dashboard
 Disallow: /practice
 Disallow: /practice-

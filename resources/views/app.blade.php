@@ -54,7 +54,29 @@
             }
         </style>
 
-        <title inertia>{{ config('app.name', 'Laravel') }}</title>
+        <title inertia>{{ $seo['title'] ?? config('app.name', 'Laravel') }}</title>
+
+        {{-- Server-rendered SEO tags (the React pages are client-rendered, so crawlers need these in the HTML). --}}
+        @isset($seo)
+            <meta name="robots" content="{{ $seo['robots'] ?? 'index, follow, max-image-preview:large' }}">
+            @isset($seo['description'])
+                <meta name="description" content="{{ $seo['description'] }}">
+                <link rel="canonical" href="{{ $seo['canonical'] ?? url()->current() }}">
+                <meta property="og:site_name" content="Mynine">
+                <meta property="og:locale" content="uz_UZ">
+                <meta property="og:type" content="website">
+                <meta property="og:title" content="{{ $seo['title'] }}">
+                <meta property="og:description" content="{{ $seo['description'] }}">
+                <meta property="og:url" content="{{ $seo['canonical'] ?? url()->current() }}">
+                <meta property="og:image" content="{{ asset('images/site/hero-illustration.png') }}">
+                <meta name="twitter:card" content="summary_large_image">
+                <meta name="twitter:title" content="{{ $seo['title'] }}">
+                <meta name="twitter:description" content="{{ $seo['description'] }}">
+            @endisset
+            @isset($seo['jsonld'])
+                <script type="application/ld+json">{!! json_encode($seo['jsonld'], JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE) !!}</script>
+            @endisset
+        @endisset
 
         <link rel="preconnect" href="https://fonts.bunny.net">
         <link href="https://fonts.bunny.net/css?family=inter:400,500,600,700" rel="stylesheet" />

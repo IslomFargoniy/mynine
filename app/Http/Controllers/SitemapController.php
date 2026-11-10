@@ -30,9 +30,6 @@ class SitemapController extends Controller
             $urls[] = ['loc' => route('blog.show', $article['slug']), 'lastmod' => $article['updated'], 'changefreq' => 'monthly', 'priority' => '0.7'];
         }
 
-        $urls[] = ['loc' => route('login'), 'lastmod' => $pagesUpdated, 'changefreq' => 'yearly', 'priority' => '0.3'];
-        $urls[] = ['loc' => route('register'), 'lastmod' => $pagesUpdated, 'changefreq' => 'yearly', 'priority' => '0.4'];
-
         $xml = '<?xml version="1.0" encoding="UTF-8"?>'."\n";
         $xml .= '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">'."\n";
         foreach ($urls as $url) {

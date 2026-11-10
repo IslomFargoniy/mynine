@@ -49,14 +49,6 @@ export default function Welcome() {
     return (
         <>
             <Head title={t('seo.welcome_title')}>
-                <meta name="description" content={t('seo.welcome_description')} />
-                <meta name="keywords" content={t('seo.welcome_keywords')} />
-                <meta property="og:type" content="website" />
-                <meta property="og:title" content={t('seo.welcome_title')} />
-                <meta property="og:description" content={t('seo.welcome_description')} />
-                <meta property="twitter:card" content="summary_large_image" />
-                <meta property="twitter:title" content={t('seo.welcome_title')} />
-                <meta property="twitter:description" content={t('seo.welcome_description')} />
                 <link rel="preconnect" href="https://fonts.bunny.net" />
                 <link href="https://fonts.bunny.net/css?family=instrument-sans:400,500,600" rel="stylesheet" />
             </Head>

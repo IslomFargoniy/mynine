@@ -123,6 +123,32 @@ class HomeController extends Controller
 
     public function home(Request $request)
     {
-        return Inertia::render('welcome');
+        $description = "Mynine — IELTS mock testlarni haqiqiy imtihon formatida onlayn va o'quv markazida topshiring: "
+            .'Listening, Reading, Writing va Speaking, avtomatik baholash va band score. Bepul amaliyot testlari.';
+
+        return Inertia::render('welcome')->withViewData(['seo' => [
+            'title' => 'Mynine — IELTS mock test onlayn va o‘quv markazida | Band score bilan',
+            'description' => $description,
+            'canonical' => url('/'),
+            'jsonld' => [
+                '@context' => 'https://schema.org',
+                '@graph' => [
+                    [
+                        '@type' => 'EducationalOrganization',
+                        'name' => 'Mynine',
+                        'url' => url('/'),
+                        'logo' => asset('images/logo/logo.png'),
+                        'description' => $description,
+                        'sameAs' => ['https://t.me/MynineUzBot'],
+                    ],
+                    [
+                        '@type' => 'WebSite',
+                        'name' => 'Mynine',
+                        'url' => url('/'),
+                        'inLanguage' => 'uz',
+                    ],
+                ],
+            ],
+        ]]);
     }
 }
