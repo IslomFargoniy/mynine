@@ -41,4 +41,7 @@ return [
         'skype.exe',
     ],
 
+    // Numbered questions in a full Listening / Reading paper (Mock Bank readiness check).
+    'questions_per_paper' => 40,
+
 ];

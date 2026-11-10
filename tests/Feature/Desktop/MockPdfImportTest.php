@@ -248,6 +248,7 @@ test('a long reading paper is split into one AI call per passage', function () {
 */
 
 test('listening AI JSON becomes rows with the answer key applied by question number', function () {
+    config(['desktop.questions_per_paper' => null]); // small fixtures, not a full 40-question paper
     ['listening' => $module] = makeBankTest();
 
     $result = app(MockImportNormalizer::class)->normalize('Listening', [listeningAiResponse()]);

@@ -100,3 +100,15 @@ test('moving a test to practice twice does not fail', function () {
 
     expect($test->fresh()->purpose)->toBe('practice')->and((int) $test->fresh()->open)->toBe(1);
 });
+
+test('a Listening or Reading module with fewer than 40 question numbers is not ready', function () {
+    $admin = makeUser('Admin');
+    ['testType' => $module] = makeTestContent($admin, 'Reading', ['purpose' => 'mock', 'open' => 0]);
+
+    $issues = app(\App\Services\MockBankService::class)->moduleIssues($module->fresh());
+    expect(collect($issues)->first(fn ($i) => str_starts_with($i, 'question_count:')))->not->toBeNull();
+
+    config(['desktop.questions_per_paper' => null]);
+    $issues = app(\App\Services\MockBankService::class)->moduleIssues($module->fresh());
+    expect(collect($issues)->first(fn ($i) => str_starts_with($i, 'question_count:')))->toBeNull();
+});

@@ -795,7 +795,8 @@
                 "no_parts": "Нет частей",
                 "no_questions": "Нет вопросов",
                 "missing_answer_keys": "Вопросов без ключа: {{count}}",
-                "no_audio": "Нет аудио Listening"
+                "no_audio": "Нет аудио Listening",
+                "question_count": "Вопросов: {{count}} из 40"
             },
             "edit_module": "Открыть редактор модуля (части и вопросы)",
             "import": {

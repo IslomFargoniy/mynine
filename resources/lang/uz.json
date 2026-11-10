@@ -795,7 +795,8 @@
                 "no_parts": "Partlar yo'q",
                 "no_questions": "Savollar yo'q",
                 "missing_answer_keys": "{{count}} ta savolda javob kaliti yo'q",
-                "no_audio": "Listening audio yo'q"
+                "no_audio": "Listening audio yo'q",
+                "question_count": "40 ta savoldan {{count}} tasi bor"
             },
             "edit_module": "Modulni tahrirlash (part va savollar qo'shish)",
             "import": {

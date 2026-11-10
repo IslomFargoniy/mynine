@@ -795,7 +795,8 @@
                 "no_parts": "No parts",
                 "no_questions": "No questions",
                 "missing_answer_keys": "{{count}} question(s) without an answer key",
-                "no_audio": "Listening audio missing"
+                "no_audio": "Listening audio missing",
+                "question_count": "{{count}} of 40 questions"
             },
             "edit_module": "Open module editor (add parts and questions)",
             "import": {

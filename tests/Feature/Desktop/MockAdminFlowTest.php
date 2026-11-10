@@ -77,6 +77,7 @@ function finishWrittenExam(MockStudent $student, bool $reviewWriting = true): At
 */
 
 test('a test is marked ready only when every module passes the readiness check', function () {
+    config(['desktop.questions_per_paper' => null]); // small fixtures, not a full 40-question paper
     $test = $this->exam['testL'];
     $test->update(['bank_status' => ExamTest::BANK_DRAFT, 'audio_path' => 'audio/l.mp3']);
 

@@ -20,6 +20,8 @@ class MockBankService
     /** Module types a mock is built from (Speaking is face-to-face). */
     public const MODULE_TYPES = ['Listening', 'Reading', 'Writing'];
 
+    public const QUESTIONS_PER_PAPER = 40;
+
     public function reuseDays(): int
     {
         return (int) config('desktop.module_reuse_days', 14);
@@ -28,7 +30,7 @@ class MockBankService
     /**
      * Problems that keep a module out of the "ready" state (empty = ready).
      *
-     * @return array<int, string> machine codes: no_parts, no_questions, missing_answer_keys:<n>, no_audio
+     * @return array<int, string> machine codes: no_parts, no_questions, missing_answer_keys:<n>, question_count:<n>, no_audio
      */
     public function moduleIssues(TestType $testType): array
     {
@@ -55,6 +57,16 @@ class MockBankService
 
             if ($missing > 0) {
                 $issues[] = 'missing_answer_keys:'.$missing;
+            }
+
+            // A full Listening / Reading paper has 40 numbered questions. A "choose TWO" question
+            // covers as many numbers as it has correct options (same rule as the exam payload).
+            $numbers = (clone $questions)->with('options:id,question_id,is_correct')->get()
+                ->sum(fn (Question $q) => $q->options->isEmpty() ? 1 : max(1, $q->options->where('is_correct', true)->count()));
+
+            $expected = config('desktop.questions_per_paper', self::QUESTIONS_PER_PAPER);
+            if ($expected && $numbers !== (int) $expected) {
+                $issues[] = 'question_count:'.$numbers;
             }
         }
 
