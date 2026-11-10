@@ -3,19 +3,22 @@
 namespace App\Http\Middleware\Desktop;
 
 use App\Exceptions\ApiException;
-use App\Models\AppRelease;
+use App\Services\Desktop\ReleaseManifest;
 use Closure;
 use Illuminate\Http\Request;
 use Symfony\Component\HttpFoundation\Response;
 
 /**
- * Rejects exam requests from desktop clients older than the newest active mandatory release (426).
+ * Rejects exam requests from desktop clients older than `min_version` of public/desktop/version.json (426).
+ * No manifest or no min_version → no check.
  */
 class EnsureClientVersion
 {
+    public function __construct(private ReleaseManifest $manifest) {}
+
     public function handle(Request $request, Closure $next): Response
     {
-        $minVersion = AppRelease::minVersion();
+        $minVersion = $this->manifest->minVersion();
         if ($minVersion === null) {
             return $next($request);
         }

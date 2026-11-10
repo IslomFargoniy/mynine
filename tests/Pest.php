@@ -14,6 +14,7 @@ use App\Models\Test as ExamTest;
 use App\Models\TestType;
 use App\Models\Type;
 use App\Models\User\User;
+use App\Services\Desktop\ReleaseManifest;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Testing\TestResponse;
 use Spatie\Permission\Models\Role;
@@ -214,4 +215,32 @@ function binaryContent(TestResponse $response): string
     $response->baseResponse->sendContent();
 
     return (string) ob_get_clean();
+}
+
+/**
+ * Points ReleaseManifest at a temporary version.json (array → JSON, string → raw content, null → missing file).
+ */
+function useReleaseManifest(array|string|null $manifest): string
+{
+    $path = sys_get_temp_dir().'/mynine-version-'.uniqid('', true).'.json';
+    if ($manifest !== null) {
+        file_put_contents($path, is_array($manifest) ? json_encode($manifest) : $manifest);
+    }
+    app()->instance(ReleaseManifest::class, new ReleaseManifest($path));
+
+    return $path;
+}
+
+function releaseManifestData(array $overrides = []): array
+{
+    return array_merge([
+        'version' => '1.2.0',
+        'file' => 'mynine-setup-1.2.0.exe',
+        'sha256' => str_repeat('ab', 32),
+        'size' => 1024,
+        'mandatory' => false,
+        'min_version' => null,
+        'notes' => 'Fixes',
+        'published_at' => '2026-11-10T00:00:00+05:00',
+    ], $overrides);
 }

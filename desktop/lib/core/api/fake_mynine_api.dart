@@ -108,25 +108,37 @@ class FakeMynineApi implements MynineApi {
     return '${parts[0]}.${parts[1]}.${parts[2] + 1}';
   }
 
+  /// Overrides the generated manifest (tests); null = default demo manifest.
+  UpdateManifest? manifestOverride;
+
+  /// When true, `version.json` answers 404 (file not uploaded yet).
+  bool manifestMissing = false;
+
+  /// File names served from the fake static update folder
+  /// (`fake://desktop/<file>`); others answer 404.
+  final List<String> downloadedFiles = [];
+
   @override
-  Future<AppVersionInfo> appVersion({String? current}) async {
-    await _io('appVersion');
-    _tick();
+  String updateFileUrl(String fileName) => 'fake://desktop/$fileName';
+
+  @override
+  Future<UpdateManifest> updateManifest() async {
+    await _io('updateManifest');
+    if (manifestMissing) {
+      throw ApiException(code: ApiErrorCode.notFound, statusCode: 404, message: 'Not Found');
+    }
+    if (manifestOverride != null) return manifestOverride!;
     final bytes = _installer();
     final version = offerUpdate ? _nextVersion : appVersionString;
-    return AppVersionInfo(
-      latest: ReleaseInfo(
-        version: version,
-        notes: offerUpdate ? 'Demo update: improved timer display.' : 'Current release.',
-        mandatory: false,
-        url: 'fake://releases/$version/download',
-        sha256: sha256.convert(bytes).toString(),
-        size: bytes.length,
-        publishedAt: _serverNow,
-      ),
+    return UpdateManifest(
+      version: version,
+      file: 'mynine-setup-$version.exe',
+      sha256: sha256.convert(bytes).toString(),
+      size: bytes.length,
+      mandatory: false,
       minVersion: null,
-      updateAvailable: offerUpdate,
-      serverTime: _serverNow,
+      notes: offerUpdate ? 'Demo update: improved timer display.' : 'Current release.',
+      publishedAt: _serverNow,
     );
   }
 
@@ -486,8 +498,15 @@ class FakeMynineApi implements MynineApi {
   }
 
   @override
-  Future<File> download(String url, File target, {String? examToken, ProgressCallback? onProgress}) async {
+  Future<File> download(
+    String url,
+    File target, {
+    String? examToken,
+    ProgressCallback? onProgress,
+    bool anonymous = false,
+  }) async {
     await _io('download');
+    if (url.startsWith('fake://desktop/')) downloadedFiles.add(url.substring('fake://desktop/'.length));
     final bytes = url.startsWith('fake://audio') ? _audio() : _installer();
     await target.parent.create(recursive: true);
     const chunk = 64 * 1024;

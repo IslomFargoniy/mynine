@@ -68,10 +68,43 @@ jobs:
           Write-Host "SHA-256: $hash"
           "## mynine-setup-${{ steps.version.outputs.version }}.exe`n``$hash``" >> $env:GITHUB_STEP_SUMMARY
 
+      # version.json for the static update folder <site>/public/desktop/ (see desktop/README.md).
+      # notes = the annotated tag message on desktop-v* tags, otherwise "".
+      - name: Generate version.json
+        shell: pwsh
+        env:
+          REF_TYPE: ${{ github.ref_type }}
+          REF_NAME: ${{ github.ref_name }}
+        run: |
+          $version = "${{ steps.version.outputs.version }}"
+          $name = "mynine-setup-$version.exe"
+          $file = "build\installer\$name"
+          $notes = ""
+          if ($env:REF_TYPE -eq "tag") {
+            git fetch --force --no-tags origin "refs/tags/$($env:REF_NAME):refs/tags/$($env:REF_NAME)" 2>$null
+            if ((git cat-file -t "refs/tags/$($env:REF_NAME)") -eq "tag") {
+              $notes = ((git tag -l --format='%(contents:subject)%0a%0a%(contents:body)' $env:REF_NAME) -join "`n").Trim()
+            }
+          }
+          $manifest = [ordered]@{
+            version      = $version
+            file         = $name
+            sha256       = (Get-FileHash -Algorithm SHA256 $file).Hash.ToLower()
+            size         = (Get-Item $file).Length
+            mandatory    = $false
+            min_version  = $null
+            notes        = $notes
+            published_at = [DateTime]::UtcNow.ToString("yyyy-MM-dd'T'HH:mm:ss'Z'")
+          }
+          $manifest | ConvertTo-Json | Set-Content -Encoding utf8NoBOM "build\installer\version.json"
+          Get-Content "build\installer\version.json"
+          $global:LASTEXITCODE = 0  # a failed tag fetch only means empty notes
+
       - uses: actions/upload-artifact@v4
         with:
           name: mynine-setup-${{ steps.version.outputs.version }}
           path: |
             desktop/build/installer/mynine-setup-*.exe
             desktop/build/installer/mynine-setup-*.exe.sha256
+            desktop/build/installer/version.json
           if-no-files-found: error

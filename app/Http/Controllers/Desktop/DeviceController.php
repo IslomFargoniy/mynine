@@ -3,8 +3,8 @@
 namespace App\Http\Controllers\Desktop;
 
 use App\Http\Controllers\Controller;
-use App\Models\AppRelease;
 use App\Models\Device;
+use App\Services\Desktop\ReleaseManifest;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
@@ -15,12 +15,12 @@ use Inertia\Response;
  */
 class DeviceController extends Controller
 {
-    public function index(): Response
+    public function index(ReleaseManifest $manifest): Response
     {
         $this->authorize('viewAny', Device::class);
 
         $online = (int) config('desktop.online_seconds', 60);
-        $latest = AppRelease::latestActive()?->version;
+        $latest = $manifest->latestVersion();
 
         $devices = Device::query()
             ->with(['currentAttempt' => fn ($q) => $q->select('id', 'name', 'mock_id', 'mock_student_id', 'finished_at')->with('mock:id,name')])

@@ -10,7 +10,6 @@ use App\Http\Controllers\Auth\GoogleAuthController;
 use App\Http\Controllers\Auth\TelegramAuthController;
 use App\Http\Controllers\Auth\TelegramLoginController;
 use App\Http\Controllers\BlogController;
-use App\Http\Controllers\Desktop\AppReleaseController;
 use App\Http\Controllers\Desktop\DeviceController as DesktopDeviceController;
 use App\Http\Controllers\Desktop\SettingsController as DesktopSettingsController;
 use App\Http\Controllers\FolderController;
@@ -129,7 +128,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::get('/writing-review', [WritingReviewController::class, 'index'])->name('writing-review.index');
         Route::post('/writing-review/{attemptType}/confirm', [WritingReviewController::class, 'confirm'])->name('writing-review.confirm');
 
-        // Desktop exam app: PCs, installer releases, settings
+        // Desktop exam app: PCs, settings (installers: static public/desktop/)
         Route::prefix('desktop')->name('desktop.')->group(function () {
             Route::get('devices', [DesktopDeviceController::class, 'index'])->name('devices.index');
             Route::post('devices/{device}/approve', [DesktopDeviceController::class, 'approve'])->name('devices.approve');
@@ -137,11 +136,6 @@ Route::middleware(['auth', 'verified'])->group(function () {
             Route::post('devices/{device}/unblock', [DesktopDeviceController::class, 'unblock'])->name('devices.unblock');
             Route::patch('devices/{device}', [DesktopDeviceController::class, 'update'])->name('devices.update');
             Route::delete('devices/{device}', [DesktopDeviceController::class, 'destroy'])->name('devices.destroy');
-
-            Route::get('releases', [AppReleaseController::class, 'index'])->name('releases.index');
-            Route::post('releases', [AppReleaseController::class, 'store'])->name('releases.store');
-            Route::patch('releases/{appRelease}', [AppReleaseController::class, 'update'])->name('releases.update');
-            Route::delete('releases/{appRelease}', [AppReleaseController::class, 'destroy'])->name('releases.destroy');
 
             Route::get('settings', [DesktopSettingsController::class, 'index'])->name('settings.index');
             Route::post('settings/exit-password', [DesktopSettingsController::class, 'updateExitPassword'])->name('settings.exit-password');

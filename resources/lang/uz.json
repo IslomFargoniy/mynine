@@ -735,7 +735,6 @@
             "speaking": "Speaking",
             "writing_review": "Writing tekshiruvi",
             "devices": "Imtihon kompyuterlari",
-            "releases": "Ilova versiyalari",
             "settings": "Desktop sozlamalari"
         },
         "common": {
@@ -955,27 +954,6 @@
             "rename_prompt": "Kompyuterning yangi nomi",
             "block_confirm": "{{name}} bloklansinmi? U imtihon o'tkaza olmaydi.",
             "delete_confirm": "{{name}} o'chirilsinmi? U qaytadan ro'yxatdan o'tishi kerak bo'ladi."
-        },
-        "releases": {
-            "description": "Kompyuterlar eng yuqori faol versiyaga yangilanadi. Eng yangisini o'chirish ularni orqaga qaytaradi. Minimal (majburiy) versiya: {{min}}",
-            "version": "Versiya (x.y.z)",
-            "installer": "O'rnatuvchi (.exe)",
-            "notes": "O'zgarishlar",
-            "mandatory": "Majburiy",
-            "active": "Faol",
-            "upload": "Yuklash",
-            "empty": "Hali versiyalar yo'q.",
-            "served": "Hozir tarqatilmoqda",
-            "inactive": "Nofaol",
-            "rollback": "Orqaga qaytarish",
-            "deactivate": "O'chirish",
-            "activate": "Faollashtirish",
-            "rollback_confirm": "{{version}} o'chirilsinmi? Kompyuterlar oldingi faol versiyaga qaytadi.",
-            "make_optional": "Ixtiyoriy qilish",
-            "make_mandatory": "Majburiy qilish",
-            "delete_confirm": "{{version}} versiyasi va o'rnatuvchi fayli o'chirilsinmi?",
-            "pcs": "Bu versiyada {{count}} ta kompyuter",
-            "other_versions": "Ro'yxatda yo'q versiyadagi kompyuterlar"
         },
         "settings": {
             "description": "Mynine desktop imtihon ilovasining markaz bo'yicha sozlamalari.",

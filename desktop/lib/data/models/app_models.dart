@@ -5,34 +5,40 @@ import 'json_helpers.dart';
 part 'app_models.freezed.dart';
 part 'app_models.g.dart';
 
-/// `GET /app/version` response.
+/// Static update manifest `{site}/desktop/version.json` (served by nginx from
+/// the server's `public/desktop/` folder, next to the installers).
+///
+/// `sha256` / `size` are filled at release time; until then (or when `file`
+/// is missing) the manifest is [isComplete] == false and means "no update".
 @freezed
-abstract class AppVersionInfo with _$AppVersionInfo {
-  const factory AppVersionInfo({
-    ReleaseInfo? latest,
-    String? minVersion,
-    @Default(false) bool updateAvailable,
-    @JsonKey(fromJson: dateOrNull, toJson: dateToJson) DateTime? serverTime,
-  }) = _AppVersionInfo;
+abstract class UpdateManifest with _$UpdateManifest {
+  const UpdateManifest._();
 
-  factory AppVersionInfo.fromJson(Map<String, Object?> json) =>
-      _$AppVersionInfoFromJson(json);
-}
-
-@freezed
-abstract class ReleaseInfo with _$ReleaseInfo {
-  const factory ReleaseInfo({
-    required String version,
-    @Default('') String notes,
-    @Default(false) bool mandatory,
-    required String url,
-    required String sha256,
-    @Default(0) int size,
+  const factory UpdateManifest({
+    @JsonKey(fromJson: stringOrEmpty) @Default('') String version,
+    @JsonKey(fromJson: stringOrEmpty) @Default('') String file,
+    @JsonKey(fromJson: stringOrEmpty) @Default('') String sha256,
+    @JsonKey(fromJson: intFrom) @Default(0) int size,
+    @JsonKey(fromJson: boolTrue) @Default(false) bool mandatory,
+    @JsonKey(fromJson: stringOrNull) String? minVersion,
+    @JsonKey(fromJson: stringOrEmpty) @Default('') String notes,
     @JsonKey(fromJson: dateOrNull, toJson: dateToJson) DateTime? publishedAt,
-  }) = _ReleaseInfo;
+  }) = _UpdateManifest;
 
-  factory ReleaseInfo.fromJson(Map<String, Object?> json) =>
-      _$ReleaseInfoFromJson(json);
+  factory UpdateManifest.fromJson(Map<String, Object?> json) =>
+      _$UpdateManifestFromJson(json);
+
+  static final _semver = RegExp(r'^\d+\.\d+\.\d+$');
+  static final _fileName = RegExp(r'^[A-Za-z0-9._-]+\.exe$');
+  static final _sha = RegExp(r'^[0-9a-fA-F]{64}$');
+
+  /// True when the manifest describes a downloadable, verifiable installer.
+  bool get isComplete =>
+      _semver.hasMatch(version) &&
+      _fileName.hasMatch(file) &&
+      !file.contains('..') &&
+      _sha.hasMatch(sha256) &&
+      size > 0;
 }
 
 /// `POST /device/register` response.

@@ -42,7 +42,8 @@ Product decisions: `mynine.uz/docs/desktop/ARCHITECTURE.md`.
   `SetWindowDisplayAffinity(WDA_EXCLUDEFROMCAPTURE)`, monitor count, banned
   process scan every 5 s, clipboard clear, focus-loss events, VM detection,
   `MachineGuid` as machine id. Violations are queued and sent to the server.
-- **Self-update** from mynine.uz: check on start, every 30 min on the code screen
+- **Self-update** from the static folder `https://mynine.uz/desktop/`
+  (`version.json` + installers): check on start, every 30 min on the code screen
   (random 0–10 min delay before the automatic download) and with the
   "Check for updates" button (exit password needed in kiosk mode). Resumable
   download, SHA-256 check, silent Inno Setup install and relaunch, automatic
@@ -112,18 +113,50 @@ works. To hear audio on macOS: install CocoaPods and
 
 ## Releasing an update
 
+Updates are plain static files: nginx serves the server's `<site>/public/desktop/`
+as `https://mynine.uz/desktop/`. The app reads `desktop/version.json`
+(`?t=<epoch>` cache buster, no auth) and downloads `desktop/<file>` from the same folder.
+
+```json
+{"version":"1.2.0","file":"mynine-setup-1.2.0.exe","sha256":"<64 hex>","size":12345678,
+ "mandatory":false,"min_version":null,"notes":"…","published_at":"2026-11-10T12:00:00Z"}
+```
+
 1. Bump `version:` in `pubspec.yaml` (semver, e.g. `1.2.0+12`).
-2. Push a tag `desktop-v1.2.0` (or run the `desktop-windows-build` workflow manually; it lives in the repo root `.github/workflows/`).
-3. Download the artifact `mynine-setup-1.2.0` (installer + `.sha256`).
-4. In the mynine.uz admin → App releases, upload the installer with its version,
-   notes and the SHA-256; tick **mandatory** if older versions must not start an exam
-   (the server then answers 426 `client_outdated` for older clients).
-5. All PCs pick it up within ~30–40 min on the code screen (or immediately with
+2. Push an annotated tag `git tag -a desktop-v1.2.0 -m "Release notes"` (or run the
+   `desktop-windows-build` workflow manually; it lives in the repo root `.github/workflows/`).
+3. Download the artifact `mynine-setup-1.2.0`: installer, `.sha256` and a ready
+   `version.json` (sha256, size, notes from the tag message, `mandatory: false`,
+   `min_version: null`).
+4. Upload `mynine-setup-1.2.0.exe` to `<site>/public/desktop/` on the server.
+   **Keep the previous installers there**: before installing an update, a PC
+   downloads `mynine-setup-<its current version>.exe` from that folder as its
+   rollback copy (if it does not already have one in `%LOCALAPPDATA%\Mynine\previous\`).
+   Installers are not committed to git (`public/desktop/*.exe` is ignored).
+5. Update `public/desktop/version.json` last (after the exe is fully uploaded) with the
+   values from the CI `version.json`. Set `"mandatory": true` to make the update dialog
+   non-dismissable; set `"min_version"` to block older apps from starting an exam (the
+   server answers 426 `client_outdated` to `/exam/*` for versions below it). The server
+   copy of `version.json` is tracked in git, so commit the change (or edit it on the
+   server and commit later; both must agree).
+6. Done. All PCs pick it up within ~30–40 min on the code screen (or immediately with
    "Check for updates"). A PC never updates during an exam.
 
-Rollback: if the new version cannot reach the API and render the code screen within
-2 minutes, the PC reinstalls the installer kept in `%LOCALAPPDATA%\Mynine\previous\`.
-An Admin can also mark the older release active again on the server.
+A missing/invalid `version.json`, an empty `sha256`, `size: 0` or a missing `file` means
+"no update" on the PCs — never an error that blocks an exam. A download whose size or
+SHA-256 differs from `version.json` is discarded.
+
+**Rollback.** A PC only installs when `version.json`'s `version` is **higher** than the
+installed one, so pointing `version.json` back to an older file does nothing on PCs that
+already updated. Options:
+
+- Automatic: if the new version cannot reach the server and render the code screen within
+  2 minutes after the update, the PC reinstalls the installer kept in
+  `%LOCALAPPDATA%\Mynine\previous\` by itself.
+- Manual: build the old (good) code with a **new, higher** version number (e.g. 1.2.1 =
+  1.1.0's code), upload it and publish it in `version.json` like any release.
+- Pointing `version.json` back to the old installer only stops PCs that have not
+  updated yet from taking the bad version.
 
 ## Installing on a centre PC (checklist)
 

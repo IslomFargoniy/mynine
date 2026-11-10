@@ -57,8 +57,6 @@ class AppServiceProvider extends ServiceProvider
 
         RateLimiter::for('desktop', fn (Request $request) => Limit::perMinute(300)->by('desktop:'.$deviceKey($request)));
 
-        RateLimiter::for('desktop-public', fn (Request $request) => Limit::perMinute(300)->by('desktop-public:'.$request->ip()));
-
         RateLimiter::for('desktop-register', fn (Request $request) => Limit::perMinute(30)->by('desktop-register:'.$request->ip()));
 
         RateLimiter::for('desktop-login', fn (Request $request) => [

@@ -6,7 +6,7 @@ Every request from the app sends:
 ```
 Accept: application/json
 X-Mynine-Client: desktop/<semver>      e.g. desktop/1.0.0
-X-Device-Token: <device token>         (after device registration; omitted only on /device/register and /app/*)
+X-Device-Token: <device token>         (after device registration; omitted only on /device/register)
 Authorization: Bearer <exam token>     (exam endpoints only)
 ```
 
@@ -15,29 +15,44 @@ Errors: `{ "message": "...", "code": "<machine_code>" }` with HTTP status. Codes
 `invalid_code` 422, `mock_not_active` 422, `mock_not_started` 422 (+`starts_at`), `mock_finished` 422,
 `attempt_finished` 409, `paused` 409, `module_locked` 409, `module_time_over` 409, `validation_failed` 422.
 
-Server rejects exam requests whose `X-Mynine-Client` version is lower than the active `min_version` with 426.
+Server rejects exam requests whose `X-Mynine-Client` version is lower than `min_version` of `desktop/version.json` with 426.
 All timestamps are ISO-8601 with offset (server timezone). Every exam response includes `server_time`.
 
 ---
 
-## App / updates (no auth)
+## Updates — static folder (not part of the API, no auth)
 
-### GET /app/version
-Query: `current=1.0.0` (optional).
+Updates are **static files**, not API endpoints: nginx serves the server's `public/desktop/` folder as
+`https://mynine.uz/desktop/` (site root = API base URL without `/api/v1`). It holds `version.json` and the
+installers `mynine-setup-<version>.exe` (uploaded by hand, not in git; old installers are kept there for rollback).
+
+### GET {site}/desktop/version.json?t=<epoch seconds>
+The `t` query only busts caches. No auth headers are needed (the app sends no device token).
 ```json
 {
-  "latest": { "version": "1.2.0", "notes": "…", "mandatory": false,
-              "url": "https://mynine.uz/api/v1/app/releases/1.2.0/download",
-              "sha256": "…64 hex…", "size": 41234567, "published_at": "…" },
-  "min_version": "1.1.0",
-  "update_available": true,
-  "server_time": "…"
+  "version": "1.2.0",
+  "file": "mynine-setup-1.2.0.exe",
+  "sha256": "…64 hex…",
+  "size": 41234567,
+  "mandatory": false,
+  "min_version": null,
+  "notes": "…",
+  "published_at": "2026-11-10T12:00:00Z"
 }
 ```
-`latest` is the highest **active** release; `min_version` is the highest active release with `mandatory=true` (or `null`). If no release: `latest: null`.
+- `version` (`x.y.z`) is the newest release. The app offers it only when it is **higher** than the installed version
+  and the manifest is complete (`file` is a plain `*.exe` name, `sha256` is 64 hex, `size` > 0). An empty `sha256`,
+  `size: 0`, a missing `file`, an invalid body or a 404 mean "no update", never an error that blocks an exam.
+- Mandatory (update dialog cannot be dismissed) when `mandatory` is `true` **or** the installed version is below
+  `min_version`.
+- `min_version` (`x.y.z` or `null`) is also read by the server: `/exam/*` answers 426 `client_outdated` to older clients
+  (`null` → no check).
+- The CI workflow generates this file next to the installer (see `desktop/README.md`).
 
-### GET /app/releases/{version}/download
-Streams the installer (`application/octet-stream`), supports HTTP `Range` (resume). 404 if inactive/unknown.
+### GET {site}/desktop/{file}
+The installer, served by nginx with HTTP `Range` (resume). The app verifies `size` and `sha256` before installing.
+Before installing an update the app also fetches `{site}/desktop/mynine-setup-<installed version>.exe` as its rollback
+copy (if it does not have one yet); without it no automatic rollback is possible.
 
 ---
 
@@ -202,7 +217,7 @@ Streams audio with `Range` support; only for tests/parts of the current attempt.
 ## Admin-side (web, session auth — not used by the app)
 
 Monitor actions (`Admin` unless noted): `POST /monitor/attempts/{attempt}/extra-time {minutes}`, `/pause`, `/resume`,
-`/force-submit`, `/unlock` (Admin + Reception). Device list, releases upload, settings live under the web admin.
+`/force-submit`, `/unlock` (Admin + Reception). Device list and settings live under the web admin (installers are uploaded to the static folder, see above).
 
 ---
 
@@ -214,14 +229,14 @@ Additive clarifications of the contract above, as implemented on branch `feat/de
 - Extra codes besides the list above: `forbidden` 403, `not_found` 404, `method_not_allowed` 405, `too_many_requests` 429,
   `server_error` 500. `validation_failed` also carries Laravel's `errors` object.
 - Throttles: `/device/register` 30/min per IP; `/exam/login` 10/min per device **and** 60/min per IP; `/device/unlock`
-  5/min per device; every other device/exam endpoint 300/min per device; `/app/*` 300/min per IP.
-- The `X-Mynine-Client` check (426 `client_outdated`) runs on `/exam/*` only (login included). `/app/*` and `/device/*`
-  never return 426, so an outdated PC can still heartbeat and update. A missing or malformed header counts as outdated
-  while a `min_version` exists.
+  5/min per device; every other device/exam endpoint 300/min per device.
+- The `X-Mynine-Client` check (426 `client_outdated`) runs on `/exam/*` only (login included). `/device/*` never
+  returns 426 and updates are static files, so an outdated PC can still heartbeat and update. A missing or malformed
+  header counts as outdated while `version.json` has a `min_version`. `min_version` comes from
+  `public/desktop/version.json` (`App\Services\Desktop\ReleaseManifest`, cached per file mtime; a missing or invalid
+  file means no check).
 
 **App / device**
-- `GET /app/version`: `update_available` compares `latest.version` with `current`, falling back to the version in
-  `X-Mynine-Client`; with neither it is `true` whenever a release exists. `current` must be `x.y.z` (else 422).
 - `POST /device/register`: the token is 64 random characters; only its SHA-256 is stored. Re-registering a blocked
   `machine_id` returns 403 `device_blocked`.
 - `POST /device/unlock` 422 body is `{ "ok": false, "message": "...", "code": "invalid_password" }`.
@@ -286,7 +301,7 @@ The exit password is set with `php artisan desktop:exit-password <password>` (mi
 ### Device approval (added by coordinator)
 - A newly registered PC has `is_approved = false`. Until an Admin approves it in the web panel,
   `POST /exam/login` and `GET /device/config` return **403 `device_not_approved`** (message names the PC).
-  `/device/heartbeat`, `/device/unlock` and `/app/*` keep working, so the PC shows up as "pending" in the admin device list.
+  `/device/heartbeat` and `/device/unlock` keep working, so the PC shows up as "pending" in the admin device list.
 - **Re-registering** an existing `machine_id` rotates the token **and drops the approval** (someone who learns an approved
   PC's machine id cannot take over its approval). The app must therefore register only once and keep its token; on
   `device_not_approved` it shows "This PC is waiting for administrator approval: <name>" on the code screen and retries

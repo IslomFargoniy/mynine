@@ -19,7 +19,7 @@ mock-exam + desktop-client work on branch `feat/desktop-mock-system`. The API co
 | Speaking | Admin assigns time slots (`mock_students.speaking_at`) and enters the band manually (existing `attempt-type.store`). |
 | Results | Printed at reception. Result sheet = module bands (L, R, W, S) + overall band only. The desktop app never shows scores: after submit it shows "Completed" and returns to the code screen. |
 | Desktop client | Flutter, Windows 10/11, ≤ 20 PCs, **English UI only**, lockdown/kiosk, offline-tolerant (internet sometimes drops). No code signing (Defender allow-listed once). |
-| Updates | Self-updating from **mynine.uz server** (not GitHub); visible "Check for updates" button on the code screen (never during an exam); rollout to all PCs at once; auto-rollback if the new version fails its self-check; Admin can mark an older release active again. |
+| Updates | Self-updating from the **static folder `https://mynine.uz/desktop/`** (server `public/desktop/`: `version.json` + installers, uploaded by hand; not GitHub, no DB). Visible "Check for updates" button on the code screen (never during an exam); rollout to all PCs at once; auto-rollback if the new version fails its self-check. PCs only install a **higher** version, so a manual rollback is a new higher version built from the old code. |
 | Lockdown exit | Center-wide exit password (setting `desktop_exit_password`, stored hashed). Admin **and** Reception may unlock (password on the PC, or remote unlock from the monitor). |
 
 ## Role matrix
@@ -35,7 +35,7 @@ mock-exam + desktop-client work on branch `feat/desktop-mock-system`. The API co
 | Remote unlock of a desktop PC | ✓ | ✓ | — |
 | Confirm Writing, enter Speaking band, assign speaking slots | ✓ | — | — |
 | Print result sheet, mark "delivered" | ✓ | ✓ | — |
-| Users, devices, app releases, settings | ✓ | — | — |
+| Users, devices, settings | ✓ | — | — |
 
 ## Data model changes
 
@@ -55,7 +55,7 @@ New / changed columns:
 - `attempt_types`: `reviewed_at` (nullable datetime), `reviewed_by` (nullable FK users).
 - `attempt_violations` (new): `id, attempt_id (cascade), device_id (nullable), type string(40), detail json nullable, occurred_at datetime, timestamps`, index on `attempt_id`. `attempts.tab_switch_count` is still incremented for type `focus_lost` for backward compatibility.
 - `devices` (new): `id, machine_id string unique, name, token_hash string(64), app_version, os_version, ip, last_seen_at, is_blocked bool, current_attempt_id nullable, timestamps`.
-- `app_releases` (new): `id, version string unique (semver), notes text, mandatory bool, file_path, file_size bigint, sha256 char(64), is_active bool default true, published_by nullable FK users, timestamps`.
+- No release table: releases are described by the static `public/desktop/version.json` (see API.md "Updates"), read on the server by `App\Services\Desktop\ReleaseManifest` for `min_version` (426) and the admin devices page (latest version).
 - `settings` (new): `key string primary, value text nullable, timestamps`. Keys: `desktop_exit_password` (bcrypt hash), `desktop_exit_password_offline` (`pbkdf2_sha256$<iterations>$<salt_b64>$<hash_b64>` so the app can verify offline).
 
 Rules enforced server-side:
@@ -84,5 +84,5 @@ Key behaviour:
 - **Timers**: based on server `finished_at` + clock offset from `server_time`, never the local clock alone.
 - **Lockdown (Windows)**: native C++ in `windows/runner` exposed via MethodChannel `mynine/lockdown`: low-level keyboard hook (Win, Alt+Tab, Alt+F4, Ctrl+Esc, Alt+Esc), `SetWindowDisplayAffinity(WDA_EXCLUDEFROMCAPTURE)`, fullscreen topmost kiosk, monitor count, banned process scan every 5 s, clipboard clear, focus-loss detection. Violations are queued and sent to `POST /exam/violations`.
 - **Exit**: only after submit, with the exit password (verified online, or offline against the cached PBKDF2 hash), or by remote unlock (`unlock: true` in heartbeat).
-- **Updates**: see API `GET /app/version`; download from server with resume, verify SHA-256, run installer silently (`/VERYSILENT /SUPPRESSMSGBOXES /NORESTART`), relaunch; on failed self-check after update, reinstall the previous installer kept in `%LOCALAPPDATA%\Mynine\previous\`. Random 0–10 min delay before automatic download (not for the manual button).
-- **Installer**: Inno Setup script in the repo; GitHub Actions `windows-latest` workflow builds `mynine-setup-<version>.exe` and its SHA-256.
+- **Updates**: `GET {site}/desktop/version.json?t=<epoch>` (static, see API.md "Updates"); download `{site}/desktop/<file>` with resume, verify size + SHA-256, run installer silently (`/VERYSILENT /SUPPRESSMSGBOXES /NORESTART`), relaunch; on failed self-check after update, reinstall the previous installer kept in `%LOCALAPPDATA%\Mynine\previous\`. Random 0–10 min delay before automatic download (not for the manual button).
+- **Installer**: Inno Setup script in the repo; GitHub Actions `windows-latest` workflow builds `mynine-setup-<version>.exe`, its SHA-256 and a ready `version.json`. Release = upload the exe to the server's `public/desktop/` (keeping older installers: PCs download `mynine-setup-<installed version>.exe` from there as their rollback copy), then update `version.json`.

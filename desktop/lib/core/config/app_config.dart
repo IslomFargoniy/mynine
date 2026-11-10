@@ -65,3 +65,12 @@ class AppConfig {
   /// Max answers per `POST /exam/answers` batch.
   static const answerBatchSize = 200;
 }
+
+/// Site root for an API base URL: strips trailing slashes and a trailing
+/// `/api/v1` (or `/api`), e.g. `https://mynine.uz/api/v1` → `https://mynine.uz`.
+/// The static update folder lives at `<site>/desktop/`.
+String siteUrlFromApiBase(String apiBase) {
+  var s = apiBase.trim().replaceAll(RegExp(r'/+$'), '');
+  s = s.replaceFirst(RegExp(r'/api(/v\d+)?$'), '');
+  return s;
+}

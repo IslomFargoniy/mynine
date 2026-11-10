@@ -80,10 +80,14 @@ class UpdateStateData {
       );
 }
 
-/// Self-update from the mynine.uz server.
+/// Self-update from the mynine.uz server's static folder `<site>/desktop/`
+/// (nginx serves the server's `public/desktop/`).
 ///
-/// * `GET /app/version` on start, every 30 min on the code screen and on the
-///   "Check for updates" button.
+/// * `GET <site>/desktop/version.json?t=<epoch>` on start, every 30 min on the
+///   code screen and on the "Check for updates" button. A missing, invalid or
+///   incomplete manifest (empty sha256, size 0, no file) means "no update" —
+///   never an error that could block the exam.
+/// * The installer is `<site>/desktop/<file>`; size and SHA-256 are verified.
 /// * Automatic downloads wait a random 0–10 min (spreads 20 PCs); manual ones don't.
 /// * HTTP Range resume into `updates/`, SHA-256 verify, silent install, relaunch.
 /// * The installer of the version being replaced is kept in `previous/`; if the
@@ -108,7 +112,7 @@ class UpdateService extends ChangeNotifier {
   final DateTime Function() _now;
 
   UpdatePhase _phase = UpdatePhase.idle;
-  ReleaseInfo? _release;
+  UpdateManifest? _release;
   bool _mandatory = false;
   double _progress = 0;
   String? _error;
@@ -125,7 +129,7 @@ class UpdateService extends ChangeNotifier {
   bool Function() canAutoInstall = () => false;
 
   UpdatePhase get phase => _phase;
-  ReleaseInfo? get release => _release;
+  UpdateManifest? get release => _release;
   bool get mandatory => _mandatory;
   double get progress => _progress;
   String? get error => _error;
@@ -143,38 +147,55 @@ class UpdateService extends ChangeNotifier {
 
   // ---- Checking --------------------------------------------------------------
 
-  /// Evaluates a version response. Pure; exposed for tests.
-  static ({bool available, bool mandatory}) evaluate(AppVersionInfo info, String current) {
-    final latest = info.latest;
-    final available = latest != null && isNewerVersion(latest.version, current);
-    final mandatory = isBelowMin(current, info.minVersion) ||
-        (available && latest.mandatory);
+  /// Evaluates a manifest against the running version. Pure; exposed for tests.
+  ///
+  /// An update is available only for a complete manifest (file, sha256, size)
+  /// whose version is higher than [current]. It is mandatory when the
+  /// manifest says so or [current] is below `min_version`.
+  static ({bool available, bool mandatory}) evaluate(UpdateManifest? manifest, String current) {
+    if (manifest == null || !manifest.isComplete) {
+      return (available: false, mandatory: false);
+    }
+    final available = isNewerVersion(manifest.version, current);
+    final mandatory =
+        available && (manifest.mandatory || isBelowMin(current, manifest.minVersion));
     return (available: available, mandatory: mandatory);
   }
 
   Future<bool> check({bool manual = false}) async {
     if (busy) return _phase == UpdatePhase.available;
     _set(UpdatePhase.checking);
+    UpdateManifest? manifest;
     try {
-      final info = await api.appVersion(current: currentVersion);
+      manifest = await api.updateManifest();
       _lastCheck = _now();
       reportApiReachable();
-      final r = evaluate(info, currentVersion);
-      if (!r.available) {
-        _release = null;
-        _mandatory = false;
-        _set(UpdatePhase.upToDate);
+    } on ApiException catch (e) {
+      if (e.statusCode == 404) {
+        // version.json not published yet: nothing to install.
+        _lastCheck = _now();
+        reportApiReachable();
+        manifest = null;
+      } else {
+        _set(UpdatePhase.error, error: e.userMessage);
         return false;
       }
-      _release = info.latest;
-      _mandatory = r.mandatory;
-      _set(UpdatePhase.available);
-      if (!manual) _scheduleAutoDownload();
-      return true;
-    } on ApiException catch (e) {
-      _set(UpdatePhase.error, error: e.userMessage);
+    } on FormatException catch (e) {
+      debugPrint('Invalid version.json: $e');
+      manifest = null;
+    }
+    final r = evaluate(manifest, currentVersion);
+    if (!r.available) {
+      _release = null;
+      _mandatory = false;
+      _set(UpdatePhase.upToDate);
       return false;
     }
+    _release = manifest;
+    _mandatory = r.mandatory;
+    _set(UpdatePhase.available);
+    if (!manual) _scheduleAutoDownload();
+    return true;
   }
 
   /// Starts periodic checks (code screen). Safe to call repeatedly.
@@ -209,23 +230,28 @@ class UpdateService extends ChangeNotifier {
   File installerFile(String version) =>
       File(p.join(paths.updates.path, 'mynine-setup-$version.exe'));
 
-  /// Downloads (with resume) and verifies the available release.
+  Future<bool> _verify(File file, UpdateManifest release) async =>
+      release.isComplete &&
+      await file.exists() &&
+      await file.length() == release.size &&
+      await verifySha256(file, release.sha256);
+
+  /// Downloads (with resume) and verifies (size + SHA-256) the available release.
   Future<File?> download() async {
     final release = _release;
-    if (release == null) return null;
+    if (release == null || !release.isComplete) return null;
     final file = installerFile(release.version);
     try {
-      if (await file.exists() && await verifySha256(file, release.sha256)) {
-        return file;
-      }
+      if (await _verify(file, release)) return file;
+      if (await file.exists()) await file.delete();
       _progress = 0;
       _set(UpdatePhase.downloading);
-      await api.download(release.url, file, onProgress: (r, t) {
+      await api.download(api.updateFileUrl(release.file), file, anonymous: true, onProgress: (r, t) {
         final total = t > 0 ? t : release.size;
         _progress = total > 0 ? (r / total).clamp(0.0, 1.0) : 0;
         notifyListeners();
       });
-      if (!await verifySha256(file, release.sha256)) {
+      if (!await _verify(file, release)) {
         await file.delete();
         _set(UpdatePhase.error, error: 'The downloaded update is corrupted. Please try again.');
         return null;
@@ -243,22 +269,22 @@ class UpdateService extends ChangeNotifier {
 
   // ---- Install -------------------------------------------------------------------
 
-  /// Keeps the installer of the running version in `previous/` (downloading
-  /// it from the server if needed) so a failed update can be rolled back.
+  /// Keeps the installer of the running version in `previous/` so a failed
+  /// update can be rolled back. If it is not there yet it is downloaded from
+  /// `<site>/desktop/mynine-setup-<currentVersion>.exe` — old installers must
+  /// therefore stay in the server's `public/desktop/` folder. There is no
+  /// checksum for it; a missing file just means no rollback is possible.
   Future<void> ensurePreviousInstaller() async {
-    final target = File(p.join(paths.previous.path, 'mynine-setup-$currentVersion.exe'));
-    if (await target.exists()) return;
-    final release = _release;
-    if (release == null) return;
-    final url = release.url.replaceFirst(
-      '/releases/${release.version}/',
-      '/releases/$currentVersion/',
-    );
-    if (url == release.url) return;
+    final name = 'mynine-setup-$currentVersion.exe';
+    final target = File(p.join(paths.previous.path, name));
+    if (await target.exists() && await target.length() > 0) return;
     try {
-      await api.download(url, target);
+      await api.download(api.updateFileUrl(name), target, anonymous: true);
+      if (await target.length() == 0) await target.delete();
     } on ApiException catch (e) {
       debugPrint('No previous installer for rollback: $e');
+    } on FileSystemException catch (e) {
+      debugPrint('Cannot store the previous installer: $e');
     }
   }
 

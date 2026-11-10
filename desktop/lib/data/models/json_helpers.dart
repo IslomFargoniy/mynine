@@ -38,3 +38,6 @@ DateTime dateRequired(Object? value) =>
     DateTime.tryParse(value?.toString() ?? '') ?? DateTime.now().toUtc();
 
 String dateRequiredToJson(DateTime value) => value.toUtc().toIso8601String();
+
+/// Only a JSON `true` counts as true (strings like "yes" do not).
+bool boolTrue(Object? value) => value == true;

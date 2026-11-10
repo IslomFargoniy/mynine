@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:convert';
 import 'dart:io';
 
 import 'package:dio/dio.dart' hide ProgressCallback;
@@ -7,6 +8,7 @@ import '../../data/models/app_models.dart';
 import '../../data/models/exam_models.dart';
 import '../../data/models/json_helpers.dart';
 import '../../data/models/part_payload.dart';
+import '../config/app_config.dart';
 import '../time/server_clock.dart';
 import 'api_exception.dart';
 import 'mynine_api.dart';
@@ -154,16 +156,42 @@ class HttpMynineApi implements MynineApi {
     );
   }
 
-  // ---- App -----------------------------------------------------------------
+  // ---- App updates (static folder) ----------------------------------------
+
+  /// Site root derived from the API base URL (`https://mynine.uz/api/v1` →
+  /// `https://mynine.uz`).
+  String get siteUrl => siteUrlFromApiBase(baseUrl());
 
   @override
-  Future<AppVersionInfo> appVersion({String? current}) async =>
-      AppVersionInfo.fromJson(await _json(
-        'GET',
-        '/app/version',
-        query: {'current': ?current},
-        noDeviceToken: true,
-      ));
+  String updateFileUrl(String fileName) =>
+      '$siteUrl/desktop/${Uri.encodeComponent(fileName)}';
+
+  @override
+  Future<UpdateManifest> updateManifest() async {
+    final Response<Object?> response;
+    try {
+      response = await _dio.get<Object?>(
+        '$siteUrl/desktop/version.json',
+        queryParameters: {'t': DateTime.now().millisecondsSinceEpoch ~/ 1000},
+        options: Options(
+          responseType: ResponseType.plain,
+          headers: {'Cache-Control': 'no-cache'},
+          extra: {_noDeviceTokenExtra: true},
+        ),
+      );
+    } on DioException catch (e) {
+      // Dio decodes `application/json` bodies itself; a broken file surfaces here.
+      final cause = e.error;
+      if (cause is FormatException) throw cause;
+      throw mapDioError(e);
+    }
+    final data = response.data;
+    final Object? decoded = data is String ? jsonDecode(data) : data;
+    if (decoded is! Map) {
+      throw const FormatException('version.json is not a JSON object');
+    }
+    return UpdateManifest.fromJson(decoded.map((k, v) => MapEntry(k.toString(), v)));
+  }
 
   // ---- Device --------------------------------------------------------------
 
@@ -318,6 +346,7 @@ class HttpMynineApi implements MynineApi {
     File target, {
     String? examToken,
     ProgressCallback? onProgress,
+    bool anonymous = false,
   }) async {
     await target.parent.create(recursive: true);
     final partial = File('${target.path}.part');
@@ -334,7 +363,10 @@ class HttpMynineApi implements MynineApi {
             if (existing > 0) 'Range': 'bytes=$existing-',
             'Accept': '*/*',
           },
-          extra: {_examTokenExtra: ?examToken},
+          extra: {
+            _examTokenExtra: ?examToken,
+            if (anonymous) _noDeviceTokenExtra: true,
+          },
           validateStatus: (s) => s != null && (s < 400 || s == 416),
         ),
       );

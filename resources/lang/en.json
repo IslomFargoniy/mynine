@@ -735,7 +735,6 @@
             "speaking": "Speaking",
             "writing_review": "Writing review",
             "devices": "Exam PCs",
-            "releases": "App releases",
             "settings": "Desktop settings"
         },
         "common": {
@@ -955,27 +954,6 @@
             "rename_prompt": "New PC name",
             "block_confirm": "Block {{name}}? It will not be able to run exams.",
             "delete_confirm": "Delete {{name}}? It will have to register again."
-        },
-        "releases": {
-            "description": "PCs update to the highest active release. Deactivating the newest one rolls them back. Minimum (mandatory) version: {{min}}",
-            "version": "Version (x.y.z)",
-            "installer": "Installer (.exe)",
-            "notes": "Release notes",
-            "mandatory": "Mandatory",
-            "active": "Active",
-            "upload": "Upload",
-            "empty": "No releases yet.",
-            "served": "Served now",
-            "inactive": "Inactive",
-            "rollback": "Roll back",
-            "deactivate": "Deactivate",
-            "activate": "Activate",
-            "rollback_confirm": "Deactivate {{version}}? PCs will go back to the previous active version.",
-            "make_optional": "Make optional",
-            "make_mandatory": "Make mandatory",
-            "delete_confirm": "Delete release {{version}} and its installer?",
-            "pcs": "{{count}} PC(s) on this version",
-            "other_versions": "PCs on versions not in the list"
         },
         "settings": {
             "description": "Center-wide settings of the Mynine desktop exam app.",

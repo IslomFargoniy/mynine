@@ -1,6 +1,5 @@
 <?php
 
-use App\Models\AppRelease;
 use App\Models\Attempt;
 use App\Models\AttemptType;
 use App\Models\Device;
@@ -22,7 +21,6 @@ beforeEach(function () {
         'started_at' => now(), 'finished_at' => now(),
     ]);
     $this->device = Device::factory()->create();
-    $this->release = AppRelease::factory()->create();
 });
 
 /**
@@ -37,7 +35,6 @@ function adminWebRoutes(): array
     $attempt = fn () => ['attempt' => test()->attempt->id];
     $test = fn () => ['test' => test()->exam['testL']->id];
     $device = fn () => ['device' => test()->device->id];
-    $release = fn () => ['appRelease' => test()->release->id];
     $none = fn () => [];
 
     return [
@@ -62,10 +59,6 @@ function adminWebRoutes(): array
         'device unblock' => ['post', 'desktop.devices.unblock', $device, false],
         'device rename' => ['patch', 'desktop.devices.update', $device, false],
         'device delete' => ['delete', 'desktop.devices.destroy', $device, false],
-        'releases' => ['get', 'desktop.releases.index', $none, false],
-        'release upload' => ['post', 'desktop.releases.store', $none, false],
-        'release update' => ['patch', 'desktop.releases.update', $release, false],
-        'release delete' => ['delete', 'desktop.releases.destroy', $release, false],
         'desktop settings' => ['get', 'desktop.settings.index', $none, false],
         'exit password' => ['post', 'desktop.settings.exit-password', $none, false],
         'monitor extra time' => ['post', 'monitor.extra-time', $attempt, false],
@@ -105,7 +98,7 @@ test('admins reach every page', function (string $name, array $params = []) {
     $this->actingAs($this->admin)->get(route($name, $params))->assertOk();
 })->with([
     ['mock-bank.index'], ['mock.create'], ['speaking.index'], ['writing-review.index'], ['desktop.devices.index'],
-    ['desktop.releases.index'], ['desktop.settings.index'], ['reception.index'], ['monitor.index'],
+    ['desktop.settings.index'], ['reception.index'], ['monitor.index'],
 ]);
 
 test('admins open the mock edit page and the code cards', function () {

@@ -1,7 +1,6 @@
 <?php
 
 use App\Http\Controllers\SpeakingController;
-use App\Models\AppRelease;
 use App\Models\Attempt;
 use App\Models\AttemptAnswer;
 use App\Models\AttemptPart;
@@ -21,10 +20,8 @@ use App\Services\ExamService;
 use App\Services\IeltsScoreConverter;
 use App\Services\MockBankService;
 use App\Services\MockResultService;
-use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Queue;
-use Illuminate\Support\Facades\Storage;
 
 beforeEach(function () {
     $this->admin = makeUser('Admin');
@@ -490,7 +487,7 @@ test('the monitor page shows module, time left, online state and violations', fu
 
 /*
 |--------------------------------------------------------------------------
-| Devices, releases, settings
+| Devices, settings
 |--------------------------------------------------------------------------
 */
 
@@ -515,38 +512,24 @@ test('admins approve, block, unblock, rename and delete PCs', function () {
     expect(Device::find($device->id))->toBeNull();
 });
 
-test('a release upload stores the installer and computes sha256 and size on the server', function () {
-    Storage::fake(AppRelease::DISK);
-    $content = random_bytes(4096).'MZ-installer';
-    $file = UploadedFile::fake()->createWithContent('mynine-setup.exe', $content);
+test('the devices page shows the latest version from version.json', function () {
+    Device::factory()->create(['name' => 'PC-01', 'app_version' => '1.1.0']);
+    Device::factory()->create(['name' => 'PC-02', 'app_version' => '1.2.0']);
 
-    $this->actingAs($this->admin)->post(route('desktop.releases.store'), [
-        'version' => '1.4.0', 'notes' => 'Fixes', 'mandatory' => 1, 'file' => $file,
-        'sha256' => str_repeat('0', 64), 'file_size' => 1,
-    ])->assertSessionHasNoErrors()->assertSessionHas('success');
+    useReleaseManifest(releaseManifestData(['version' => '1.2.0']));
+    $this->actingAs($this->admin)->get(route('desktop.devices.index'))->assertOk()
+        ->assertInertia(fn ($page) => $page->component('desktop/devices')
+            ->where('latestVersion', '1.2.0')
+            ->where('devices.0.name', 'PC-01')->where('devices.0.outdated', true)
+            ->where('devices.1.outdated', false));
 
-    $release = AppRelease::where('version', '1.4.0')->firstOrFail();
-    expect($release->sha256)->toBe(hash('sha256', $content))
-        ->and($release->file_size)->toBe(strlen($content))
-        ->and($release->file_path)->toBe('desktop-releases/1.4.0/mynine-setup-1.4.0.exe')
-        ->and($release->mandatory)->toBeTrue()
-        ->and($release->is_active)->toBeTrue()
-        ->and((int) $release->published_by)->toBe($this->admin->id);
-    Storage::disk(AppRelease::DISK)->assertExists('desktop-releases/1.4.0/mynine-setup-1.4.0.exe');
+    useReleaseManifest(null);
+    $this->actingAs($this->admin)->get(route('desktop.devices.index'))->assertOk()
+        ->assertInertia(fn ($page) => $page->where('latestVersion', null)->where('devices.0.outdated', false));
 
-    // Version must be unique semver; only .exe files.
-    $this->actingAs($this->admin)->post(route('desktop.releases.store'), ['version' => '1.4.0', 'file' => UploadedFile::fake()->createWithContent('a.exe', 'x')])->assertSessionHasErrors('version');
-    $this->actingAs($this->admin)->post(route('desktop.releases.store'), ['version' => '1.5', 'file' => UploadedFile::fake()->createWithContent('a.exe', 'x')])->assertSessionHasErrors('version');
-    $this->actingAs($this->admin)->post(route('desktop.releases.store'), ['version' => '1.5.0', 'file' => UploadedFile::fake()->createWithContent('a.zip', 'x')])->assertSessionHasErrors('file');
-});
-
-test('deactivating the newest release rolls /app/version back', function () {
-    $old = AppRelease::factory()->create(['version' => '1.1.0']);
-    $new = AppRelease::factory()->create(['version' => '1.2.0']);
-    expect(AppRelease::latestActive()->id)->toBe($new->id);
-
-    $this->actingAs($this->admin)->patch(route('desktop.releases.update', $new), ['is_active' => false])->assertSessionHas('success');
-    expect(AppRelease::latestActive()->id)->toBe($old->id);
+    useReleaseManifest('{invalid');
+    $this->actingAs($this->admin)->get(route('desktop.devices.index'))->assertOk()
+        ->assertInertia(fn ($page) => $page->where('latestVersion', null));
 });
 
 test('the exit password is stored in both online and offline formats', function () {

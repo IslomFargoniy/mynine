@@ -14,350 +14,47 @@ part of 'app_models.dart';
 T _$identity<T>(T value) => value;
 
 /// @nodoc
-mixin _$AppVersionInfo {
+mixin _$UpdateManifest {
 
- ReleaseInfo? get latest; String? get minVersion; bool get updateAvailable;@JsonKey(fromJson: dateOrNull, toJson: dateToJson) DateTime? get serverTime;
-/// Create a copy of AppVersionInfo
+@JsonKey(fromJson: stringOrEmpty) String get version;@JsonKey(fromJson: stringOrEmpty) String get file;@JsonKey(fromJson: stringOrEmpty) String get sha256;@JsonKey(fromJson: intFrom) int get size;@JsonKey(fromJson: boolTrue) bool get mandatory;@JsonKey(fromJson: stringOrNull) String? get minVersion;@JsonKey(fromJson: stringOrEmpty) String get notes;@JsonKey(fromJson: dateOrNull, toJson: dateToJson) DateTime? get publishedAt;
+/// Create a copy of UpdateManifest
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
 @pragma('vm:prefer-inline')
-$AppVersionInfoCopyWith<AppVersionInfo> get copyWith => _$AppVersionInfoCopyWithImpl<AppVersionInfo>(this as AppVersionInfo, _$identity);
+$UpdateManifestCopyWith<UpdateManifest> get copyWith => _$UpdateManifestCopyWithImpl<UpdateManifest>(this as UpdateManifest, _$identity);
 
-  /// Serializes this AppVersionInfo to a JSON map.
+  /// Serializes this UpdateManifest to a JSON map.
   Map<String, dynamic> toJson();
 
 
 @override
 bool operator ==(Object other) {
-  final _this = this as AppVersionInfo;
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is AppVersionInfo&&(identical(other.latest, _this.latest) || other.latest == _this.latest)&&(identical(other.minVersion, _this.minVersion) || other.minVersion == _this.minVersion)&&(identical(other.updateAvailable, _this.updateAvailable) || other.updateAvailable == _this.updateAvailable)&&(identical(other.serverTime, _this.serverTime) || other.serverTime == _this.serverTime));
+  final _this = this as UpdateManifest;
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is UpdateManifest&&(identical(other.version, _this.version) || other.version == _this.version)&&(identical(other.file, _this.file) || other.file == _this.file)&&(identical(other.sha256, _this.sha256) || other.sha256 == _this.sha256)&&(identical(other.size, _this.size) || other.size == _this.size)&&(identical(other.mandatory, _this.mandatory) || other.mandatory == _this.mandatory)&&(identical(other.minVersion, _this.minVersion) || other.minVersion == _this.minVersion)&&(identical(other.notes, _this.notes) || other.notes == _this.notes)&&(identical(other.publishedAt, _this.publishedAt) || other.publishedAt == _this.publishedAt));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
 int get hashCode {
-  final _this = this as AppVersionInfo;
-  return Object.hash(runtimeType,_this.latest,_this.minVersion,_this.updateAvailable,_this.serverTime);
+  final _this = this as UpdateManifest;
+  return Object.hash(runtimeType,_this.version,_this.file,_this.sha256,_this.size,_this.mandatory,_this.minVersion,_this.notes,_this.publishedAt);
 }
 
 @override
 String toString() {
-  final _this = this as AppVersionInfo;
-  return 'AppVersionInfo(latest: ${_this.latest}, minVersion: ${_this.minVersion}, updateAvailable: ${_this.updateAvailable}, serverTime: ${_this.serverTime})';
+  final _this = this as UpdateManifest;
+  return 'UpdateManifest(version: ${_this.version}, file: ${_this.file}, sha256: ${_this.sha256}, size: ${_this.size}, mandatory: ${_this.mandatory}, minVersion: ${_this.minVersion}, notes: ${_this.notes}, publishedAt: ${_this.publishedAt})';
 }
 
 
 }
 
 /// @nodoc
-abstract mixin class $AppVersionInfoCopyWith<$Res>  {
-  factory $AppVersionInfoCopyWith(AppVersionInfo value, $Res Function(AppVersionInfo) _then) = _$AppVersionInfoCopyWithImpl;
+abstract mixin class $UpdateManifestCopyWith<$Res>  {
+  factory $UpdateManifestCopyWith(UpdateManifest value, $Res Function(UpdateManifest) _then) = _$UpdateManifestCopyWithImpl;
 @useResult
 $Res call({
- ReleaseInfo? latest, String? minVersion, bool updateAvailable,@JsonKey(fromJson: dateOrNull, toJson: dateToJson) DateTime? serverTime
-});
-
-
-$ReleaseInfoCopyWith<$Res>? get latest;
-
-}
-/// @nodoc
-class _$AppVersionInfoCopyWithImpl<$Res>
-    implements $AppVersionInfoCopyWith<$Res> {
-  _$AppVersionInfoCopyWithImpl(this._self, this._then);
-
-  final AppVersionInfo _self;
-  final $Res Function(AppVersionInfo) _then;
-
-/// Create a copy of AppVersionInfo
-/// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? latest = freezed,Object? minVersion = freezed,Object? updateAvailable = null,Object? serverTime = freezed,}) {
-  return _then(AppVersionInfo(
-latest: freezed == latest ? _self.latest : latest // ignore: cast_nullable_to_non_nullable
-as ReleaseInfo?,minVersion: freezed == minVersion ? _self.minVersion : minVersion // ignore: cast_nullable_to_non_nullable
-as String?,updateAvailable: null == updateAvailable ? _self.updateAvailable : updateAvailable // ignore: cast_nullable_to_non_nullable
-as bool,serverTime: freezed == serverTime ? _self.serverTime : serverTime // ignore: cast_nullable_to_non_nullable
-as DateTime?,
-  ));
-}
-/// Create a copy of AppVersionInfo
-/// with the given fields replaced by the non-null parameter values.
-@override
-@pragma('vm:prefer-inline')
-$ReleaseInfoCopyWith<$Res>? get latest {
-    if (_self.latest == null) {
-    return null;
-  }
-
-  return $ReleaseInfoCopyWith<$Res>(_self.latest!, (value) {
-    return _then(_self.copyWith(latest: value));
-  });
-}
-}
-
-
-/// Adds pattern-matching-related methods to [AppVersionInfo].
-extension AppVersionInfoPatterns on AppVersionInfo {
-/// A variant of `map` that fallback to returning `orElse`.
-///
-/// It is equivalent to doing:
-/// ```dart
-/// switch (sealedClass) {
-///   case final Subclass value:
-///     return ...;
-///   case _:
-///     return orElse();
-/// }
-/// ```
-
-@optionalTypeArgs TResult maybeMap<TResult extends Object?>(TResult Function( _AppVersionInfo value)?  $default,{required TResult orElse(),}){
-final _that = this;
-switch (_that) {
-case _AppVersionInfo() when $default != null:
-return $default(_that);case _:
-  return orElse();
-
-}
-}
-/// A `switch`-like method, using callbacks.
-///
-/// Callbacks receives the raw object, upcasted.
-/// It is equivalent to doing:
-/// ```dart
-/// switch (sealedClass) {
-///   case final Subclass value:
-///     return ...;
-///   case final Subclass2 value:
-///     return ...;
-/// }
-/// ```
-
-@optionalTypeArgs TResult map<TResult extends Object?>(TResult Function( _AppVersionInfo value)  $default,){
-final _that = this;
-switch (_that) {
-case _AppVersionInfo():
-return $default(_that);case _:
-  throw StateError('Unexpected subclass');
-
-}
-}
-/// A variant of `map` that fallback to returning `null`.
-///
-/// It is equivalent to doing:
-/// ```dart
-/// switch (sealedClass) {
-///   case final Subclass value:
-///     return ...;
-///   case _:
-///     return null;
-/// }
-/// ```
-
-@optionalTypeArgs TResult? mapOrNull<TResult extends Object?>(TResult? Function( _AppVersionInfo value)?  $default,){
-final _that = this;
-switch (_that) {
-case _AppVersionInfo() when $default != null:
-return $default(_that);case _:
-  return null;
-
-}
-}
-/// A variant of `when` that fallback to an `orElse` callback.
-///
-/// It is equivalent to doing:
-/// ```dart
-/// switch (sealedClass) {
-///   case Subclass(:final field):
-///     return ...;
-///   case _:
-///     return orElse();
-/// }
-/// ```
-
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( ReleaseInfo? latest,  String? minVersion,  bool updateAvailable, @JsonKey(fromJson: dateOrNull, toJson: dateToJson)  DateTime? serverTime)?  $default,{required TResult orElse(),}) {final _that = this;
-switch (_that) {
-case _AppVersionInfo() when $default != null:
-return $default(_that.latest,_that.minVersion,_that.updateAvailable,_that.serverTime);case _:
-  return orElse();
-
-}
-}
-/// A `switch`-like method, using callbacks.
-///
-/// As opposed to `map`, this offers destructuring.
-/// It is equivalent to doing:
-/// ```dart
-/// switch (sealedClass) {
-///   case Subclass(:final field):
-///     return ...;
-///   case Subclass2(:final field2):
-///     return ...;
-/// }
-/// ```
-
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( ReleaseInfo? latest,  String? minVersion,  bool updateAvailable, @JsonKey(fromJson: dateOrNull, toJson: dateToJson)  DateTime? serverTime)  $default,) {final _that = this;
-switch (_that) {
-case _AppVersionInfo():
-return $default(_that.latest,_that.minVersion,_that.updateAvailable,_that.serverTime);case _:
-  throw StateError('Unexpected subclass');
-
-}
-}
-/// A variant of `when` that fallback to returning `null`
-///
-/// It is equivalent to doing:
-/// ```dart
-/// switch (sealedClass) {
-///   case Subclass(:final field):
-///     return ...;
-///   case _:
-///     return null;
-/// }
-/// ```
-
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( ReleaseInfo? latest,  String? minVersion,  bool updateAvailable, @JsonKey(fromJson: dateOrNull, toJson: dateToJson)  DateTime? serverTime)?  $default,) {final _that = this;
-switch (_that) {
-case _AppVersionInfo() when $default != null:
-return $default(_that.latest,_that.minVersion,_that.updateAvailable,_that.serverTime);case _:
-  return null;
-
-}
-}
-
-}
-
-/// @nodoc
-@JsonSerializable()
-
-class _AppVersionInfo implements AppVersionInfo {
-  const _AppVersionInfo({this.latest, this.minVersion, this.updateAvailable = false, @JsonKey(fromJson: dateOrNull, toJson: dateToJson) this.serverTime});
-  factory _AppVersionInfo.fromJson(Map<String, dynamic> json) => _$AppVersionInfoFromJson(json);
-
-@override final  ReleaseInfo? latest;
-@override final  String? minVersion;
-@override@JsonKey() final  bool updateAvailable;
-@override@JsonKey(fromJson: dateOrNull, toJson: dateToJson) final  DateTime? serverTime;
-
-/// Create a copy of AppVersionInfo
-/// with the given fields replaced by the non-null parameter values.
-@override @JsonKey(includeFromJson: false, includeToJson: false)
-@pragma('vm:prefer-inline')
-_$AppVersionInfoCopyWith<_AppVersionInfo> get copyWith => __$AppVersionInfoCopyWithImpl<_AppVersionInfo>(this, _$identity);
-
-@override
-Map<String, dynamic> toJson() {
-  return _$AppVersionInfoToJson(this, );
-}
-
-@override
-bool operator ==(Object other) {
-    return identical(this, other) || (other.runtimeType == runtimeType&&other is _AppVersionInfo&&(identical(other.latest, latest) || other.latest == latest)&&(identical(other.minVersion, minVersion) || other.minVersion == minVersion)&&(identical(other.updateAvailable, updateAvailable) || other.updateAvailable == updateAvailable)&&(identical(other.serverTime, serverTime) || other.serverTime == serverTime));
-}
-
-@JsonKey(includeFromJson: false, includeToJson: false)
-@override
-int get hashCode {
-    return Object.hash(runtimeType,latest,minVersion,updateAvailable,serverTime);
-}
-
-@override
-String toString() {
-    return 'AppVersionInfo(latest: $latest, minVersion: $minVersion, updateAvailable: $updateAvailable, serverTime: $serverTime)';
-}
-
-
-}
-
-/// @nodoc
-abstract mixin class _$AppVersionInfoCopyWith<$Res> implements $AppVersionInfoCopyWith<$Res> {
-  factory _$AppVersionInfoCopyWith(_AppVersionInfo value, $Res Function(_AppVersionInfo) _then) = __$AppVersionInfoCopyWithImpl;
-@override @useResult
-$Res call({
- ReleaseInfo? latest, String? minVersion, bool updateAvailable,@JsonKey(fromJson: dateOrNull, toJson: dateToJson) DateTime? serverTime
-});
-
-
-@override $ReleaseInfoCopyWith<$Res>? get latest;
-
-}
-/// @nodoc
-class __$AppVersionInfoCopyWithImpl<$Res>
-    implements _$AppVersionInfoCopyWith<$Res> {
-  __$AppVersionInfoCopyWithImpl(this._self, this._then);
-
-  final _AppVersionInfo _self;
-  final $Res Function(_AppVersionInfo) _then;
-
-/// Create a copy of AppVersionInfo
-/// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? latest = freezed,Object? minVersion = freezed,Object? updateAvailable = null,Object? serverTime = freezed,}) {
-  return _then(_AppVersionInfo(
-latest: freezed == latest ? _self.latest : latest // ignore: cast_nullable_to_non_nullable
-as ReleaseInfo?,minVersion: freezed == minVersion ? _self.minVersion : minVersion // ignore: cast_nullable_to_non_nullable
-as String?,updateAvailable: null == updateAvailable ? _self.updateAvailable : updateAvailable // ignore: cast_nullable_to_non_nullable
-as bool,serverTime: freezed == serverTime ? _self.serverTime : serverTime // ignore: cast_nullable_to_non_nullable
-as DateTime?,
-  ));
-}
-
-/// Create a copy of AppVersionInfo
-/// with the given fields replaced by the non-null parameter values.
-@override
-@pragma('vm:prefer-inline')
-$ReleaseInfoCopyWith<$Res>? get latest {
-    if (_self.latest == null) {
-    return null;
-  }
-
-  return $ReleaseInfoCopyWith<$Res>(_self.latest!, (value) {
-    return _then(_self.copyWith(latest: value));
-  });
-}
-}
-
-
-/// @nodoc
-mixin _$ReleaseInfo {
-
- String get version; String get notes; bool get mandatory; String get url; String get sha256; int get size;@JsonKey(fromJson: dateOrNull, toJson: dateToJson) DateTime? get publishedAt;
-/// Create a copy of ReleaseInfo
-/// with the given fields replaced by the non-null parameter values.
-@JsonKey(includeFromJson: false, includeToJson: false)
-@pragma('vm:prefer-inline')
-$ReleaseInfoCopyWith<ReleaseInfo> get copyWith => _$ReleaseInfoCopyWithImpl<ReleaseInfo>(this as ReleaseInfo, _$identity);
-
-  /// Serializes this ReleaseInfo to a JSON map.
-  Map<String, dynamic> toJson();
-
-
-@override
-bool operator ==(Object other) {
-  final _this = this as ReleaseInfo;
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is ReleaseInfo&&(identical(other.version, _this.version) || other.version == _this.version)&&(identical(other.notes, _this.notes) || other.notes == _this.notes)&&(identical(other.mandatory, _this.mandatory) || other.mandatory == _this.mandatory)&&(identical(other.url, _this.url) || other.url == _this.url)&&(identical(other.sha256, _this.sha256) || other.sha256 == _this.sha256)&&(identical(other.size, _this.size) || other.size == _this.size)&&(identical(other.publishedAt, _this.publishedAt) || other.publishedAt == _this.publishedAt));
-}
-
-@JsonKey(includeFromJson: false, includeToJson: false)
-@override
-int get hashCode {
-  final _this = this as ReleaseInfo;
-  return Object.hash(runtimeType,_this.version,_this.notes,_this.mandatory,_this.url,_this.sha256,_this.size,_this.publishedAt);
-}
-
-@override
-String toString() {
-  final _this = this as ReleaseInfo;
-  return 'ReleaseInfo(version: ${_this.version}, notes: ${_this.notes}, mandatory: ${_this.mandatory}, url: ${_this.url}, sha256: ${_this.sha256}, size: ${_this.size}, publishedAt: ${_this.publishedAt})';
-}
-
-
-}
-
-/// @nodoc
-abstract mixin class $ReleaseInfoCopyWith<$Res>  {
-  factory $ReleaseInfoCopyWith(ReleaseInfo value, $Res Function(ReleaseInfo) _then) = _$ReleaseInfoCopyWithImpl;
-@useResult
-$Res call({
- String version, String notes, bool mandatory, String url, String sha256, int size,@JsonKey(fromJson: dateOrNull, toJson: dateToJson) DateTime? publishedAt
+@JsonKey(fromJson: stringOrEmpty) String version,@JsonKey(fromJson: stringOrEmpty) String file,@JsonKey(fromJson: stringOrEmpty) String sha256,@JsonKey(fromJson: intFrom) int size,@JsonKey(fromJson: boolTrue) bool mandatory,@JsonKey(fromJson: stringOrNull) String? minVersion,@JsonKey(fromJson: stringOrEmpty) String notes,@JsonKey(fromJson: dateOrNull, toJson: dateToJson) DateTime? publishedAt
 });
 
 
@@ -365,24 +62,25 @@ $Res call({
 
 }
 /// @nodoc
-class _$ReleaseInfoCopyWithImpl<$Res>
-    implements $ReleaseInfoCopyWith<$Res> {
-  _$ReleaseInfoCopyWithImpl(this._self, this._then);
+class _$UpdateManifestCopyWithImpl<$Res>
+    implements $UpdateManifestCopyWith<$Res> {
+  _$UpdateManifestCopyWithImpl(this._self, this._then);
 
-  final ReleaseInfo _self;
-  final $Res Function(ReleaseInfo) _then;
+  final UpdateManifest _self;
+  final $Res Function(UpdateManifest) _then;
 
-/// Create a copy of ReleaseInfo
+/// Create a copy of UpdateManifest
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? version = null,Object? notes = null,Object? mandatory = null,Object? url = null,Object? sha256 = null,Object? size = null,Object? publishedAt = freezed,}) {
-  return _then(ReleaseInfo(
+@pragma('vm:prefer-inline') @override $Res call({Object? version = null,Object? file = null,Object? sha256 = null,Object? size = null,Object? mandatory = null,Object? minVersion = freezed,Object? notes = null,Object? publishedAt = freezed,}) {
+  return _then(UpdateManifest(
 version: null == version ? _self.version : version // ignore: cast_nullable_to_non_nullable
-as String,notes: null == notes ? _self.notes : notes // ignore: cast_nullable_to_non_nullable
-as String,mandatory: null == mandatory ? _self.mandatory : mandatory // ignore: cast_nullable_to_non_nullable
-as bool,url: null == url ? _self.url : url // ignore: cast_nullable_to_non_nullable
+as String,file: null == file ? _self.file : file // ignore: cast_nullable_to_non_nullable
 as String,sha256: null == sha256 ? _self.sha256 : sha256 // ignore: cast_nullable_to_non_nullable
 as String,size: null == size ? _self.size : size // ignore: cast_nullable_to_non_nullable
-as int,publishedAt: freezed == publishedAt ? _self.publishedAt : publishedAt // ignore: cast_nullable_to_non_nullable
+as int,mandatory: null == mandatory ? _self.mandatory : mandatory // ignore: cast_nullable_to_non_nullable
+as bool,minVersion: freezed == minVersion ? _self.minVersion : minVersion // ignore: cast_nullable_to_non_nullable
+as String?,notes: null == notes ? _self.notes : notes // ignore: cast_nullable_to_non_nullable
+as String,publishedAt: freezed == publishedAt ? _self.publishedAt : publishedAt // ignore: cast_nullable_to_non_nullable
 as DateTime?,
   ));
 }
@@ -390,8 +88,8 @@ as DateTime?,
 }
 
 
-/// Adds pattern-matching-related methods to [ReleaseInfo].
-extension ReleaseInfoPatterns on ReleaseInfo {
+/// Adds pattern-matching-related methods to [UpdateManifest].
+extension UpdateManifestPatterns on UpdateManifest {
 /// A variant of `map` that fallback to returning `orElse`.
 ///
 /// It is equivalent to doing:
@@ -404,10 +102,10 @@ extension ReleaseInfoPatterns on ReleaseInfo {
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeMap<TResult extends Object?>(TResult Function( _ReleaseInfo value)?  $default,{required TResult orElse(),}){
+@optionalTypeArgs TResult maybeMap<TResult extends Object?>(TResult Function( _UpdateManifest value)?  $default,{required TResult orElse(),}){
 final _that = this;
 switch (_that) {
-case _ReleaseInfo() when $default != null:
+case _UpdateManifest() when $default != null:
 return $default(_that);case _:
   return orElse();
 
@@ -426,10 +124,10 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult map<TResult extends Object?>(TResult Function( _ReleaseInfo value)  $default,){
+@optionalTypeArgs TResult map<TResult extends Object?>(TResult Function( _UpdateManifest value)  $default,){
 final _that = this;
 switch (_that) {
-case _ReleaseInfo():
+case _UpdateManifest():
 return $default(_that);case _:
   throw StateError('Unexpected subclass');
 
@@ -447,10 +145,10 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult? mapOrNull<TResult extends Object?>(TResult? Function( _ReleaseInfo value)?  $default,){
+@optionalTypeArgs TResult? mapOrNull<TResult extends Object?>(TResult? Function( _UpdateManifest value)?  $default,){
 final _that = this;
 switch (_that) {
-case _ReleaseInfo() when $default != null:
+case _UpdateManifest() when $default != null:
 return $default(_that);case _:
   return null;
 
@@ -468,10 +166,10 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String version,  String notes,  bool mandatory,  String url,  String sha256,  int size, @JsonKey(fromJson: dateOrNull, toJson: dateToJson)  DateTime? publishedAt)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function(@JsonKey(fromJson: stringOrEmpty)  String version, @JsonKey(fromJson: stringOrEmpty)  String file, @JsonKey(fromJson: stringOrEmpty)  String sha256, @JsonKey(fromJson: intFrom)  int size, @JsonKey(fromJson: boolTrue)  bool mandatory, @JsonKey(fromJson: stringOrNull)  String? minVersion, @JsonKey(fromJson: stringOrEmpty)  String notes, @JsonKey(fromJson: dateOrNull, toJson: dateToJson)  DateTime? publishedAt)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
-case _ReleaseInfo() when $default != null:
-return $default(_that.version,_that.notes,_that.mandatory,_that.url,_that.sha256,_that.size,_that.publishedAt);case _:
+case _UpdateManifest() when $default != null:
+return $default(_that.version,_that.file,_that.sha256,_that.size,_that.mandatory,_that.minVersion,_that.notes,_that.publishedAt);case _:
   return orElse();
 
 }
@@ -489,10 +187,10 @@ return $default(_that.version,_that.notes,_that.mandatory,_that.url,_that.sha256
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String version,  String notes,  bool mandatory,  String url,  String sha256,  int size, @JsonKey(fromJson: dateOrNull, toJson: dateToJson)  DateTime? publishedAt)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function(@JsonKey(fromJson: stringOrEmpty)  String version, @JsonKey(fromJson: stringOrEmpty)  String file, @JsonKey(fromJson: stringOrEmpty)  String sha256, @JsonKey(fromJson: intFrom)  int size, @JsonKey(fromJson: boolTrue)  bool mandatory, @JsonKey(fromJson: stringOrNull)  String? minVersion, @JsonKey(fromJson: stringOrEmpty)  String notes, @JsonKey(fromJson: dateOrNull, toJson: dateToJson)  DateTime? publishedAt)  $default,) {final _that = this;
 switch (_that) {
-case _ReleaseInfo():
-return $default(_that.version,_that.notes,_that.mandatory,_that.url,_that.sha256,_that.size,_that.publishedAt);case _:
+case _UpdateManifest():
+return $default(_that.version,_that.file,_that.sha256,_that.size,_that.mandatory,_that.minVersion,_that.notes,_that.publishedAt);case _:
   throw StateError('Unexpected subclass');
 
 }
@@ -509,10 +207,10 @@ return $default(_that.version,_that.notes,_that.mandatory,_that.url,_that.sha256
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String version,  String notes,  bool mandatory,  String url,  String sha256,  int size, @JsonKey(fromJson: dateOrNull, toJson: dateToJson)  DateTime? publishedAt)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function(@JsonKey(fromJson: stringOrEmpty)  String version, @JsonKey(fromJson: stringOrEmpty)  String file, @JsonKey(fromJson: stringOrEmpty)  String sha256, @JsonKey(fromJson: intFrom)  int size, @JsonKey(fromJson: boolTrue)  bool mandatory, @JsonKey(fromJson: stringOrNull)  String? minVersion, @JsonKey(fromJson: stringOrEmpty)  String notes, @JsonKey(fromJson: dateOrNull, toJson: dateToJson)  DateTime? publishedAt)?  $default,) {final _that = this;
 switch (_that) {
-case _ReleaseInfo() when $default != null:
-return $default(_that.version,_that.notes,_that.mandatory,_that.url,_that.sha256,_that.size,_that.publishedAt);case _:
+case _UpdateManifest() when $default != null:
+return $default(_that.version,_that.file,_that.sha256,_that.size,_that.mandatory,_that.minVersion,_that.notes,_that.publishedAt);case _:
   return null;
 
 }
@@ -523,54 +221,55 @@ return $default(_that.version,_that.notes,_that.mandatory,_that.url,_that.sha256
 /// @nodoc
 @JsonSerializable()
 
-class _ReleaseInfo implements ReleaseInfo {
-  const _ReleaseInfo({required this.version, this.notes = '', this.mandatory = false, required this.url, required this.sha256, this.size = 0, @JsonKey(fromJson: dateOrNull, toJson: dateToJson) this.publishedAt});
-  factory _ReleaseInfo.fromJson(Map<String, dynamic> json) => _$ReleaseInfoFromJson(json);
+class _UpdateManifest extends UpdateManifest {
+  const _UpdateManifest({@JsonKey(fromJson: stringOrEmpty) this.version = '', @JsonKey(fromJson: stringOrEmpty) this.file = '', @JsonKey(fromJson: stringOrEmpty) this.sha256 = '', @JsonKey(fromJson: intFrom) this.size = 0, @JsonKey(fromJson: boolTrue) this.mandatory = false, @JsonKey(fromJson: stringOrNull) this.minVersion, @JsonKey(fromJson: stringOrEmpty) this.notes = '', @JsonKey(fromJson: dateOrNull, toJson: dateToJson) this.publishedAt}): super._();
+  factory _UpdateManifest.fromJson(Map<String, dynamic> json) => _$UpdateManifestFromJson(json);
 
-@override final  String version;
-@override@JsonKey() final  String notes;
-@override@JsonKey() final  bool mandatory;
-@override final  String url;
-@override final  String sha256;
-@override@JsonKey() final  int size;
+@override@JsonKey(fromJson: stringOrEmpty) final  String version;
+@override@JsonKey(fromJson: stringOrEmpty) final  String file;
+@override@JsonKey(fromJson: stringOrEmpty) final  String sha256;
+@override@JsonKey(fromJson: intFrom) final  int size;
+@override@JsonKey(fromJson: boolTrue) final  bool mandatory;
+@override@JsonKey(fromJson: stringOrNull) final  String? minVersion;
+@override@JsonKey(fromJson: stringOrEmpty) final  String notes;
 @override@JsonKey(fromJson: dateOrNull, toJson: dateToJson) final  DateTime? publishedAt;
 
-/// Create a copy of ReleaseInfo
+/// Create a copy of UpdateManifest
 /// with the given fields replaced by the non-null parameter values.
 @override @JsonKey(includeFromJson: false, includeToJson: false)
 @pragma('vm:prefer-inline')
-_$ReleaseInfoCopyWith<_ReleaseInfo> get copyWith => __$ReleaseInfoCopyWithImpl<_ReleaseInfo>(this, _$identity);
+_$UpdateManifestCopyWith<_UpdateManifest> get copyWith => __$UpdateManifestCopyWithImpl<_UpdateManifest>(this, _$identity);
 
 @override
 Map<String, dynamic> toJson() {
-  return _$ReleaseInfoToJson(this, );
+  return _$UpdateManifestToJson(this, );
 }
 
 @override
 bool operator ==(Object other) {
-    return identical(this, other) || (other.runtimeType == runtimeType&&other is _ReleaseInfo&&(identical(other.version, version) || other.version == version)&&(identical(other.notes, notes) || other.notes == notes)&&(identical(other.mandatory, mandatory) || other.mandatory == mandatory)&&(identical(other.url, url) || other.url == url)&&(identical(other.sha256, sha256) || other.sha256 == sha256)&&(identical(other.size, size) || other.size == size)&&(identical(other.publishedAt, publishedAt) || other.publishedAt == publishedAt));
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is _UpdateManifest&&(identical(other.version, version) || other.version == version)&&(identical(other.file, file) || other.file == file)&&(identical(other.sha256, sha256) || other.sha256 == sha256)&&(identical(other.size, size) || other.size == size)&&(identical(other.mandatory, mandatory) || other.mandatory == mandatory)&&(identical(other.minVersion, minVersion) || other.minVersion == minVersion)&&(identical(other.notes, notes) || other.notes == notes)&&(identical(other.publishedAt, publishedAt) || other.publishedAt == publishedAt));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
 int get hashCode {
-    return Object.hash(runtimeType,version,notes,mandatory,url,sha256,size,publishedAt);
+    return Object.hash(runtimeType,version,file,sha256,size,mandatory,minVersion,notes,publishedAt);
 }
 
 @override
 String toString() {
-    return 'ReleaseInfo(version: $version, notes: $notes, mandatory: $mandatory, url: $url, sha256: $sha256, size: $size, publishedAt: $publishedAt)';
+    return 'UpdateManifest(version: $version, file: $file, sha256: $sha256, size: $size, mandatory: $mandatory, minVersion: $minVersion, notes: $notes, publishedAt: $publishedAt)';
 }
 
 
 }
 
 /// @nodoc
-abstract mixin class _$ReleaseInfoCopyWith<$Res> implements $ReleaseInfoCopyWith<$Res> {
-  factory _$ReleaseInfoCopyWith(_ReleaseInfo value, $Res Function(_ReleaseInfo) _then) = __$ReleaseInfoCopyWithImpl;
+abstract mixin class _$UpdateManifestCopyWith<$Res> implements $UpdateManifestCopyWith<$Res> {
+  factory _$UpdateManifestCopyWith(_UpdateManifest value, $Res Function(_UpdateManifest) _then) = __$UpdateManifestCopyWithImpl;
 @override @useResult
 $Res call({
- String version, String notes, bool mandatory, String url, String sha256, int size,@JsonKey(fromJson: dateOrNull, toJson: dateToJson) DateTime? publishedAt
+@JsonKey(fromJson: stringOrEmpty) String version,@JsonKey(fromJson: stringOrEmpty) String file,@JsonKey(fromJson: stringOrEmpty) String sha256,@JsonKey(fromJson: intFrom) int size,@JsonKey(fromJson: boolTrue) bool mandatory,@JsonKey(fromJson: stringOrNull) String? minVersion,@JsonKey(fromJson: stringOrEmpty) String notes,@JsonKey(fromJson: dateOrNull, toJson: dateToJson) DateTime? publishedAt
 });
 
 
@@ -578,24 +277,25 @@ $Res call({
 
 }
 /// @nodoc
-class __$ReleaseInfoCopyWithImpl<$Res>
-    implements _$ReleaseInfoCopyWith<$Res> {
-  __$ReleaseInfoCopyWithImpl(this._self, this._then);
+class __$UpdateManifestCopyWithImpl<$Res>
+    implements _$UpdateManifestCopyWith<$Res> {
+  __$UpdateManifestCopyWithImpl(this._self, this._then);
 
-  final _ReleaseInfo _self;
-  final $Res Function(_ReleaseInfo) _then;
+  final _UpdateManifest _self;
+  final $Res Function(_UpdateManifest) _then;
 
-/// Create a copy of ReleaseInfo
+/// Create a copy of UpdateManifest
 /// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? version = null,Object? notes = null,Object? mandatory = null,Object? url = null,Object? sha256 = null,Object? size = null,Object? publishedAt = freezed,}) {
-  return _then(_ReleaseInfo(
+@override @pragma('vm:prefer-inline') $Res call({Object? version = null,Object? file = null,Object? sha256 = null,Object? size = null,Object? mandatory = null,Object? minVersion = freezed,Object? notes = null,Object? publishedAt = freezed,}) {
+  return _then(_UpdateManifest(
 version: null == version ? _self.version : version // ignore: cast_nullable_to_non_nullable
-as String,notes: null == notes ? _self.notes : notes // ignore: cast_nullable_to_non_nullable
-as String,mandatory: null == mandatory ? _self.mandatory : mandatory // ignore: cast_nullable_to_non_nullable
-as bool,url: null == url ? _self.url : url // ignore: cast_nullable_to_non_nullable
+as String,file: null == file ? _self.file : file // ignore: cast_nullable_to_non_nullable
 as String,sha256: null == sha256 ? _self.sha256 : sha256 // ignore: cast_nullable_to_non_nullable
 as String,size: null == size ? _self.size : size // ignore: cast_nullable_to_non_nullable
-as int,publishedAt: freezed == publishedAt ? _self.publishedAt : publishedAt // ignore: cast_nullable_to_non_nullable
+as int,mandatory: null == mandatory ? _self.mandatory : mandatory // ignore: cast_nullable_to_non_nullable
+as bool,minVersion: freezed == minVersion ? _self.minVersion : minVersion // ignore: cast_nullable_to_non_nullable
+as String?,notes: null == notes ? _self.notes : notes // ignore: cast_nullable_to_non_nullable
+as String,publishedAt: freezed == publishedAt ? _self.publishedAt : publishedAt // ignore: cast_nullable_to_non_nullable
 as DateTime?,
   ));
 }

@@ -1,7 +1,6 @@
 <?php
 
 use App\Http\Controllers\Api\V1\AnswerController;
-use App\Http\Controllers\Api\V1\AppController;
 use App\Http\Controllers\Api\V1\AudioController;
 use App\Http\Controllers\Api\V1\DeviceController;
 use App\Http\Controllers\Api\V1\ExamAuthController;
@@ -22,14 +21,6 @@ Route::get('/user', function (Request $request) {
 */
 
 Route::prefix('v1')->name('api.v1.')->group(function () {
-    // App / updates (no auth)
-    Route::middleware('throttle:desktop-public')->group(function () {
-        Route::get('app/version', [AppController::class, 'version'])->name('app.version');
-        Route::get('app/releases/{version}/download', [AppController::class, 'download'])
-            ->where('version', '\d+\.\d+\.\d+')
-            ->name('app.download');
-    });
-
     Route::post('device/register', [DeviceController::class, 'register'])
         ->middleware('throttle:desktop-register')
         ->name('device.register');

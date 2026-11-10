@@ -24,7 +24,6 @@ import {
     Library,
     Mic,
     Monitor,
-    Package,
     PenLine,
     Send,
     Settings,
@@ -106,7 +105,6 @@ export function AppSidebar() {
                 label: t('exam_admin.nav.group_desktop'),
                 items: [
                     { title: t('exam_admin.nav.devices'), href: '/desktop/devices', icon: Monitor },
-                    { title: t('exam_admin.nav.releases'), href: '/desktop/releases', icon: Package },
                     { title: t('exam_admin.nav.settings'), href: '/desktop/settings', icon: Settings },
                 ],
             },

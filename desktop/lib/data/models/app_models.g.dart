@@ -6,42 +6,29 @@ part of 'app_models.dart';
 // JsonSerializableGenerator
 // **************************************************************************
 
-_AppVersionInfo _$AppVersionInfoFromJson(Map<String, dynamic> json) =>
-    _AppVersionInfo(
-      latest: json['latest'] == null
-          ? null
-          : ReleaseInfo.fromJson(json['latest'] as Map<String, dynamic>),
-      minVersion: json['min_version'] as String?,
-      updateAvailable: json['update_available'] as bool? ?? false,
-      serverTime: dateOrNull(json['server_time']),
+_UpdateManifest _$UpdateManifestFromJson(Map<String, dynamic> json) =>
+    _UpdateManifest(
+      version: json['version'] == null ? '' : stringOrEmpty(json['version']),
+      file: json['file'] == null ? '' : stringOrEmpty(json['file']),
+      sha256: json['sha256'] == null ? '' : stringOrEmpty(json['sha256']),
+      size: json['size'] == null ? 0 : intFrom(json['size']),
+      mandatory: json['mandatory'] == null
+          ? false
+          : boolTrue(json['mandatory']),
+      minVersion: stringOrNull(json['min_version']),
+      notes: json['notes'] == null ? '' : stringOrEmpty(json['notes']),
+      publishedAt: dateOrNull(json['published_at']),
     );
 
-Map<String, dynamic> _$AppVersionInfoToJson(_AppVersionInfo instance) =>
-    <String, dynamic>{
-      'latest': instance.latest?.toJson(),
-      'min_version': instance.minVersion,
-      'update_available': instance.updateAvailable,
-      'server_time': dateToJson(instance.serverTime),
-    };
-
-_ReleaseInfo _$ReleaseInfoFromJson(Map<String, dynamic> json) => _ReleaseInfo(
-  version: json['version'] as String,
-  notes: json['notes'] as String? ?? '',
-  mandatory: json['mandatory'] as bool? ?? false,
-  url: json['url'] as String,
-  sha256: json['sha256'] as String,
-  size: (json['size'] as num?)?.toInt() ?? 0,
-  publishedAt: dateOrNull(json['published_at']),
-);
-
-Map<String, dynamic> _$ReleaseInfoToJson(_ReleaseInfo instance) =>
+Map<String, dynamic> _$UpdateManifestToJson(_UpdateManifest instance) =>
     <String, dynamic>{
       'version': instance.version,
-      'notes': instance.notes,
-      'mandatory': instance.mandatory,
-      'url': instance.url,
+      'file': instance.file,
       'sha256': instance.sha256,
       'size': instance.size,
+      'mandatory': instance.mandatory,
+      'min_version': instance.minVersion,
+      'notes': instance.notes,
       'published_at': dateToJson(instance.publishedAt),
     };
 

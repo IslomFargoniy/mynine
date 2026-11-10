@@ -15,8 +15,17 @@ enum DeviceState { idle, updating, exam }
 /// exam endpoints take the exam token explicitly so that background sync of
 /// an older session (after the Completed screen) can keep using its own token.
 abstract class MynineApi {
-  // ---- App / updates -------------------------------------------------------
-  Future<AppVersionInfo> appVersion({String? current});
+  // ---- App updates (static files, no auth) ---------------------------------
+
+  /// `GET {site}/desktop/version.json?t=<epoch>` — the static update manifest
+  /// served by nginx from the server's `public/desktop/` folder. No auth
+  /// headers are sent. A missing file surfaces as an [ApiException] with
+  /// status 404; an unparseable body as a [FormatException].
+  Future<UpdateManifest> updateManifest();
+
+  /// Absolute URL of a file in the static update folder
+  /// (`{site}/desktop/<fileName>`).
+  String updateFileUrl(String fileName);
 
   // ---- Device --------------------------------------------------------------
   Future<DeviceRegistration> registerDevice({
@@ -74,12 +83,14 @@ abstract class MynineApi {
   ///
   /// Data is written to `<target>.part` first and renamed on completion, so an
   /// interrupted download continues where it stopped on the next call. The
-  /// caller verifies the SHA-256.
+  /// caller verifies the SHA-256. With [anonymous] no device token is sent
+  /// (static update files).
   Future<File> download(
     String url,
     File target, {
     String? examToken,
     ProgressCallback? onProgress,
+    bool anonymous = false,
   });
 }
 
