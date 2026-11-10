@@ -129,16 +129,16 @@ An Admin can also mark the older release active again on the server.
 
 - [ ] Windows 10 **2004 (build 19041) or newer** / Windows 11 — required for
       `WDA_EXCLUDEFROMCAPTURE` (older builds fall back to `WDA_MONITOR`).
-- [ ] Run `mynine-setup-<version>.exe` as administrator (installs to
-      `C:\Program Files\Mynine Exam`, creates the desktop/start-menu shortcuts and the
-      auto-start shortcut).
+- [ ] Sign in as the **exam account** (a standard, non-admin user) and run
+      `mynine-setup-<version>.exe` (per-user install to
+      `%LOCALAPPDATA%\Programs\Mynine Exam`, no admin rights or UAC needed; creates the
+      desktop/start-menu shortcuts and the auto-start shortcut for that account).
 - [ ] **Microsoft Defender**: the app is not code-signed. Add allow-list entries for
-      `C:\Program Files\Mynine Exam\mynine_desktop.exe` and
+      `%LOCALAPPDATA%\Programs\Mynine Exam\mynine_desktop.exe` and
       `%LOCALAPPDATA%\Mynine\updates\` (Windows Security → Virus & threat protection →
       Exclusions), and allow the app in SmartScreen once.
-- [ ] Silent updates install per-machine and need elevation: use an exam account that
-      is a local administrator with UAC set to "Never notify", or approve the UAC prompt
-      after each update.
+- [ ] Silent updates install per-user, so they need no elevation and show no UAC prompt.
+      Keep the exam account a **standard user** (not an administrator).
 - [ ] Auto-start: the installer adds a Startup shortcut (task "Start automatically").
       Optionally enable automatic sign-in of the exam account.
 - [ ] Ctrl+Alt+Del cannot be blocked by an application: hide Task Manager / Lock /
