@@ -17,7 +17,7 @@ export default function Welcome() {
     const { t } = useTranslation(); // Using the translation hook
 
     useEffect(() => {
-        const tg = window.Telegram?.WebApp;
+        const tg = window.Telegram?.WebApp?.initData ? window.Telegram.WebApp : undefined;
         tg?.ready();
         tg?.expand();
 

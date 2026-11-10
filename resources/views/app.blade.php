@@ -7,15 +7,17 @@
         <script src="https://telegram.org/js/telegram-web-app.js"></script>
 
         <script>
-            if (window.Telegram && window.Telegram.WebApp) {
+            // Only inside a real Telegram Mini App (initData is empty in a normal browser);
+            // calling WebApp methods elsewhere just floods the console with postEvent logs.
+            if (window.Telegram && window.Telegram.WebApp && window.Telegram.WebApp.initData) {
                 const WebApp = window.Telegram.WebApp;
                 WebApp.ready();
 
                 // Always expand (safe for both mobile & desktop)
                 WebApp.expand();
 
-                // Fullscreen only on laptop/desktop
-                if (WebApp.platform === "web" || WebApp.platform === "tdesktop") {
+                // Fullscreen only on laptop/desktop (Bot API 8.0+)
+                if ((WebApp.platform === "web" || WebApp.platform === "tdesktop") && WebApp.isVersionAtLeast && WebApp.isVersionAtLeast('8.0')) {
                     WebApp.requestFullscreen();
                 }
             }

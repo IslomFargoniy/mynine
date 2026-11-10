@@ -14,7 +14,7 @@ export function isTelegramWebApp(): boolean {
 export function useTelegramBackButton(backUrl?: string) {
     useEffect(() => {
         const tg = window.Telegram?.WebApp;
-        if (!tg || !backUrl) return;
+        if (!tg || !isTelegramWebApp() || !backUrl) return;
 
         tg.BackButton.show();
         const handler = () => router.visit(backUrl);
@@ -30,7 +30,7 @@ export function useTelegramBackButton(backUrl?: string) {
  * Telegram HapticFeedback
  */
 export function useTelegramHaptic() {
-    const tg = window.Telegram?.WebApp;
+    const tg = isTelegramWebApp() ? window.Telegram?.WebApp : undefined;
 
     return {
         /** Engil tebranish (tugma bosish) */
@@ -53,12 +53,13 @@ export function useTelegramHaptic() {
  */
 export function initTelegramWebApp() {
     const tg = window.Telegram?.WebApp;
-    if (!tg) return;
+    if (!tg || !isTelegramWebApp()) return;
 
     tg.expand();
-    
-    // Available in SDK 7.7+
-    if ((tg as any).disableVerticalSwipes) {
-        (tg as any).disableVerticalSwipes();
+
+    // Bot API 7.7+; older clients only log "not supported" warnings.
+    const webApp = tg as unknown as { isVersionAtLeast?: (v: string) => boolean; disableVerticalSwipes?: () => void };
+    if (webApp.disableVerticalSwipes && webApp.isVersionAtLeast?.('7.7')) {
+        webApp.disableVerticalSwipes();
     }
 }

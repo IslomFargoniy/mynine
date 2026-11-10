@@ -3,7 +3,8 @@ import { useEffect } from 'react';
 export function TelegramThemeProvider({ children }: { children: React.ReactNode }) {
     useEffect(() => {
         const tg = window.Telegram?.WebApp;
-        if (!tg || tg.platform === 'unknown') return;
+        // Only inside a real Telegram Mini App (initData is empty in a normal browser).
+        if (!tg || tg.platform === 'unknown' || !tg.initData) return;
 
         const updateTheme = () => {
             const theme = tg.themeParams;
@@ -47,15 +48,15 @@ export function TelegramThemeProvider({ children }: { children: React.ReactNode 
 
 export const useHaptic = () => {
     const impact = (style: 'light' | 'medium' | 'heavy' | 'rigid' | 'soft' = 'light') => {
-        window.Telegram?.WebApp?.HapticFeedback?.impactOccurred(style);
+        if (window.Telegram?.WebApp?.initData) window.Telegram.WebApp.HapticFeedback?.impactOccurred(style);
     };
 
     const notification = (type: 'error' | 'success' | 'warning') => {
-        window.Telegram?.WebApp?.HapticFeedback?.notificationOccurred(type);
+        if (window.Telegram?.WebApp?.initData) window.Telegram.WebApp.HapticFeedback?.notificationOccurred(type);
     };
 
     const selection = () => {
-        window.Telegram?.WebApp?.HapticFeedback?.selectionChanged();
+        if (window.Telegram?.WebApp?.initData) window.Telegram.WebApp.HapticFeedback?.selectionChanged();
     };
 
     return { impact, notification, selection };

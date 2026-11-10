@@ -26,7 +26,7 @@ export default function Login({ status, canResetPassword }: LoginProps) {
     const { t } = useTranslation();
 
     useEffect(() => {
-        const tg = window.Telegram?.WebApp;
+        const tg = window.Telegram?.WebApp?.initData ? window.Telegram.WebApp : undefined;
         tg?.ready();
         tg?.expand();
 
