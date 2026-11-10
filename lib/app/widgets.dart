@@ -1,11 +1,13 @@
 import 'package:flutter/material.dart';
 
+import '../core/theme/web_tokens.dart';
 import '../data/repositories/sync_service.dart';
 import 'theme.dart';
 
-/// White card centred on the grey canvas (code / rules / completed screens).
+/// White card centred on the grey canvas — the web module-selection card
+/// (index.tsx: `bg-white p-8 md:p-10 max-w-3xl border border-gray-300 shadow-md`).
 class CenterCard extends StatelessWidget {
-  const CenterCard({super.key, required this.child, this.maxWidth = 720});
+  const CenterCard({super.key, required this.child, this.maxWidth = 768});
 
   final Widget child;
   final double maxWidth;
@@ -21,8 +23,11 @@ class CenterCard extends StatelessWidget {
             padding: const EdgeInsets.all(40),
             decoration: BoxDecoration(
               color: Colors.white,
-              border: Border.all(color: AppColors.border),
-              boxShadow: const [BoxShadow(color: Color(0x14000000), blurRadius: 12, offset: Offset(0, 4))],
+              border: Border.all(color: TW.gray300),
+              boxShadow: const [
+                BoxShadow(color: Color(0x1A000000), blurRadius: 6, offset: Offset(0, 4), spreadRadius: -1),
+                BoxShadow(color: Color(0x1A000000), blurRadius: 4, offset: Offset(0, 2), spreadRadius: -2),
+              ],
             ),
             child: child,
           ),
@@ -89,4 +94,78 @@ class ConnectionIndicator extends StatelessWidget {
       },
     );
   }
+}
+
+/// Card heading block: `text-3xl font-bold tracking-tight` + `text-gray-600 mt-2`
+/// inside `border-b-2 border-gray-200 pb-4 mb-6`.
+class CardHeading extends StatelessWidget {
+  const CardHeading({super.key, required this.title, this.subtitle});
+  final String title;
+  final String? subtitle;
+
+  @override
+  Widget build(BuildContext context) => Container(
+        padding: const EdgeInsets.only(bottom: 16),
+        margin: const EdgeInsets.only(bottom: 24),
+        decoration: const BoxDecoration(border: Border(bottom: BorderSide(color: TW.gray200, width: 2))),
+        child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+          Text(title, style: inter(30, weight: FontWeight.w700, color: TW.gray900, letterSpacing: -0.75, height: 1.2)),
+          if (subtitle != null) ...[
+            const SizedBox(height: 8),
+            Text(subtitle!, style: inter(16, color: TW.gray600)),
+          ],
+        ]),
+      );
+}
+
+/// index.tsx loading state: `w-12 h-12 border-4 border-black border-t-transparent
+/// rounded-full animate-spin` + `LOADING...` (uppercase, tracking-widest, pulse).
+class WebSpinner extends StatelessWidget {
+  const WebSpinner({super.key, this.label = 'Loading...'});
+  final String label;
+
+  @override
+  Widget build(BuildContext context) => Column(mainAxisSize: MainAxisSize.min, children: [
+        const SizedBox(
+          width: 48,
+          height: 48,
+          child: CircularProgressIndicator(strokeWidth: 4, color: TW.black, strokeCap: StrokeCap.butt),
+        ),
+        const SizedBox(height: 16),
+        Text(label.toUpperCase(),
+            textAlign: TextAlign.center,
+            style: inter(18, weight: FontWeight.w500, color: TW.gray900, letterSpacing: 1.8)),
+      ]);
+}
+
+/// Black action button `px-6 py-2 bg-black text-white font-semibold rounded-[2px]
+/// uppercase tracking-wide text-sm` with "➔".
+class BlackButton extends StatelessWidget {
+  const BlackButton({super.key, required this.label, required this.onTap, this.arrow = true});
+  final String label;
+  final VoidCallback? onTap;
+  final bool arrow;
+
+  @override
+  Widget build(BuildContext context) => MouseRegion(
+        cursor: onTap == null ? SystemMouseCursors.basic : SystemMouseCursors.click,
+        child: GestureDetector(
+          onTap: onTap,
+          child: Opacity(
+            opacity: onTap == null ? 0.6 : 1,
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 8),
+              decoration: const BoxDecoration(color: TW.black, borderRadius: WebTokens.r2),
+              child: Row(mainAxisSize: MainAxisSize.min, children: [
+                Text(label.toUpperCase(),
+                    style: inter(14, weight: FontWeight.w600, color: Colors.white, letterSpacing: 0.35)),
+                if (arrow) ...[
+                  const SizedBox(width: 8),
+                  Text('➔', style: inter(14, color: Colors.white)),
+                ],
+              ]),
+            ),
+          ),
+        ),
+      );
 }

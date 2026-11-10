@@ -2,6 +2,7 @@ import 'dart:io';
 
 import 'package:flutter/material.dart';
 
+import '../../core/theme/web_tokens.dart';
 import 'html_document.dart';
 
 /// A highlighted range over [HtmlDocument] offsets.
@@ -48,6 +49,9 @@ class HtmlView extends StatefulWidget {
     this.highlightColor = const Color(0x80FDE047),
     this.noteColor = const Color(0x8093C5FD),
     this.blockSpacing = 8,
+    this.tableHeaderColor = WebTokens.tableHeaderBg,
+    this.inlineParagraphs = false,
+    this.tableBorderColor = WebTokens.tableBorder,
   });
 
   final HtmlDocument document;
@@ -60,6 +64,14 @@ class HtmlView extends StatefulWidget {
   final Color highlightColor;
   final Color noteColor;
   final double blockSpacing;
+
+  /// th background (null in the high-contrast schemes, like the web).
+  final Color? tableHeaderColor;
+  final Color tableBorderColor;
+
+  /// app.css `.ielts-gap-section p { display: inline }`: consecutive
+  /// paragraphs flow as one inline text (complete_section / drag_and_drop).
+  final bool inlineParagraphs;
 
   @override
   State<HtmlView> createState() => HtmlViewState();
@@ -91,12 +103,16 @@ class HtmlViewState extends State<HtmlView> {
   }
 
   List<Widget> _blocks(BuildContext context, List<HtmlBlock> blocks, TextStyle base) {
+    if (widget.inlineParagraphs) blocks = _mergeInline(blocks);
     final out = <Widget>[];
     for (var i = 0; i < blocks.length; i++) {
       final b = blocks[i];
       final w = switch (b) {
         TextBlock() => _textBlock(context, b, base),
-        TableBlock() => _table(context, b, base),
+        TableBlock() => Padding(
+            padding: const EdgeInsets.symmetric(vertical: 12), // app.css table margin 12px 0
+            child: _table(context, b, base),
+          ),
         ImageBlock() => _image(b),
       };
       out.add(Padding(
@@ -107,13 +123,46 @@ class HtmlViewState extends State<HtmlView> {
     return out;
   }
 
+  /// Joins runs of consecutive plain paragraphs into one block.
+  static List<HtmlBlock> _mergeInline(List<HtmlBlock> blocks) {
+    final out = <HtmlBlock>[];
+    TextBlock? acc;
+    void flush() {
+      if (acc != null) out.add(acc!);
+      acc = null;
+    }
+
+    for (final b in blocks) {
+      if (b is TextBlock && b.kind == BlockKind.paragraph && b.listMarker == null && !b.quote) {
+        if (acc == null) {
+          acc = b;
+        } else {
+          final a = acc!;
+          acc = TextBlock(
+            kind: BlockKind.paragraph,
+            inlines: [...a.inlines, TextRun(' ', const InlineStyle(), a.end), ...b.inlines],
+            start: a.start,
+            end: b.end,
+            align: a.align,
+          );
+        }
+      } else {
+        flush();
+        out.add(b);
+      }
+    }
+    flush();
+    return out;
+  }
+
   TextStyle _blockStyle(TextBlock b, TextStyle base) {
     final size = base.fontSize ?? 14;
     return switch (b.kind) {
-      BlockKind.h1 => base.copyWith(fontSize: size * 1.6, fontWeight: FontWeight.bold),
-      BlockKind.h2 => base.copyWith(fontSize: size * 1.4, fontWeight: FontWeight.bold),
-      BlockKind.h3 => base.copyWith(fontSize: size * 1.2, fontWeight: FontWeight.bold),
-      BlockKind.h4 => base.copyWith(fontSize: size * 1.1, fontWeight: FontWeight.bold),
+      // @tailwindcss/typography `prose` heading sizes/weights.
+      BlockKind.h1 => base.copyWith(fontSize: size * 2.25, fontWeight: FontWeight.w800, height: 1.11),
+      BlockKind.h2 => base.copyWith(fontSize: size * 1.5, fontWeight: FontWeight.w700, height: 1.33),
+      BlockKind.h3 => base.copyWith(fontSize: size * 1.25, fontWeight: FontWeight.w600, height: 1.6),
+      BlockKind.h4 => base.copyWith(fontWeight: FontWeight.w600),
       BlockKind.preformatted => base.copyWith(fontFamily: 'monospace'),
       _ => base,
     };
@@ -156,7 +205,8 @@ class HtmlViewState extends State<HtmlView> {
                   : runStyle.copyWith(
                       backgroundColor: hit.isNote ? widget.noteColor : widget.highlightColor,
                       decoration: hit.isNote ? TextDecoration.underline : runStyle.decoration,
-                      decorationColor: hit.isNote ? const Color(0xFF2563EB) : null,
+                      decorationColor: hit.isNote ? WebTokens.noteUnderline : null,
+                      decorationThickness: hit.isNote ? 2 : null,
                     ),
             ));
           }
@@ -234,9 +284,10 @@ class HtmlViewState extends State<HtmlView> {
 
   Widget _table(BuildContext context, TableBlock t, TextStyle base) {
     final cols = t.columnCount;
-    const border = BorderSide(color: Color(0xFF9CA3AF));
+    // app.css `.ielts-passage table`: 1px #555 borders, th #f3f4f6 bold 8/12, td 6/12.
+    final border = BorderSide(color: widget.tableBorderColor);
     return Table(
-      border: const TableBorder(
+      border: TableBorder(
         top: border, bottom: border, left: border, right: border,
         horizontalInside: border, verticalInside: border,
       ),
@@ -245,13 +296,11 @@ class HtmlViewState extends State<HtmlView> {
       children: [
         for (final row in t.rows)
           TableRow(
-            decoration: row.every((c) => c.header)
-                ? const BoxDecoration(color: Color(0x0F000000))
-                : null,
             children: [
               for (var c = 0; c < cols; c++)
-                Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+                Container(
+                  color: c < row.length && row[c].header ? widget.tableHeaderColor : null,
+                  padding: c < row.length && row[c].header ? WebTokens.thPadding : WebTokens.tdPadding,
                   child: c < row.length
                       ? Column(
                           crossAxisAlignment: CrossAxisAlignment.start,

@@ -1,57 +1,60 @@
 import 'package:flutter/material.dart';
 
+import '../core/theme/web_tokens.dart';
 import 'providers.dart';
 
+/// Short aliases used across screens (all from [WebTokens] / [TW]).
 abstract final class AppColors {
-  static const ieltsRed = Color(0xFFE11D48);
-  static const blue = Color(0xFF2563EB);
-  static const ink = Color(0xFF111827);
-  static const grey = Color(0xFF6B7280);
-  static const border = Color(0xFFD1D5DB);
-  static const canvas = Color(0xFFE5E7EB);
-  static const panel = Color(0xFFF9FAFB);
-  static const flag = Color(0xFFF97316);
+  static const ieltsRed = WebTokens.ieltsBadge;
+  static const blue = WebTokens.badgeBlue;
+  static const ink = TW.gray900;
+  static const grey = TW.gray500;
+  static const border = TW.gray300;
+  static const canvas = WebTokens.pageBackground;
+  static const panel = TW.gray50;
+  static const flag = TW.orange500;
 }
 
 ThemeData buildTheme() {
-  final scheme = ColorScheme.fromSeed(
-    seedColor: AppColors.blue,
-    brightness: Brightness.light,
-  ).copyWith(primary: AppColors.blue, surface: Colors.white);
-  return ThemeData(
-    useMaterial3: true,
-    colorScheme: scheme,
-    scaffoldBackgroundColor: AppColors.canvas,
-    visualDensity: VisualDensity.standard,
-    inputDecorationTheme: const InputDecorationTheme(
-      border: OutlineInputBorder(),
-      isDense: true,
+  final scheme = ColorScheme.fromSeed(seedColor: WebTokens.badgeBlue, brightness: Brightness.light)
+      .copyWith(primary: WebTokens.badgeBlue, surface: Colors.white);
+  final base = ThemeData(useMaterial3: true, colorScheme: scheme, fontFamily: kFontFamily);
+  return base.copyWith(
+    scaffoldBackgroundColor: WebTokens.pageBackground,
+    textTheme: base.textTheme.apply(fontFamily: kFontFamily, bodyColor: TW.gray900, displayColor: TW.gray900),
+    textSelectionTheme: const TextSelectionThemeData(
+      selectionColor: Color(0x663B82F6),
+      cursorColor: TW.black,
     ),
+    inputDecorationTheme: const InputDecorationTheme(border: OutlineInputBorder(), isDense: true),
     filledButtonTheme: FilledButtonThemeData(
       style: FilledButton.styleFrom(
-        backgroundColor: AppColors.ink,
+        backgroundColor: TW.black,
         foregroundColor: Colors.white,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(3)),
+        shape: const RoundedRectangleBorder(borderRadius: WebTokens.r2),
         padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
-        textStyle: const TextStyle(fontWeight: FontWeight.w700, letterSpacing: 0.5),
+        textStyle: inter(14, weight: FontWeight.w600, letterSpacing: 0.4),
       ),
     ),
     outlinedButtonTheme: OutlinedButtonThemeData(
       style: OutlinedButton.styleFrom(
-        foregroundColor: AppColors.ink,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(3)),
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+        foregroundColor: TW.gray700,
+        side: const BorderSide(color: TW.gray300),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+        textStyle: inter(12, weight: FontWeight.w600),
       ),
     ),
     dialogTheme: DialogThemeData(
       backgroundColor: Colors.white,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
     ),
+    tooltipTheme: TooltipThemeData(textStyle: inter(12, color: Colors.white)),
   );
 }
 
-/// Colours of the question/passage area for the contrast settings
-/// (mirrors the web's standard / yellow-on-black / white-on-blue).
+/// Colours of the exam content area for the three contrast schemes of the web
+/// (index.tsx `.theme-yellow-black` / `.theme-blue-white`).
 class ExamPalette {
   const ExamPalette({
     required this.background,
@@ -63,6 +66,7 @@ class ExamPalette {
     required this.inputFill,
     required this.inputText,
     required this.accent,
+    required this.standard,
   });
 
   final Color background;
@@ -75,39 +79,45 @@ class ExamPalette {
   final Color inputText;
   final Color accent;
 
+  /// True for the standard scheme (component colours apply unchanged).
+  final bool standard;
+
   static ExamPalette of(ContrastSetting c) => switch (c) {
         ContrastSetting.standard => const ExamPalette(
-            background: Colors.white,
-            panel: AppColors.panel,
-            text: AppColors.ink,
-            muted: AppColors.grey,
-            highlight: Color(0x80FDE047),
-            note: Color(0x8093C5FD),
-            inputFill: Colors.white,
-            inputText: AppColors.ink,
-            accent: AppColors.blue,
+            background: WebTokens.paneLeftBg,
+            panel: WebTokens.paneRightBg,
+            text: TW.black,
+            muted: TW.gray500,
+            highlight: WebTokens.highlight,
+            note: WebTokens.highlight,
+            inputFill: Colors.transparent,
+            inputText: TW.black,
+            accent: WebTokens.badgeBlue,
+            standard: true,
           ),
         ContrastSetting.yellowBlack => const ExamPalette(
-            background: Colors.black,
-            panel: Colors.black,
-            text: Color(0xFFFDE047),
-            muted: Color(0xFFFACC15),
-            highlight: Color(0xFF84CC16),
-            note: Color(0xFF22D3EE),
-            inputFill: Colors.black,
-            inputText: Color(0xFFFDE047),
-            accent: Color(0xFFFDE047),
+            background: WebTokens.yellowBlackBg,
+            panel: WebTokens.yellowBlackBg,
+            text: WebTokens.yellowBlackText,
+            muted: WebTokens.yellowBlackText,
+            highlight: WebTokens.yellowBlackMark,
+            note: WebTokens.yellowBlackMark,
+            inputFill: Colors.transparent,
+            inputText: WebTokens.yellowBlackText,
+            accent: WebTokens.yellowBlackText,
+            standard: false,
           ),
         ContrastSetting.blueWhite => const ExamPalette(
-            background: Color(0xFF002B49),
-            panel: Color(0xFF002B49),
-            text: Colors.white,
-            muted: Color(0xFFCBD5E1),
-            highlight: Color(0xFFFDE047),
-            note: Color(0xFF93C5FD),
-            inputFill: Color(0xFF00406B),
-            inputText: Colors.white,
-            accent: Color(0xFF93C5FD),
+            background: WebTokens.blueWhiteBg,
+            panel: WebTokens.blueWhiteBg,
+            text: WebTokens.blueWhiteText,
+            muted: WebTokens.blueWhiteText,
+            highlight: WebTokens.blueWhiteMark,
+            note: WebTokens.blueWhiteMark,
+            inputFill: Colors.transparent,
+            inputText: WebTokens.blueWhiteText,
+            accent: WebTokens.blueWhiteText,
+            standard: false,
           ),
       };
 }

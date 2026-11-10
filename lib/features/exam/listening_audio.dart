@@ -1,9 +1,12 @@
 import 'dart:async';
 import 'dart:io';
 
+import 'dart:math' as math;
+
 import 'package:flutter/material.dart';
 import 'package:media_kit/media_kit.dart';
 
+import '../../core/theme/web_tokens.dart';
 import '../../core/time/server_clock.dart';
 import '../../data/models/exam_models.dart';
 import '../sound_check/sound_check_screen.dart' show listeningVolume;
@@ -120,36 +123,75 @@ class _ListeningAudioState extends State<ListeningAudio> {
 
   @override
   Widget build(BuildContext context) {
-    return Row(mainAxisSize: MainAxisSize.min, children: [
-      Icon(
-        _error != null
-            ? Icons.error_outline
-            : _ended
-                ? Icons.volume_off
-                : Icons.graphic_eq,
-        size: 20,
-        color: _error != null ? Colors.red : (_playing ? const Color(0xFF16A34A) : Colors.grey),
-      ),
-      const SizedBox(width: 4),
-      Text(
-        _error ?? (_ended ? 'Recording ended' : (_playing ? 'Playing' : 'Audio')),
-        style: const TextStyle(fontSize: 12),
-      ),
-      const SizedBox(width: 4),
-      SizedBox(
-        width: 110,
-        child: ValueListenableBuilder<double>(
-          valueListenable: listeningVolume,
-          builder: (context, v, _) => SliderTheme(
-            data: SliderTheme.of(context).copyWith(trackHeight: 2, overlayShape: SliderComponentShape.noOverlay),
-            child: Slider(
-              value: v,
-              max: 100,
-              onChanged: (x) => listeningVolume.value = x,
-            ),
-          ),
+    if (_error != null) {
+      return Tooltip(
+        message: _error!,
+        child: const Padding(
+          padding: EdgeInsets.only(right: 8),
+          child: Icon(Icons.error_outline, size: 16, color: TW.red500),
         ),
-      ),
-    ]);
+      );
+    }
+    return Padding(
+      padding: const EdgeInsets.only(right: 8), // mr-2
+      child: AudioEqualizer(active: _playing && !_ended),
+    );
   }
+}
+
+/// audio-equalizer.tsx: 20 bars `w-[3px] bg-green-500 rounded-t`, `gap-[1px] h-3`.
+/// The web drives the bars from a WebAudio analyser; media_kit has no FFT
+/// tap, so the bars are animated pseudo-levels while the recording plays.
+class AudioEqualizer extends StatefulWidget {
+  const AudioEqualizer({super.key, required this.active});
+  final bool active;
+
+  @override
+  State<AudioEqualizer> createState() => _AudioEqualizerState();
+}
+
+class _AudioEqualizerState extends State<AudioEqualizer> with SingleTickerProviderStateMixin {
+  late final AnimationController _c =
+      AnimationController(vsync: this, duration: const Duration(seconds: 1))..repeat();
+  final _rnd = math.Random(7);
+  late List<double> _levels = List.filled(WebTokens.eqBars, 0.15);
+  int _frame = -1;
+
+  @override
+  void dispose() {
+    _c.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) => AnimatedBuilder(
+        animation: _c,
+        builder: (context, _) {
+          final f = (_c.value * 12).floor();
+          if (f != _frame) {
+            _frame = f;
+            _levels = [
+              for (var i = 0; i < WebTokens.eqBars; i++)
+                widget.active ? (0.2 + 0.8 * _rnd.nextDouble() * (1 - i / (WebTokens.eqBars * 1.4))) : 0.15,
+            ];
+          }
+          return SizedBox(
+            height: 12,
+            child: Row(crossAxisAlignment: CrossAxisAlignment.end, mainAxisSize: MainAxisSize.min, children: [
+              for (var i = 0; i < WebTokens.eqBars; i++) ...[
+                if (i > 0) const SizedBox(width: 1),
+                AnimatedContainer(
+                  duration: const Duration(milliseconds: 80),
+                  width: 3,
+                  height: math.max(2, 12 * _levels[i]),
+                  decoration: const BoxDecoration(
+                    color: WebTokens.eqColor,
+                    borderRadius: BorderRadius.vertical(top: Radius.circular(2)),
+                  ),
+                ),
+              ],
+            ]),
+          );
+        },
+      );
 }

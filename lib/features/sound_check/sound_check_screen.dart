@@ -8,12 +8,13 @@ import 'package:media_kit/media_kit.dart';
 import 'package:path/path.dart' as p;
 
 import '../../app/providers.dart';
-import '../../app/theme.dart';
-import '../../app/widgets.dart';
+import 'package:lucide_icons_flutter/lucide_icons.dart';
 
-/// Shared listening volume (0–100), set on the sound check, adjustable in the
-/// Listening header.
-final listeningVolume = ValueNotifier<double>(80);
+import '../../core/theme/web_tokens.dart';
+
+/// Player volume (0–100). The web has no in-app volume control, so this stays
+/// at 100 and the candidate uses the Windows volume keys.
+final listeningVolume = ValueNotifier<double>(100);
 
 /// Headphone check before Listening: plays a test chime, volume slider.
 class SoundCheckScreen extends ConsumerStatefulWidget {
@@ -52,83 +53,183 @@ class _SoundCheckScreenState extends ConsumerState<SoundCheckScreen> {
     }
   }
 
+  Future<void> _stop() async {
+    await _player?.stop();
+    if (mounted) setState(() => _playing = false);
+  }
+
   @override
   Widget build(BuildContext context) {
     final exam = ref.watch(examControllerProvider);
+    final title = exam.currentModule?.title ?? 'Listening';
+    // sound-check-modal.tsx: overlay bg-black/70 on top of the module page.
     return Scaffold(
-      body: CenterCard(
-        maxWidth: 620,
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const Row(children: [
-              Icon(Icons.headphones, size: 32),
-              SizedBox(width: 12),
-              Text('Sound check', style: TextStyle(fontSize: 26, fontWeight: FontWeight.bold)),
-            ]),
-            const SizedBox(height: 12),
-            const Text(
-              'Put on your headphones. When the Listening section starts, the recording plays automatically '
-              'and cannot be paused or replayed.',
-              style: TextStyle(fontSize: 15, height: 1.5),
-            ),
-            const SizedBox(height: 24),
+      backgroundColor: WebTokens.pageBackground,
+      body: Container(
+        color: WebTokens.soundOverlay,
+        alignment: Alignment.center,
+        padding: const EdgeInsets.all(16),
+        child: Container(
+          width: WebTokens.modalMaxWidth,
+          clipBehavior: Clip.antiAlias,
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(color: TW.gray200),
+            boxShadow: const [BoxShadow(color: Color(0x40000000), blurRadius: 50, offset: Offset(0, 25), spreadRadius: -12)],
+          ),
+          child: Column(mainAxisSize: MainAxisSize.min, crossAxisAlignment: CrossAxisAlignment.stretch, children: [
+            // Header: bg-gradient-to-r from-blue-600 to-indigo-600 p-6 text-center
             Container(
-              padding: const EdgeInsets.all(16),
-              color: AppColors.panel,
+              padding: const EdgeInsets.all(24),
+              decoration: const BoxDecoration(
+                gradient: LinearGradient(colors: [WebTokens.gradientFrom, WebTokens.gradientTo]),
+              ),
               child: Column(children: [
-                Row(children: [
-                  FilledButton.icon(
-                    key: const Key('play-tone'),
-                    onPressed: _playing ? null : _play,
-                    icon: const Icon(Icons.play_arrow),
-                    label: Text(_playing ? 'PLAYING…' : 'PLAY SOUND'),
+                Container(
+                  width: 56,
+                  height: 56,
+                  margin: const EdgeInsets.only(bottom: 12),
+                  decoration: BoxDecoration(
+                    color: const Color(0x33FFFFFF),
+                    borderRadius: BorderRadius.circular(16),
                   ),
-                  const SizedBox(width: 16),
-                  const Expanded(child: Text('Press the button and check that you can hear the sound clearly.')),
-                ]),
-                const SizedBox(height: 16),
-                ValueListenableBuilder<double>(
-                  valueListenable: listeningVolume,
-                  builder: (context, v, _) => Row(children: [
-                    const Icon(Icons.volume_down),
+                  child: const Icon(LucideIcons.headphones, size: 32, color: Colors.white),
+                ),
+                Text('Sound Check', style: inter(20, weight: FontWeight.w700, color: Colors.white, letterSpacing: -0.5)),
+                const SizedBox(height: 4),
+                Text('$title — Computer-Delivered IELTS Simulation', style: inter(12, color: TW.blue100)),
+              ]),
+            ),
+            Padding(
+              padding: const EdgeInsets.all(24),
+              child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
+                Text(
+                  'When the Listening section starts, the audio will play automatically and cannot be paused. '
+                  'Please check your headphones and play the test sound.',
+                  textAlign: TextAlign.center,
+                  style: inter(14, color: TW.gray600, height: 1.625),
+                ),
+                const SizedBox(height: 20),
+                Container(
+                  padding: const EdgeInsets.all(16),
+                  decoration: BoxDecoration(
+                    color: TW.gray50,
+                    border: Border.all(color: TW.gray200),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Row(children: [
+                    Container(
+                      padding: const EdgeInsets.all(10),
+                      decoration: BoxDecoration(
+                        color: _playing ? TW.blue100 : TW.gray100,
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: Icon(_playing ? LucideIcons.volume2 : LucideIcons.volumeX,
+                          size: 20, color: _playing ? TW.blue600 : TW.gray500),
+                    ),
+                    const SizedBox(width: 12),
                     Expanded(
-                      child: Slider(
-                        value: v,
-                        min: 0,
-                        max: 100,
-                        onChanged: (x) {
-                          listeningVolume.value = x;
-                          _player?.setVolume(x);
-                        },
+                      child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                        Text('Audio Sample Test', style: inter(12, weight: FontWeight.w600, color: TW.gray800)),
+                        Text(_playing ? 'Playing sample...' : 'Click to test sound',
+                            style: inter(11, color: TW.gray500)),
+                      ]),
+                    ),
+                    InkWell(
+                      key: const Key('play-tone'),
+                      onTap: _playing ? _stop : _play,
+                      borderRadius: BorderRadius.circular(8),
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
+                        decoration: BoxDecoration(
+                          border: Border.all(color: TW.blue600),
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: Row(mainAxisSize: MainAxisSize.min, children: [
+                          Icon(_playing ? LucideIcons.square : LucideIcons.play, size: 14, color: TW.blue600),
+                          const SizedBox(width: 6),
+                          Text(_playing ? 'Stop' : 'Play Tone',
+                              style: inter(12, weight: FontWeight.w700, color: TW.blue600)),
+                        ]),
                       ),
                     ),
-                    const Icon(Icons.volume_up),
-                    SizedBox(width: 44, child: Text('${v.round()}%')),
                   ]),
+                ),
+                const SizedBox(height: 20),
+                Container(
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: TW.amber50,
+                    border: Border.all(color: const Color(0xCCFEE685)),
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                    Text('⚠️', style: inter(14, weight: FontWeight.w700, height: 1)),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Text(
+                        'Once the test starts, the audio plays only once. Please set your volume to a comfortable 70-80% level.',
+                        style: inter(11, color: TW.amber700),
+                      ),
+                    ),
+                  ]),
+                ),
+                const SizedBox(height: 20),
+                // Audio preload status: always cached here (prefetched before the rules).
+                Container(
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: TW.emerald50,
+                    border: Border.all(color: TW.emerald200),
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: Row(children: [
+                    const Icon(LucideIcons.shieldCheck, size: 16, color: TW.emerald600),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Text('Listening audio is stored on this computer (100% offline ready)',
+                          style: inter(11, weight: FontWeight.w600, color: TW.emerald800)),
+                    ),
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                      decoration: BoxDecoration(
+                        color: const Color(0x99A4F4CF),
+                        borderRadius: BorderRadius.circular(6),
+                      ),
+                      child: Text('Offline Ready', style: inter(10, weight: FontWeight.w700, color: TW.emerald800)),
+                    ),
+                  ]),
+                ),
+                if (_error != null) ...[
+                  const SizedBox(height: 12),
+                  Text(_error!, style: inter(12, color: TW.red600)),
+                ],
+                const SizedBox(height: 20),
+                InkWell(
+                  key: const Key('sound-ok'),
+                  onTap: () {
+                    _player?.stop();
+                    exam.confirmSoundCheck();
+                  },
+                  borderRadius: BorderRadius.circular(12),
+                  child: Ink(
+                    padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 16),
+                    decoration: BoxDecoration(
+                      gradient: const LinearGradient(colors: [WebTokens.gradientFrom, WebTokens.gradientTo]),
+                      borderRadius: BorderRadius.circular(12),
+                      boxShadow: const [BoxShadow(color: Color(0x402B7FFF), blurRadius: 15, offset: Offset(0, 10))],
+                    ),
+                    child: Row(mainAxisAlignment: MainAxisAlignment.center, children: [
+                      const Icon(LucideIcons.circleCheck, size: 20, color: Colors.white),
+                      const SizedBox(width: 8),
+                      Text('Sound is good, Start Test', style: inter(14, weight: FontWeight.w700, color: Colors.white)),
+                    ]),
+                  ),
                 ),
               ]),
             ),
-            if (_error != null) ...[
-              const SizedBox(height: 8),
-              Text(_error!, style: const TextStyle(color: Colors.red)),
-            ],
-            const SizedBox(height: 16),
-            const Text(
-              'If you cannot hear the sound, raise your hand now.',
-              style: TextStyle(color: Color(0xFF92400E), fontWeight: FontWeight.w600),
-            ),
-            const SizedBox(height: 24),
-            Align(
-              alignment: Alignment.centerRight,
-              child: FilledButton(
-                key: const Key('sound-ok'),
-                onPressed: exam.confirmSoundCheck,
-                child: const Text('SOUND IS OK – START LISTENING'),
-              ),
-            ),
-          ],
+          ]),
         ),
       ),
     );

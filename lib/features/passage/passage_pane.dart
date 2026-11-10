@@ -3,7 +3,10 @@ import 'dart:async';
 import 'package:drift/drift.dart' hide Column;
 import 'package:flutter/material.dart';
 
+import 'package:lucide_icons_flutter/lucide_icons.dart';
+
 import '../../app/theme.dart';
+import '../../core/theme/web_tokens.dart';
 import '../../data/db/app_database.dart';
 import 'html_document.dart';
 import 'html_view.dart';
@@ -43,13 +46,13 @@ class HighlightStore extends ChangeNotifier {
     await load(partId);
   }
 
-  /// Removes every plain highlight overlapping [start, end).
+  /// Removes every mark overlapping [start, end) (web: Clear unwraps all
+  /// `mark.highlight`, note marks included; the note itself stays).
   Future<void> clearRange(int partId, int start, int end) async {
     await (db.delete(db.highlights)
           ..where((t) =>
               t.attemptId.equals(attemptId) &
               t.partId.equals(partId) &
-              t.kind.equals('highlight') &
               t.startOffset.isSmallerThanValue(end) &
               t.endOffset.isBiggerThanValue(start)))
         .go();
@@ -75,8 +78,9 @@ class HighlightStore extends ChangeNotifier {
   }
 }
 
-/// Passage with Inspera-style highlighter: select text → floating toolbar
-/// (Highlight / Note / Clear). Highlights are stored as character offsets.
+/// practice-part.tsx: part title, "Candidate Notes (n)" button, passage with
+/// the Inspera floating toolbar (Note|Clear / Highlight) and the note dialog.
+/// Highlights are stored as character offsets.
 class PassagePane extends StatefulWidget {
   const PassagePane({
     super.key,
@@ -85,7 +89,7 @@ class PassagePane extends StatefulWidget {
     required this.html,
     required this.store,
     required this.palette,
-    required this.fontSize,
+    this.onToggleNotes,
     this.imageResolver,
   });
 
@@ -94,7 +98,7 @@ class PassagePane extends StatefulWidget {
   final String html;
   final HighlightStore store;
   final ExamPalette palette;
-  final double fontSize;
+  final VoidCallback? onToggleNotes;
   final ImageResolver? imageResolver;
 
   @override
@@ -103,7 +107,6 @@ class PassagePane extends StatefulWidget {
 
 class _PassagePaneState extends State<PassagePane> {
   final _viewKey = GlobalKey<HtmlViewState>();
-  final _stackKey = GlobalKey();
   HtmlSelection? _selection;
   Offset? _toolbarAt;
   Offset? _lastPointerUp;
@@ -132,7 +135,7 @@ class _PassagePaneState extends State<PassagePane> {
   bool get _selectionHighlighted {
     final s = _selection;
     if (s == null) return false;
-    return _ranges.any((r) => !r.isNote && r.overlaps(s.start, s.end));
+    return _ranges.any((r) => r.overlaps(s.start, s.end));
   }
 
   void _onSelection(HtmlSelection? s) {
@@ -142,7 +145,6 @@ class _PassagePaneState extends State<PassagePane> {
 
   void _onPointerUp(PointerUpEvent e) {
     _lastPointerUp = e.localPosition;
-    // Selection callbacks arrive during the gesture; decide after this frame.
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
       setState(() => _toolbarAt = _selection == null ? null : _lastPointerUp);
@@ -177,7 +179,8 @@ class _PassagePaneState extends State<PassagePane> {
     setState(() => _toolbarAt = null);
     final text = await showDialog<String>(
       context: context,
-      builder: (_) => _NoteDialog(quote: s.text),
+      barrierColor: const Color(0x66000000), // bg-black/40
+      builder: (_) => _NoteDialog(quote: s.text.trim()),
     );
     if (text != null) {
       await widget.store.addNote(widget.partId, s.start, s.end, s.text.trim(), text.trim());
@@ -191,17 +194,24 @@ class _PassagePaneState extends State<PassagePane> {
     final doc = parseHtmlCached(widget.html);
     return ListenableBuilder(
       listenable: widget.store,
-      builder: (context, _) => Stack(
-        key: _stackKey,
-        children: [
+      builder: (context, _) {
+        final notes = widget.store.notes(widget.partId);
+        return Stack(children: [
           Listener(
             onPointerUp: _onPointerUp,
             child: SingleChildScrollView(
-              padding: const EdgeInsets.fromLTRB(24, 20, 24, 40),
+              padding: const EdgeInsets.all(WebTokens.panePadding),
               child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
-                Text(widget.title,
-                    style: TextStyle(fontWeight: FontWeight.bold, fontSize: widget.fontSize + 3, color: p.text)),
-                const SizedBox(height: 12),
+                Row(children: [
+                  Expanded(
+                    child: Text(widget.title,
+                        style: inter(WebTokens.partTitleSize,
+                            weight: FontWeight.w700, color: p.standard ? WebTokens.partTitleColor : p.text)),
+                  ),
+                  if (notes.isNotEmpty && widget.onToggleNotes != null)
+                    _NotesButton(count: notes.length, onTap: widget.onToggleNotes!),
+                ]),
+                const SizedBox(height: 12), // mb-3
                 HtmlView(
                   key: _viewKey,
                   document: doc,
@@ -211,30 +221,67 @@ class _PassagePaneState extends State<PassagePane> {
                   noteColor: p.note,
                   imageResolver: widget.imageResolver,
                   onSelectionChanged: _onSelection,
-                  style: TextStyle(fontSize: widget.fontSize, height: 1.7, color: p.text),
+                  blockSpacing: WebTokens.passageFontSize * 1.25, // prose p margin 1.25em
+                  tableHeaderColor: p.standard ? WebTokens.tableHeaderBg : null,
+                  tableBorderColor: p.standard ? WebTokens.tableBorder : p.text,
+                  style: inter(WebTokens.passageFontSize,
+                      height: WebTokens.proseLineHeight, color: p.standard ? WebTokens.passageText : p.text),
                 ),
               ]),
             ),
           ),
           if (_toolbarAt != null)
             Positioned(
-              left: (_toolbarAt!.dx - 60).clamp(8.0, double.infinity),
-              top: (_toolbarAt!.dy - 64).clamp(8.0, double.infinity),
-              child: _Toolbar(
+              left: (_toolbarAt!.dx - 45).clamp(10.0, double.infinity),
+              top: (_toolbarAt!.dy - 52).clamp(10.0, double.infinity),
+              child: HighlightToolbar(
                 highlighted: _selectionHighlighted,
                 onHighlight: _highlight,
                 onNote: _note,
                 onClear: _clear,
               ),
             ),
-        ],
-      ),
+        ]);
+      },
     );
   }
 }
 
-class _Toolbar extends StatelessWidget {
-  const _Toolbar({required this.highlighted, required this.onHighlight, required this.onNote, required this.onClear});
+/// `Candidate Notes (n)` button (`bg-amber-50 border-amber-300 text-amber-900 text-xs font-semibold`).
+class _NotesButton extends StatelessWidget {
+  const _NotesButton({required this.count, required this.onTap});
+  final int count;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) => InkWell(
+        onTap: onTap,
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+          decoration: BoxDecoration(
+            color: WebTokens.notesBtnBg,
+            border: Border.all(color: WebTokens.notesBtnBorder),
+            borderRadius: BorderRadius.circular(4),
+          ),
+          child: Row(mainAxisSize: MainAxisSize.min, children: [
+            const Icon(LucideIcons.stickyNote, size: 14, color: WebTokens.notesBtnIcon),
+            const SizedBox(width: 6),
+            Text('Candidate Notes ($count)',
+                style: inter(12, weight: FontWeight.w600, color: WebTokens.notesBtnText)),
+          ]),
+        ),
+      );
+}
+
+/// Inspera floating toolbar (white card: Note|Clear, divider, Highlight).
+class HighlightToolbar extends StatelessWidget {
+  const HighlightToolbar({
+    super.key,
+    required this.highlighted,
+    required this.onHighlight,
+    required this.onNote,
+    required this.onClear,
+  });
 
   final bool highlighted;
   final VoidCallback onHighlight;
@@ -243,32 +290,49 @@ class _Toolbar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    Widget btn(Key key, IconData icon, String label, VoidCallback onTap, {Color? color}) => InkWell(
+    Widget btn(Key key, IconData icon, String label, VoidCallback onTap, Color color, double minWidth) => InkWell(
           key: key,
           onTap: onTap,
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+          borderRadius: BorderRadius.circular(4),
+          child: Container(
+            constraints: BoxConstraints(minWidth: minWidth),
+            padding: const EdgeInsets.all(4),
             child: Column(mainAxisSize: MainAxisSize.min, children: [
-              Icon(icon, size: 16, color: color ?? AppColors.ink),
-              Text(label, style: TextStyle(fontSize: 9, fontWeight: FontWeight.w700, color: color ?? AppColors.ink)),
+              Icon(icon, size: 14, color: color),
+              const SizedBox(height: 2),
+              Text(label, style: inter(9, weight: FontWeight.w600, color: color, letterSpacing: -0.4)),
             ]),
           ),
         );
     return Material(
-      elevation: 6,
       color: Colors.white,
-      borderRadius: BorderRadius.circular(4),
-      child: Row(mainAxisSize: MainAxisSize.min, children: [
-        highlighted
-            ? btn(const Key('tb-clear'), Icons.delete_outline, 'CLEAR', onClear, color: Colors.red)
-            : btn(const Key('tb-note'), Icons.sticky_note_2_outlined, 'NOTE', onNote),
-        Container(width: 1, height: 26, color: AppColors.border),
-        btn(const Key('tb-highlight'), Icons.border_color, 'HIGHLIGHT', onHighlight),
-      ]),
+      elevation: 0,
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          border: Border.all(color: WebTokens.toolbarBorder),
+          borderRadius: BorderRadius.circular(4),
+          boxShadow: const [
+            BoxShadow(color: Color(0x1A000000), blurRadius: 25, offset: Offset(0, 20), spreadRadius: -5),
+            BoxShadow(color: Color(0x1A000000), blurRadius: 10, offset: Offset(0, 8), spreadRadius: -6),
+          ],
+        ),
+        child: Row(mainAxisSize: MainAxisSize.min, children: [
+          highlighted
+              ? btn(const Key('tb-clear'), LucideIcons.trash2, 'CLEAR', onClear, WebTokens.toolbarClear, 34)
+              : btn(const Key('tb-note'), LucideIcons.fileText, 'NOTE', onNote, WebTokens.toolbarText, 34),
+          const SizedBox(width: 6),
+          Container(width: 1, height: 24, color: WebTokens.toolbarDivider),
+          const SizedBox(width: 6),
+          btn(const Key('tb-highlight'), LucideIcons.highlighter, 'HIGHLIGHT', onHighlight, WebTokens.toolbarText, 42),
+        ]),
+      ),
     );
   }
 }
 
+/// "Add Candidate Note" dialog (practice-part.tsx).
 class _NoteDialog extends StatefulWidget {
   const _NoteDialog({required this.quote});
   final String quote;
@@ -287,38 +351,103 @@ class _NoteDialogState extends State<_NoteDialog> {
   }
 
   @override
-  Widget build(BuildContext context) => AlertDialog(
-        title: const Text('Add note'),
-        content: SizedBox(
-          width: 420,
-          child: Column(mainAxisSize: MainAxisSize.min, crossAxisAlignment: CrossAxisAlignment.stretch, children: [
-            Container(
-              padding: const EdgeInsets.all(8),
-              color: AppColors.panel,
-              constraints: const BoxConstraints(maxHeight: 100),
-              child: SingleChildScrollView(
-                child: Text('"${widget.quote}"', style: const TextStyle(fontStyle: FontStyle.italic, fontSize: 13)),
-              ),
-            ),
-            const SizedBox(height: 12),
-            TextField(
-              controller: _c,
-              autofocus: true,
-              minLines: 3,
-              maxLines: 6,
-              autocorrect: false,
-              decoration: const InputDecoration(hintText: 'Type your note…'),
-            ),
-          ]),
+  Widget build(BuildContext context) => Dialog(
+        backgroundColor: Colors.white,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(6),
+          side: const BorderSide(color: TW.gray300),
         ),
-        actions: [
-          TextButton(onPressed: () => Navigator.pop(context), child: const Text('Cancel')),
-          FilledButton(onPressed: () => Navigator.pop(context, _c.text), child: const Text('Save note')),
-        ],
+        child: SizedBox(
+          width: WebTokens.modalMaxWidth,
+          child: Padding(
+            padding: const EdgeInsets.all(16),
+            child: Column(mainAxisSize: MainAxisSize.min, crossAxisAlignment: CrossAxisAlignment.stretch, children: [
+              Container(
+                padding: const EdgeInsets.only(bottom: 8),
+                margin: const EdgeInsets.only(bottom: 12),
+                decoration: const BoxDecoration(border: Border(bottom: BorderSide(color: TW.gray200))),
+                child: Row(children: [
+                  const Icon(LucideIcons.fileText, size: 16, color: TW.blue600),
+                  const SizedBox(width: 6),
+                  Expanded(
+                    child: Text('Add Candidate Note', style: inter(14, weight: FontWeight.w700, color: TW.gray900)),
+                  ),
+                  InkWell(
+                    onTap: () => Navigator.pop(context),
+                    child: const Icon(LucideIcons.x, size: 16, color: TW.gray400),
+                  ),
+                ]),
+              ),
+              Container(
+                padding: const EdgeInsets.all(8),
+                margin: const EdgeInsets.only(bottom: 12),
+                constraints: const BoxConstraints(maxHeight: 96),
+                decoration: BoxDecoration(
+                  color: TW.gray50,
+                  border: Border.all(color: TW.gray200),
+                  borderRadius: BorderRadius.circular(4),
+                ),
+                child: SingleChildScrollView(
+                  child: Text('"${widget.quote}"',
+                      style: inter(12, color: TW.gray700, style: FontStyle.italic)),
+                ),
+              ),
+              TextField(
+                controller: _c,
+                autofocus: true,
+                minLines: 3,
+                maxLines: 3,
+                autocorrect: false,
+                style: inter(12, color: TW.gray900),
+                decoration: InputDecoration(
+                  hintText: 'Type your notes here...',
+                  hintStyle: inter(12, color: TW.gray400),
+                  contentPadding: const EdgeInsets.all(8),
+                  enabledBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(4), borderSide: const BorderSide(color: TW.gray300)),
+                  focusedBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(4), borderSide: const BorderSide(color: TW.blue600)),
+                ),
+              ),
+              const SizedBox(height: 12),
+              Row(mainAxisAlignment: MainAxisAlignment.end, children: [
+                _SmallButton(label: 'Cancel', onTap: () => Navigator.pop(context)),
+                const SizedBox(width: 8),
+                _SmallButton(
+                  label: 'Save Note',
+                  primary: true,
+                  onTap: () => Navigator.pop(context, _c.text),
+                ),
+              ]),
+            ]),
+          ),
+        ),
       );
 }
 
-/// Right-side drawer listing the candidate's notes for the current part.
+class _SmallButton extends StatelessWidget {
+  const _SmallButton({required this.label, required this.onTap, this.primary = false});
+  final String label;
+  final VoidCallback onTap;
+  final bool primary;
+
+  @override
+  Widget build(BuildContext context) => InkWell(
+        onTap: onTap,
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+          decoration: BoxDecoration(
+            color: primary ? TW.blue600 : Colors.white,
+            border: primary ? null : Border.all(color: TW.gray300),
+            borderRadius: BorderRadius.circular(4),
+          ),
+          child: Text(label,
+              style: inter(12, weight: primary ? FontWeight.w600 : FontWeight.w400, color: primary ? Colors.white : TW.gray900)),
+        ),
+      );
+}
+
+/// Right-side "Candidate Notes" drawer (practice-part.tsx).
 class NotesDrawer extends StatelessWidget {
   const NotesDrawer({super.key, required this.store, required this.partId, required this.onClose});
 
@@ -328,72 +457,107 @@ class NotesDrawer extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Material(
-      elevation: 12,
-      color: Colors.white,
-      child: SizedBox(
-        width: 340,
-        child: ListenableBuilder(
-          listenable: store,
-          builder: (context, _) {
-            final notes = store.notes(partId);
-            return Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
-              Container(
-                color: const Color(0xFF0F172A),
-                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-                child: Row(children: [
-                  const Icon(Icons.sticky_note_2, color: Colors.amber, size: 18),
-                  const SizedBox(width: 8),
-                  Expanded(
-                    child: Text('Candidate notes (${notes.length})',
-                        style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
-                  ),
-                  IconButton(onPressed: onClose, icon: const Icon(Icons.close, color: Colors.white, size: 18)),
-                ]),
-              ),
-              Expanded(
+    return Container(
+      width: WebTokens.drawerWidth,
+      decoration: const BoxDecoration(
+        color: Colors.white,
+        border: Border(left: BorderSide(color: TW.gray300)),
+        boxShadow: [BoxShadow(color: Color(0x40000000), blurRadius: 50, offset: Offset(0, 25), spreadRadius: -12)],
+      ),
+      child: ListenableBuilder(
+        listenable: store,
+        builder: (context, _) {
+          final notes = store.notes(partId);
+          return Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
+            Container(
+              color: WebTokens.drawerHeader,
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+              child: Row(children: [
+                const Icon(LucideIcons.stickyNote, color: TW.amber400, size: 16),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Text('Candidate Notes (${notes.length})',
+                      style: inter(14, weight: FontWeight.w700, color: Colors.white)),
+                ),
+                InkWell(onTap: onClose, child: const Icon(LucideIcons.x, color: TW.gray400, size: 16)),
+              ]),
+            ),
+            Expanded(
+              child: Container(
+                color: WebTokens.drawerListBg,
                 child: notes.isEmpty
-                    ? const Padding(
-                        padding: EdgeInsets.all(24),
-                        child: Text(
-                          'No notes yet. Select text in the passage and click "Note".',
-                          textAlign: TextAlign.center,
-                          style: TextStyle(color: AppColors.grey),
-                        ),
+                    ? Padding(
+                        padding: const EdgeInsets.symmetric(vertical: 40, horizontal: 16),
+                        child: Column(children: [
+                          const Icon(LucideIcons.fileText, size: 32, color: Color(0x8099A1AF)),
+                          const SizedBox(height: 8),
+                          Text('No candidate notes yet',
+                              style: inter(12, weight: FontWeight.w600, color: TW.gray600)),
+                          const SizedBox(height: 4),
+                          Text.rich(
+                            TextSpan(style: inter(12, color: TW.gray400), children: [
+                              const TextSpan(text: 'Select any text in the reading passage and click '),
+                              TextSpan(text: '"Note"', style: inter(12, weight: FontWeight.w700, color: TW.gray700)),
+                              const TextSpan(text: ' to save your notes.'),
+                            ]),
+                            textAlign: TextAlign.center,
+                          ),
+                        ]),
                       )
-                    : ListView(
-                        padding: const EdgeInsets.all(12),
-                        children: [
-                          for (final n in notes)
-                            Card(
-                              child: Padding(
-                                padding: const EdgeInsets.all(10),
-                                child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
-                                  Container(
-                                    padding: const EdgeInsets.all(6),
-                                    color: const Color(0xFFFFFBEB),
-                                    child: Text('"${n.quote}"',
-                                        style: const TextStyle(fontStyle: FontStyle.italic, fontSize: 12)),
-                                  ),
-                                  const SizedBox(height: 6),
-                                  Text(n.note.isEmpty ? 'No note written' : n.note, style: const TextStyle(fontSize: 13)),
-                                  Align(
-                                    alignment: Alignment.centerRight,
-                                    child: TextButton.icon(
-                                      onPressed: () => store.deleteNote(partId, n.id),
-                                      icon: const Icon(Icons.delete_outline, size: 16, color: Colors.red),
-                                      label: const Text('Delete', style: TextStyle(color: Colors.red)),
-                                    ),
+                    : ListView.separated(
+                        padding: const EdgeInsets.all(16),
+                        itemCount: notes.length,
+                        separatorBuilder: (_, _) => const SizedBox(height: 12),
+                        itemBuilder: (context, i) {
+                          final n = notes[i];
+                          final t = n.createdAt.toLocal();
+                          final time = '${t.hour.toString().padLeft(2, '0')}:${t.minute.toString().padLeft(2, '0')}';
+                          return Container(
+                            padding: const EdgeInsets.all(12),
+                            decoration: BoxDecoration(
+                              color: Colors.white,
+                              border: Border.all(color: TW.gray200),
+                              borderRadius: BorderRadius.circular(6),
+                            ),
+                            child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
+                              Container(
+                                padding: const EdgeInsets.all(8),
+                                decoration: const BoxDecoration(
+                                  color: TW.amber50,
+                                  border: Border(left: BorderSide(color: TW.amber400, width: 3)),
+                                ),
+                                child: Text('"${n.quote}"',
+                                    style: inter(12, color: TW.gray800, style: FontStyle.italic)),
+                              ),
+                              const SizedBox(height: 8),
+                              n.note.isEmpty
+                                  ? Text('No notes written',
+                                      style: inter(12, color: TW.gray400, style: FontStyle.italic))
+                                  : Text(n.note, style: inter(12, weight: FontWeight.w500, color: TW.gray700)),
+                              const SizedBox(height: 8),
+                              Container(
+                                padding: const EdgeInsets.only(top: 8),
+                                decoration: const BoxDecoration(border: Border(top: BorderSide(color: TW.gray100))),
+                                child: Row(children: [
+                                  Expanded(child: Text(time, style: inter(10, color: TW.gray400))),
+                                  InkWell(
+                                    onTap: () => store.deleteNote(partId, n.id),
+                                    child: Row(children: [
+                                      const Icon(LucideIcons.trash2, size: 12, color: TW.red500),
+                                      const SizedBox(width: 4),
+                                      Text('Delete', style: inter(10, weight: FontWeight.w600, color: TW.red500)),
+                                    ]),
                                   ),
                                 ]),
                               ),
-                            ),
-                        ],
+                            ]),
+                          );
+                        },
                       ),
               ),
-            ]);
-          },
-        ),
+            ),
+          ]);
+        },
       ),
     );
   }

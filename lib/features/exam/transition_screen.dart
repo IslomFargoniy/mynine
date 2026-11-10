@@ -3,8 +3,10 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../app/providers.dart';
 import '../../app/widgets.dart';
+import '../../core/theme/web_tokens.dart';
 
-/// Shown between sections (starting a module, submitting, waiting for the network).
+/// Between sections (starting a module, submitting, waiting for the network):
+/// the web loading state (black ring + uppercase label) on the grey canvas.
 class TransitionScreen extends ConsumerWidget {
   const TransitionScreen({super.key});
 
@@ -13,22 +15,22 @@ class TransitionScreen extends ConsumerWidget {
     final exam = ref.watch(examControllerProvider);
     return Scaffold(
       body: Stack(children: [
-        CenterCard(
-          maxWidth: 560,
+        Center(
           child: ListenableBuilder(
             listenable: exam,
-            builder: (context, _) => Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                const CircularProgressIndicator(),
-                const SizedBox(height: 24),
-                Text(
-                  exam.transitionMessage ?? 'Please wait…',
-                  textAlign: TextAlign.center,
-                  style: const TextStyle(fontSize: 18, height: 1.5),
-                ),
-              ],
-            ),
+            builder: (context, _) {
+              final lines = (exam.transitionMessage ?? 'Loading...').split('\n');
+              return Padding(
+                padding: const EdgeInsets.all(24),
+                child: Column(mainAxisSize: MainAxisSize.min, children: [
+                  WebSpinner(label: lines.first),
+                  for (final l in lines.skip(1)) ...[
+                    const SizedBox(height: 8),
+                    Text(l, textAlign: TextAlign.center, style: inter(14, color: TW.gray600)),
+                  ],
+                ]),
+              );
+            },
           ),
         ),
         Positioned(
