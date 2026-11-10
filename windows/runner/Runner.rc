@@ -89,13 +89,13 @@ BEGIN
     BEGIN
         BLOCK "040904e4"
         BEGIN
-            VALUE "CompanyName", "uz.mynine" "\0"
-            VALUE "FileDescription", "mynine_desktop" "\0"
+            VALUE "CompanyName", "Mynine" "\0"
+            VALUE "FileDescription", "Mynine Exam" "\0"
             VALUE "FileVersion", VERSION_AS_STRING "\0"
             VALUE "InternalName", "mynine_desktop" "\0"
             VALUE "LegalCopyright", "Copyright (C) 2026 uz.mynine. All rights reserved." "\0"
             VALUE "OriginalFilename", "mynine_desktop.exe" "\0"
-            VALUE "ProductName", "mynine_desktop" "\0"
+            VALUE "ProductName", "Mynine Exam" "\0"
             VALUE "ProductVersion", VERSION_AS_STRING "\0"
         END
     END
