@@ -11,6 +11,8 @@ use App\Models\TestImport;
 use App\Models\TestType;
 use App\Services\Desktop\ExamPayloadBuilder;
 use App\Services\ExamService;
+use App\Services\GeminiService;
+use App\Services\Import\AiRateLimitException;
 use App\Services\Import\DocumentTextExtractor;
 use App\Services\Import\MockImportNormalizer;
 use App\Services\Import\MockTestImporter;
@@ -18,10 +20,13 @@ use App\Services\Import\MockTestPdfParser;
 use App\Services\MockBankService;
 use App\Services\OpenAIService;
 use Barryvdh\DomPDF\Facade\Pdf;
+use GuzzleHttp\Promise\PromiseInterface;
 use GuzzleHttp\Psr7\Response;
 use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Queue;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Sleep;
 use OpenAI\Exceptions\RateLimitException;
 
 /*
@@ -174,6 +179,8 @@ function readingAi(int $passage, int $first): array
 }
 
 beforeEach(function () {
+    // The OpenAI text path unless a test switches to Gemini (useGemini()).
+    config(['services.mock_import.provider' => 'openai']);
     seedImportQuestionTypes();
     $this->admin = makeUser('Admin');
 });
@@ -593,4 +600,324 @@ test('an OpenAI rate limit puts the module back in the queue instead of failing'
     $job->assertReleased(90);
     expect($import->fresh()->modules['Listening']['status'])->toBe(TestImport::QUEUED)
         ->and($import->fresh()->modules['Listening']['message'])->toContain('retrying');
+});
+
+/*
+|--------------------------------------------------------------------------
+| Gemini provider (PDF read directly)
+|--------------------------------------------------------------------------
+*/
+
+/**
+ * Gemini-shaped module JSON: answers as a list, one fill_blank section per number range.
+ *
+ * @param  array<string, array<int, array{0: int, 1: int}>>  $parts  part name => [[from, to], ...]
+ * @return array<string, mixed>
+ */
+function geminiModuleJson(array $parts): array
+{
+    $json = ['answers' => [], 'parts' => []];
+    foreach ($parts as $name => $ranges) {
+        $sections = [];
+        foreach ($ranges as [$from, $to]) {
+            $sections[] = [
+                'question_type' => 'fill_blank',
+                'instructions_html' => "<p><strong>Questions {$from}-{$to}</strong></p>",
+                'content_html' => '',
+                'from_option' => null,
+                'to_option' => null,
+                'options' => [],
+                'questions' => array_map(fn ($n) => ['numbers' => [$n], 'text' => "Sentence [[{$n}]].", 'options' => []], range($from, $to)),
+            ];
+            foreach (range($from, $to) as $n) {
+                $json['answers'][] = ['number' => $n, 'answer' => "word{$n}"];
+            }
+        }
+        $json['parts'][] = ['name' => $name, 'passage_html' => '', 'sections' => $sections];
+    }
+
+    return $json;
+}
+
+function geminiReply(array $json, string $finishReason = 'STOP'): PromiseInterface
+{
+    return Http::response([
+        'candidates' => [['content' => ['role' => 'model', 'parts' => [['text' => json_encode($json)]]], 'finishReason' => $finishReason]],
+    ]);
+}
+
+function fakePdf(string $name, string $body = 'paper'): string
+{
+    $path = sys_get_temp_dir().'/'.uniqid('gemini-').'-'.$name;
+    file_put_contents($path, "%PDF-1.4\n{$body}\n%%EOF");
+
+    return $path;
+}
+
+/**
+ * The instruction text (last part) of the n-th recorded Gemini request.
+ */
+function geminiPromptOf(int $index): string
+{
+    $parts = Http::recorded()[$index][0]['contents'][0]['parts'];
+
+    return (string) $parts[count($parts) - 1]['text'];
+}
+
+function useGemini(): void
+{
+    config([
+        'services.mock_import.provider' => 'gemini',
+        'services.gemini.key' => 'test-gemini-key',
+        'services.gemini.import_model' => 'gemini-3.5-flash',
+        'services.gemini.import_max_tokens' => 65536,
+    ]);
+}
+
+test('gemini receives both PDFs inline with the API key header and JSON output settings', function () {
+    useGemini();
+    $full = geminiModuleJson(['Part 1' => [[1, 10]], 'Part 2' => [[11, 20]], 'Part 3' => [[21, 30]], 'Part 4' => [[31, 40]]]);
+    Http::fake(['generativelanguage.googleapis.com/*' => geminiReply($full)]);
+
+    $paper = fakePdf('listening.pdf', 'listening paper');
+    $key = fakePdf('answers.pdf', 'answer key');
+    $result = app(MockTestPdfParser::class)->parseFiles('Listening', $paper, $key);
+
+    expect($result['questions'])->toBe(40)
+        ->and($result['numbers'])->toBe(range(1, 40))
+        ->and($result['warnings'])->toBe([])
+        ->and($result['parts'][0]['sections'][0]['questions'][0]['answer_text'])->toBe('word1');
+
+    Http::assertSentCount(1);
+    Http::assertSent(function ($request) use ($paper, $key) {
+        $parts = $request['contents'][0]['parts'];
+        $pdfs = array_values(array_filter($parts, fn ($p) => isset($p['inline_data'])));
+
+        return $request->url() === 'https://generativelanguage.googleapis.com/v1beta/models/gemini-3.5-flash:generateContent'
+            && $request->method() === 'POST'
+            && $request->hasHeader('x-goog-api-key', 'test-gemini-key')
+            && count($pdfs) === 2
+            && $pdfs[0]['inline_data'] === ['mime_type' => 'application/pdf', 'data' => base64_encode(file_get_contents($paper))]
+            && $pdfs[1]['inline_data']['data'] === base64_encode(file_get_contents($key))
+            && str_contains(end($parts)['text'], 'EVERY question number')
+            && $request['generationConfig']['temperature'] === 0
+            && $request['generationConfig']['responseMimeType'] === 'application/json'
+            && $request['generationConfig']['maxOutputTokens'] >= 32768
+            && isset($request['generationConfig']['responseSchema']['properties']['parts']);
+    });
+
+    @unlink($paper);
+    @unlink($key);
+});
+
+test('gemini gets .txt / .docx uploads as text parts', function () {
+    useGemini();
+    Http::fake(['*' => geminiReply(geminiModuleJson(['Part 1' => [[1, 40]]]))]);
+
+    $paper = sys_get_temp_dir().'/'.uniqid('paper-').'.txt';
+    file_put_contents($paper, "LISTENING\nPART 1 Questions 1-10");
+    app(MockTestPdfParser::class)->parseFiles('Listening', $paper);
+    @unlink($paper);
+
+    Http::assertSent(function ($request) {
+        $parts = $request['contents'][0]['parts'];
+
+        return collect($parts)->contains(fn ($p) => ($p['text'] ?? '') === "LISTENING\nPART 1 Questions 1-10")
+            && ! collect($parts)->contains(fn ($p) => isset($p['inline_data']))
+            && str_contains(end($parts)['text'], 'No separate answer key was uploaded');
+    });
+});
+
+test('question numbers missing after the first gemini pass are asked for once and merged in place', function () {
+    useGemini();
+    $first = geminiModuleJson(['Passage 1' => [[1, 13]], 'Passage 2' => [[19, 26]], 'Passage 3' => [[27, 40]]]);
+    $first['parts'][1]['sections'][0]['question_type'] = 'fill_blank';
+    $followUp = [
+        'answers' => [['number' => 14, 'answer' => 'visual memory'], ['number' => 15, 'answer' => '(migration) direction'], ['number' => 16, 'answer' => 'destination'], ['number' => 17, 'answer' => 'landmarks'], ['number' => 18, 'answer' => '(laysan) albatross']],
+        'parts' => [[
+            'name' => 'Passage 2',
+            'passage_html' => '',
+            'sections' => [
+                [
+                    'question_type' => 'complete_section',
+                    'instructions_html' => '<p><strong>Questions 14-18</strong></p><p>Complete the summary below.</p>',
+                    'content_html' => '<p>Birds rely on their [[14]]. They select their accustomed [[15]] and may miss their [[16]]. No [[17]]. One bird: the [[18]].</p>',
+                    'from_option' => null, 'to_option' => null, 'options' => [],
+                    'questions' => array_map(fn ($n) => ['numbers' => [$n], 'text' => '', 'options' => []], range(14, 18)),
+                ],
+                // Already covered: dropped instead of duplicated.
+                ['question_type' => 'fill_blank', 'instructions_html' => '', 'content_html' => '', 'options' => [], 'questions' => [['numbers' => [19], 'text' => 'dup [[19]]', 'options' => []]]],
+            ],
+        ]],
+    ];
+    Http::fakeSequence('generativelanguage.googleapis.com/*')
+        ->pushResponse(geminiReply($first))
+        ->pushResponse(geminiReply($followUp));
+
+    $paper = fakePdf('reading.pdf');
+    $result = app(MockTestPdfParser::class)->parseFiles('Reading', $paper);
+    @unlink($paper);
+
+    Http::assertSentCount(2);
+    expect(geminiPromptOf(1))->toContain('missed questions 14, 15, 16, 17, 18');
+
+    expect($result['numbers'])->toBe(range(1, 40))
+        ->and($result['questions'])->toBe(40)
+        ->and(collect($result['warnings'])->filter(fn ($w) => str_contains($w, 'missing') || str_contains($w, 'Duplicate')))->toBeEmpty()
+        ->and(count($result['parts']))->toBe(3);
+
+    $passage2 = $result['parts'][1];
+    expect(array_column($passage2['sections'], 'question_type'))->toBe(['complete_section', 'fill_blank'])
+        ->and(array_column($passage2['sections'][0]['questions'], 'answer_text'))
+        ->toBe(['visual memory', 'migration direction/direction', 'destination', 'landmarks', 'laysan albatross/albatross']);
+});
+
+test('a reading answer cut off at the token limit is parsed passage by passage', function () {
+    useGemini();
+    Http::fakeSequence('generativelanguage.googleapis.com/*')
+        ->pushResponse(geminiReply(['parts' => []], 'MAX_TOKENS'))
+        ->pushResponse(geminiReply(geminiModuleJson(['Passage 1' => [[1, 13]]])))
+        ->pushResponse(geminiReply(geminiModuleJson(['Passage 2' => [[14, 26]]])))
+        ->pushResponse(geminiReply(geminiModuleJson(['Passage 3' => [[27, 40]]])));
+
+    $paper = fakePdf('reading.pdf');
+    $result = app(MockTestPdfParser::class)->parseFiles('Reading', $paper);
+    @unlink($paper);
+
+    Http::assertSentCount(4);
+    expect($result['numbers'])->toBe(range(1, 40))
+        ->and(array_column($result['parts'], 'name'))->toBe(['Passage 1', 'Passage 2', 'Passage 3']);
+    expect(geminiPromptOf(3))->toContain('Reading Passage 3 only');
+});
+
+test('a gemini 5xx is retried inside the request', function () {
+    useGemini();
+    Sleep::fake();
+    $paper = fakePdf('listening.pdf');
+    $full = geminiModuleJson(['Part 1' => [[1, 40]]]);
+
+    Http::fakeSequence('generativelanguage.googleapis.com/*')
+        ->push(['error' => ['code' => 503, 'message' => 'The model is overloaded.', 'status' => 'UNAVAILABLE']], 503)
+        ->pushResponse(geminiReply($full));
+    expect(app(MockTestPdfParser::class)->parseFiles('Listening', $paper)['questions'])->toBe(40);
+    Http::assertSentCount(2);
+    @unlink($paper);
+});
+
+test('a gemini safety stop is a clear error', function () {
+    useGemini();
+    Http::fake(['*' => geminiReply([], 'SAFETY')]);
+
+    expect(fn () => app(GeminiService::class)->generateJson([['text' => 'x']]))->toThrow(RuntimeException::class, 'finish reason: SAFETY');
+});
+
+test('a gemini API error is a clear error', function () {
+    useGemini();
+    Http::fake(['*' => Http::response(['error' => ['code' => 400, 'message' => 'API key not valid.', 'status' => 'INVALID_ARGUMENT']], 400)]);
+
+    expect(fn () => app(GeminiService::class)->generateJson([['text' => 'x']]))->toThrow(RuntimeException::class, 'Gemini API error 400 INVALID_ARGUMENT: API key not valid.');
+});
+
+test('a gemini 429 puts the module back in the queue and is explained as a quota problem', function () {
+    useGemini();
+    Storage::fake('local');
+    ['test' => $test] = makeBankTest();
+    $import = TestImport::create(['test_id' => $test->id, 'status' => TestImport::QUEUED, 'modules' => ['Listening' => ['status' => 'queued']]]);
+    $dir = ImportMockModuleJob::directory($test->id, $import->id);
+    Storage::disk('local')->put("{$dir}/listening.pdf", "%PDF-1.4\npaper\n%%EOF");
+    $import->forceFill(['files' => ['listening' => "{$dir}/listening.pdf"]])->save();
+
+    Http::fake(['*' => Http::response(['error' => ['code' => 429, 'message' => 'Quota exceeded.', 'status' => 'RESOURCE_EXHAUSTED']], 429)]);
+
+    $job = (new ImportMockModuleJob($import->id, 'Listening'))->withFakeQueueInteractions();
+    app()->call([$job, 'handle']);
+
+    $job->assertReleased(90);
+    Http::assertSentCount(1); // 429 is not retried inside the request
+    expect($import->fresh()->modules['Listening']['status'])->toBe(TestImport::QUEUED)
+        ->and($import->fresh()->modules['Listening']['message'])->toContain('Gemini rate limit');
+
+    $e = new AiRateLimitException('Gemini quota or rate limit hit (429 RESOURCE_EXHAUSTED).');
+    expect(ImportMockModuleJob::describe($e))->toContain('RESOURCE_EXHAUSTED')->toContain('aistudio.google.com');
+});
+
+test('the job imports a module with gemini reading the stored PDFs', function () {
+    useGemini();
+    Storage::fake('local');
+    ['test' => $test, 'listening' => $listening] = makeBankTest();
+    $import = TestImport::create(['test_id' => $test->id, 'status' => TestImport::QUEUED, 'modules' => ['Listening' => ['status' => 'queued']]]);
+    $dir = ImportMockModuleJob::directory($test->id, $import->id);
+    Storage::disk('local')->put("{$dir}/listening.pdf", "%PDF-1.4\npaper\n%%EOF");
+    Storage::disk('local')->put("{$dir}/answers.pdf", "%PDF-1.4\nkey\n%%EOF");
+    $import->forceFill(['files' => ['listening' => "{$dir}/listening.pdf", 'answers' => "{$dir}/answers.pdf"]])->save();
+
+    Http::fake(['*' => geminiReply(geminiModuleJson(['Part 1' => [[1, 10]], 'Part 2' => [[11, 20]], 'Part 3' => [[21, 30]], 'Part 4' => [[31, 40]]]))]);
+    $this->mock(OpenAIService::class, fn ($mock) => $mock->shouldNotReceive('parseMockModule'));
+
+    app()->call([new ImportMockModuleJob($import->id, 'Listening'), 'handle']);
+
+    expect($import->fresh()->modules['Listening'])->toMatchArray(['status' => TestImport::DONE, 'questions' => 40, 'parts' => 4, 'warnings' => []])
+        ->and(Part::where('test_type_id', $listening->id)->count())->toBe(4);
+});
+
+test('the import provider is gemini when a key is set, openai otherwise, and can be forced', function () {
+    $load = function (array $env) {
+        $saved = [];
+        foreach ($env as $name => $value) {
+            $saved[$name] = [$_ENV[$name] ?? null, $_SERVER[$name] ?? null];
+            if ($value === null) {
+                unset($_ENV[$name], $_SERVER[$name]);
+            } else {
+                $_ENV[$name] = $_SERVER[$name] = $value;
+            }
+        }
+        $provider = (require config_path('services.php'))['mock_import']['provider'];
+        foreach ($saved as $name => [$e, $s]) {
+            if ($e === null) {
+                unset($_ENV[$name]);
+            } else {
+                $_ENV[$name] = $e;
+            }
+            if ($s === null) {
+                unset($_SERVER[$name]);
+            } else {
+                $_SERVER[$name] = $s;
+            }
+        }
+
+        return $provider;
+    };
+
+    expect($load(['GEMINI_API_KEY' => 'abc', 'MOCK_IMPORT_PROVIDER' => null]))->toBe('gemini')
+        ->and($load(['GEMINI_API_KEY' => '', 'MOCK_IMPORT_PROVIDER' => null]))->toBe('openai')
+        ->and($load(['GEMINI_API_KEY' => 'abc', 'MOCK_IMPORT_PROVIDER' => 'openai']))->toBe('openai');
+
+    // The OpenAI provider keeps the text path and never calls Gemini.
+    config(['services.mock_import.provider' => 'openai', 'services.gemini.key' => 'test-gemini-key']);
+    Http::fake();
+    $this->mock(OpenAIService::class, fn ($mock) => $mock->shouldReceive('parseMockModule')->once()
+        ->withArgs(fn ($module, $text) => $module === 'Listening' && $text === 'LISTENING PART 1')
+        ->andReturn(listeningAiResponse()));
+
+    $paper = sys_get_temp_dir().'/'.uniqid('paper-').'.txt';
+    file_put_contents($paper, 'LISTENING PART 1');
+    expect(app(MockTestPdfParser::class)->parseFiles('Listening', $paper)['questions'])->toBe(12);
+    @unlink($paper);
+    Http::assertNothingSent();
+});
+
+test('big PDFs go through the gemini Files API upload', function () {
+    useGemini();
+    Http::fake([
+        'generativelanguage.googleapis.com/upload/v1beta/files' => Http::response(['file' => []], 200, ['X-Goog-Upload-URL' => 'https://upload.example.test/session-1']),
+        'upload.example.test/*' => Http::response(['file' => ['name' => 'files/abc', 'uri' => 'https://generativelanguage.googleapis.com/v1beta/files/abc', 'state' => 'ACTIVE']]),
+    ]);
+
+    $paper = fakePdf('big.pdf');
+    $part = app(GeminiService::class)->uploadFile($paper);
+    @unlink($paper);
+
+    expect($part)->toBe(['file_data' => ['mime_type' => 'application/pdf', 'file_uri' => 'https://generativelanguage.googleapis.com/v1beta/files/abc']]);
+    Http::assertSent(fn ($r) => str_ends_with($r->url(), '/upload/v1beta/files') && $r->hasHeader('X-Goog-Upload-Command', 'start') && $r->hasHeader('x-goog-api-key', 'test-gemini-key'));
+    Http::assertSent(fn ($r) => $r->url() === 'https://upload.example.test/session-1' && $r->hasHeader('X-Goog-Upload-Command', 'upload, finalize'));
 });

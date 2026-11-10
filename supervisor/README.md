@@ -14,7 +14,10 @@ qiymatlarga mos bo'lishi kerak.
 
 Worker `--timeout=960 --tries=3` bilan ishlaydi: `EvaluateEssayJob` (OpenAI) 120 soniyagacha, Mock Bank
 "PDF dan import" (`ImportMockModuleJob`, har modul uchun bitta job) esa 15 daqiqagacha (`$timeout = 900`) davom
-etishi mumkin. Shuning uchun:
+etishi mumkin. Import provayderi: `GEMINI_API_KEY` bo'lsa Gemini PDF'ni to'g'ridan-to'g'ri o'qiydi
+(`GEMINI_IMPORT_MODEL`, standart `gemini-3.5-flash`), aks holda OpenAI matn orqali; `MOCK_IMPORT_PROVIDER=openai|gemini`
+bilan majburlash mumkin. Serverda tekshirish: `php artisan mock:import-dry Listening paper.pdf answers.pdf` (bazaga
+yozmaydi). Shuning uchun:
 
 - worker `--timeout` (960) job timeout'idan katta bo'lishi kerak;
 - `.env` da `DB_QUEUE_RETRY_AFTER=1000` (navbatning `retry_after` qiymati worker `--timeout` dan katta bo'lishi

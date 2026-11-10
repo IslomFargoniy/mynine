@@ -50,6 +50,19 @@ return [
         'import_model' => env('OPENAI_IMPORT_MODEL', 'gpt-4o'),
         'import_timeout' => (int) env('OPENAI_IMPORT_TIMEOUT', 300),
     ],
+    'gemini' => [
+        'key' => env('GEMINI_API_KEY'),
+        // Mock Bank "Import from PDF" reads the PDFs natively (App\Services\GeminiService::parseMockModule)
+        'import_model' => env('GEMINI_IMPORT_MODEL', 'gemini-3.5-flash'),
+        'import_timeout' => (int) env('GEMINI_IMPORT_TIMEOUT', 300),
+        'import_max_tokens' => (int) env('GEMINI_IMPORT_MAX_TOKENS', 65536),
+        // Optional thinking level for Gemini 3 models ("minimal", "low", "medium", "high"); empty = model default
+        'import_thinking' => env('GEMINI_IMPORT_THINKING'),
+    ],
+    'mock_import' => [
+        // "gemini" (PDF read directly) or "openai" (text extracted with smalot/pdfparser, then gpt-4o)
+        'provider' => env('MOCK_IMPORT_PROVIDER', env('GEMINI_API_KEY') ? 'gemini' : 'openai'),
+    ],
     'telegram' => [
         // Legacy bot that only redirects users to @MynineUzBot
         'bot_token' => env('TELEGRAM_BOT_TOKEN'),

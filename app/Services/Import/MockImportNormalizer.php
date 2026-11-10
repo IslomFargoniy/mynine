@@ -46,7 +46,9 @@ class MockImportNormalizer
 
     /**
      * @param  array<int, array<string, mixed>>  $responses  one decoded AI response per call (whole module or one passage)
-     * @return array{parts: array<int, array<string, mixed>>, warnings: array<int, string>, questions: int}
+     *                                                       Every normalised question also carries "numbers" (its paper question numbers; ignored by the
+     *                                                       importer) and the result lists all covered numbers, for coverage checks and the dry run.
+     * @return array{parts: array<int, array<string, mixed>>, warnings: array<int, string>, questions: int, numbers: array<int, int>}
      */
     public function normalize(string $module, array $responses): array
     {
@@ -87,7 +89,10 @@ class MockImportNormalizer
             $this->warnings[] = 'Answers missing for questions '.$this->ranges($this->unanswered).' — add them in the module editor.';
         }
 
-        return ['parts' => $parts, 'warnings' => $this->warnings, 'questions' => count($this->numbers)];
+        $covered = array_values(array_unique($this->numbers));
+        sort($covered);
+
+        return ['parts' => $parts, 'warnings' => $this->warnings, 'questions' => count($this->numbers), 'numbers' => $covered];
     }
 
     /**
@@ -179,7 +184,7 @@ class MockImportNormalizer
                 $used[] = mb_strtolower($answer);
             }
 
-            $questions[] = ['order' => ++$order, 'textarea' => null, 'answer_text' => $answer, 'options' => []];
+            $questions[] = ['order' => ++$order, 'textarea' => null, 'answer_text' => $answer, 'options' => [], 'numbers' => [$number]];
 
             return '{'.($answer ?? '').'}';
         }, $content);
@@ -228,7 +233,7 @@ class MockImportNormalizer
                 $letters[] = $answer;
             }
 
-            $questions[] = ['textarea' => $this->plain($rawQuestion['text'] ?? ''), 'answer_text' => $answer, 'options' => []];
+            $questions[] = ['textarea' => $this->plain($rawQuestion['text'] ?? ''), 'answer_text' => $answer, 'options' => [], 'numbers' => [$number]];
         }
 
         if ($from === null || $to === null) {
@@ -281,7 +286,7 @@ class MockImportNormalizer
                 'true_false', 'yes_no' => $this->judgement($type, $text, $numbers[0]),
                 'multiple_response' => $this->choice($partName, $type, $text, $rawQuestion, $numbers),
                 default => $this->choice($partName, 'multiple_choice', $text, $rawQuestion, $numbers),
-            };
+            } + ['numbers' => $numbers];
         }
 
         if ($questions === []) {
