@@ -796,7 +796,8 @@
                 "no_questions": "Savollar yo'q",
                 "missing_answer_keys": "{{count}} ta savolda javob kaliti yo'q",
                 "no_audio": "Listening audio yo'q"
-            }
+            },
+            "edit_module": "Modulni tahrirlash (part va savollar qo'shish)"
         },
         "mock_form": {
             "create_title": "Yangi mock",

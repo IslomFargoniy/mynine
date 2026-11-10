@@ -107,8 +107,9 @@ test('moving a bank test to practice makes it an open practice test', function (
     $test = $this->exam['testR']->fresh();
     expect($test->purpose)->toBe(ExamTest::PURPOSE_PRACTICE)->and((int) $test->open)->toBe(1);
 
-    // Practice tests are not Mock Bank tests.
-    $this->actingAs($this->admin)->post(route('mock-bank.to-practice', $test))->assertNotFound();
+    // Repeating it (e.g. a double click) is a harmless no-op.
+    $this->actingAs($this->admin)->post(route('mock-bank.to-practice', $test))->assertSessionHas('success');
+    expect($test->fresh()->purpose)->toBe(ExamTest::PURPOSE_PRACTICE);
 });
 
 test('the mock bank page lists only mock tests with their modules', function () {

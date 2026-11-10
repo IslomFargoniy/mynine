@@ -89,9 +89,10 @@ class TestController extends Controller
     {
         $this->authorize('view', $test);
 
-        $test->load(['folder', 'types.type']);
-
-        return Inertia::render('test/show', ['test' => $test]);
+        // There is no standalone test page: tests are edited from their folder (test -> module -> parts).
+        return $test->folder_id
+            ? redirect()->route('folder.show', ['folder' => $test->folder_id, 'search' => $test->name])
+            : redirect()->route('folder.index');
     }
 
     public function update(UpdateTestRequest $request, Test $test)

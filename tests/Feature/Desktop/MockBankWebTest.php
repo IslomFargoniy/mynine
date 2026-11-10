@@ -68,3 +68,21 @@ test('tests default to practice purpose and draft bank status', function () {
         ->and($test->bank_status)->toBe(ExamTest::BANK_DRAFT)
         ->and(ExamTest::mock()->pluck('id')->sort()->values()->all())->toBe(collect([$this->exam['testL']->id, $this->exam['testR']->id, $this->exam['testW']->id])->sort()->values()->all());
 });
+
+test('test.show redirects to the folder editor instead of a missing page', function () {
+    $admin = makeUser('Admin');
+    ['test' => $test] = makeTestContent($admin);
+
+    $this->actingAs($admin)->get(route('test.show', $test))
+        ->assertRedirect(route('folder.show', ['folder' => $test->folder_id, 'search' => $test->name]));
+});
+
+test('moving a test to practice twice does not fail', function () {
+    $admin = makeUser('Admin');
+    ['test' => $test] = makeTestContent($admin, 'Reading', ['purpose' => 'mock', 'open' => 0]);
+
+    $this->actingAs($admin)->post(route('mock-bank.to-practice', $test))->assertSessionHas('success');
+    $this->actingAs($admin)->post(route('mock-bank.to-practice', $test))->assertSessionHas('success');
+
+    expect($test->fresh()->purpose)->toBe('practice')->and((int) $test->fresh()->open)->toBe(1);
+});

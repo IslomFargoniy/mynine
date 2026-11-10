@@ -796,7 +796,8 @@
                 "no_questions": "No questions",
                 "missing_answer_keys": "{{count}} question(s) without an answer key",
                 "no_audio": "Listening audio missing"
-            }
+            },
+            "edit_module": "Open module editor (add parts and questions)"
         },
         "mock_form": {
             "create_title": "New mock",

@@ -97,7 +97,10 @@ class MockBankController extends Controller
     public function toPractice(Test $test): RedirectResponse
     {
         $this->authorize('manageBank', Test::class);
-        abort_unless($test->isMock(), 404);
+        if (! $test->isMock()) {
+            // Already a practice test (e.g. a double click): nothing to do.
+            return back()->with('success', 'Test allaqachon amaliyot (practice) testlarida.');
+        }
 
         $test->forceFill(['purpose' => Test::PURPOSE_PRACTICE, 'open' => 1])->save();
 

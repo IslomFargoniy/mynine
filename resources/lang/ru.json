@@ -796,7 +796,8 @@
                 "no_questions": "Нет вопросов",
                 "missing_answer_keys": "Вопросов без ключа: {{count}}",
                 "no_audio": "Нет аудио Listening"
-            }
+            },
+            "edit_module": "Открыть редактор модуля (части и вопросы)"
         },
         "mock_form": {
             "create_title": "Новый мок",

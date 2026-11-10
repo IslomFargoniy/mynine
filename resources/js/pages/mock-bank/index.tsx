@@ -199,7 +199,11 @@ export default function MockBankIndex() {
                                     </div>
                                     <div className="flex flex-wrap items-center gap-1.5">
                                         <Link
-                                            href={route('test.show', test.id)}
+                                            href={
+                                                test.folder
+                                                    ? route('folder.show', { folder: test.folder.id, search: test.name })
+                                                    : route('test.show', test.id)
+                                            }
                                             className="inline-flex items-center gap-1 rounded-xl bg-gray-100 px-3 py-1.5 text-xs font-bold text-gray-700 hover:bg-gray-200 dark:bg-gray-800 dark:text-gray-200"
                                         >
                                             <Pencil className="h-3.5 w-3.5" />
@@ -239,10 +243,12 @@ export default function MockBankIndex() {
                                 <div className="grid gap-2 md:grid-cols-3">
                                     {test.modules.length === 0 && <p className="text-xs text-gray-400">{t('exam_admin.bank.no_modules')}</p>}
                                     {test.modules.map((module) => (
-                                        <div
+                                        <Link
                                             key={module.id}
+                                            href={route('test-type.show', module.id)}
+                                            title={t('exam_admin.bank.edit_module')}
                                             className={cn(
-                                                'rounded-xl border p-3 text-xs',
+                                                'block rounded-xl border p-3 text-xs transition hover:border-indigo-300 hover:shadow-sm',
                                                 module.parts_count === 0
                                                     ? 'border-dashed border-gray-200 opacity-60 dark:border-gray-800'
                                                     : module.ready
@@ -277,7 +283,8 @@ export default function MockBankIndex() {
                                                         </div>
                                                     ))}
                                             </div>
-                                        </div>
+                                            <div className="mt-2 text-[10px] font-bold text-indigo-600">{t('exam_admin.bank.edit_module')} →</div>
+                                        </Link>
                                     ))}
                                 </div>
                             </Panel>
