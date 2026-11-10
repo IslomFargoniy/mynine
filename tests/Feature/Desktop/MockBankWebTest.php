@@ -1,7 +1,9 @@
 <?php
 
 use App\Models\Attempt;
+use App\Models\Folder;
 use App\Models\Test as ExamTest;
+use App\Models\TestType;
 
 beforeEach(function () {
     $this->admin = makeUser('Admin');
@@ -69,20 +71,32 @@ test('tests default to practice purpose and draft bank status', function () {
         ->and(ExamTest::mock()->pluck('id')->sort()->values()->all())->toBe(collect([$this->exam['testL']->id, $this->exam['testR']->id, $this->exam['testW']->id])->sort()->values()->all());
 });
 
-test('test.show redirects to the folder editor instead of a missing page', function () {
+test('test.show opens the content editor of the first module, Listening first', function () {
     $admin = makeUser('Admin');
-    ['test' => $test] = makeTestContent($admin);
+    ['test' => $test, 'testType' => $reading] = makeTestContent($admin);
 
-    $this->actingAs($admin)->get(route('test.show', $test))
-        ->assertRedirect(route('folder.show', ['folder' => $test->folder_id, 'search' => $test->name]));
+    $this->actingAs($admin)->get(route('test.show', $test))->assertRedirect(route('test-type.show', $reading->id));
+
+    $listening = TestType::create(['test_id' => $test->id, 'type_id' => makeType('Listening')->id]);
+    $this->actingAs($admin)->get(route('test.show', $test))->assertRedirect(route('test-type.show', $listening->id));
+});
+
+test('test.show without modules falls back to the folder, or to the Mock Bank for folderless tests', function () {
+    $admin = makeUser('Admin');
+    $folder = Folder::create(['name' => 'F', 'user_id' => $admin->id, 'active' => 1]);
+    $practice = ExamTest::create(['folder_id' => $folder->id, 'name' => 'Empty']);
+    $mock = ExamTest::create(['folder_id' => null, 'name' => 'Bank', 'purpose' => 'mock']);
+
+    $this->actingAs($admin)->get(route('test.show', $practice))->assertRedirect(route('folder.show', ['folder' => $folder->id, 'search' => 'Empty']));
+    $this->actingAs($admin)->get(route('test.show', $mock))->assertRedirect(route('mock-bank.index'));
 });
 
 test('moving a test to practice twice does not fail', function () {
     $admin = makeUser('Admin');
     ['test' => $test] = makeTestContent($admin, 'Reading', ['purpose' => 'mock', 'open' => 0]);
 
-    $this->actingAs($admin)->post(route('mock-bank.to-practice', $test))->assertSessionHas('success');
-    $this->actingAs($admin)->post(route('mock-bank.to-practice', $test))->assertSessionHas('success');
+    $this->actingAs($admin)->post(route('mock-bank.to-practice', $test), ['folder_id' => $test->folder_id])->assertSessionHas('success');
+    $this->actingAs($admin)->post(route('mock-bank.to-practice', $test), ['folder_id' => $test->folder_id])->assertSessionHas('success');
 
     expect($test->fresh()->purpose)->toBe('practice')->and((int) $test->fresh()->open)->toBe(1);
 });

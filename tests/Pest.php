@@ -100,9 +100,9 @@ function makeDesktopExam(User $owner, array $mockOverrides = [], string $code = 
     $readingType = makeType('Reading', 60);
     $writingType = makeType('Writing', 60);
 
-    $folder = Folder::create(['name' => 'Bank', 'user_id' => $owner->id, 'active' => 1]);
+    // Mock Bank tests never belong to a folder.
     $bankTest = fn (string $name) => ExamTest::create([
-        'folder_id' => $folder->id, 'name' => $name, 'active' => 1, 'open' => 0,
+        'folder_id' => null, 'name' => $name, 'active' => 1, 'open' => 0,
         'purpose' => ExamTest::PURPOSE_MOCK, 'bank_status' => ExamTest::BANK_READY,
     ]);
 

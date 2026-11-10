@@ -12,8 +12,15 @@ sudo sed -i 's/APP_USER/<ilova_foydalanuvchisi>/g' /etc/supervisor/conf.d/mynine
 Yo'l (`/var/www/<user>/data/www/mynine.uz`) va PHP binari (`/opt/php82/bin/php`) serveringizdagi haqiqiy
 qiymatlarga mos bo'lishi kerak.
 
-Worker `--timeout=150 --tries=3` bilan ishlaydi: `EvaluateEssayJob` (OpenAI) 120 soniyagacha davom etishi mumkin,
-job timeout'i worker timeout'idan kichik bo'lishi shart.
+Worker `--timeout=960 --tries=3` bilan ishlaydi: `EvaluateEssayJob` (OpenAI) 120 soniyagacha, Mock Bank
+"PDF dan import" (`ImportMockModuleJob`, har modul uchun bitta job) esa 15 daqiqagacha (`$timeout = 900`) davom
+etishi mumkin. Shuning uchun:
+
+- worker `--timeout` (960) job timeout'idan katta bo'lishi kerak;
+- `.env` da `DB_QUEUE_RETRY_AFTER=1000` (navbatning `retry_after` qiymati worker `--timeout` dan katta bo'lishi
+  shart, aks holda database navbat hali ishlayotgan import job'ini ikkinchi marta beradi). Standart qiymat 90 s.
+
+`.env` ni o'zgartirgandan keyin `php artisan config:cache` va worker'ni qayta ishga tushiring.
 
 Agar serverda eski `mynine-evaluate-essay.conf` bo'lsa, uni olib tashlang (ikkita worker bir xil navbatni o'qiydi):
 ```bash

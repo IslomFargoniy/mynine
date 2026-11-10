@@ -11,9 +11,21 @@ function Dialog({
 }
 
 function DialogTrigger({
+  onClick,
   ...props
 }: React.ComponentProps<typeof DialogPrimitive.Trigger>) {
-  return <DialogPrimitive.Trigger data-slot="dialog-trigger" {...props} />
+  return (
+    <DialogPrimitive.Trigger
+      data-slot="dialog-trigger"
+      onClick={(e) => {
+        onClick?.(e)
+        // Radix sets aria-hidden on the page right after opening; a still-focused trigger
+        // inside it makes the browser log "Blocked aria-hidden … descendant retained focus".
+        e.currentTarget.blur()
+      }}
+      {...props}
+    />
+  )
 }
 
 function DialogPortal({
@@ -59,7 +71,11 @@ function DialogContent({
           if (onOpenAutoFocus) {
             onOpenAutoFocus(e);
           } else {
+            // Don't auto-focus the first field (mobile keyboards), but move focus into the dialog:
+            // focus left on the trigger triggers "Blocked aria-hidden … descendant retained focus"
+            // once Radix hides the rest of the page.
             e.preventDefault();
+            (e.target as HTMLElement | null)?.focus({ preventScroll: true });
           }
         }}
         className={cn(

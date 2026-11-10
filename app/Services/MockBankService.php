@@ -89,6 +89,22 @@ class MockBankService
     }
 
     /**
+     * The module the content editor opens first: Listening, then Reading, then Writing, then any other module.
+     */
+    public function firstModule(Test $test): ?TestType
+    {
+        $order = array_flip(self::MODULE_TYPES);
+
+        return TestType::query()
+            ->with('type')
+            ->where('test_id', $test->id)
+            ->orderBy('id')
+            ->get()
+            ->sortBy(fn (TestType $tt) => [$order[$tt->type?->name] ?? 99, $tt->id])
+            ->first();
+    }
+
+    /**
      * A test may be marked ready when it has at least one L/R/W module with parts and every
      * such module passes the readiness check.
      *

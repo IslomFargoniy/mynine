@@ -23,6 +23,7 @@
         "laravel/tinker": "^3.0",
         "openai-php/client": "^0.16.1",
         "silviolleite/laravelpwa": "^2.0",
+        "smalot/pdfparser": "^2.13",
         "socialiteproviders/manager": "^4.8",
         "socialiteproviders/telegram": "dev-master",
         "spatie/laravel-permission": "^6.16",

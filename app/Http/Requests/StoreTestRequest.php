@@ -24,6 +24,8 @@ class StoreTestRequest extends FormRequest
             // Mock Bank tests are never open for practice.
             'open' => $isMock ? 0 : (Auth::user()->hasRole('Admin') ? ($this->open ?? 0) : 0),
             'purpose' => $isMock ? 'mock' : 'practice',
+            // Mock Bank tests never belong to a folder.
+            'folder_id' => $isMock ? null : $this->input('folder_id'),
         ]);
     }
 
@@ -35,7 +37,7 @@ class StoreTestRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'folder_id' => 'required|exists:folders,id',
+            'folder_id' => ['nullable', 'required_unless:purpose,mock', 'exists:folders,id'],
             'name' => 'required|string|max:255',
             'comment' => 'nullable|string|max:500',
             'active' => 'nullable|boolean',

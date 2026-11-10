@@ -117,6 +117,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::get('/mock-bank', [MockBankController::class, 'index'])->name('mock-bank.index');
         Route::post('/mock-bank/{test}/status', [MockBankController::class, 'updateStatus'])->name('mock-bank.status');
         Route::post('/mock-bank/{test}/to-practice', [MockBankController::class, 'toPractice'])->name('mock-bank.to-practice');
+        Route::post('/mock-bank/{test}/import', [MockBankController::class, 'import'])->name('mock-bank.import');
 
         // Speaking slots and examiner bands
         Route::get('/speaking', [SpeakingController::class, 'index'])->name('speaking.index');

@@ -6,6 +6,7 @@ use App\Models\AttemptAnswer;
 use App\Models\AttemptPart;
 use App\Models\AttemptType;
 use App\Models\Device;
+use App\Models\Folder;
 use App\Models\Mock;
 use App\Models\MockModule;
 use App\Models\MockStudent;
@@ -101,11 +102,18 @@ test('a test is marked ready only when every module passes the readiness check',
     expect($test->fresh()->bank_status)->toBe(ExamTest::BANK_ARCHIVED);
 });
 
-test('moving a bank test to practice makes it an open practice test', function () {
-    $this->actingAs($this->admin)->post(route('mock-bank.to-practice', $this->exam['testR']))->assertSessionHas('success');
+test('moving a bank test to practice makes it an open practice test in the chosen folder', function () {
+    $folder = Folder::create(['name' => 'Practice folder', 'user_id' => $this->admin->id, 'active' => 1]);
+
+    // A folderless bank test needs a target folder.
+    $this->actingAs($this->admin)->post(route('mock-bank.to-practice', $this->exam['testR']))->assertSessionHasErrors('folder_id');
+    $this->actingAs($this->admin)->post(route('mock-bank.to-practice', $this->exam['testR']), ['folder_id' => 999999])->assertSessionHasErrors('folder_id');
+    expect($this->exam['testR']->fresh()->purpose)->toBe(ExamTest::PURPOSE_MOCK);
+
+    $this->actingAs($this->admin)->post(route('mock-bank.to-practice', $this->exam['testR']), ['folder_id' => $folder->id])->assertSessionHas('success');
 
     $test = $this->exam['testR']->fresh();
-    expect($test->purpose)->toBe(ExamTest::PURPOSE_PRACTICE)->and((int) $test->open)->toBe(1);
+    expect($test->purpose)->toBe(ExamTest::PURPOSE_PRACTICE)->and((int) $test->open)->toBe(1)->and((int) $test->folder_id)->toBe($folder->id);
 
     // Repeating it (e.g. a double click) is a harmless no-op.
     $this->actingAs($this->admin)->post(route('mock-bank.to-practice', $test))->assertSessionHas('success');
@@ -121,14 +129,50 @@ test('the mock bank page lists only mock tests with their modules', function () 
             ->where('tests', fn ($tests) => collect($tests)->pluck('name')->sort()->values()->all() === ['Bank L', 'Bank R', 'Bank W']));
 });
 
-test('mock tests can be created from the test editor flow with purpose=mock', function () {
-    $folder = $this->exam['testL']->folder;
+test('mock tests are created without a folder, even when one is sent', function () {
+    $folder = Folder::create(['name' => 'Some folder', 'user_id' => $this->admin->id, 'active' => 1]);
 
-    $this->actingAs($this->admin)->post(route('test.store'), ['folder_id' => $folder->id, 'name' => 'New bank test', 'purpose' => 'mock', 'open' => 1])
+    $this->actingAs($this->admin)->post(route('test.store'), ['name' => 'New bank test', 'purpose' => 'mock', 'open' => 1])
+        ->assertSessionHasNoErrors();
+    $this->actingAs($this->admin)->post(route('test.store'), ['folder_id' => $folder->id, 'name' => 'Second bank test', 'purpose' => 'mock'])
         ->assertSessionHasNoErrors();
 
-    $test = ExamTest::where('name', 'New bank test')->firstOrFail();
-    expect($test->purpose)->toBe('mock')->and((int) $test->open)->toBe(0)->and($test->bank_status)->toBe('draft');
+    foreach (['New bank test', 'Second bank test'] as $name) {
+        $test = ExamTest::where('name', $name)->firstOrFail();
+        expect($test->purpose)->toBe('mock')->and((int) $test->open)->toBe(0)->and($test->bank_status)->toBe('draft')
+            ->and($test->folder_id)->toBeNull()
+            ->and($test->types()->count())->toBeGreaterThan(0);
+    }
+});
+
+test('practice tests still require a folder', function () {
+    $this->actingAs($this->admin)->post(route('test.store'), ['name' => 'Loose practice test', 'purpose' => 'practice'])
+        ->assertSessionHasErrors('folder_id');
+    expect(ExamTest::where('name', 'Loose practice test')->exists())->toBeFalse();
+});
+
+test('reception and students cannot create mock bank tests', function () {
+    foreach (['Reception', 'Student'] as $role) {
+        $this->actingAs(makeUser($role))->post(route('test.store'), ['name' => "Bank by {$role}", 'purpose' => 'mock'])->assertForbidden();
+    }
+    expect(ExamTest::where('name', 'like', 'Bank by%')->exists())->toBeFalse();
+});
+
+test('admins edit the content of folderless bank tests; reception and students cannot', function () {
+    $part = $this->exam['partR'];
+    expect($this->exam['testR']->fresh()->folder_id)->toBeNull();
+
+    $this->actingAs($this->admin)->get(route('test-type.show', $this->exam['reading']->id))->assertOk();
+    $this->actingAs($this->admin)->post(route('part.update', $part), ['name' => 'Renamed passage', 'test_type_id' => $part->test_type_id])
+        ->assertSessionHasNoErrors();
+    expect($part->fresh()->name)->toBe('Renamed passage');
+
+    foreach (['Reception', 'Student'] as $role) {
+        $user = makeUser($role);
+        $this->actingAs($user)->get(route('test-type.show', $this->exam['reading']->id))->assertForbidden();
+        $this->actingAs($user)->post(route('part.update', $part), ['name' => 'Hacked', 'test_type_id' => $part->test_type_id])->assertForbidden();
+    }
+    expect($part->fresh()->name)->toBe('Renamed passage');
 });
 
 /*

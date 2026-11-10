@@ -46,6 +46,9 @@ return [
     ],
     'openai' => [
         'key' => env('OPENAI_API_KEY'),
+        // Mock Bank "Import from PDF" (App\Services\OpenAIService::parseMockModule)
+        'import_model' => env('OPENAI_IMPORT_MODEL', 'gpt-4o'),
+        'import_timeout' => (int) env('OPENAI_IMPORT_TIMEOUT', 300),
     ],
     'telegram' => [
         // Legacy bot that only redirects users to @MynineUzBot

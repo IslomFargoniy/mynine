@@ -8,6 +8,7 @@ use App\Models\Folder;
 use App\Models\Test;
 use App\Models\Type;
 use App\Services\AudioUploadService;
+use App\Services\MockBankService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -16,7 +17,10 @@ use Inertia\Inertia;
 
 class TestController extends Controller
 {
-    public function __construct(private readonly AudioUploadService $audio) {}
+    public function __construct(
+        private readonly AudioUploadService $audio,
+        private readonly MockBankService $modules,
+    ) {}
 
     public function index(Request $request)
     {
@@ -44,8 +48,12 @@ class TestController extends Controller
 
     public function store(StoreTestRequest $request)
     {
-        $folder = Folder::findOrFail($request->folder_id);
-        $this->authorize('update', $folder);
+        if ($request->input('purpose') === Test::PURPOSE_MOCK) {
+            // Mock Bank tests have no folder.
+            $this->authorize('manageBank', Test::class);
+        } else {
+            $this->authorize('update', Folder::findOrFail($request->folder_id));
+        }
 
         try {
             $user = Auth::user();
@@ -89,10 +97,17 @@ class TestController extends Controller
     {
         $this->authorize('view', $test);
 
-        // There is no standalone test page: tests are edited from their folder (test -> module -> parts).
-        return $test->folder_id
-            ? redirect()->route('folder.show', ['folder' => $test->folder_id, 'search' => $test->name])
-            : redirect()->route('folder.index');
+        // There is no standalone test page: open the content editor of the first module
+        // (Listening first), otherwise the place the test is listed in.
+        if ($module = $this->modules->firstModule($test)) {
+            return redirect()->route('test-type.show', $module->id);
+        }
+
+        if ($test->folder_id) {
+            return redirect()->route('folder.show', ['folder' => $test->folder_id, 'search' => $test->name]);
+        }
+
+        return $test->isMock() ? redirect()->route('mock-bank.index') : redirect()->route('folder.index');
     }
 
     public function update(UpdateTestRequest $request, Test $test)
@@ -137,6 +152,10 @@ class TestController extends Controller
 
             if ($folderId) {
                 return redirect()->route('folder.show', $folderId)->with('success', __('deleted_successfully'));
+            }
+
+            if ($test->isMock()) {
+                return redirect()->route('mock-bank.index')->with('success', __('deleted_successfully'));
             }
 
             return redirect()->route('all-test.index')->with('success', __('deleted_successfully'));

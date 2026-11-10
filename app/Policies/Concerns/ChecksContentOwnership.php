@@ -12,7 +12,7 @@ use App\Models\TestType;
 use App\Models\User\User;
 
 /**
- * Shared ownership rules for test content (folder -> test -> test type -> part -> section -> question -> option).
+ * Shared ownership rules for test content ([folder] -> test -> test type -> part -> section -> question -> option).
  * Only admins manage content (the Teacher role was removed: the system has Admin, Reception and Student).
  */
 trait ChecksContentOwnership
@@ -27,9 +27,18 @@ trait ChecksContentOwnership
         return $folder !== null && $user->hasRole('Admin');
     }
 
+    /**
+     * Mock Bank tests have no folder (folder_id = null): content managers own them directly.
+     */
     protected function ownsTest(User $user, ?Test $test): bool
     {
-        return $test !== null && $this->ownsFolder($user, $test->folder);
+        if ($test === null) {
+            return false;
+        }
+
+        return $test->folder_id === null
+            ? $this->isContentManager($user)
+            : $this->ownsFolder($user, $test->folder);
     }
 
     protected function ownsTestType(User $user, ?TestType $testType): bool

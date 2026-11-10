@@ -72,6 +72,16 @@ class Test extends Model
         return $this->hasMany(Attempt::class, 'test_id');
     }
 
+    public function imports()
+    {
+        return $this->hasMany(TestImport::class, 'test_id');
+    }
+
+    public function latestImport()
+    {
+        return $this->hasOne(TestImport::class, 'test_id')->latestOfMany();
+    }
+
     public function types()
     {
         return $this->hasMany(TestType::class, 'test_id');

@@ -214,9 +214,12 @@ class ExamPayloadBuilder
             'id' => (int) $section->id,
             'question_type' => $type,
             'input_type' => $section->question_type?->input_type,
-            'html' => (string) ($section->textarea ?? ''),
-            'from_option' => $section->from_option !== null ? (int) $section->from_option : null,
-            'to_option' => $section->to_option !== null ? (int) $section->to_option : null,
+            'html' => in_array($type, ExamService::GAP_TYPES, true)
+                ? $this->exam->maskGaps($section->textarea)
+                : (string) ($section->textarea ?? ''),
+            // Strings: matching ranges are letters ("A"-"G") or roman numerals as often as numbers.
+            'from_option' => $section->from_option !== null && $section->from_option !== '' ? (string) $section->from_option : null,
+            'to_option' => $section->to_option !== null && $section->to_option !== '' ? (string) $section->to_option : null,
             'options' => $section->options->sortBy('id')->values()->map(fn ($option) => [
                 'id' => (int) $option->id,
                 'html' => (string) ($option->textarea ?? ''),

@@ -10,6 +10,7 @@ import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
 import TextareaEditor from '@/components/textarea-editor';
 import { route } from 'ziggy-js';
+import { contentBreadcrumbs } from '@/lib/content-breadcrumbs';
 
 export default function CreatePart() {
     const { testType } = usePage<{ testType: TestType }>().props;
@@ -22,33 +23,12 @@ export default function CreatePart() {
     //     }
     // };
 
-    const folder = testType?.test?.folder;
     const test = testType?.test;
-    const folderName = folder?.name || t('folder') || 'Jild';
     const testName = test?.name || t('test') || 'Test';
     const typeName = testType?.type?.name || 'Module';
 
     const breadcrumbs: BreadcrumbItem[] = [
-        {
-            title: t('folders') || 'Jildlar',
-            href: route('folder.index'),
-        },
-        ...(folder?.id
-            ? [
-                  {
-                      title: folderName,
-                      href: route('folder.show', folder.id),
-                  },
-              ]
-            : []),
-        ...(test?.id
-            ? [
-                  {
-                      title: testName,
-                      href: folder?.id ? route('folder.show', folder.id) : route('folder.index'),
-                  },
-              ]
-            : []),
+        ...contentBreadcrumbs(test, t),
         ...(testType?.id
             ? [
                   {

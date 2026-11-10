@@ -172,7 +172,7 @@ export interface Test {
     created_at: string;
     updated_at: string;
     types: TestType[];
-    folder: Folder;
+    folder: Folder | null;
 }
 
 export interface TestPaginate {

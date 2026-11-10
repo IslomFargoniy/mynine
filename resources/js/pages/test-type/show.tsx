@@ -11,6 +11,7 @@ import PartComponent from '@/components/part/part';
 import ImportAiModal from '@/components/part/import-ai-modal';
 import PartModal from '@/components/part/part-modal';
 import { cleanTinyMce } from '@/utils/util';
+import { contentBreadcrumbs } from '@/lib/content-breadcrumbs';
 
 export default function TestTypeShow() {
     const { testType, question_types } = usePage<{
@@ -19,34 +20,13 @@ export default function TestTypeShow() {
     }>().props;
     const { t } = useTranslation();
 
-    const folder = testType.test?.folder;
     const test = testType.test;
     const type = testType.type;
-    const folderName = folder?.name || t('folder') || 'Jild';
     const testName = test?.name || t('test') || 'Test';
     const typeName = type?.name || 'Module';
 
     const breadcrumbs: BreadcrumbItem[] = [
-        {
-            title: t('folders') || 'Jildlar',
-            href: route('folder.index'),
-        },
-        ...(folder?.id
-            ? [
-                  {
-                      title: folderName,
-                      href: route('folder.show', folder.id),
-                  },
-              ]
-            : []),
-        ...(test?.id
-            ? [
-                  {
-                      title: testName,
-                      href: folder?.id ? route('folder.show', folder.id) : route('folder.index'),
-                  },
-              ]
-            : []),
+        ...contentBreadcrumbs(test, t),
         {
             title: typeName,
             href: route('test-type.show', testType.id),

@@ -42,6 +42,11 @@ class ExamService
                 $section->setAttribute('drag_options', $this->dragOptions($section));
             }
 
+            if (in_array($section->question_type?->type, self::GAP_TYPES, true)) {
+                // Response-only change: the model is never saved after this.
+                $section->setAttribute('textarea', $this->maskGaps($section->textarea));
+            }
+
             foreach ($section->questions as $question) {
                 $question->makeHidden('answer_text');
                 $question->options->each->makeHidden('is_correct');
@@ -55,6 +60,18 @@ class ExamService
                 }
             }
         }
+    }
+
+    /** Section types whose gaps are written into section.textarea as "{answer}". */
+    public const GAP_TYPES = ['complete_section', 'drag_and_drop'];
+
+    /**
+     * "{answer}" gaps -> "{}" so the correct answers never reach a candidate. Both exam rooms
+     * (web practice-section.tsx, desktop HtmlDocument.sectionBlankPattern) treat "{}" as a gap.
+     */
+    public function maskGaps(?string $html): string
+    {
+        return preg_replace('/\{[^{}]*\}/', '{}', (string) $html);
     }
 
     /**

@@ -12,6 +12,8 @@ mock-exam + desktop-client work on branch `feat/desktop-mock-system`. The API co
 | Open tests | Practice tests (`tests.purpose = practice`, `open = 1`) are solved by anyone on the website. Unchanged. |
 | Mock tests | Live in a separate **Mock Bank** (`tests.purpose = mock`). Never listed in practice/all-test, never startable outside a mock. |
 | Mock Bank granularity | Per **module** (a `test_types` row = one L, R or W module of a test). A mock picks one module per type, modules may come from different tests. |
+| Mock Bank storage | Mock Bank tests have **no folder** (`tests.folder_id = NULL`, migration `2026_11_10_000015`); admins own them directly. "Move to practice" asks for the target folder. |
+| PDF import | Mock Bank card → "Import from PDF": Listening / Reading question papers (+ optional answer key, optional Listening audio). One queued `ImportMockModuleJob` per module: text extraction (`DocumentTextExtractor`, smalot/pdfparser) → AI (`OpenAIService::parseMockModule`, model `OPENAI_IMPORT_MODEL`) → strict normalisation (`MockImportNormalizer`, answers applied by question number) → rows (`MockTestImporter`). Status in `test_imports`. Writing tasks and pictures are added by hand in the module editor. |
 | Reuse rule | A module used in a mock is not auto-picked again for **14 days** (`test_types.last_used_at`). Manual pick shows a warning. |
 | Candidates | **Code-only guests** (`mock_students`). Phone is **mandatory** for new candidates; it is used to detect repeat candidates (warn if a candidate already did a selected module). No account linking. |
 | Exam order | Listening → Reading → Writing on the desktop app, then Speaking face-to-face by time slot. |
@@ -56,6 +58,8 @@ New / changed columns:
 - `attempt_violations` (new): `id, attempt_id (cascade), device_id (nullable), type string(40), detail json nullable, occurred_at datetime, timestamps`, index on `attempt_id`. `attempts.tab_switch_count` is still incremented for type `focus_lost` for backward compatibility.
 - `devices` (new): `id, machine_id string unique, name, token_hash string(64), app_version, os_version, ip, last_seen_at, is_blocked bool, current_attempt_id nullable, timestamps`.
 - No release table: releases are described by the static `public/desktop/version.json` (see API.md "Updates"), read on the server by `App\Services\Desktop\ReleaseManifest` for `min_version` (426) and the admin devices page (latest version).
+- `tests.folder_id` nullable; existing `purpose=mock` tests detached from their folders.
+- `test_imports` (new): `id, test_id (cascade), user_id (nullable), status (queued|running|done|failed), replace bool, files json, modules json ({Listening: {status, message, warnings[], parts, questions}}), finished_at, timestamps`.
 - `settings` (new): `key string primary, value text nullable, timestamps`. Keys: `desktop_exit_password` (bcrypt hash), `desktop_exit_password_offline` (`pbkdf2_sha256$<iterations>$<salt_b64>$<hash_b64>` so the app can verify offline).
 
 Rules enforced server-side:

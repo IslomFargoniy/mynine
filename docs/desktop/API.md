@@ -148,7 +148,7 @@ Returns one `PartPayload` (same shape as in prefetch). 403 if the part is not in
       "question_type": "multiple_choice",          // multiple_choice | multiple_response | true_false | yes_no | fill_blank | matching | essay | complete_section | drag_and_drop
       "input_type": "radio",                       // radio | checkbox | text | select | textarea
       "html": "<p>Questions 1–5. Choose the correct letter…</p>",
-      "from_option": 1, "to_option": 5,
+      "from_option": "A", "to_option": "G",       // strings or null: letters, numbers ("1"-"5") or roman numerals
       "options": [ { "id": 9001, "html": "A heading text" } ],            // section-level options (matching lists)
       "drag_options": [ { "id": "d1", "label": "…" } ],                   // drag_and_drop only, else []
       "questions": [
@@ -161,8 +161,8 @@ Returns one `PartPayload` (same shape as in prefetch). 403 if the part is not in
 ```
 Semantics of each question type follow the web exam room components in
 `resources/js/components/practice/` (`practice-section.tsx`, `practice-question.tsx`, `matching-headings.tsx`,
-`practice-option.tsx`, `practice-essay.tsx`). `complete_section`: blanks are marked in `section.html`; each blank maps to a
-question in order. `drag_and_drop`: the candidate drops a `drag_options.label` onto a question; it is saved as `text`.
+`practice-option.tsx`, `practice-essay.tsx`). `complete_section` / `drag_and_drop`: blanks are marked in `section.html` as `{}` (the server strips the stored
+answers out of the braces); each blank maps to a question in order. `drag_and_drop`: the candidate drops a `drag_options.label` onto a question; it is saved as `text`.
 `matching`: saved as `text` (the chosen option letter/label) — mirror the web component.
 
 ### POST /exam/modules/{type_id}/start
