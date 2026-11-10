@@ -13,6 +13,7 @@ use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
+use OpenAI\Exceptions\RateLimitException;
 use Throwable;
 
 /**
@@ -76,8 +77,21 @@ class ImportMockModuleJob implements ShouldQueue
 
         TestImport::updateModule($this->importId, $this->module, [
             'status' => TestImport::FAILED,
-            'message' => mb_substr($e?->getMessage() ?: 'The import failed.', 0, 500),
+            'message' => mb_substr(self::describe($e), 0, 500),
         ]);
+    }
+
+    /**
+     * OpenAI answers 429 both for rate limits and for an empty credit balance; say what to do.
+     */
+    public static function describe(?Throwable $e): string
+    {
+        if ($e instanceof RateLimitException) {
+            return 'OpenAI rejected the request (429): the API credit balance is exhausted or the rate limit was hit. '
+                .'Check billing at platform.openai.com, then start the import again.';
+        }
+
+        return $e?->getMessage() ?: 'The import failed.';
     }
 
     /**

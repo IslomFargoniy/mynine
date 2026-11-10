@@ -18,9 +18,11 @@ use App\Services\Import\MockTestPdfParser;
 use App\Services\MockBankService;
 use App\Services\OpenAIService;
 use Barryvdh\DomPDF\Facade\Pdf;
+use GuzzleHttp\Psr7\Response;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Queue;
 use Illuminate\Support\Facades\Storage;
+use OpenAI\Exceptions\RateLimitException;
 
 /*
 |--------------------------------------------------------------------------
@@ -565,4 +567,11 @@ test('gap answers are masked for candidates and matching letters reach the deskt
     $matching = collect($payload['parts'])->pluck('sections')->flatten(1)->firstWhere('question_type', 'matching');
     expect($matching['from_option'])->toBe('A')->and($matching['to_option'])->toBe('G');
     expect(collect($payload['parts'])->pluck('sections')->flatten(1)->firstWhere('question_type', 'complete_section')['html'])->toContain('Phone number: {} (mobile)');
+});
+
+test('a 429 from OpenAI is explained as a billing / rate limit problem', function () {
+    $e = new RateLimitException(new Response(429));
+
+    expect(ImportMockModuleJob::describe($e))->toContain('credit balance is exhausted')
+        ->and(ImportMockModuleJob::describe(new RuntimeException('boom')))->toBe('boom');
 });
