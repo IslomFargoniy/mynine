@@ -147,9 +147,10 @@ class BlackButton extends StatelessWidget {
   final bool arrow;
 
   @override
-  Widget build(BuildContext context) => MouseRegion(
-        cursor: onTap == null ? SystemMouseCursors.basic : SystemMouseCursors.click,
-        child: GestureDetector(
+  Widget build(BuildContext context) => Material(
+        color: Colors.transparent,
+        child: InkWell(
+          // Focusable: Tab + Enter/Space work like the web <button>.
           onTap: onTap,
           child: Opacity(
             opacity: onTap == null ? 0.6 : 1,
