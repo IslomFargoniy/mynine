@@ -7,7 +7,7 @@ Ishlab chiqarish (production) serveriga yuklash, yangilash va fon xizmatlarini b
 > (ularni repoga yozmang).
 
 ## Talablar (serverda)
-- PHP 8.2+ (`mbstring`, `pdo_mysql`, `fileinfo`, `gd`, `zip`, `bcmath`), Composer 2
+- PHP **8.3+** (Laravel 13; `mbstring`, `pdo_mysql`, `fileinfo`, `gd`, `zip`, `bcmath`), Composer 2
 - Node 22+ va npm
 - MySQL 8
 - Supervisor (`queue:work` va `schedule:work` uchun)
@@ -65,6 +65,13 @@ php artisan up
 
 > Migratsiyadan oldin **ma'lumotlar bazasidan zaxira nusxa** oling:
 > `mysqldump -u <user> -p <db> | gzip > ~/backups/mynine-$(date +%F).sql.gz`
+
+### Desktop ilova yangilanishlari
+Imtihon ilovasi yangilanishni `https://<domen>/desktop/version.json` dan tekshiradi va o'rnatuvchini shu papkadan
+yuklaydi. Yangi versiya chiqarish: CI (`desktop-windows-build`) yig'gan `mynine-setup-X.Y.Z.exe` ni
+`<loyiha_papkasi>/public/desktop/` ga yuklang (eskilarini o'chirmang — rollback uchun kerak), keyin
+`version.json` dagi `version`, `file`, `sha256`, `size` ni CI bergan qiymatlarga yangilang.
+Batafsil: `desktop/README.md`.
 
 ### Audio fayllarni yopiq diskga o'tkazish (bir martalik)
 2026-10 dan oldin yuklangan audio `storage/app/public/audio` da (ochiq URL) saqlangan. Yangilashdan keyin bir marta:

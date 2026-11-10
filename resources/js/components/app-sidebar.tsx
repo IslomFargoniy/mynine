@@ -13,14 +13,21 @@ import {
 import { Auth, type NavItem } from '@/types';
 import { Link } from '@inertiajs/react';
 import {
-    LayoutDashboard,
-    Users,
-    GraduationCap,
-    ClipboardList,
+    Activity,
     BarChart3,
+    ClipboardList,
+    ConciergeBell,
+    Folder,
     GithubIcon as Github,
+    GraduationCap,
+    LayoutDashboard,
+    Library,
+    Mic,
+    Monitor,
+    PenLine,
     Send,
-    Folder
+    Settings,
+    Users
 } from 'lucide-react';
 import AppLogo from './app-logo';
 import { usePage } from '@inertiajs/react';
@@ -48,51 +55,62 @@ export function AppSidebar() {
 
     const { auth } = usePage().props as unknown as { auth?: Auth };
 
-    const isAdmin = auth?.user?.roles?.some(role => role.name === 'Admin');
-    const isStudent = auth?.user?.roles?.some(role => role.name === 'Student');
+    const roles = auth?.user?.roles?.map((role) => role.name) ?? [];
+    const isAdmin = roles.includes('Admin');
+    const isReception = !isAdmin && roles.includes('Reception');
 
-    const filteredNavItems = useMemo((): NavItem[] => {
-        const items: NavItem[] = [
-            {
-                title: t('sidebar.dashboard'),
-                href: '/dashboard', 
-                icon: LayoutDashboard
-            },
-            {
-                title: t('sidebar.user'),
-                href: '/user',
-                icon: Users
-            },
-            {
-                title: t('sidebar.folder'),
-                href: '/folder',
-                icon: Folder
-            },
-            {
-                title: t('sidebar.mock'),
-                href: '/mock',
-                icon: GraduationCap
-            },
-            {
-                title: t('sidebar.all_tests'),
-                href: '/all-test',
-                icon: ClipboardList
-            },
-            {
-                title: t('sidebar.my_result'),
-                href: '/attempt',
-                icon: BarChart3
-            }
+    const groups = useMemo((): { label?: string; items: NavItem[] }[] => {
+        if (isReception) {
+            return [
+                {
+                    items: [
+                        { title: t('exam_admin.nav.reception'), href: '/reception', icon: ConciergeBell },
+                        { title: t('exam_admin.nav.monitor'), href: '/monitor', icon: Activity },
+                        { title: t('sidebar.all_tests'), href: '/all-test', icon: ClipboardList },
+                    ],
+                },
+            ];
+        }
+
+        const platform: NavItem[] = [
+            { title: t('sidebar.dashboard'), href: '/dashboard', icon: LayoutDashboard },
+            ...(isAdmin
+                ? [
+                      { title: t('sidebar.user'), href: '/user', icon: Users },
+                      { title: t('sidebar.folder'), href: '/folder', icon: Folder },
+                  ]
+                : []),
+            { title: t('sidebar.all_tests'), href: '/all-test', icon: ClipboardList },
+            { title: t('sidebar.my_result'), href: '/attempt', icon: BarChart3 },
         ];
 
-        return items.filter(item => {
-            if (item.href === '/user' && !isAdmin) return false;
-            if (item.href === '/folder' && isStudent) return false;
-            if (item.href === '/mock' && isStudent) return false;
+        if (!isAdmin) {
+            return [{ items: platform }];
+        }
 
-            return true;
-        });
-    }, [isAdmin, i18n.language]);
+        return [
+            { items: platform },
+            {
+                label: t('exam_admin.nav.group_mock'),
+                items: [
+                    { title: t('sidebar.mock'), href: '/mock', icon: GraduationCap },
+                    { title: t('exam_admin.nav.mock_bank'), href: '/mock-bank', icon: Library },
+                    { title: t('exam_admin.nav.reception'), href: '/reception', icon: ConciergeBell },
+                    { title: t('exam_admin.nav.monitor'), href: '/monitor', icon: Activity },
+                    { title: t('exam_admin.nav.speaking'), href: '/speaking', icon: Mic },
+                    { title: t('exam_admin.nav.writing_review'), href: '/writing-review', icon: PenLine },
+                ],
+            },
+            {
+                label: t('exam_admin.nav.group_desktop'),
+                items: [
+                    { title: t('exam_admin.nav.devices'), href: '/desktop/devices', icon: Monitor },
+                    { title: t('exam_admin.nav.settings'), href: '/desktop/settings', icon: Settings },
+                ],
+            },
+        ];
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [isAdmin, isReception, i18n.language]);
 
     return (
         <Sidebar 
@@ -113,7 +131,9 @@ export function AppSidebar() {
             </SidebarHeader>
 
             <SidebarContent className="py-4">
-                <NavMain items={filteredNavItems} />
+                {groups.map((group, index) => (
+                    <NavMain key={group.label ?? index} items={group.items} label={group.label} />
+                ))}
             </SidebarContent>
 
             <SidebarFooter className="border-t border-gray-100/50 dark:border-gray-800/50 p-4">

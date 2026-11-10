@@ -5,7 +5,7 @@ use App\Models\Mock;
 use App\Models\MockStudent;
 
 beforeEach(function () {
-    $this->teacher = makeUser('Teacher');
+    $this->teacher = makeUser('Admin');
     ['test' => $this->test] = makeTestContent($this->teacher, 'Listening');
 });
 

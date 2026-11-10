@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Attempt;
 use App\Models\Mock;
 use App\Models\User\User;
 use Illuminate\Http\Request;
@@ -13,6 +14,10 @@ class HomeController extends Controller
 {
     public function index(Request $request)
     {
+        // Reception works from the reception desk; it has no dashboard.
+        if ($request->user()?->hasRole('Reception') && ! $request->user()->hasRole('Admin')) {
+            return redirect()->route('reception.index');
+        }
 
         $user = User::query()
             ->with([
@@ -40,7 +45,7 @@ class HomeController extends Controller
             ->find(Auth::id());
 
         // Get recent 5 attempts
-        $recent_attempts = \App\Models\Attempt::with(['test', 'attempt_types'])
+        $recent_attempts = Attempt::with(['test', 'attempt_types'])
             ->where('user_id', Auth::id())
             ->whereNotNull('finished_at')
             ->orderBy('finished_at', 'desc')

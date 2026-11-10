@@ -1,0 +1,110 @@
+name: desktop-windows-build
+
+# Builds the Flutter desktop exam client in desktop/ (see desktop/README.md).
+on:
+  push:
+    branches: [main]
+    tags: ['desktop-v*']
+    paths: ['desktop/**', '.github/workflows/desktop-windows-build.yml']
+  pull_request:
+    paths: ['desktop/**', '.github/workflows/desktop-windows-build.yml']
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: windows-latest
+    defaults:
+      run:
+        working-directory: desktop
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          flutter-version: 3.47.5
+          cache: true
+
+      - name: Dependencies and code generation
+        run: |
+          flutter pub get
+          dart run build_runner build
+
+      - name: Analyze and test
+        run: |
+          flutter analyze
+          flutter test --exclude-tags golden
+
+      - name: Build Windows release
+        run: flutter build windows --release
+
+      - name: Read version from pubspec.yaml
+        id: version
+        shell: pwsh
+        run: |
+          $line = Select-String -Path pubspec.yaml -Pattern '^version:\s*([0-9]+\.[0-9]+\.[0-9]+)' | Select-Object -First 1
+          $v = $line.Matches[0].Groups[1].Value
+          "version=$v" >> $env:GITHUB_OUTPUT
+
+      - name: Install Inno Setup
+        shell: pwsh
+        run: |
+          if (-not (Test-Path "${env:ProgramFiles(x86)}\Inno Setup 6\ISCC.exe")) {
+            choco install innosetup --no-progress -y
+          }
+
+      - name: Build installer
+        shell: pwsh
+        run: |
+          & "${env:ProgramFiles(x86)}\Inno Setup 6\ISCC.exe" "/DMyAppVersion=${{ steps.version.outputs.version }}" installer\mynine.iss
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+
+      - name: SHA-256
+        shell: pwsh
+        run: |
+          $file = "build\installer\mynine-setup-${{ steps.version.outputs.version }}.exe"
+          $hash = (Get-FileHash -Algorithm SHA256 $file).Hash.ToLower()
+          "$hash  mynine-setup-${{ steps.version.outputs.version }}.exe" | Out-File -Encoding ascii "$file.sha256"
+          Write-Host "SHA-256: $hash"
+          "## mynine-setup-${{ steps.version.outputs.version }}.exe`n``$hash``" >> $env:GITHUB_STEP_SUMMARY
+
+      # version.json for the static update folder <site>/public/desktop/ (see desktop/README.md).
+      # notes = the annotated tag message on desktop-v* tags, otherwise "".
+      - name: Generate version.json
+        shell: pwsh
+        env:
+          REF_TYPE: ${{ github.ref_type }}
+          REF_NAME: ${{ github.ref_name }}
+        run: |
+          $version = "${{ steps.version.outputs.version }}"
+          $name = "mynine-setup-$version.exe"
+          $file = "build\installer\$name"
+          $notes = ""
+          if ($env:REF_TYPE -eq "tag") {
+            git fetch --force --no-tags origin "refs/tags/$($env:REF_NAME):refs/tags/$($env:REF_NAME)" 2>$null
+            if ((git cat-file -t "refs/tags/$($env:REF_NAME)") -eq "tag") {
+              $notes = ((git tag -l --format='%(contents:subject)%0a%0a%(contents:body)' $env:REF_NAME) -join "`n").Trim()
+            }
+          }
+          $manifest = [ordered]@{
+            version      = $version
+            file         = $name
+            sha256       = (Get-FileHash -Algorithm SHA256 $file).Hash.ToLower()
+            size         = (Get-Item $file).Length
+            mandatory    = $false
+            min_version  = $null
+            notes        = $notes
+            published_at = [DateTime]::UtcNow.ToString("yyyy-MM-dd'T'HH:mm:ss'Z'")
+          }
+          $manifest | ConvertTo-Json | Set-Content -Encoding utf8NoBOM "build\installer\version.json"
+          Get-Content "build\installer\version.json"
+          $global:LASTEXITCODE = 0  # a failed tag fetch only means empty notes
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: mynine-setup-${{ steps.version.outputs.version }}
+          path: |
+            desktop/build/installer/mynine-setup-*.exe
+            desktop/build/installer/mynine-setup-*.exe.sha256
+            desktop/build/installer/version.json
+          if-no-files-found: error

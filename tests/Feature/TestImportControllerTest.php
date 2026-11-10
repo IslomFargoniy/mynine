@@ -10,7 +10,7 @@ use App\Services\OpenAIService;
 
 test('it imports sections, questions, and options successfully from raw text via AI', function () {
     // 1. Arrange
-    $user = makeUser('Teacher');
+    $user = makeUser('Admin');
 
     $folder = Folder::create(['name' => 'Test Folder', 'user_id' => $user->id]);
     $test = TestModel::create([

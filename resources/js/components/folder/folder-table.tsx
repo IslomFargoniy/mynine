@@ -24,7 +24,6 @@ const FolderTable = ({ searchData, ...folder }: FolderTableProps) => {
     const { auth } = usePage().props as unknown as { auth?: Auth };
 
     const isAdmin = auth?.user?.roles?.some(role => role.name === 'Admin');
-    const isTeacher = auth?.user?.roles?.some(role => role.name === 'Teacher');
 
     const handleUpdateClick = (folderData: Folder) => {
         setSelectedFolder(folderData); // Set the selected folder data
@@ -62,7 +61,7 @@ const FolderTable = ({ searchData, ...folder }: FolderTableProps) => {
                 <h2 className="text-xl font-semibold text-gray-800 dark:text-gray-100">
                     {t('folder')}
                 </h2>
-                {(isAdmin || isTeacher) && <CreateFolderModal />}
+                {isAdmin && <CreateFolderModal />}
             </div>
 
 
@@ -108,7 +107,7 @@ const FolderTable = ({ searchData, ...folder }: FolderTableProps) => {
                             </div>
 
                             {/* Actions */}
-                            {(isAdmin || isTeacher) && (
+                            {isAdmin && (
                                 <div className="mt-3 flex gap-2 pt-1">
                                     <button
                                         type="button"

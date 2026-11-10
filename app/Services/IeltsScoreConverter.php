@@ -132,7 +132,16 @@ class IeltsScoreConverter
         if (empty($scores)) {
             return 0.0;
         }
-        $avg = array_sum($scores) / count($scores);
+
+        return static::roundBand(array_sum($scores) / count($scores));
+    }
+
+    /**
+     * IELTS rounding of an average to a band: .25 rounds up to .5, .75 rounds up to the next whole band.
+     */
+    public static function roundBand(float $avg): float
+    {
+        $avg = round($avg, 6);
         $fraction = $avg - floor($avg);
         if ($fraction < 0.25) {
             return (float) floor($avg);

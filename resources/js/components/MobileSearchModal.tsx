@@ -20,14 +20,13 @@ interface MobileSearchModalProps {
     handleSubmit: (e: React.FormEvent) => void;
     roles?: Role[];
     users?: User[];
-    teachers?: User[];
     mocks?: Mock[];
     tests?: Test[];
     folders?: Folder[];
     isAdmin?: boolean;
 }
 
-const MobileSearchModal = ({ data, setData, handleSubmit, roles, users, teachers, mocks, tests, folders, isAdmin = false }: MobileSearchModalProps) => {
+const MobileSearchModal = ({ data, setData, handleSubmit, roles, users, mocks, tests, folders, isAdmin = false }: MobileSearchModalProps) => {
     const [isOpen, setIsOpen] = useState(false);
     const { t } = useTranslation();
 
@@ -36,7 +35,6 @@ const MobileSearchModal = ({ data, setData, handleSubmit, roles, users, teachers
         data.from || 
         data.to || 
         data.role || 
-        data.teacher_id || 
         data.user_id || 
         data.mock_id || 
         data.test_id || 
@@ -83,7 +81,6 @@ const MobileSearchModal = ({ data, setData, handleSubmit, roles, users, teachers
                                 }} 
                                 roles={roles}
                                 users={users}
-                                teachers={teachers}
                                 mocks={mocks}
                                 tests={tests}
                                 folders={folders}

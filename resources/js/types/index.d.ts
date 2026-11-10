@@ -56,7 +56,6 @@ export interface SearchData {
     firm_id?: number;
     from?: string;
     to?: string;
-    teacher_id?: number | string;
     user_id?: number | string;
     mock_id?: number | string;
     test_id?: number | string;
@@ -167,6 +166,8 @@ export interface Test {
     playtime_seconds: number;
     active: number;
     open: number;
+    purpose?: 'practice' | 'mock';
+    bank_status?: 'draft' | 'ready' | 'archived';
     attempts_count: number;
     created_at: string;
     updated_at: string;
@@ -190,6 +191,7 @@ export interface TestType {
     id: number;
     test_id: number;
     type_id: number;
+    last_used_at?: string | null;
     created_at: string;
     updated_at: string;
     type: Type;
@@ -282,8 +284,22 @@ export interface Mock {
 
     slug: string;
     active: number;
+    status?: 'active' | 'inactive' | 'scheduled' | 'expired';
+    require_desktop?: boolean;
+    speaking_starts_at?: string | null;
+    speaking_slot_minutes?: number;
+    modules?: MockModule[];
     created_at: string;
     updated_at: string;
+}
+
+export interface MockModule {
+    id: number;
+    mock_id: number;
+    type_id: number;
+    test_type_id: number;
+    type?: Type;
+    test_type?: TestType;
 }
 
 export interface MockPaginate {

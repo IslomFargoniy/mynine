@@ -9,11 +9,10 @@ import { useTranslation } from 'react-i18next';
 import MobileSearchModal from '@/components/MobileSearchModal';
 
 export default function Mock() {
-    const { mock, tests, users, teachers, folders, filters, isAdmin } = usePage<{
+    const { mock, tests, users, folders, filters, isAdmin } = usePage<{
         mock: MockPaginate,
         tests: Test[],
         users: User[],
-        teachers?: User[],
         folders?: Folder[],
         filters: any,
         isAdmin: boolean
@@ -30,7 +29,6 @@ export default function Mock() {
     // Form handling for search and per_page
     const { data, setData } = useForm<SearchData>({
         search: filters?.search || '',
-        teacher_id: filters?.teacher_id || '',
         user_id: filters?.user_id || '',
         test_id: filters?.test_id || '',
         folder_id: filters?.folder_id || '',
@@ -57,7 +55,6 @@ export default function Mock() {
                         setData={setData}
                         handleSubmit={handleSubmit}
                         users={users}
-                        teachers={teachers}
                         tests={tests}
                         folders={folders}
                         isAdmin={isAdmin}
@@ -69,7 +66,6 @@ export default function Mock() {
                             handleSubmit={handleSubmit}
                             isAdmin={isAdmin}
                             users={users}
-                            teachers={teachers}
                             tests={tests}
                             folders={folders}
                         />

@@ -4,10 +4,11 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Laravel\Sanctum\HasApiTokens;
 
 class MockStudent extends Model
 {
-    use HasFactory;
+    use HasApiTokens, HasFactory;
 
     protected $fillable = [
         'mock_id',
@@ -15,10 +16,19 @@ class MockStudent extends Model
         'code',
         'attended',
         'phone',
+        'checked_in_at',
+        'speaking_at',
+        'result_printed_at',
+        'result_delivered_at',
+        'delivered_by',
     ];
 
     protected $casts = [
         'attended' => 'boolean',
+        'checked_in_at' => 'datetime',
+        'speaking_at' => 'datetime',
+        'result_printed_at' => 'datetime',
+        'result_delivered_at' => 'datetime',
     ];
 
     protected $with = [
@@ -33,6 +43,11 @@ class MockStudent extends Model
     public function attempt()
     {
         return $this->hasOne(Attempt::class, 'mock_student_id');
+    }
+
+    public function deliveredBy()
+    {
+        return $this->belongsTo(User\User::class, 'delivered_by');
     }
 
     /**

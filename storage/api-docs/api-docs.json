@@ -1,23 +1,31 @@
 {
     "openapi": "3.0.0",
     "info": {
-        "title": "API",
-        "description": "Description of your API",
+        "title": "Mynine API",
+        "description": "Mynine.uz API (desktop exam client).",
         "version": "1.0.0"
     },
     "paths": {
-        "/api/example": {
+        "/api/user": {
             "get": {
                 "tags": [
-                    "Example"
+                    "Auth"
                 ],
-                "summary": "Example API",
-                "operationId": "22dfb0a7c663e09ec23fa724ba4e90fe",
+                "summary": "Current authenticated user",
+                "operationId": "30e87a2b41cda034f2df75e6c356007a",
                 "responses": {
                     "200": {
-                        "description": "Successful response"
+                        "description": "The user"
+                    },
+                    "401": {
+                        "description": "Unauthenticated"
                     }
-                }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
             }
         }
     },
@@ -25,15 +33,14 @@
         "securitySchemes": {
             "bearerAuth": {
                 "type": "http",
-                "bearerFormat": "JWT",
                 "scheme": "bearer"
             }
         }
     },
     "tags": [
         {
-            "name": "Example",
-            "description": "Example"
+            "name": "Auth",
+            "description": "Auth"
         }
     ]
 }

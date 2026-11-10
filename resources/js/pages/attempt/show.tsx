@@ -45,7 +45,6 @@ export default function AttemptShow() {
     const { auth } = usePage().props as unknown as { auth?: Auth };
 
     const isAdmin = auth?.user?.roles?.some(role => role.name === 'Admin');
-    const isTeacher = auth?.user?.roles?.some(role => role.name === 'Teacher');
 
     const getListeningBand = (correct: number): number => {
         if (correct >= 39) return 9.0;
@@ -236,7 +235,7 @@ export default function AttemptShow() {
                                                 </div>
                                             ) : isSpeaking ? (
                                                 <div className="text-xs text-gray-500 dark:text-gray-400">
-                                                    Teacher / AI Assessment
+                                                    Examiner / AI Assessment
                                                 </div>
                                             ) : null}
                                         </div>
@@ -252,7 +251,7 @@ export default function AttemptShow() {
                         })}
                     </div>
 
-                    {(isTeacher || isAdmin) && (
+                    {isAdmin && (
                         <div className="pt-2 flex justify-end">
                             <EvaluateSpeaking attempt={attempt} />
                         </div>

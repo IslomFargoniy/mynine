@@ -25,6 +25,14 @@ class TestPolicy
         return $this->isContentManager($user);
     }
 
+    /**
+     * Mock Bank: listing, readiness, status changes, moving tests to practice (answer keys live here).
+     */
+    public function manageBank(User $user): bool
+    {
+        return $user->hasRole('Admin');
+    }
+
     public function update(User $user, Test $test): bool
     {
         return $this->ownsTest($user, $test);

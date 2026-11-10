@@ -8,7 +8,7 @@ use App\Models\Option;
 use App\Models\Question;
 
 test('is_correct_count accepts alternative answers and number formatting', function () {
-    $teacher = makeUser('Teacher');
+    $teacher = makeUser('Admin');
     ['test' => $test, 'testType' => $testType, 'part' => $part] = makeTestContent($teacher, 'Listening');
     $section = makeSection($part, 'fill_blank');
 
@@ -38,7 +38,7 @@ test('is_correct_count accepts alternative answers and number formatting', funct
 });
 
 test('writing modules sum the essay band scores instead of counting answers', function () {
-    $teacher = makeUser('Teacher');
+    $teacher = makeUser('Admin');
     ['test' => $test, 'testType' => $testType, 'part' => $part] = makeTestContent($teacher, 'Writing');
     $section = makeSection($part, 'essay');
     $task1 = Question::create(['section_id' => $section->id, 'textarea' => 'Task 1']);

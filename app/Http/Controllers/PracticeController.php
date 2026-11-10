@@ -2,12 +2,11 @@
 
 namespace App\Http\Controllers;
 
-use App\Jobs\EvaluateEssayJob;
 use App\Models\Attempt;
-use App\Models\AttemptPart;
 use App\Models\AttemptType;
 use App\Models\Part;
 use App\Models\TestType;
+use App\Services\ExamService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -16,6 +15,8 @@ use Inertia\Inertia;
 
 class PracticeController extends Controller
 {
+    public function __construct(private readonly ExamService $exam) {}
+
     /**
      * Exam room page.
      */
@@ -35,12 +36,13 @@ class PracticeController extends Controller
             return back()->with('error', __('error.unauthorized_attempt'));
         }
 
-        if ($error = $this->mockWindowError($attempt)) {
+        if ($error = $this->exam->mockWindowError($attempt)) {
             return back()->with('error', $error);
         }
 
-        $this->autoFinishExpiredTypes($attempt->id);
+        $this->exam->autoFinishExpiredTypes($attempt);
         $attempt->load('attempt_types');
+        $this->useMockModules($attempt);
 
         return Inertia::render('practice/index', [
             'attempt' => $attempt,
@@ -96,7 +98,7 @@ class PracticeController extends Controller
             ->firstOrFail();
 
         if (! $attemptType->is_submitted) {
-            $this->finishTypeWithEvaluation($attempt, $attemptType);
+            $this->exam->finishTypeWithEvaluation($attempt, $attemptType);
         }
 
         return response()->json([
@@ -110,13 +112,14 @@ class PracticeController extends Controller
     public function practice_attempt(Attempt $attempt): JsonResponse
     {
         $this->authorize('participate', $attempt);
-        $this->autoFinishExpiredTypes($attempt->id);
+        $this->exam->autoFinishExpiredTypes($attempt);
 
         $attempt->load([
             'user:id,name',
             'attempt_types',
             'test' => fn ($q) => $q->with(['types' => fn ($q) => $q->whereHas('parts')]),
         ]);
+        $this->useMockModules($attempt);
 
         return response()->json([
             'data' => $attempt,
@@ -131,12 +134,12 @@ class PracticeController extends Controller
         $request->validate(['attempt_id' => 'required|exists:attempts,id']);
         $attempt = Attempt::findOrFail($request->attempt_id);
         $this->authorize('participate', $attempt);
-        abort_unless((int) $test_type->test_id === (int) $attempt->test_id, 403);
+        abort_unless($attempt->allowsTestType($test_type), 403);
 
-        $this->autoFinishExpiredTypes($attempt->id);
+        $this->exam->autoFinishExpiredTypes($attempt);
 
         $test_type->load('parts');
-        $test_type->parts->each(fn (Part $part) => $this->hideAnswerKeys($part));
+        $test_type->parts->each(fn (Part $part) => $this->exam->hideAnswerKeys($part));
 
         return response()->json([
             'data' => $test_type,
@@ -152,27 +155,11 @@ class PracticeController extends Controller
         $attempt = Attempt::findOrFail($request->attempt_id);
         $this->authorize('participate', $attempt);
 
-        $part->load(['test_type.test', 'test_type.type']);
-        abort_unless((int) $part->test_type->test_id === (int) $attempt->test_id, 403);
+        abort_unless($attempt->allowsPart($part), 403);
 
-        $this->autoFinishExpiredTypes($attempt->id);
+        $this->exam->autoFinishExpiredTypes($attempt);
 
-        $type = $part->test_type->type;
-        if ($type->name === 'Listening' && $part->test_type->test->playtime_seconds) {
-            $typeFinishedAt = now()->addSeconds((int) $part->test_type->test->playtime_seconds + 5);
-        } else {
-            $typeFinishedAt = now()->addMinutes((int) $type->minute);
-        }
-
-        $attemptPart = AttemptPart::firstOrCreate(
-            ['attempt_id' => $attempt->id, 'part_id' => $part->id],
-            ['started_at' => now(), 'finished_at' => now()->addMinutes((int) ($part->minute ?: $type->minute))]
-        );
-
-        AttemptType::firstOrCreate(
-            ['attempt_id' => $attempt->id, 'type_id' => $part->test_type->type_id],
-            ['started_at' => now(), 'finished_at' => $typeFinishedAt]
-        );
+        $attemptPart = $this->exam->startPart($attempt, $part);
 
         $part = Part::with([
             'test_type',
@@ -181,7 +168,7 @@ class PracticeController extends Controller
             'sections.questions.attempt_answer' => fn ($q) => $q->where('attempt_part_id', $attemptPart->id)->with('attempt_answer_options'),
         ])->findOrFail($part->id);
 
-        $this->hideAnswerKeys($part);
+        $this->exam->hideAnswerKeys($part);
 
         return response()->json([
             'data' => $part,
@@ -192,86 +179,14 @@ class PracticeController extends Controller
     }
 
     /**
-     * Strip everything a candidate could use to cheat from a part payload and
-     * build a neutral, pre-sorted option list for drag-and-drop sections.
+     * Module mocks pick modules from several tests: show those instead of attempts.test_id's modules.
      */
-    private function hideAnswerKeys(Part $part): void
+    private function useMockModules(Attempt $attempt): void
     {
-        foreach ($part->sections as $section) {
-            $section->options->each->makeHidden('is_correct');
-
-            if ($section->question_type?->type === 'drag_and_drop') {
-                $labels = $section->questions->pluck('answer_text')
-                    ->merge($section->options->pluck('textarea'))
-                    ->map(fn ($label) => trim((string) $label))
-                    ->filter()
-                    ->unique(fn ($label) => mb_strtolower($label))
-                    ->sort(fn ($a, $b) => strcasecmp($a, $b))
-                    ->values();
-
-                $section->setAttribute('drag_options', $labels->map(fn ($label, $i) => [
-                    'id' => 'd'.($i + 1),
-                    'label' => $label,
-                ])->all());
-            }
-
-            foreach ($section->questions as $question) {
-                $question->makeHidden('answer_text');
-                $question->options->each->makeHidden('is_correct');
-
-                if ($question->attempt_answer) {
-                    $question->attempt_answer->makeHidden(['is_correct', 'score', 'review_note', 'review_note_ai']);
-                    $question->attempt_answer->attempt_answer_options->each(function ($answerOption) {
-                        $answerOption->makeHidden('is_correct');
-                        $answerOption->option?->makeHidden('is_correct');
-                    });
-                }
-            }
-        }
-    }
-
-    private function mockWindowError(Attempt $attempt): ?string
-    {
-        $mock = $attempt->mock;
-        if (! $mock) {
-            return null;
-        }
-
-        return match ($mock->status) {
-            'inactive' => 'Ushbu Mock test hozirda faol emas!',
-            'scheduled' => 'Ushbu Mock test hali boshlanmagan! Boshlanish vaqti: '.\Carbon\Carbon::parse($mock->started_at)->format('d.m.Y H:i'),
-            'expired' => 'Ushbu Mock test vaqti tugagan! Yakunlangan vaqti: '.\Carbon\Carbon::parse($mock->finished_at)->format('d.m.Y H:i'),
-            default => null,
-        };
-    }
-
-    /**
-     * Close every module whose timer ran out and queue AI evaluation for its essays.
-     */
-    private function autoFinishExpiredTypes(int $attemptId): void
-    {
-        $expired = AttemptType::where('attempt_id', $attemptId)
-            ->where('is_submitted', false)
-            ->whereNotNull('finished_at')
-            ->where('finished_at', '<', now())
-            ->get();
-
-        if ($expired->isEmpty()) {
+        if ($attempt->moduleTestTypeIds() === null || ! $attempt->test) {
             return;
         }
 
-        $attempt = Attempt::findOrFail($attemptId);
-        foreach ($expired as $attemptType) {
-            $this->finishTypeWithEvaluation($attempt, $attemptType);
-        }
-    }
-
-    private function finishTypeWithEvaluation(Attempt $attempt, AttemptType $attemptType): void
-    {
-        $attemptType->finish();
-
-        foreach ($attempt->essayAnswersForEvaluation($attemptType->type_id) as $answer) {
-            EvaluateEssayJob::dispatch($answer->id);
-        }
+        $attempt->test->setRelation('types', $attempt->moduleTestTypes());
     }
 }

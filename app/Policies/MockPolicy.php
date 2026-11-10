@@ -39,11 +39,40 @@ class MockPolicy
     }
 
     /**
-     * Adding/removing candidates for a mock.
+     * Adding candidates, printing code cards and checking them in (Admin + Reception).
      */
     public function manageStudents(User $user, Mock $mock): bool
     {
-        return $this->owns($user, $mock);
+        return $this->isStaff($user);
+    }
+
+    /**
+     * Removing a candidate (Admin only).
+     */
+    public function deleteStudents(User $user, Mock $mock): bool
+    {
+        return $user->hasRole('Admin');
+    }
+
+    /**
+     * Reception desk and live monitor (view), result sheets and delivery (Admin + Reception).
+     */
+    public function operate(User $user, ?Mock $mock = null): bool
+    {
+        return $this->isStaff($user);
+    }
+
+    /**
+     * Monitor actions other than remote unlock, speaking slots and scores, Writing confirmation (Admin).
+     */
+    public function examine(User $user, ?Mock $mock = null): bool
+    {
+        return $user->hasRole('Admin');
+    }
+
+    protected function isStaff(User $user): bool
+    {
+        return $user->hasAnyRole(['Admin', 'Reception']);
     }
 
     protected function owns(User $user, Mock $mock): bool

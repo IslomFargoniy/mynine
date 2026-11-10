@@ -1,12 +1,11 @@
 import DeleteItemModal from '@/components/delete-item-modal';
-import CreateMockModal from '@/components/mock/create-mock-modal';
-import UpdateMockModal from '@/components/mock/update-mock-modal';
+import { ModuleBadge } from '@/components/exam-admin/shared';
 import MockStudentManager from '@/components/mock/mock-student-manager';
 
 import { Mock, type MockPaginate, SearchData, Test } from '@/types';
 import { Link, useForm } from '@inertiajs/react';
 import { format } from 'date-fns';
-import { CheckCircle, Clock, MinusCircle, PencilIcon, TrashIcon } from 'lucide-react';
+import { CheckCircle, Clock, MinusCircle, Monitor, PencilIcon, Plus, TrashIcon } from 'lucide-react';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { toast } from 'sonner';
@@ -18,7 +17,7 @@ interface MockTableProps extends MockPaginate {
 
 const MockTable = ({ tests, searchData, ...mock }: MockTableProps) => {
     const { t } = useTranslation(); // Using the translation hook
-    const [open, setOpen] = useState(false);
+    const [, setOpen] = useState(false);
     const [openDelete, setOpenDelete] = useState(false);
     const [selectedMock, setSelectedMock] = useState<Mock | null>(null);
 
@@ -52,11 +51,6 @@ const MockTable = ({ tests, searchData, ...mock }: MockTableProps) => {
         );
     };
 
-    const handleUpdateClick = (mockData: Mock) => {
-        setSelectedMock(mockData); // Set the selected mock data
-        setOpen(true); // Open the modal
-    };
-
     const handleDeleteClick = (mockData: Mock) => {
         setSelectedMock(mockData); // Set the selected mock for deletion
         setOpenDelete(true); // Open the delete modal
@@ -85,7 +79,13 @@ const MockTable = ({ tests, searchData, ...mock }: MockTableProps) => {
         <div>
             <div className="mb-4 flex items-center justify-between">
                 <h2 className="text-xl font-semibold text-gray-800 dark:text-gray-100">{t('mock')}</h2>
-                <CreateMockModal tests={tests} />
+                <Link
+                    href={route('mock.create')}
+                    className="inline-flex cursor-pointer items-center gap-2 rounded-xl bg-blue-600 px-4 py-2.5 text-xs font-bold text-white shadow-xs transition-all hover:bg-blue-700 active:scale-95"
+                >
+                    <Plus className="h-4 w-4" />
+                    {t('create')} {t('mock')}
+                </Link>
             </div>
 
             {/* Cards Grid */}
@@ -109,11 +109,26 @@ const MockTable = ({ tests, searchData, ...mock }: MockTableProps) => {
                                 <h3 className="line-clamp-1 text-xl font-bold text-gray-900 dark:text-white group-hover:text-blue-600 transition-colors">
                                     <Link href={`/mock/${item.id}`}>{item.name}</Link>
                                 </h3>
-                                <div className="mt-1 flex items-center text-xs text-gray-500 dark:text-gray-400">
-                                    <span className="font-semibold text-blue-600/70">{item.test?.folder?.name}</span>
-                                    <span className="mx-2 opacity-30">/</span>
-                                    <span className="truncate">{item.test?.name}</span>
-                                </div>
+                                {item.modules && item.modules.length > 0 ? (
+                                    <div className="mt-2 flex flex-wrap items-center gap-1">
+                                        {item.modules.map((module) => (
+                                            <ModuleBadge key={module.id} type={module.type?.name}>
+                                                {module.type?.name?.[0]} · {module.test_type?.test?.name}
+                                            </ModuleBadge>
+                                        ))}
+                                        {item.require_desktop && (
+                                            <span className="inline-flex items-center gap-1 rounded-lg border border-gray-200 px-1.5 py-0.5 text-[10px] font-bold text-gray-500 dark:border-gray-700">
+                                                <Monitor className="h-3 w-3" />
+                                            </span>
+                                        )}
+                                    </div>
+                                ) : (
+                                    <div className="mt-1 flex items-center text-xs text-gray-500 dark:text-gray-400">
+                                        <span className="font-semibold text-blue-600/70">{item.test?.folder?.name}</span>
+                                        <span className="mx-2 opacity-30">/</span>
+                                        <span className="truncate">{item.test?.name}</span>
+                                    </div>
+                                )}
                             </div>
 
                             {/* Comment */}
@@ -148,14 +163,13 @@ const MockTable = ({ tests, searchData, ...mock }: MockTableProps) => {
                                 />
 
                                 <div className="flex items-center gap-1.5">
-                                    <button
-                                        type="button"
-                                        onClick={() => handleUpdateClick(item)}
+                                    <Link
+                                        href={route('mock.edit', item.id)}
                                         className="p-2 bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 hover:bg-blue-600 hover:text-white dark:hover:bg-blue-600 dark:hover:text-white rounded-xl font-semibold text-xs transition-all cursor-pointer shadow-xs active:scale-95"
                                         title={t('edit')}
                                     >
                                         <PencilIcon className="h-3.5 w-3.5" />
-                                    </button>
+                                    </Link>
 
                                     <button
                                         type="button"
@@ -173,8 +187,6 @@ const MockTable = ({ tests, searchData, ...mock }: MockTableProps) => {
             </div>
 
             {/* Modals */}
-            {selectedMock && open && <UpdateMockModal tests={tests} mock={selectedMock} open={open} setOpen={setOpen} />}
-
             {selectedMock && openDelete && <DeleteItemModal item={selectedMock} open={openDelete} setOpen={setOpenDelete} onDelete={handleDelete} />}
 
             {/* Pagination */}

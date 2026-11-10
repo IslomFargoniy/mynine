@@ -17,7 +17,7 @@ class AttemptPolicy
 
     /**
      * Who may see an attempt and its results: the candidate (logged in or via candidate code),
-     * admins, and the teacher who owns the mock or the test.
+     * and admins.
      */
     public function view(?User $user, Attempt $attempt): bool
     {

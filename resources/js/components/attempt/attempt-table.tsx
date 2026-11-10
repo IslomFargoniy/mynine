@@ -27,7 +27,6 @@ const AttemptTable = ({ searchData, hidePagination, ...attempt }: AttemptTablePr
     const { auth } = usePage().props as unknown as { auth?: Auth };
 
     const isAdmin = auth?.user?.roles?.some(role => role.name === 'Admin');
-    const isTeacher = auth?.user?.roles?.some(role => role.name === 'Teacher');
 
     const handleDeleteClick = (attemptData: Attempt) => {
         setSelectedAttempt(attemptData); // Set the selected attempt for deletion
@@ -192,7 +191,7 @@ const AttemptTable = ({ searchData, hidePagination, ...attempt }: AttemptTablePr
                                                 </Link>
                                             )}
 
-                                            {(isAdmin || isTeacher) && (
+                                            {isAdmin && (
                                                 <button
                                                     onClick={() => handleDeleteClick(item)}
                                                     className="p-2 text-red-500 hover:bg-red-50 dark:hover:bg-red-900/30 rounded-lg transition-colors opacity-0 group-hover:opacity-100"

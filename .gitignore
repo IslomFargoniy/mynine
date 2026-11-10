@@ -22,5 +22,5 @@ yarn-error.log
 /.nova
 /.vscode
 /.zed
-/public/desktop/node_modules
-/public/desktop/dist
+/public/desktop/*.exe
+/public/desktop/*.exe.sha256

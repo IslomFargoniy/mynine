@@ -9,10 +9,9 @@ import { useTranslation } from 'react-i18next';
 import MobileSearchModal from '@/components/MobileSearchModal';
 
 export default function AllTest() {
-    const { folder, folders, teachers, filters, isAdmin } = usePage<{ 
+    const { folder, folders, filters, isAdmin } = usePage<{ 
         folder: FolderPaginate,
         folders: Folder[],
-        teachers?: User[],
         filters: any,
         isAdmin: boolean
     }>().props;
@@ -28,7 +27,6 @@ export default function AllTest() {
     // Form handling for search and per_page
     const { data, setData } = useForm<SearchData>({
         search: filters?.search || '',
-        teacher_id: filters?.teacher_id || '',
         folder_id: filters?.folder_id || '',
         from: filters?.from || '',
         to: filters?.to || '',
@@ -104,7 +102,6 @@ export default function AllTest() {
                         setData={setData}
                         handleSubmit={handleSubmit}
                         folders={folders}
-                        teachers={teachers}
                         isAdmin={isAdmin}
                     />
                     <div className="hidden lg:block w-full">
@@ -113,7 +110,6 @@ export default function AllTest() {
                             setData={setData} 
                             data={data} 
                             folders={folders}
-                            teachers={teachers}
                             isAdmin={isAdmin}
                         />
                     </div>

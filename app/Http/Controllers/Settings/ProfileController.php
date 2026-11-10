@@ -14,19 +14,6 @@ use Inertia\Response;
 class ProfileController extends Controller
 {
     /**
-     * @OA\Get(
-     *     path="/api/example",
-     *     summary="Example API",
-     *     tags={"Example"},
-     *
-     *     @OA\Response(
-     *         response=200,
-     *         description="Successful response"
-     *     )
-     * )
-     */
-
-    /**
      * Show the user's profile settings page.
      */
     public function edit(Request $request): Response
