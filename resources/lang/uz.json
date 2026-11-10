@@ -1009,5 +1009,6 @@
     },
     "Upload a Listening, Reading or Writing file.": "Listening, Reading yoki Writing faylini yuklang.",
     "An import of this test is still running.": "Bu testning importi hali davom etmoqda.",
-    "Import started. It takes a few minutes; the status is shown on the test card.": "Import boshlandi. Bir necha daqiqa davom etadi; holati test kartasida ko'rsatiladi."
+    "Import started. It takes a few minutes; the status is shown on the test card.": "Import boshlandi. Bir necha daqiqa davom etadi; holati test kartasida ko'rsatiladi.",
+    "Listening audio saved.": "Listening audiosi saqlandi."
 }

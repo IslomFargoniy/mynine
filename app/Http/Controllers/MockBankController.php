@@ -147,6 +147,14 @@ class MockBankController extends Controller
 
         $modules = array_values(array_filter(MockTestPdfParser::MODULES, fn ($m) => $request->hasFile(strtolower($m).'_file')));
         if ($modules === []) {
+            // Audio on its own: just attach it to the test, no AI import.
+            if ($request->hasFile('listening_audio')) {
+                $audio = $this->audio->store($request->file('listening_audio'), $test->audio_path);
+                $test->forceFill(['audio_path' => $audio['path'], 'playtime_seconds' => $audio['playtime']])->save();
+
+                return back()->with('success', __('Listening audio saved.'));
+            }
+
             throw ValidationException::withMessages(['listening_file' => __('Upload a Listening, Reading or Writing file.')]);
         }
 

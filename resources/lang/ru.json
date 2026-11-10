@@ -1009,5 +1009,6 @@
     },
     "Upload a Listening, Reading or Writing file.": "Загрузите файл Listening, Reading или Writing.",
     "An import of this test is still running.": "Импорт этого теста ещё выполняется.",
-    "Import started. It takes a few minutes; the status is shown on the test card.": "Импорт запущен. Это займёт несколько минут; статус показан на карточке теста."
+    "Import started. It takes a few minutes; the status is shown on the test card.": "Импорт запущен. Это займёт несколько минут; статус показан на карточке теста.",
+    "Listening audio saved.": "Аудио Listening сохранено."
 }

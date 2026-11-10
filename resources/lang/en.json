@@ -1009,5 +1009,6 @@
     },
     "Upload a Listening, Reading or Writing file.": "Upload a Listening, Reading or Writing file.",
     "An import of this test is still running.": "An import of this test is still running.",
-    "Import started. It takes a few minutes; the status is shown on the test card.": "Import started. It takes a few minutes; the status is shown on the test card."
+    "Import started. It takes a few minutes; the status is shown on the test card.": "Import started. It takes a few minutes; the status is shown on the test card.",
+    "Listening audio saved.": "Listening audio saved."
 }

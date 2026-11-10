@@ -1210,3 +1210,17 @@ test('the writing import needs a gemini key', function () {
     expect(fn () => app(MockTestPdfParser::class)->parseFiles('Writing', $paper['path']))
         ->toThrow(RuntimeException::class, 'GEMINI_API_KEY');
 });
+
+test('the listening audio can be uploaded on its own without starting an import', function () {
+    Storage::fake('local');
+    Queue::fake();
+    ['test' => $test] = makeBankTest();
+
+    $this->actingAs($this->admin)->post(route('mock-bank.import', $test), [
+        'listening_audio' => UploadedFile::fake()->create('rental property application form.mp3', 300, 'audio/mpeg'),
+    ])->assertSessionHasNoErrors()->assertSessionHas('success');
+
+    expect($test->fresh()->audio_path)->not->toBeEmpty()
+        ->and(TestImport::count())->toBe(0);
+    Queue::assertNothingPushed();
+});

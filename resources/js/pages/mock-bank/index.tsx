@@ -164,7 +164,7 @@ function ImportPdfDialog({ test }: { test: BankTestRow }) {
 
     const running = test.import?.status === 'queued' || test.import?.status === 'running';
     const filled = test.modules.filter((m) => ['Listening', 'Reading', 'Writing'].includes(m.type) && m.parts_count > 0).map((m) => m.type);
-    const hasFile = Boolean(data.listening_file || data.reading_file || data.writing_file);
+    const hasFile = Boolean(data.listening_file || data.reading_file || data.writing_file || data.listening_audio);
     const docs = '.pdf,.docx,.txt';
 
     const submit: FormEventHandler = (e) => {
@@ -193,7 +193,7 @@ function ImportPdfDialog({ test }: { test: BankTestRow }) {
                     {t('exam_admin.bank.import.button')}
                 </Button>
             </DialogTrigger>
-            <DialogContent className="max-h-[90vh] overflow-y-auto rounded-2xl sm:max-w-lg">
+            <DialogContent className="max-h-[90vh] overflow-y-auto rounded-2xl sm:max-w-2xl lg:max-w-3xl">
                 <DialogHeader>
                     <DialogTitle>
                         {t('exam_admin.bank.import.title')} — {test.name}
