@@ -9,7 +9,7 @@ sudo cp supervisor/mynine-worker.conf /etc/supervisor/conf.d/
 sudo cp supervisor/mynine-scheduler.conf /etc/supervisor/conf.d/
 sudo sed -i 's/APP_USER/<ilova_foydalanuvchisi>/g' /etc/supervisor/conf.d/mynine-*.conf
 ```
-Yo'l (`/var/www/<user>/data/www/mynine.uz`) va PHP binari (`/opt/php82/bin/php`) serveringizdagi haqiqiy
+Yo'l (`/var/www/<user>/data/www/mynine.uz`) va PHP binari (`/opt/php83/bin/php`) serveringizdagi haqiqiy
 qiymatlarga mos bo'lishi kerak.
 
 Worker `--timeout=960 --tries=3` bilan ishlaydi: `EvaluateEssayJob` (OpenAI) 120 soniyagacha, Mock Bank
