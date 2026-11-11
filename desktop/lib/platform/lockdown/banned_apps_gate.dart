@@ -17,7 +17,12 @@ class BannedAppsGate extends ChangeNotifier {
     required this.lockdown,
     required this.bannedProcesses,
     this.interval = const Duration(seconds: 3),
+    this.autoClose = false,
   });
+
+  /// Close banned programs as soon as they are found (rules screen): the
+  /// candidate sees nothing unless a program cannot be closed.
+  final bool autoClose;
 
   final Lockdown lockdown;
   final List<String> Function() bannedProcesses;
@@ -74,7 +79,13 @@ class BannedAppsGate extends ChangeNotifier {
     _unkillable.retainAll(_running);
     if (_running.isEmpty) _notClosed = const [];
     if (changed) notifyListeners();
+    if (autoClose && !_busy && _running.any((r) => !_unkillable.contains(r))) {
+      unawaited(closeAll());
+    }
   }
+
+  /// Something the candidate must see: a program that could not be closed.
+  bool get needsAttention => _checked && (_notClosed.isNotEmpty || _unkillable.isNotEmpty) && _running.isNotEmpty;
 
   /// Terminates every running banned app, then checks again.
   Future<void> closeAll() async {

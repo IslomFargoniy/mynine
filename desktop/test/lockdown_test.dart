@@ -100,6 +100,31 @@ void main() {
       gate.dispose();
     });
 
+    test('rules screen (autoClose): banned apps close silently, no panel unless one survives', () async {
+      final lockdown = FakeLockdown(['telegram.exe', 'anydesk.exe'])..unkillable.add('anydesk.exe');
+      final gate = BannedAppsGate(
+        lockdown: lockdown,
+        bannedProcesses: () => ['telegram.exe', 'anydesk.exe'],
+        autoClose: true,
+      );
+      await gate.refresh();
+      // closeAll ran by itself.
+      for (var i = 0; i < 20 && gate.busy; i++) {
+        await Future<void>.delayed(const Duration(milliseconds: 10));
+      }
+      expect(lockdown.terminateCalls, isNotEmpty);
+      expect(lockdown.running, isNot(contains('telegram.exe')));
+      expect(gate.running, ['anydesk.exe']);
+      expect(gate.needsAttention, isTrue, reason: 'the program that could not be closed is shown');
+
+      lockdown.unkillable.clear();
+      lockdown.running.remove('anydesk.exe');
+      await gate.refresh();
+      expect(gate.needsAttention, isFalse);
+      expect(gate.canStart, isTrue);
+      gate.dispose();
+    });
+
     test('nothing running → Start allowed after the first check', () async {
       final gate = BannedAppsGate(lockdown: FakeLockdown(const []), bannedProcesses: () => const []);
       await gate.refresh();

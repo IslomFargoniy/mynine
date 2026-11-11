@@ -9,7 +9,7 @@ import '../../platform/lockdown/banned_apps_gate.dart';
 
 const _rules = [
   'The exam has three parts in this order: Listening, Reading and Writing. Speaking takes place separately.',
-  'Each part has its own timer. When the time is over, your answers are saved and the next part starts automatically.',
+  'Each part has its own timer. When the time is over, your answers are saved; the next part starts when you press Start.',
   'In Listening the recording plays once. It cannot be paused, rewound or replayed.',
   'Your answers are saved automatically, even if the internet connection is lost.',
   'Do not leave the exam window or use other programs. Switching windows is recorded and reported.',
@@ -33,6 +33,7 @@ class _RulesScreenState extends ConsumerState<RulesScreen> {
   late final BannedAppsGate _gate = BannedAppsGate(
     lockdown: ref.read(lockdownProvider),
     bannedProcesses: () => ref.read(deviceRepositoryProvider).config.bannedProcesses,
+    autoClose: true,
   );
 
   @override
@@ -162,13 +163,10 @@ class BannedAppsPanel extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    if (!gate.checked) {
-      return Padding(
-        padding: const EdgeInsets.only(bottom: 12),
-        child: Text('Checking for other programs…', style: inter(13, color: TW.gray500)),
-      );
-    }
-    if (gate.running.isEmpty) return const SizedBox.shrink();
+    // With autoClose the programs are closed silently: the panel (which made
+    // the page jump) shows only for a program that could not be closed.
+    if (!gate.checked || gate.running.isEmpty) return const SizedBox.shrink();
+    if (gate.autoClose && !gate.needsAttention) return const SizedBox.shrink();
     return Container(
       key: const Key('banned-apps'),
       margin: const EdgeInsets.only(bottom: 16),
