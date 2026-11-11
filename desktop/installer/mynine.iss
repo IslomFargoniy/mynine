@@ -74,6 +74,9 @@ Name: "{autodesktop}\{#MyAppName}"; Filename: "{app}\{#MyAppExeName}"; Tasks: de
 Name: "{userstartup}\{#MyAppName}"; Filename: "{app}\{#MyAppExeName}"; Tasks: autostart
 
 [Run]
+; Windows keeps shortcut icons in its icon cache: refresh it so an updated
+; app icon shows on the desktop / Start / taskbar shortcuts right away.
+Filename: "{sys}\ie4uinit.exe"; Parameters: "-show"; Flags: runhidden nowait skipifdoesntexist
 ; No "skipifsilent": the self-updater installs silently and needs the relaunch.
 Filename: "{app}\{#MyAppExeName}"; Description: "{cm:LaunchProgram,{#MyAppName}}"; Flags: nowait postinstall
 
