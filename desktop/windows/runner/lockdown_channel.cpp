@@ -22,6 +22,24 @@
 
 namespace {
 
+// Windows 11 keeps its taskbar above a topmost full-screen window whenever that
+// window is not the foreground one, so kiosk mode hides the taskbars outright
+// (primary and every secondary monitor) and shows them again on exit. Startup
+// also shows them, in case a previous run crashed while they were hidden.
+void SetTaskbarsVisible(bool visible) {
+  ::EnumWindows(
+      [](HWND hwnd, LPARAM lparam) -> BOOL {
+        wchar_t cls[64] = {};
+        ::GetClassNameW(hwnd, cls, 64);
+        if (wcscmp(cls, L"Shell_TrayWnd") == 0 ||
+            wcscmp(cls, L"Shell_SecondaryTrayWnd") == 0) {
+          ::ShowWindowAsync(hwnd, lparam != 0 ? SW_SHOWNA : SW_HIDE);
+        }
+        return TRUE;
+      },
+      visible ? 1 : 0);
+}
+
 constexpr UINT_PTR kRefocusTimerId = 0x4D59;  // 'MY'
 constexpr UINT kRefocusDelayMs = 400;
 
@@ -330,6 +348,7 @@ LockdownChannel::LockdownChannel(flutter::BinaryMessenger* messenger,
   // The app crashed (or was killed) while the PC was locked last time:
   // put the user's original settings back before anything else.
   RestoreSystemPolicies();
+  SetTaskbarsVisible(true);
 }
 
 LockdownChannel::~LockdownChannel() {
@@ -458,6 +477,7 @@ void LockdownChannel::Disable() {
 
 void LockdownChannel::EnterKiosk() {
   if (kiosk_) {
+    SetTaskbarsVisible(false);
     FitToMonitor();
     return;
   }
@@ -471,6 +491,7 @@ void LockdownChannel::EnterKiosk() {
   ::SetWindowLongPtr(window_, GWL_EXSTYLE,
                      (saved_ex_style_ & ~WS_EX_APPWINDOW) | WS_EX_TOPMOST);
   kiosk_ = true;
+  SetTaskbarsVisible(false);
   FitToMonitor();
   ::SetForegroundWindow(window_);
 }
@@ -489,6 +510,7 @@ void LockdownChannel::ExitKiosk() {
   if (!kiosk_) return;
   kiosk_ = false;
   ::KillTimer(window_, kRefocusTimerId);
+  SetTaskbarsVisible(true);
   ::SetWindowLongPtr(window_, GWL_STYLE, saved_style_);
   ::SetWindowLongPtr(window_, GWL_EXSTYLE, saved_ex_style_);
   ::SetWindowPos(window_, HWND_NOTOPMOST, saved_rect_.left, saved_rect_.top,
@@ -684,6 +706,8 @@ std::optional<LRESULT> LockdownChannel::HandleMessage(HWND hwnd, UINT message,
         ::KillTimer(hwnd, kRefocusTimerId);
         if (kiosk_) {
           if (minimize_others_) MinimizeOtherWindows();
+          // Explorer restarted (new taskbar window) or something showed it.
+          SetTaskbarsVisible(false);
           // Take the foreground back (works because our process owned it last;
           // Windows may only flash the taskbar otherwise).
           ::ShowWindow(hwnd, SW_RESTORE);

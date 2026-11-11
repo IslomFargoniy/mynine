@@ -27,7 +27,7 @@ class HttpMynineApi implements MynineApi {
     Dio? dio,
   }) : _dio = dio ?? Dio() {
     _dio.options
-      ..connectTimeout = const Duration(seconds: 10)
+      ..connectTimeout = const Duration(seconds: 20)
       ..sendTimeout = const Duration(seconds: 20)
       ..receiveTimeout = const Duration(seconds: 30)
       ..responseType = ResponseType.json;
@@ -145,7 +145,8 @@ class HttpMynineApi implements MynineApi {
       case DioExceptionType.sendTimeout:
       case DioExceptionType.receiveTimeout:
       case DioExceptionType.connectionError:
-        return ApiException(code: ApiErrorCode.network, message: e.message);
+        // e.error holds the OS reason (timed out, reset, host lookup failed…).
+        return ApiException(code: ApiErrorCode.network, message: '${e.type.name}: ${e.error ?? e.message ?? ''}');
       case DioExceptionType.badCertificate:
         return ApiException(code: ApiErrorCode.secureConnection, message: e.message);
       case DioExceptionType.unknown:
@@ -153,7 +154,7 @@ class HttpMynineApi implements MynineApi {
           return ApiException(code: ApiErrorCode.secureConnection, message: '${e.error}');
         }
         if (e.error is SocketException || e.error is HttpException) {
-          return ApiException(code: ApiErrorCode.network, message: e.message);
+          return ApiException(code: ApiErrorCode.network, message: '${e.error}');
         }
         return ApiException(code: ApiErrorCode.unknown, message: e.message);
       default:
@@ -271,9 +272,21 @@ class HttpMynineApi implements MynineApi {
   // ---- Exam auth -----------------------------------------------------------
 
   @override
-  Future<LoginResponse> login(String code) async => LoginResponse.fromJson(
-        await _json('POST', '/exam/login', body: {'code': code.trim().toUpperCase()}),
-      );
+  Future<LoginResponse> login(String code) async {
+    // A lossy network (centre Wi-Fi) drops single connections: try a few times
+    // before showing "No connection". A repeated login is harmless — the last
+    // token wins and the earlier ones are revoked by the server.
+    for (var attempt = 1;; attempt++) {
+      try {
+        return LoginResponse.fromJson(
+          await _json('POST', '/exam/login', body: {'code': code.trim().toUpperCase()}),
+        );
+      } on ApiException catch (e) {
+        if (!e.isNetwork || attempt >= 3) rethrow;
+        await Future<void>.delayed(Duration(milliseconds: 800 * attempt));
+      }
+    }
+  }
 
   @override
   Future<void> logout(String examToken) async {

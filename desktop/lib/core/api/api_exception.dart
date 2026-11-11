@@ -103,7 +103,9 @@ class ApiException implements Exception {
         ApiErrorCode.deviceBlocked => 'This computer is blocked. Please ask the reception.',
         ApiErrorCode.clientOutdated => 'This app must be updated before the exam can start.',
         ApiErrorCode.unauthenticated => 'Session expired. Please enter your code again.',
-        ApiErrorCode.network => 'No connection to the server. Please try again.',
+        ApiErrorCode.network => message?.isNotEmpty == true
+            ? 'No connection to the server. Please try again. (${_short(message!)})'
+            : 'No connection to the server. Please try again.',
         ApiErrorCode.secureConnection =>
           'Secure connection to the server failed. Check this PC\'s date, time and time zone, then try again.',
         ApiErrorCode.paused => 'The exam is paused by the invigilator.',
@@ -132,6 +134,12 @@ class ApiException implements Exception {
                 ? 'Something went wrong. Please try again. ($message)'
                 : 'Something went wrong. Please try again.',
       };
+
+  /// First line of a technical error, shortened for the screen.
+  static String _short(String text) {
+    final line = text.split('\n').first.replaceAll(RegExp(r'\s+'), ' ').trim();
+    return line.length > 120 ? '${line.substring(0, 120)}…' : line;
+  }
 
   static String _hm(DateTime t) {
     final l = t.toLocal();
