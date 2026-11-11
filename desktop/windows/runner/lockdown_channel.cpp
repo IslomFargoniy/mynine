@@ -2,12 +2,15 @@
 
 #include <dwmapi.h>
 #include <flutter/standard_method_codec.h>
+#include <io.h>
 #include <tlhelp32.h>
 
 #include <algorithm>
+#include <atomic>
 #include <cctype>
 #include <cstdio>
 #include <cstdlib>
+#include <cstring>
 #include <cwchar>
 #include <map>
 #include <set>
@@ -320,14 +323,55 @@ bool ReadWholeFile(const std::wstring& path, std::string* content) {
   return true;
 }
 
+// Written through to the disk (_commit = FlushFileBuffers) before returning:
+// the marker must survive a power loss that happens after the registry was
+// changed.
 bool WriteWholeFile(const std::wstring& path, const std::string& content,
                     const wchar_t* mode) {
   FILE* file = nullptr;
   if (_wfopen_s(&file, path.c_str(), mode) != 0 || file == nullptr) return false;
   const size_t written = fwrite(content.data(), 1, content.size(), file);
-  const bool ok = written == content.size() && fflush(file) == 0;
+  const bool ok = written == content.size() && fflush(file) == 0 &&
+                  _commit(_fileno(file)) == 0;
   fclose(file);
   return ok;
+}
+
+// True when the marker holds at least one saved registry value (an "R|" line
+// or a desktop 1.0.2 line). An empty / truncated marker saved nothing.
+bool MarkerHasRegistryLines(const std::string& content) {
+  size_t start = 0;
+  while (start < content.size()) {
+    size_t end = content.find('\n', start);
+    if (end == std::string::npos) end = content.size();
+    std::string line = content.substr(start, end - start);
+    start = end + 1;
+    if (!line.empty() && line.back() == '\r') line.pop_back();
+    if (line.empty()) continue;
+    const std::vector<std::string> f = SplitFields(line);
+    if (f[0] == "R" && f.size() >= 6) return true;
+    if (f[0] != "R" && f[0] != "A" && f.size() >= 4) return true;
+  }
+  return false;
+}
+
+// The value currently holds exactly what lockdown writes (REG_DWORD).
+bool HasLockedValue(const PolicyValue& p) {
+  DWORD value = 0;
+  DWORD size = static_cast<DWORD>(sizeof(value));
+  return ::RegGetValueW(HKEY_CURRENT_USER, p.subkey, p.name, RRF_RT_REG_DWORD,
+                        nullptr, &value, &size) == ERROR_SUCCESS &&
+         value == p.locked_value;
+}
+
+// No usable marker: the values are only deleted when they hold the locked
+// value (they were most likely left by a run whose marker was lost).
+void DeleteLockedValues() {
+  for (const auto& p : kPolicies) {
+    if (HasLockedValue(p)) {
+      ::RegDeleteKeyValueW(HKEY_CURRENT_USER, p.subkey, p.name);
+    }
+  }
 }
 
 }  // namespace
@@ -838,7 +882,14 @@ void LockdownChannel::ApplySystemPolicies() {
 
   // A leftover marker means the originals are already saved (restore failed
   // earlier): keep it instead of saving our own locked values as "originals".
-  if (::GetFileAttributesW(path.c_str()) == INVALID_FILE_ATTRIBUTES) {
+  // An empty / truncated one saved nothing and is replaced.
+  bool have_marker = false;
+  std::string existing;
+  if (::GetFileAttributesW(path.c_str()) != INVALID_FILE_ATTRIBUTES) {
+    have_marker =
+        !ReadWholeFile(path, &existing) || MarkerHasRegistryLines(existing);
+  }
+  if (!have_marker) {
     std::string content;
     for (const auto& p : kPolicies) {
       // Any type: a pre-existing value of another type is restored as it was
@@ -848,7 +899,7 @@ void LockdownChannel::ApplySystemPolicies() {
       const DWORD flags = RRF_RT_ANY | RRF_NOEXPAND;
       LSTATUS status = ::RegGetValueW(HKEY_CURRENT_USER, p.subkey, p.name,
                                       flags, &type, nullptr, &size);
-      const bool existed = status == ERROR_SUCCESS;
+      bool existed = status == ERROR_SUCCESS;
       std::vector<BYTE> data;
       if (existed && size > 0) {
         data.resize(size);
@@ -856,6 +907,17 @@ void LockdownChannel::ApplySystemPolicies() {
                                 &type, data.data(), &size);
         if (status != ERROR_SUCCESS) return;  // cannot save it: change nothing
         data.resize(size);
+      }
+      // Already the locked value without a marker: most likely left by a run
+      // whose marker was lost. Recorded as originally absent, so the restore
+      // deletes it instead of keeping the PC locked down.
+      if (existed && type == REG_DWORD && data.size() == sizeof(DWORD)) {
+        DWORD current = 0;
+        std::memcpy(&current, data.data(), sizeof(current));
+        if (current == p.locked_value) {
+          existed = false;
+          data.clear();
+        }
       }
       content += "R|" + WideToUtf8(p.subkey) + "|" + WideToUtf8(p.name) + "|" +
                  (existed ? "1" : "0") + "|" +
@@ -866,14 +928,11 @@ void LockdownChannel::ApplySystemPolicies() {
       ::DeleteFileW(path.c_str());
       return;
     }
-  } else {
+  } else if (!existing.empty() &&
+             existing.find("A|STICKY|") == std::string::npos) {
     // Marker of desktop 1.0.2 (no accessibility lines): add the current
     // flags, which that version never changed.
-    std::string content;
-    if (ReadWholeFile(path, &content) &&
-        content.find("A|STICKY|") == std::string::npos) {
-      WriteWholeFile(path, AccessibilityMarkerLines(), L"ab");
-    }
+    WriteWholeFile(path, AccessibilityMarkerLines(), L"ab");
   }
 
   for (const auto& p : kPolicies) {
@@ -895,15 +954,39 @@ void LockdownChannel::ApplySystemPolicies() {
 }
 
 void LockdownChannel::RestoreSystemPolicies() {
-  const std::wstring path = PolicyMarkerPath();
-  if (path.empty()) {
-    policies_applied_ = false;
-    return;
+  RestorePoliciesFromMarker();
+  policies_applied_ = false;
+  BroadcastPolicyChange();
+}
+
+void LockdownChannel::RestoreSystemState(bool notify_shell) {
+  RestorePoliciesFromMarker();
+  SetTaskbarsVisible(true);
+  if (notify_shell) {
+    DWORD_PTR ignored = 0;
+    ::SendMessageTimeoutW(HWND_BROADCAST, WM_SETTINGCHANGE, 0,
+                          reinterpret_cast<LPARAM>(L"Policy"),
+                          SMTO_ABORTIFHUNG, 1000, &ignored);
   }
+}
+
+void LockdownChannel::RestoreAfterCrash() {
+  static std::atomic<bool> done{false};
+  if (done.exchange(true)) return;
+  SetTaskbarsVisible(true);  // first: needs no allocation
+  RestorePoliciesFromMarker();
+}
+
+void LockdownChannel::RestorePoliciesFromMarker() {
+  const std::wstring path = PolicyMarkerPath();
+  if (path.empty()) return;
   std::string content;
-  if (!ReadWholeFile(path, &content)) {
-    policies_applied_ = false;  // nothing saved = nothing changed
-    return;
+  if (!ReadWholeFile(path, &content)) return;  // nothing saved = nothing changed
+
+  if (!MarkerHasRegistryLines(content)) {
+    // Empty / truncated marker (the write never completed): the originals
+    // are unknown, so only values that hold the locked value are removed.
+    DeleteLockedValues();
   }
 
   bool all_ok = true;
@@ -980,8 +1063,6 @@ void LockdownChannel::RestoreSystemPolicies() {
 
   // Keep the marker if something could not be restored (retried next start).
   if (all_ok) ::DeleteFileW(path.c_str());
-  policies_applied_ = false;
-  BroadcastPolicyChange();
 }
 
 // ---------------------------------------------------------------------------

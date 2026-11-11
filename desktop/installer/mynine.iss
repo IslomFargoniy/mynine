@@ -7,7 +7,9 @@
 ;
 ; The app's self-updater runs this installer with
 ;   /VERYSILENT /SUPPRESSMSGBOXES /NORESTART
-; and the [Run] entry below relaunches the app after a silent install.
+; and the [Run] entry below relaunches the app after a silent install. A
+; silent install that fails (file in use, disk full, antivirus) relaunches the
+; existing app from DeinitializeSetup instead, so the PC never stays without it.
 
 #ifndef MyAppVersion
   #define MyAppVersion "1.0.0"
@@ -47,6 +49,9 @@ Compression=lzma2/max
 SolidCompression=yes
 WizardStyle=modern
 SetupLogging=yes
+; Checked after InitializeSetup (which waits up to 30 s for the app to exit);
+; the uninstaller refuses to run while the app is open.
+AppMutex={#MyAppMutex}
 ; The updater exits the app right after starting setup; Restart Manager closes
 ; it if it is still running.
 CloseApplications=force
@@ -80,17 +85,64 @@ Filename: "{sys}\ie4uinit.exe"; Parameters: "-show"; Flags: runhidden nowait ski
 ; No "skipifsilent": the self-updater installs silently and needs the relaunch.
 Filename: "{app}\{#MyAppExeName}"; Description: "{cm:LaunchProgram,{#MyAppName}}"; Flags: nowait postinstall
 
+[UninstallRun]
+; Before any file is removed: undo what a crashed / killed run may have left
+; (HKCU policies such as DisableTaskMgr, toasts / touchpad gestures off,
+; hidden taskbar). The app exits right after the restore.
+Filename: "{app}\{#MyAppExeName}"; Parameters: "--restore-lockdown"; Flags: runhidden waituntilterminated skipifdoesntexist; RunOnceId: "RestoreLockdown"
+
 [Code]
-// Wait (max 15 s) for the running app to exit before files are replaced.
+var
+  InstallSucceeded: Boolean;
+
+// Wait (max 30 s) for the running app to exit before files are replaced.
 function InitializeSetup(): Boolean;
 var
   I: Integer;
 begin
+  InstallSucceeded := False;
   I := 0;
-  while CheckForMutexes('{#MyAppMutex}') and (I < 30) do
+  while CheckForMutexes('{#MyAppMutex}') and (I < 60) do
   begin
     Sleep(500);
     I := I + 1;
   end;
   Result := True;
+end;
+
+procedure CurStepChanged(CurStep: TSetupStep);
+begin
+  if CurStep = ssPostInstall then
+    InstallSucceeded := True;
+end;
+
+function InstalledAppExe(): String;
+begin
+  try
+    Result := ExpandConstant('{app}\{#MyAppExeName}');
+  except
+    Result := '';
+  end;
+  if (Result = '') or not FileExists(Result) then
+    Result := ExpandConstant('{autopf}\{#MyAppName}\{#MyAppExeName}');
+end;
+
+// The self-updater exits the app before a silent install. If that install
+// failed or was aborted, the [Run] relaunch never happens: start the
+// existing (old) app again so the exam PC is not left without it.
+procedure DeinitializeSetup();
+var
+  AppExe: String;
+  ResultCode: Integer;
+begin
+  if InstallSucceeded or not WizardSilent() then
+    exit;
+  if CheckForMutexes('{#MyAppMutex}') then
+    exit;
+  AppExe := InstalledAppExe();
+  if FileExists(AppExe) then
+  begin
+    Log('Setup did not finish: relaunching ' + AppExe);
+    Exec(AppExe, '', '', SW_SHOW, ewNoWait, ResultCode);
+  end;
 end;

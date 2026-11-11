@@ -2,11 +2,50 @@
 #include <flutter/flutter_view_controller.h>
 #include <windows.h>
 
+#include <csignal>
+#include <cstdlib>
+#include <cwchar>
+#include <exception>
+
 #include "flutter_window.h"
+#include "lockdown_channel.h"
 #include "utils.h"
+
+namespace {
+
+// Crash handlers: put the taskbar and the user's settings back before the
+// process dies (a forced kill is handled by the next start / uninstaller).
+LONG WINAPI OnUnhandledException(EXCEPTION_POINTERS*) {
+  LockdownChannel::RestoreAfterCrash();
+  return EXCEPTION_CONTINUE_SEARCH;
+}
+
+void OnTerminate() {
+  LockdownChannel::RestoreAfterCrash();
+  std::abort();
+}
+
+void OnAbortSignal(int) {
+  LockdownChannel::RestoreAfterCrash();
+}
+
+}  // namespace
 
 int APIENTRY wWinMain(_In_ HINSTANCE instance, _In_opt_ HINSTANCE prev,
                       _In_ wchar_t *command_line, _In_ int show_command) {
+  // "--restore-lockdown" (run by the uninstaller): undo what a previous run
+  // left behind (policies, hidden taskbar) and exit. Before the single
+  // instance check and without a window or Flutter.
+  if (command_line != nullptr &&
+      std::wcsstr(command_line, L"--restore-lockdown") != nullptr) {
+    LockdownChannel::RestoreSystemState(true);
+    return EXIT_SUCCESS;
+  }
+
+  ::SetUnhandledExceptionFilter(OnUnhandledException);
+  std::set_terminate(OnTerminate);
+  std::signal(SIGABRT, OnAbortSignal);
+
   // Single instance: the Inno Setup script uses the same mutex name
   // (AppMutex) so installs/updates wait until the app has exited.
   HANDLE single_instance =

@@ -27,7 +27,8 @@
 // data; accessibility flags) are written to
 // %LOCALAPPDATA%\Mynine\lockdown_applied.ini BEFORE anything is changed and
 // restored on disable(), on WM_ENDSESSION, and at the next start if the app
-// crashed (the constructor restores a leftover marker file).
+// crashed (the constructor restores a leftover marker file), by the crash
+// handlers in main.cpp and by "--restore-lockdown" (uninstaller).
 //
 // The low-level keyboard hook is re-installed every 30 s and when the window
 // regains the focus: Windows silently removes a hook whose thread was too
@@ -61,6 +62,17 @@ class LockdownChannel {
   std::optional<LRESULT> HandleMessage(HWND hwnd, UINT message, WPARAM wparam,
                                        LPARAM lparam);
 
+  // Puts back what a previous run changed (saved HKCU policy values and
+  // accessibility flags from the marker file; shows the taskbars). Needs no
+  // window or Flutter engine: used by "mynine_desktop.exe --restore-lockdown"
+  // (run by the uninstaller). notify_shell sends WM_SETTINGCHANGE("Policy")
+  // synchronously (max ~1 s).
+  static void RestoreSystemState(bool notify_shell);
+
+  // Same, for the crash handlers in main.cpp: runs at most once per process,
+  // starts no threads and sends no broadcasts.
+  static void RestoreAfterCrash();
+
  private:
   void HandleMethodCall(
       const flutter::MethodCall<flutter::EncodableValue>& call,
@@ -88,6 +100,7 @@ class LockdownChannel {
       const std::vector<std::string>& names);
   static std::string ProcessNameFromPid(DWORD pid);
   static std::wstring PolicyMarkerPath();
+  static void RestorePoliciesFromMarker();
   static void ReleaseHeldWinKeys();
   static void BroadcastPolicyChange();
   static std::optional<std::string> ReadMachineGuid();

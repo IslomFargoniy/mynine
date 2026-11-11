@@ -22,6 +22,15 @@ class RecordingRunner implements InstallerRunner {
   Future<void> runSilentAndExit(File installer) async => ran.add(p.basename(installer.path));
 }
 
+/// Setup cannot be started (antivirus, file locked, ...).
+class ThrowingRunner implements InstallerRunner {
+  @override
+  bool get canInstall => true;
+  @override
+  Future<void> runSilentAndExit(File installer) async =>
+      throw const ProcessException('setup.exe', [], 'access denied');
+}
+
 /// Fake whose release checksum / size can be corrupted.
 class TamperApi extends FakeMynineApi {
   TamperApi() : super(clock: ServerClock(), latency: Duration.zero, offerUpdate: true);
@@ -332,11 +341,119 @@ void main() {
     expect(await svc.install(file, auto: true), isFalse);
     expect(runner.ran, isEmpty);
     expect(svc.phase, UpdatePhase.available);
-    expect(await svc.readState(), isNull); // pending state rolled back
+    // Pending state rolled back; only the rollback installer's checksum stays.
+    final kept = await svc.readState();
+    expect(kept!.pendingVerify, isFalse);
+    expect(kept.previousVersion, '1.0.0');
+    expect(kept.previousSha256, hasLength(64));
 
     svc.canAutoInstall = () => true;
     expect(await svc.install(file, auto: true), isTrue);
     expect(runner.ran, ['mynine-setup-1.0.1.exe']);
+  });
+
+  test('a manual install declined by an unfinished session shows a message', () async {
+    final runner = RecordingRunner();
+    final svc = UpdateService(api: TamperApi(), paths: paths, currentVersion: '1.0.0', runner: runner)
+      ..hasUnfinishedSession = () async => true;
+    await svc.check(manual: true);
+    final file = (await svc.download())!;
+    expect(await svc.install(file), isFalse);
+    expect(svc.phase, UpdatePhase.available);
+    expect(svc.error, UpdateService.sessionBlocksInstallMessage);
+    expect(runner.ran, isEmpty);
+  });
+
+  test('installer that cannot be started: error phase, state restored', () async {
+    final runner = ThrowingRunner();
+    final svc = UpdateService(api: TamperApi(), paths: paths, currentVersion: '1.0.0', runner: runner);
+    await svc.check(manual: true);
+    final file = (await svc.download())!;
+    expect(await svc.install(file), isFalse);
+    expect(svc.phase, UpdatePhase.error);
+    expect(svc.busy, isFalse);
+    expect(svc.error, contains('access denied'));
+    final state = await svc.readState();
+    expect(state?.pendingVerify ?? false, isFalse);
+  });
+
+  test('previous installer: verified checksum kept after the self-check, damaged copy re-fetched', () async {
+    await paths.updates.create(recursive: true);
+    final installer = File(p.join(paths.updates.path, 'mynine-setup-1.0.1.exe'))..writeAsStringSync('new');
+    final sha = sha256.convert(utf8.encode('new')).toString();
+    var svc = UpdateService(api: TamperApi(), paths: paths, currentVersion: '1.0.1', runner: RecordingRunner());
+    await svc.writeState(UpdateStateData(
+        pendingVerify: true,
+        targetVersion: '1.0.1',
+        fromVersion: '1.0.0',
+        installerPath: installer.path,
+        installerSha256: sha));
+    await svc.startupSelfCheck();
+    svc.reportApiReachable();
+    svc.reportUiRendered();
+    await Future<void>.delayed(const Duration(milliseconds: 50));
+    var state = (await svc.readState())!;
+    expect(state.pendingVerify, isFalse);
+    expect((state.previousVersion, state.previousSha256), ('1.0.1', sha));
+    svc.dispose();
+
+    // Valid copy: reused, nothing downloaded.
+    final api = TamperApi();
+    svc = UpdateService(api: api, paths: paths, currentVersion: '1.0.1', runner: RecordingRunner());
+    await svc.ensurePreviousInstaller();
+    expect(api.downloadedFiles, isEmpty);
+
+    // Damaged copy: fetched again and its new checksum recorded.
+    final kept = File(p.join(paths.previous.path, 'mynine-setup-1.0.1.exe'))..writeAsStringSync('bad');
+    await svc.ensurePreviousInstaller();
+    expect(api.downloadedFiles, ['mynine-setup-1.0.1.exe']);
+    state = (await svc.readState())!;
+    expect(state.previousSha256, sha256.convert(kept.readAsBytesSync()).toString());
+  });
+
+  test('rollback refuses a previous installer that does not match its checksum', () async {
+    final runner = RecordingRunner();
+    await paths.previous.create(recursive: true);
+    File(p.join(paths.previous.path, 'mynine-setup-1.0.0.exe')).writeAsStringSync('tampered');
+    final svc = UpdateService(api: TamperApi(), paths: paths, currentVersion: '1.0.1', runner: runner);
+    await svc.rollback(UpdateStateData(
+      pendingVerify: true,
+      targetVersion: '1.0.1',
+      fromVersion: '1.0.0',
+      previousVersion: '1.0.0',
+      previousSha256: sha256.convert(utf8.encode('old')).toString(),
+    ));
+    expect(runner.ran, isEmpty);
+    expect((await svc.readState())!.rolledBackFrom, '1.0.1');
+  });
+
+  test('self-check time does not count while the server is unreachable', () async {
+    final runner = RecordingRunner();
+    await paths.previous.create(recursive: true);
+    File(p.join(paths.previous.path, 'mynine-setup-1.0.0.exe')).writeAsStringSync('old');
+    var reachable = false;
+    final window = AppConfig.updateSelfCheckWindow.inMilliseconds;
+    final svc = UpdateService(
+      api: TamperApi(),
+      paths: paths,
+      currentVersion: '1.0.1',
+      runner: runner,
+      serverReachable: () async => reachable,
+    );
+    await svc.writeState(UpdateStateData(
+        pendingVerify: true, targetVersion: '1.0.1', fromVersion: '1.0.0', runMs: window - 1));
+    await svc.startupSelfCheck();
+    svc.reportUiRendered();
+    await Future<void>.delayed(const Duration(milliseconds: 20));
+    await svc.selfCheckTick(); // network down: the time is not counted
+    expect(runner.ran, isEmpty);
+    expect((await svc.readState())!.runMs, window - 1);
+
+    reachable = true; // server reachable, still no API success: counted
+    await Future<void>.delayed(const Duration(milliseconds: 20));
+    await svc.selfCheckTick();
+    expect(runner.ran, ['mynine-setup-1.0.0.exe']);
+    svc.dispose();
   });
 
   test('random jitter stays within 0–10 minutes', () {

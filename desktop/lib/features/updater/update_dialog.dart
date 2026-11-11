@@ -42,9 +42,12 @@ class UpdateDialog extends StatelessWidget {
       builder: (context, _) {
         final release = service.release;
         final phase = service.phase;
-        final canClose = !(service.mandatory && release != null) &&
-            phase != UpdatePhase.downloading &&
-            phase != UpdatePhase.installing;
+        // A failed (even mandatory) update can always be closed: the error
+        // must never trap the PC in this dialog.
+        final canClose = phase == UpdatePhase.error ||
+            (!(service.mandatory && release != null) &&
+                phase != UpdatePhase.downloading &&
+                phase != UpdatePhase.installing);
         return AlertDialog(
           title: Text(switch (phase) {
             UpdatePhase.checking => 'Checking for updates…',
