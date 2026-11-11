@@ -90,9 +90,13 @@ export default function FindMockModal() {
                             id="code-input"
                             ref={codeInput}
                             placeholder={t('find_mock.code_placeholder')}
-                            className="h-11 rounded-xl px-4 font-mono font-bold text-sm tracking-wider uppercase"
+                            className="h-11 rounded-xl px-4 font-mono font-bold text-sm tracking-[0.3em]"
+                            inputMode="numeric"
+                            autoComplete="one-time-code"
+                            pattern="[0-9]{6}"
+                            maxLength={6}
                             value={data.code}
-                            onChange={(e) => setData('code', e.target.value.toUpperCase())}
+                            onChange={(e) => setData('code', e.target.value.replace(/\D/g, '').slice(0, 6))}
                             disabled={processing}
                             required
                         />

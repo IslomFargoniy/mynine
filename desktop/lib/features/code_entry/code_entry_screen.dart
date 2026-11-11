@@ -134,7 +134,7 @@ class _CodeEntryScreenState extends ConsumerState<CodeEntryScreen> {
                         ),
                         const SizedBox(height: 8),
                         const Text(
-                          'Enter the code printed on your candidate card.',
+                          'Enter the 6-digit code printed on your candidate card.',
                           style: TextStyle(fontSize: 15, color: AppColors.grey),
                         ),
                         const SizedBox(height: 28),
@@ -145,15 +145,15 @@ class _CodeEntryScreenState extends ConsumerState<CodeEntryScreen> {
                           autofocus: true,
                           enabled: !exam.busy,
                           textAlign: TextAlign.center,
-                          textCapitalization: TextCapitalization.characters,
-                          style: const TextStyle(fontSize: 26, letterSpacing: 6, fontWeight: FontWeight.w700),
+                          keyboardType: TextInputType.number,
+                          style: const TextStyle(fontSize: 30, letterSpacing: 12, fontWeight: FontWeight.w700),
+                          // Candidate codes are exactly six digits.
                           inputFormatters: [
-                            FilteringTextInputFormatter.allow(RegExp('[A-Za-z0-9]')),
-                            LengthLimitingTextInputFormatter(16),
-                            _UpperCaseFormatter(),
+                            FilteringTextInputFormatter.digitsOnly,
+                            LengthLimitingTextInputFormatter(6),
                           ],
                           decoration: const InputDecoration(
-                            hintText: 'CODE',
+                            hintText: '000000',
                             contentPadding: EdgeInsets.symmetric(vertical: 18, horizontal: 12),
                           ),
                           onSubmitted: (_) => _submit(),
@@ -245,10 +245,4 @@ class _CodeEntryScreenState extends ConsumerState<CodeEntryScreen> {
       ),
     );
   }
-}
-
-class _UpperCaseFormatter extends TextInputFormatter {
-  @override
-  TextEditingValue formatEditUpdate(TextEditingValue oldValue, TextEditingValue newValue) =>
-      newValue.copyWith(text: newValue.text.toUpperCase());
 }

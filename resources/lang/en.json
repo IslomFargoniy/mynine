@@ -1213,7 +1213,7 @@
         "title": "Enter the exam (Mock)",
         "desc": "Enter the exam code you were given",
         "code_label": "Your candidate code *",
-        "code_placeholder": "e.g. TEST1-849201",
+        "code_placeholder": "6-digit code, e.g. 849201",
         "submit": "Start the exam →"
     },
     "dashboard_page": {

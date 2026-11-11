@@ -51,75 +51,52 @@ class MockStudent extends Model
     }
 
     /**
-     * Generates a clean, compact uppercase prefix from mock name (e.g. "Test 1" -> "TEST1", "Mock 10" -> "MOCK10")
+     * Candidate codes are exactly six digits (100000-999999), unique across all mocks, so a candidate types
+     * only digits on the exam PC. The unique index on mock_students.code backs this up.
      */
-    public static function generatePrefix(?string $mockName): string
+    public const CODE_PATTERN = '/^\d{6}$/';
+
+    public static function randomCode(): string
     {
-        if (empty($mockName)) {
-            return 'MOCK';
-        }
-
-        // Remove special characters, keep letters and digits only
-        $clean = strtoupper(preg_replace('/[^a-zA-Z0-9]/', '', $mockName));
-
-        // Limit prefix to 8 characters max
-        $prefix = substr($clean, 0, 8);
-
-        return ! empty($prefix) ? $prefix : 'MOCK';
+        return (string) random_int(100000, 999999);
     }
 
     /**
-     * Generates a single unique candidate code with mock prefix (e.g. TEST1-849201)
+     * One unique six-digit candidate code.
      */
-    public static function generateUniqueCode(string $prefix = 'MOCK'): string
+    public static function generateUniqueCode(): string
     {
-        $prefix = self::generatePrefix($prefix);
         do {
-            $code = $prefix.'-'.rand(100000, 999999);
+            $code = self::randomCode();
         } while (static::where('code', $code)->exists());
 
         return $code;
     }
 
     /**
-     * Generates a batch of unique codes in memory with zero collisions and only 1 DB check
+     * $count unique six-digit codes, checked against the database in batches.
      *
-     * @return array<string>
+     * @return array<int, string>
      */
-    public static function generateBulkCodes(int $count, string $prefix = 'MOCK'): array
+    public static function generateBulkCodes(int $count): array
     {
-        if ($count <= 0) {
-            return [];
-        }
-
-        $prefix = self::generatePrefix($prefix);
         $codes = [];
-
-        // Generate N unique codes in memory
         while (count($codes) < $count) {
-            $code = $prefix.'-'.rand(100000, 999999);
-            $codes[$code] = $code;
-        }
-
-        $codeList = array_values($codes);
-
-        // Check collisions in DB with 1 single query
-        $existingCodes = static::whereIn('code', $codeList)->pluck('code')->flip()->toArray();
-
-        // If any code exists in DB, replace it
-        if (! empty($existingCodes)) {
-            for ($i = 0; $i < count($codeList); $i++) {
-                if (isset($existingCodes[$codeList[$i]])) {
-                    do {
-                        $newCode = $prefix.'-'.rand(100000, 999999);
-                    } while (isset($codes[$newCode]) || static::where('code', $newCode)->exists());
-
-                    $codes[$newCode] = $newCode;
-                    $codeList[$i] = $newCode;
+            $batch = [];
+            while (count($codes) + count($batch) < $count) {
+                $code = self::randomCode();
+                if (! isset($codes[$code])) {
+                    $batch[$code] = $code;
+                }
+            }
+            $taken = static::whereIn('code', array_values($batch))->pluck('code')->flip();
+            foreach ($batch as $code) {
+                if (! isset($taken[$code])) {
+                    $codes[$code] = $code;
                 }
             }
         }
 
-        return $codeList;
+        return array_values($codes);
     }
 }

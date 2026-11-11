@@ -74,7 +74,7 @@ class MockStudentController extends Controller
             throw ValidationException::withMessages($errors);
         }
 
-        $codes = MockStudent::generateBulkCodes(count($rows), $mock->name);
+        $codes = MockStudent::generateBulkCodes(count($rows));
         $now = now();
 
         MockStudent::insert(array_map(fn ($row, $code) => [
