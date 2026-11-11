@@ -12,7 +12,12 @@ import '../updater/update_dialog.dart';
 
 /// Asks for the center password (verified online, or offline against
 /// the cached PBKDF2 hash). Returns true when correct.
+///
+/// A PC that is not registered yet has no password to check against (the
+/// server only verifies it for a device token, and no offline hash is cached),
+/// and there is no exam to protect on the Setup screen: no prompt there.
 Future<bool> askExitPassword(BuildContext context, WidgetRef ref, {String? reason}) async {
+  if (!ref.read(deviceRepositoryProvider).isRegistered) return true;
   final ok = await showDialog<bool>(
     context: context,
     barrierDismissible: false,

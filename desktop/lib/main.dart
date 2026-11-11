@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -7,9 +8,11 @@ import 'package:window_manager/window_manager.dart';
 
 import 'app/app.dart';
 import 'app/bootstrap.dart';
+import 'core/api/trusted_roots.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  HttpOverrides.global = TrustedRootsHttpOverrides();
   try {
     MediaKit.ensureInitialized();
   } catch (e) {

@@ -14,12 +14,14 @@ export default function AppLogo() {
     return (
         <>
             <span className="flex items-center gap-2.5">
-                <span
+                <img
+                    src="/images/icons/mynine-icon.png"
+                    alt=""
                     aria-hidden="true"
-                    className="flex size-9 shrink-0 items-center justify-center rounded-xl bg-gradient-to-b from-indigo-500 to-indigo-700 text-[15px] font-extrabold text-white shadow-[inset_0_1px_0_rgba(255,255,255,0.45)]"
-                >
-                    M9
-                </span>
+                    width={36}
+                    height={36}
+                    className="size-9 shrink-0 rounded-xl bg-white object-contain shadow-sm ring-1 ring-black/5"
+                />
                 <span className="truncate text-lg font-extrabold tracking-tight text-foreground group-data-[collapsible=icon]:hidden">
                     {capitalizeDomain}
                 </span>

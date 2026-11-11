@@ -52,6 +52,7 @@ SetupLogging=yes
 CloseApplications=force
 RestartApplications=no
 UninstallDisplayIcon={app}\{#MyAppExeName}
+SetupIconFile=..\windows\runner\resources\app_icon.ico
 UninstallDisplayName={#MyAppName}
 VersionInfoVersion={#MyAppVersion}
 VersionInfoProductName={#MyAppName}

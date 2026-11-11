@@ -27,6 +27,9 @@
         <meta name="csrf-token" content="{{ csrf_token() }}">
 
         @laravelPWA
+        <link rel="icon" href="/favicon.ico" sizes="any">
+        <link rel="icon" type="image/png" href="/images/icons/icon-192x192.png">
+        <link rel="apple-touch-icon" href="/apple-touch-icon.png">
 
         {{-- Inline script to detect system dark mode preference and apply it immediately --}}
         <script>

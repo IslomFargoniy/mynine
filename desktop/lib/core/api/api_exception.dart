@@ -31,6 +31,8 @@ enum ApiErrorCode {
 
   /// Client-side: no connection / timeout / DNS.
   network('network'),
+  /// TLS handshake / certificate failure (wrong PC clock, missing root).
+  secureConnection('secure_connection'),
 
   /// Anything else (unexpected status, malformed body, rate limit, …).
   unknown('unknown');
@@ -76,7 +78,7 @@ class ApiException implements Exception {
   final DateTime? startsAt;
   final Object? body;
 
-  bool get isNetwork => code == ApiErrorCode.network;
+  bool get isNetwork => code == ApiErrorCode.network || code == ApiErrorCode.secureConnection;
 
   /// The exam token is no longer accepted (revoked, expired or unknown).
   bool get isAuthLost =>
@@ -102,6 +104,8 @@ class ApiException implements Exception {
         ApiErrorCode.clientOutdated => 'This app must be updated before the exam can start.',
         ApiErrorCode.unauthenticated => 'Session expired. Please enter your code again.',
         ApiErrorCode.network => 'No connection to the server. Please try again.',
+        ApiErrorCode.secureConnection =>
+          'Secure connection to the server failed. Check this PC\'s date, time and time zone, then try again.',
         ApiErrorCode.paused => 'The exam is paused by the invigilator.',
         ApiErrorCode.moduleLocked => 'Please finish the previous section first.',
         ApiErrorCode.moduleTimeOver => 'Time for this section is over.',
@@ -124,7 +128,9 @@ class ApiException implements Exception {
           'This candidate is active on another PC. Please ask the invigilator.',
         ApiErrorCode.unknown => statusCode == 429
             ? 'Too many attempts. Please wait a minute and try again.'
-            : 'Something went wrong. Please try again.',
+            : message?.isNotEmpty == true
+                ? 'Something went wrong. Please try again. ($message)'
+                : 'Something went wrong. Please try again.',
       };
 
   static String _hm(DateTime t) {

@@ -53,8 +53,13 @@ class _SetupViewState extends State<SetupView> {
       setState(() => _error = setupErrorMessage(e));
       _password.clear();
       _passwordFocus.requestFocus();
-    } catch (_) {
-      if (mounted) setState(() => _error = 'Something went wrong. Please try again.');
+    } catch (e) {
+      // Show the cause: staff reads it out when reporting a setup problem.
+      final detail = e.toString().replaceAll(RegExp(r'\s+'), ' ');
+      if (mounted) {
+        setState(() => _error =
+            'Something went wrong. Please try again. (${detail.length > 140 ? '${detail.substring(0, 140)}…' : detail})');
+      }
     } finally {
       if (mounted) setState(() => _busy = false);
     }

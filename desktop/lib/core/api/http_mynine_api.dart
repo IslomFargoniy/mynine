@@ -146,7 +146,12 @@ class HttpMynineApi implements MynineApi {
       case DioExceptionType.receiveTimeout:
       case DioExceptionType.connectionError:
         return ApiException(code: ApiErrorCode.network, message: e.message);
+      case DioExceptionType.badCertificate:
+        return ApiException(code: ApiErrorCode.secureConnection, message: e.message);
       case DioExceptionType.unknown:
+        if (e.error is HandshakeException || e.error is TlsException) {
+          return ApiException(code: ApiErrorCode.secureConnection, message: '${e.error}');
+        }
         if (e.error is SocketException || e.error is HttpException) {
           return ApiException(code: ApiErrorCode.network, message: e.message);
         }
