@@ -280,6 +280,7 @@ void main() {
       // Module submit works, then the connection drops before the final submit.
       final api = h.api;
       api.failSubmitExam = true;
+      exam.submitGrace = Duration.zero; // offline grace over at once
       await exam.confirmFinishModule();
       await waitFor(() => exam.stage == ExamStage.completed);
       expect(exam.submitConfirmed, isFalse);

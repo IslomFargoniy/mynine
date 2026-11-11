@@ -307,7 +307,7 @@ as DateTime?,
 /// @nodoc
 mixin _$DeviceRegistration {
 
- int get deviceId; String get deviceToken; String get name;@JsonKey(fromJson: intOrNull) int? get number;@JsonKey(fromJson: boolTrue) bool get approved;
+ int get deviceId; String get deviceToken; String get name;@JsonKey(fromJson: intOrNull) int? get number;@JsonKey(fromJson: boolTrue) bool get approved;@JsonKey(fromJson: stringOrNull) String? get exitPasswordOffline;
 /// Create a copy of DeviceRegistration
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -321,20 +321,20 @@ $DeviceRegistrationCopyWith<DeviceRegistration> get copyWith => _$DeviceRegistra
 @override
 bool operator ==(Object other) {
   final _this = this as DeviceRegistration;
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is DeviceRegistration&&(identical(other.deviceId, _this.deviceId) || other.deviceId == _this.deviceId)&&(identical(other.deviceToken, _this.deviceToken) || other.deviceToken == _this.deviceToken)&&(identical(other.name, _this.name) || other.name == _this.name)&&(identical(other.number, _this.number) || other.number == _this.number)&&(identical(other.approved, _this.approved) || other.approved == _this.approved));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is DeviceRegistration&&(identical(other.deviceId, _this.deviceId) || other.deviceId == _this.deviceId)&&(identical(other.deviceToken, _this.deviceToken) || other.deviceToken == _this.deviceToken)&&(identical(other.name, _this.name) || other.name == _this.name)&&(identical(other.number, _this.number) || other.number == _this.number)&&(identical(other.approved, _this.approved) || other.approved == _this.approved)&&(identical(other.exitPasswordOffline, _this.exitPasswordOffline) || other.exitPasswordOffline == _this.exitPasswordOffline));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
 int get hashCode {
   final _this = this as DeviceRegistration;
-  return Object.hash(runtimeType,_this.deviceId,_this.deviceToken,_this.name,_this.number,_this.approved);
+  return Object.hash(runtimeType,_this.deviceId,_this.deviceToken,_this.name,_this.number,_this.approved,_this.exitPasswordOffline);
 }
 
 @override
 String toString() {
   final _this = this as DeviceRegistration;
-  return 'DeviceRegistration(deviceId: ${_this.deviceId}, deviceToken: ${_this.deviceToken}, name: ${_this.name}, number: ${_this.number}, approved: ${_this.approved})';
+  return 'DeviceRegistration(deviceId: ${_this.deviceId}, deviceToken: ${_this.deviceToken}, name: ${_this.name}, number: ${_this.number}, approved: ${_this.approved}, exitPasswordOffline: ${_this.exitPasswordOffline})';
 }
 
 
@@ -345,7 +345,7 @@ abstract mixin class $DeviceRegistrationCopyWith<$Res>  {
   factory $DeviceRegistrationCopyWith(DeviceRegistration value, $Res Function(DeviceRegistration) _then) = _$DeviceRegistrationCopyWithImpl;
 @useResult
 $Res call({
- int deviceId, String deviceToken, String name,@JsonKey(fromJson: intOrNull) int? number,@JsonKey(fromJson: boolTrue) bool approved
+ int deviceId, String deviceToken, String name,@JsonKey(fromJson: intOrNull) int? number,@JsonKey(fromJson: boolTrue) bool approved,@JsonKey(fromJson: stringOrNull) String? exitPasswordOffline
 });
 
 
@@ -362,14 +362,15 @@ class _$DeviceRegistrationCopyWithImpl<$Res>
 
 /// Create a copy of DeviceRegistration
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? deviceId = null,Object? deviceToken = null,Object? name = null,Object? number = freezed,Object? approved = null,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? deviceId = null,Object? deviceToken = null,Object? name = null,Object? number = freezed,Object? approved = null,Object? exitPasswordOffline = freezed,}) {
   return _then(DeviceRegistration(
 deviceId: null == deviceId ? _self.deviceId : deviceId // ignore: cast_nullable_to_non_nullable
 as int,deviceToken: null == deviceToken ? _self.deviceToken : deviceToken // ignore: cast_nullable_to_non_nullable
 as String,name: null == name ? _self.name : name // ignore: cast_nullable_to_non_nullable
 as String,number: freezed == number ? _self.number : number // ignore: cast_nullable_to_non_nullable
 as int?,approved: null == approved ? _self.approved : approved // ignore: cast_nullable_to_non_nullable
-as bool,
+as bool,exitPasswordOffline: freezed == exitPasswordOffline ? _self.exitPasswordOffline : exitPasswordOffline // ignore: cast_nullable_to_non_nullable
+as String?,
   ));
 }
 
@@ -454,10 +455,10 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( int deviceId,  String deviceToken,  String name, @JsonKey(fromJson: intOrNull)  int? number, @JsonKey(fromJson: boolTrue)  bool approved)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( int deviceId,  String deviceToken,  String name, @JsonKey(fromJson: intOrNull)  int? number, @JsonKey(fromJson: boolTrue)  bool approved, @JsonKey(fromJson: stringOrNull)  String? exitPasswordOffline)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _DeviceRegistration() when $default != null:
-return $default(_that.deviceId,_that.deviceToken,_that.name,_that.number,_that.approved);case _:
+return $default(_that.deviceId,_that.deviceToken,_that.name,_that.number,_that.approved,_that.exitPasswordOffline);case _:
   return orElse();
 
 }
@@ -475,10 +476,10 @@ return $default(_that.deviceId,_that.deviceToken,_that.name,_that.number,_that.a
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( int deviceId,  String deviceToken,  String name, @JsonKey(fromJson: intOrNull)  int? number, @JsonKey(fromJson: boolTrue)  bool approved)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( int deviceId,  String deviceToken,  String name, @JsonKey(fromJson: intOrNull)  int? number, @JsonKey(fromJson: boolTrue)  bool approved, @JsonKey(fromJson: stringOrNull)  String? exitPasswordOffline)  $default,) {final _that = this;
 switch (_that) {
 case _DeviceRegistration():
-return $default(_that.deviceId,_that.deviceToken,_that.name,_that.number,_that.approved);case _:
+return $default(_that.deviceId,_that.deviceToken,_that.name,_that.number,_that.approved,_that.exitPasswordOffline);case _:
   throw StateError('Unexpected subclass');
 
 }
@@ -495,10 +496,10 @@ return $default(_that.deviceId,_that.deviceToken,_that.name,_that.number,_that.a
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( int deviceId,  String deviceToken,  String name, @JsonKey(fromJson: intOrNull)  int? number, @JsonKey(fromJson: boolTrue)  bool approved)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( int deviceId,  String deviceToken,  String name, @JsonKey(fromJson: intOrNull)  int? number, @JsonKey(fromJson: boolTrue)  bool approved, @JsonKey(fromJson: stringOrNull)  String? exitPasswordOffline)?  $default,) {final _that = this;
 switch (_that) {
 case _DeviceRegistration() when $default != null:
-return $default(_that.deviceId,_that.deviceToken,_that.name,_that.number,_that.approved);case _:
+return $default(_that.deviceId,_that.deviceToken,_that.name,_that.number,_that.approved,_that.exitPasswordOffline);case _:
   return null;
 
 }
@@ -510,7 +511,7 @@ return $default(_that.deviceId,_that.deviceToken,_that.name,_that.number,_that.a
 @JsonSerializable()
 
 class _DeviceRegistration implements DeviceRegistration {
-  const _DeviceRegistration({required this.deviceId, required this.deviceToken, required this.name, @JsonKey(fromJson: intOrNull) this.number, @JsonKey(fromJson: boolTrue) this.approved = false});
+  const _DeviceRegistration({required this.deviceId, required this.deviceToken, required this.name, @JsonKey(fromJson: intOrNull) this.number, @JsonKey(fromJson: boolTrue) this.approved = false, @JsonKey(fromJson: stringOrNull) this.exitPasswordOffline});
   factory _DeviceRegistration.fromJson(Map<String, dynamic> json) => _$DeviceRegistrationFromJson(json);
 
 @override final  int deviceId;
@@ -518,6 +519,7 @@ class _DeviceRegistration implements DeviceRegistration {
 @override final  String name;
 @override@JsonKey(fromJson: intOrNull) final  int? number;
 @override@JsonKey(fromJson: boolTrue) final  bool approved;
+@override@JsonKey(fromJson: stringOrNull) final  String? exitPasswordOffline;
 
 /// Create a copy of DeviceRegistration
 /// with the given fields replaced by the non-null parameter values.
@@ -532,18 +534,18 @@ Map<String, dynamic> toJson() {
 
 @override
 bool operator ==(Object other) {
-    return identical(this, other) || (other.runtimeType == runtimeType&&other is _DeviceRegistration&&(identical(other.deviceId, deviceId) || other.deviceId == deviceId)&&(identical(other.deviceToken, deviceToken) || other.deviceToken == deviceToken)&&(identical(other.name, name) || other.name == name)&&(identical(other.number, number) || other.number == number)&&(identical(other.approved, approved) || other.approved == approved));
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is _DeviceRegistration&&(identical(other.deviceId, deviceId) || other.deviceId == deviceId)&&(identical(other.deviceToken, deviceToken) || other.deviceToken == deviceToken)&&(identical(other.name, name) || other.name == name)&&(identical(other.number, number) || other.number == number)&&(identical(other.approved, approved) || other.approved == approved)&&(identical(other.exitPasswordOffline, exitPasswordOffline) || other.exitPasswordOffline == exitPasswordOffline));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
 int get hashCode {
-    return Object.hash(runtimeType,deviceId,deviceToken,name,number,approved);
+    return Object.hash(runtimeType,deviceId,deviceToken,name,number,approved,exitPasswordOffline);
 }
 
 @override
 String toString() {
-    return 'DeviceRegistration(deviceId: $deviceId, deviceToken: $deviceToken, name: $name, number: $number, approved: $approved)';
+    return 'DeviceRegistration(deviceId: $deviceId, deviceToken: $deviceToken, name: $name, number: $number, approved: $approved, exitPasswordOffline: $exitPasswordOffline)';
 }
 
 
@@ -554,7 +556,7 @@ abstract mixin class _$DeviceRegistrationCopyWith<$Res> implements $DeviceRegist
   factory _$DeviceRegistrationCopyWith(_DeviceRegistration value, $Res Function(_DeviceRegistration) _then) = __$DeviceRegistrationCopyWithImpl;
 @override @useResult
 $Res call({
- int deviceId, String deviceToken, String name,@JsonKey(fromJson: intOrNull) int? number,@JsonKey(fromJson: boolTrue) bool approved
+ int deviceId, String deviceToken, String name,@JsonKey(fromJson: intOrNull) int? number,@JsonKey(fromJson: boolTrue) bool approved,@JsonKey(fromJson: stringOrNull) String? exitPasswordOffline
 });
 
 
@@ -571,14 +573,15 @@ class __$DeviceRegistrationCopyWithImpl<$Res>
 
 /// Create a copy of DeviceRegistration
 /// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? deviceId = null,Object? deviceToken = null,Object? name = null,Object? number = freezed,Object? approved = null,}) {
+@override @pragma('vm:prefer-inline') $Res call({Object? deviceId = null,Object? deviceToken = null,Object? name = null,Object? number = freezed,Object? approved = null,Object? exitPasswordOffline = freezed,}) {
   return _then(_DeviceRegistration(
 deviceId: null == deviceId ? _self.deviceId : deviceId // ignore: cast_nullable_to_non_nullable
 as int,deviceToken: null == deviceToken ? _self.deviceToken : deviceToken // ignore: cast_nullable_to_non_nullable
 as String,name: null == name ? _self.name : name // ignore: cast_nullable_to_non_nullable
 as String,number: freezed == number ? _self.number : number // ignore: cast_nullable_to_non_nullable
 as int?,approved: null == approved ? _self.approved : approved // ignore: cast_nullable_to_non_nullable
-as bool,
+as bool,exitPasswordOffline: freezed == exitPasswordOffline ? _self.exitPasswordOffline : exitPasswordOffline // ignore: cast_nullable_to_non_nullable
+as String?,
   ));
 }
 

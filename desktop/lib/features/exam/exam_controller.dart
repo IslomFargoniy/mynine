@@ -308,10 +308,12 @@ class ExamController extends ChangeNotifier {
       _token = login.token;
       _candidateName = login.candidate.name;
       _candidateCode = login.candidate.code;
-      _blockReason = null;
       _submitConfirmed = false;
       sync.kick();
       await _prefetchAndOpen();
+      // Only now: if the prefetch fails the locked screen (code field,
+      // Sign in again) must come back with its reason.
+      if (_stage != ExamStage.blocked) _blockReason = null;
     } on ApiException catch (e) {
       _error = e.userMessage;
       device.noteApproval(e);
@@ -321,7 +323,10 @@ class ExamController extends ChangeNotifier {
       if (e.code == ApiErrorCode.clientOutdated) _updateRequired = true;
       if (_stage == ExamStage.prefetching) _stage = before;
     } catch (e) {
-      _error = 'Something went wrong. Please try again.';
+      // Show the cause: staff reads it out when reporting a problem.
+      final detail = e.toString().replaceAll(RegExp(r'\s+'), ' ').trim();
+      _error = 'Something went wrong. Please try again. '
+          '(${detail.length > 140 ? '${detail.substring(0, 140)}…' : detail})';
       debugPrint('login failed: $e');
       if (_stage == ExamStage.prefetching) _stage = before;
     } finally {
@@ -348,55 +353,111 @@ class ExamController extends ChangeNotifier {
 
   Future<void>? _assetsJob;
 
+  /// `attempt:token` of the running download job (a new session starts its own).
+  String? _assetsJobKey;
+
+  /// Reason of the last failed background download (null after a success).
+  String? _assetError;
+  String? get assetError => _assetError;
+
+  /// Failed download rounds in a row (reset on success / new session).
+  int _assetFailures = 0;
+  int get assetFailures => _assetFailures;
+
+  /// After this many failed rounds the "preparing audio" screen shows the
+  /// reason and asks for the invigilator.
+  static const assetFailuresShown = 3;
+
+  /// Pause between download rounds (doubles up to 30 s). Tests shorten it.
+  @visibleForTesting
+  Duration assetRetryDelay = const Duration(seconds: 3);
+
   /// True once every audio file of the exam is on this computer.
   bool get audioReady {
     final c = _cached;
     return c != null && ExamRepository.audioComplete(c);
   }
 
-  /// Starts (once) the silent background download; retries until it is done
-  /// or the session ends.
+  /// Starts (once per attempt + token) the silent background download;
+  /// retries until it is done or the session changes. A job of an earlier
+  /// session stops at its next check and never touches this session's cache.
   void _startAssetDownload() {
     final c = _cached;
     final attempt = _attemptId;
     final token = _token;
-    if (c == null || attempt == null || token == null || _assetsJob != null) return;
+    if (c == null || attempt == null || token == null) return;
+    final key = '$attempt:$token';
+    if (_assetsJob != null && _assetsJobKey == key) return;
     if (ExamRepository.audioComplete(c) && c.imageFiles.length >= c.payload.images.length) return;
-    _assetsJob = () async {
-      var wait = const Duration(seconds: 3);
-      while (_attemptId == attempt && _token == token) {
+    if (_assetsJobKey != key) {
+      _assetError = null;
+      _assetFailures = 0;
+    }
+    bool current() => !_disposed && _attemptId == attempt && _token == token;
+    late final Future<void> job;
+    job = () async {
+      var wait = assetRetryDelay;
+      while (current()) {
         try {
-          final done = await examRepo.downloadAssets(token, attempt, _cached ?? c);
-          if (_attemptId == attempt) {
+          final done = await examRepo.downloadAssets(token, attempt, _cached ?? c, cancelled: () => !current());
+          if (current()) {
             _cached = done;
+            _assetError = null;
+            _assetFailures = 0;
             notifyListeners();
           }
           return;
         } catch (e) {
-          debugPrint('Background download failed, retrying in $wait: $e');
+          if (!current()) return;
+          if (e is AssetDownloadException) {
+            _cached = e.partial; // keep the files that did arrive
+          }
+          _assetFailures++;
+          _assetError = describeDownloadError(e);
+          debugPrint('Background download failed ($_assetFailures), retrying in $wait: $e');
+          notifyListeners();
+          final cause = e is AssetDownloadException ? e.cause : e;
+          // A refused token: the session is lost; a new login starts a new job.
+          if (cause is ApiException && cause.isAuthLost) return;
           await Future<void>.delayed(wait);
           if (wait < const Duration(seconds: 30)) wait *= 2;
         }
       }
-    }()
-        .whenComplete(() => _assetsJob = null);
+    }();
+    _assetsJob = job;
+    _assetsJobKey = key;
+    job.whenComplete(() {
+      if (identical(_assetsJob, job)) {
+        _assetsJob = null;
+        _assetsJobKey = null;
+      }
+    });
   }
 
+  String _audioWaitMessage(ExamModule m) => _assetFailures >= assetFailuresShown && _assetError != null
+      ? 'Audio could not be downloaded: $_assetError.\nPlease call the invigilator.'
+      : 'Preparing the ${m.title} audio…\nPlease wait a moment.';
+
   /// Listening cannot start without its recording: if the background download
-  /// is not finished yet, wait for it (shown as a short "preparing" screen).
+  /// is not finished yet, wait for it (shown as a short "preparing" screen,
+  /// with the reason after a few failed rounds). Returns false when the wait
+  /// was left because the stage or the session changed meanwhile.
   Future<bool> _waitForAudio(ExamModule m) async {
     if (!m.isListening || audioReady) return true;
     final attempt = _attemptId;
+    final token = _token;
     _set(() {
       _stage = ExamStage.transition;
-      _transitionMessage = 'Preparing the ${m.title} audio…\nPlease wait a moment.';
+      _transitionMessage = _audioWaitMessage(m);
     });
     while (!audioReady) {
-      if (_attemptId != attempt || _stage == ExamStage.blocked) return false;
+      if (_attemptId != attempt || _token != token || _stage != ExamStage.transition) return false;
       _startAssetDownload();
+      final msg = _audioWaitMessage(m);
+      if (msg != _transitionMessage) _set(() => _transitionMessage = msg);
       await Future<void>.delayed(const Duration(milliseconds: 500));
     }
-    return true;
+    return _attemptId == attempt && _token == token && _stage == ExamStage.transition;
   }
 
   /// Opens the stage for the current module. When every module is already
@@ -404,6 +465,10 @@ class ExamController extends ChangeNotifier {
   /// submit) the final submit is sent now.
   Future<void> _enterFirstStage() async {
     _startAssetDownload();
+    // The session is open: the monitor sees this PC (and remote pause /
+    // unlock / force submit reach it) already on the rules, sound check and
+    // "preparing audio" screens, not only once a module runs.
+    if (_heartbeat == null) _startHeartbeat();
     final m = currentModule;
     if (m == null) {
       await _finalSubmit();
@@ -602,6 +667,7 @@ class ExamController extends ChangeNotifier {
   void acceptRules() {
     final m = currentModule;
     if (m == null || _stage != ExamStage.rules || _entering) return;
+    _error = null;
     if (m.isListening && m.isNotStarted) {
       _set(() => _stage = ExamStage.soundCheck);
     } else {
@@ -658,7 +724,13 @@ class ExamController extends ChangeNotifier {
           await _persistModules();
           break;
         } on ApiException catch (e) {
-          if (e.code == ApiErrorCode.moduleTimeOver || e.code == ApiErrorCode.attemptFinished) {
+          if (e.code == ApiErrorCode.attemptFinished) {
+            // The whole attempt is over on the server: end here as well.
+            _entering = false;
+            await _endLocally();
+            return;
+          }
+          if (e.code == ApiErrorCode.moduleTimeOver) {
             _modules[_moduleIndex] = m.copyWith(status: ModuleStatus.submitted);
             _entering = false;
             await _advance();
@@ -672,11 +744,25 @@ class ExamController extends ChangeNotifier {
             await _block(BlockReason.clientOutdated);
             return;
           }
+          final retry = e.isTransient || e.code == ApiErrorCode.paused || e.code == ApiErrorCode.moduleLocked;
+          if (!retry) {
+            // 404 / 403 / 422 …: retrying cannot help. Back to the Start
+            // screen with the reason (Start can be pressed again once fixed).
+            _set(() {
+              _error = '${e.userMessage} Please call the invigilator.';
+              _transitionMessage = null;
+              _stage = ExamStage.rules;
+            });
+            return;
+          }
           if (e.code == ApiErrorCode.paused) _setPaused(true);
-          _set(() => _transitionMessage = e.isTransient
-              ? 'Waiting for the connection to start ${m.title}…\nYour answers are saved on this computer.'
-              : e.userMessage);
-          await Future<void>.delayed(const Duration(seconds: 3));
+          _set(() => _transitionMessage = e.code == ApiErrorCode.paused
+              ? 'The exam is paused by the invigilator. Please wait.'
+              : e.isTransient
+                  ? 'Waiting for the connection to start ${m.title}…\nYour answers are saved on this computer.'
+                  : e.userMessage);
+          await Future<void>.delayed(retryDelay);
+          if (_stage != ExamStage.transition || _token == null) return;
         }
       }
     }
@@ -716,7 +802,7 @@ class ExamController extends ChangeNotifier {
 
   Future<void> _sendHeartbeat() async {
     final token = _token;
-    if (token == null || _stage == ExamStage.blocked) return;
+    if (token == null || _stage == ExamStage.blocked || _disposed) return;
     try {
       final r = await api.examHeartbeat(
         token,
@@ -750,6 +836,10 @@ class ExamController extends ChangeNotifier {
       } else if (e.code == ApiErrorCode.clientOutdated) {
         await _block(BlockReason.clientOutdated);
       }
+    } catch (e) {
+      // Local problem (e.g. the database closed while shutting down): the
+      // next beat tries again.
+      if (!_disposed) debugPrint('Heartbeat failed: $e');
     }
   }
 
@@ -867,6 +957,15 @@ class ExamController extends ChangeNotifier {
 
   // ---- Submitting -------------------------------------------------------------------
 
+  /// Pause between retries of a module start / submit. Tests shorten it.
+  @visibleForTesting
+  Duration retryDelay = const Duration(seconds: 3);
+
+  /// How long a submit waits for the connection before it goes on offline
+  /// (module time-over submit, final submit). Tests shorten it.
+  @visibleForTesting
+  Duration submitGrace = AppConfig.offlineSubmitGrace;
+
   Future<void> confirmFinishModule() => _submitModule(auto: false);
 
   Future<int> _drainQueue({Duration timeout = const Duration(seconds: 20)}) async {
@@ -896,8 +995,9 @@ class ExamController extends ChangeNotifier {
     try {
       await flushPending();
       await _drainQueue();
+      var deadline = DateTime.now().add(submitGrace);
       while (true) {
-        if (_stage == ExamStage.blocked || _token == null) return;
+        if (_stage == ExamStage.blocked || _stage == ExamStage.completed || _token == null) return;
         try {
           await api.submitModule(_token!, m.typeId);
           break;
@@ -919,13 +1019,26 @@ class ExamController extends ChangeNotifier {
             await _block(BlockReason.clientOutdated);
             return;
           }
+          final paused = e.code == ApiErrorCode.paused || _paused;
+          if (paused) {
+            deadline = DateTime.now().add(submitGrace);
+          } else if (auto && !DateTime.now().isBefore(deadline)) {
+            // Time is over and the server cannot be reached: the server
+            // finishes expired modules by itself and still accepts the
+            // queued answers (written before the end). Go on here; the
+            // answers stay in the queue and are sent when back online.
+            debugPrint('Module ${m.typeId} submitted locally after the offline grace: $e');
+            break;
+          }
           _set(() {
             _stage = ExamStage.transition;
-            _transitionMessage = e.code == ApiErrorCode.paused
+            _transitionMessage = paused
                 ? 'The exam is paused by the invigilator. Please wait.'
-                : 'Saving ${m.title}… waiting for the connection.\nYour answers are saved on this computer.';
+                : e.isTransient
+                    ? 'Saving ${m.title}… waiting for the connection.\nYour answers are saved on this computer.'
+                    : '${e.userMessage}\nYour answers are saved on this computer. Please call the invigilator.';
           });
-          await Future<void>.delayed(const Duration(seconds: 3));
+          await Future<void>.delayed(retryDelay);
           await _drainQueue(timeout: const Duration(seconds: 10));
         }
       }
@@ -993,11 +1106,11 @@ class ExamController extends ChangeNotifier {
       _transitionMessage = 'Finishing your exam…';
     });
     await flushPending();
-    var deadline = DateTime.now().add(AppConfig.offlineSubmitGrace);
+    var deadline = DateTime.now().add(submitGrace);
     var left = await _drainQueue();
     while (left > 0) {
       if (_paused) {
-        deadline = DateTime.now().add(AppConfig.offlineSubmitGrace);
+        deadline = DateTime.now().add(submitGrace);
         _set(() => _transitionMessage = 'The exam is paused by the invigilator. Please wait.\n'
             'Your answers are saved on this computer.');
       } else if (!DateTime.now().isBefore(deadline)) {
@@ -1006,8 +1119,8 @@ class ExamController extends ChangeNotifier {
         _set(() => _transitionMessage =
             'Finishing your exam… sending $left saved answer(s).\nPlease wait, do not turn off the computer.');
       }
-      await Future<void>.delayed(const Duration(seconds: 3));
-      if (_stage == ExamStage.blocked || _token != token) return;
+      await Future<void>.delayed(retryDelay);
+      if (_stage != ExamStage.transition || _token != token) return;
       left = await _drainQueue(timeout: const Duration(seconds: 10));
     }
     var submitted = false;
@@ -1016,6 +1129,8 @@ class ExamController extends ChangeNotifier {
       try {
         await violationQueue.syncOnce(api, token, attempt).timeout(const Duration(seconds: 10));
       } catch (_) {}
+      // True once a submit may have reached the server (its answer lost).
+      var maybeSent = false;
       while (true) {
         try {
           await api.submitExam(token);
@@ -1024,12 +1139,23 @@ class ExamController extends ChangeNotifier {
           if (e.code == ApiErrorCode.attemptFinished) {
             submitted = true;
           } else if (e.isAuthLost) {
-            throw _SessionLost();
+            // After a submit whose answer was lost, the server has already
+            // closed the attempt and revoked the token: that is a success.
+            if (!maybeSent) throw _SessionLost();
+            submitted = true;
           } else if (e.code == ApiErrorCode.paused) {
             _setPaused(true);
+            deadline = DateTime.now().add(submitGrace);
             _set(() => _transitionMessage = 'The exam is paused by the invigilator. Please wait.');
-            await Future<void>.delayed(const Duration(seconds: 5));
-            if (_stage == ExamStage.blocked || _token != token) return;
+            await Future<void>.delayed(retryDelay);
+            if (_stage != ExamStage.transition || _token != token) return;
+            continue;
+          } else if (e.isTransient && DateTime.now().isBefore(deadline)) {
+            maybeSent = true;
+            _set(() => _transitionMessage =
+                'Finishing your exam… waiting for the connection.\nPlease wait, do not turn off the computer.');
+            await Future<void>.delayed(retryDelay);
+            if (_stage != ExamStage.transition || _token != token) return;
             continue;
           }
         }

@@ -97,11 +97,20 @@ class _RulesScreenState extends ConsumerState<RulesScreen> {
             ],
             const SizedBox(height: 8),
             ListenableBuilder(
-              listenable: _gate,
+              listenable: Listenable.merge([_gate, exam]),
               builder: (context, _) => Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
                   BannedAppsPanel(gate: _gate),
+                  // A module start the server refused (not a connection problem).
+                  if (exam.error != null)
+                    Padding(
+                      padding: const EdgeInsets.only(bottom: 12),
+                      child: Text(exam.error!,
+                          key: const Key('rules-error'),
+                          textAlign: TextAlign.right,
+                          style: inter(14, weight: FontWeight.w600, color: TW.red700)),
+                    ),
                   Align(
                     alignment: Alignment.centerRight,
                     child: BlackButton(

@@ -89,12 +89,24 @@ class ExamRepository {
   static bool audioComplete(CachedExam cached) => cached.payload.audio
       .every((a) => cached.audioFiles[a.key] != null && File(cached.audioFiles[a.key]!).existsSync());
 
+  /// Audio files already hash-checked by this repository (path → sha256):
+  /// a retry never reads or fetches them again.
+  final Map<String, String?> _verified = {};
+
   /// Step 2 (slow, in the background): audio (hash-checked) and images.
+  ///
+  /// Every audio file is tried even when an earlier one fails; files already
+  /// on disk and verified are skipped. When one or more audio files could not
+  /// be downloaded, the files that did succeed are saved and an
+  /// [AssetDownloadException] (holding them and the reason) is thrown.
+  /// [cancelled] is checked between files: when it returns true the
+  /// download stops and returns what it has (the caller drops it).
   Future<CachedExam> downloadAssets(
     String token,
     int attemptId,
     CachedExam cached, {
     PrefetchProgress? onProgress,
+    bool Function()? cancelled,
   }) async {
     final payload = cached.payload;
     final dir = paths.examDir(attemptId);
@@ -104,29 +116,47 @@ class ExamRepository {
     final totalBytes = payload.audio.fold<int>(0, (s, a) => s + (a.size > 0 ? a.size : 1));
     var doneBytes = 0;
     final audioFiles = <String, String>{};
+    Object? firstError;
+    String? failedKey;
     for (final asset in payload.audio) {
+      if (cancelled?.call() ?? false) {
+        return CachedExam(payload: payload, audioFiles: audioFiles, imageFiles: cached.imageFiles);
+      }
       final file = audioTarget(asset, audioDir);
       final weight = asset.size > 0 ? asset.size : 1;
-      await _downloadVerified(
-        asset.url,
-        file,
-        token: token,
-        sha256Hex: asset.sha256,
-        onProgress: (received, total) {
-          final t = total > 0 ? total : weight;
-          final frac = (received / t).clamp(0.0, 1.0);
-          onProgress?.call(
-            0.1 + 0.8 * ((doneBytes + frac * weight) / (totalBytes == 0 ? 1 : totalBytes)),
-            'Downloading audio…',
+      final known = _verified.containsKey(file.path) && _verified[file.path] == asset.sha256;
+      if (!(known && file.existsSync())) {
+        try {
+          await _downloadVerified(
+            asset.url,
+            file,
+            token: token,
+            sha256Hex: asset.sha256,
+            onProgress: (received, total) {
+              final t = total > 0 ? total : weight;
+              final frac = (received / t).clamp(0.0, 1.0);
+              onProgress?.call(
+                0.1 + 0.8 * ((doneBytes + frac * weight) / (totalBytes == 0 ? 1 : totalBytes)),
+                'Downloading audio…',
+              );
+            },
           );
-        },
-      );
+          _verified[file.path] = asset.sha256;
+        } catch (e) {
+          debugPrint('Audio ${asset.key} not downloaded: $e');
+          firstError ??= e;
+          failedKey ??= asset.key;
+          doneBytes += weight;
+          continue;
+        }
+      }
       doneBytes += weight;
       audioFiles[asset.key] = file.path;
     }
 
     final imageFiles = <String, String>{};
     for (var i = 0; i < payload.images.length; i++) {
+      if (cancelled?.call() ?? false) break;
       final url = payload.images[i];
       onProgress?.call(0.9 + 0.1 * (i / payload.images.length), 'Downloading images…');
       final name = '${sha1.convert(utf8.encode(url))}${_ext(url, '.img')}';
@@ -143,7 +173,11 @@ class ExamRepository {
     }
 
     final done = CachedExam(payload: payload, audioFiles: audioFiles, imageFiles: imageFiles);
+    if (cancelled?.call() ?? false) return done;
     await db.putCache(cacheKey(attemptId), jsonEncode(done.toJson()));
+    if (firstError != null) {
+      throw AssetDownloadException(partial: done, cause: firstError, assetKey: failedKey);
+    }
     onProgress?.call(1, 'Ready');
     return done;
   }
@@ -174,10 +208,7 @@ class ExamRepository {
       if (await verifySha256(file, sha256Hex)) return;
       await file.delete();
     }
-    throw ApiException(
-      code: ApiErrorCode.unknown,
-      message: 'Checksum mismatch for $url',
-    );
+    throw ChecksumMismatch(url);
   }
 
   /// Where an audio asset is stored: `audio_cache/<sha256><ext>` (shared by
@@ -262,4 +293,49 @@ Future<bool> verifySha256(File file, String? expectedHex) async {
   if (expectedHex == null || expectedHex.isEmpty) return true;
   final digest = await sha256.bind(file.openRead()).first;
   return digest.toString().toLowerCase() == expectedHex.trim().toLowerCase();
+}
+
+/// The downloaded file never matched its checksum (damaged on the server or
+/// on the way).
+class ChecksumMismatch implements Exception {
+  ChecksumMismatch(this.url);
+  final String url;
+
+  @override
+  String toString() => 'Checksum mismatch for $url';
+}
+
+/// One or more audio files could not be downloaded. [partial] holds the
+/// files that did succeed (already saved in the cache).
+class AssetDownloadException implements Exception {
+  AssetDownloadException({required this.partial, required this.cause, this.assetKey});
+
+  final CachedExam partial;
+  final Object cause;
+  final String? assetKey;
+
+  /// Short candidate/invigilator-facing reason ("file not found on the
+  /// server (HTTP 404)", "the file is damaged (checksum mismatch)", …).
+  String get reason => describeDownloadError(cause);
+
+  @override
+  String toString() => 'AssetDownloadException($assetKey): $cause';
+}
+
+/// Short, readable reason of a failed download.
+String describeDownloadError(Object e) {
+  if (e is AssetDownloadException) return e.reason;
+  if (e is ChecksumMismatch) return 'the file is damaged (checksum mismatch)';
+  if (e is ApiException) {
+    final status = e.statusCode == null ? '' : ' (HTTP ${e.statusCode})';
+    return switch (e.code) {
+      ApiErrorCode.notFound => 'file not found on the server$status',
+      ApiErrorCode.network || ApiErrorCode.secureConnection => 'no connection to the server',
+      _ when e.isAuthLost => 'the session was refused by the server$status',
+      ApiErrorCode.forbidden || ApiErrorCode.deviceBlocked => 'access denied by the server$status',
+      _ => '${e.message?.isNotEmpty == true ? e.message! : e.code.wire}$status',
+    };
+  }
+  final text = e.toString().split('\n').first.replaceAll(RegExp(r'\s+'), ' ').trim();
+  return text.length > 120 ? '${text.substring(0, 120)}…' : text;
 }

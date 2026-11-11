@@ -176,30 +176,11 @@ class _SoundCheckScreenState extends ConsumerState<SoundCheckScreen> {
                   ]),
                 ),
                 const SizedBox(height: 20),
-                // Audio preload status: always cached here (prefetched before the rules).
-                Container(
-                  padding: const EdgeInsets.all(12),
-                  decoration: BoxDecoration(
-                    color: TW.emerald50,
-                    border: Border.all(color: TW.emerald200),
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  child: Row(children: [
-                    const Icon(LucideIcons.shieldCheck, size: 16, color: TW.emerald600),
-                    const SizedBox(width: 8),
-                    Expanded(
-                      child: Text('Listening audio is stored on this computer (100% offline ready)',
-                          style: inter(11, weight: FontWeight.w600, color: TW.emerald800)),
-                    ),
-                    Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-                      decoration: BoxDecoration(
-                        color: const Color(0x99A4F4CF),
-                        borderRadius: BorderRadius.circular(6),
-                      ),
-                      child: Text('Offline Ready', style: inter(10, weight: FontWeight.w700, color: TW.emerald800)),
-                    ),
-                  ]),
+                // Audio preload status: "Offline Ready" only once the recording is
+                // on this computer (it downloads in the background after login).
+                ListenableBuilder(
+                  listenable: exam,
+                  builder: (context, _) => _AudioStatus(ready: exam.audioReady),
                 ),
                 if (_error != null) ...[
                   const SizedBox(height: 12),
@@ -285,4 +266,45 @@ Uint8List chimeWav() {
     data.setInt16(44 + i * 2, (samples[i].clamp(-1.0, 1.0) * 32767).round(), Endian.little);
   }
   return data.buffer.asUint8List();
+}
+
+/// Whether the Listening recording is already stored on this computer.
+class _AudioStatus extends StatelessWidget {
+  const _AudioStatus({required this.ready});
+
+  final bool ready;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      key: Key(ready ? 'audio-ready' : 'audio-preparing'),
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: ready ? TW.emerald50 : TW.gray50,
+        border: Border.all(color: ready ? TW.emerald200 : TW.gray200),
+        borderRadius: BorderRadius.circular(8),
+      ),
+      child: Row(children: [
+        Icon(ready ? LucideIcons.shieldCheck : LucideIcons.download,
+            size: 16, color: ready ? TW.emerald600 : TW.gray500),
+        const SizedBox(width: 8),
+        Expanded(
+          child: Text(
+              ready
+                  ? 'Listening audio is stored on this computer (100% offline ready)'
+                  : 'Listening audio is being downloaded to this computer',
+              style: inter(11, weight: FontWeight.w600, color: ready ? TW.emerald800 : TW.gray700)),
+        ),
+        Container(
+          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+          decoration: BoxDecoration(
+            color: ready ? const Color(0x99A4F4CF) : TW.gray200,
+            borderRadius: BorderRadius.circular(6),
+          ),
+          child: Text(ready ? 'Offline Ready' : 'Preparing audio…',
+              style: inter(10, weight: FontWeight.w700, color: ready ? TW.emerald800 : TW.gray700)),
+        ),
+      ]),
+    );
+  }
 }

@@ -51,6 +51,8 @@ abstract class DeviceRegistration with _$DeviceRegistration {
     required String name,
     @JsonKey(fromJson: intOrNull) int? number,
     @JsonKey(fromJson: boolTrue) @Default(false) bool approved,
+    // PBKDF2 hash of the center password for offline checks (newer servers).
+    @JsonKey(fromJson: stringOrNull) String? exitPasswordOffline,
   }) = _DeviceRegistration;
 
   factory DeviceRegistration.fromJson(Map<String, Object?> json) =>

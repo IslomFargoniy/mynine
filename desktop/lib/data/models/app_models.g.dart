@@ -39,6 +39,7 @@ _DeviceRegistration _$DeviceRegistrationFromJson(Map<String, dynamic> json) =>
       name: json['name'] as String,
       number: intOrNull(json['number']),
       approved: json['approved'] == null ? false : boolTrue(json['approved']),
+      exitPasswordOffline: stringOrNull(json['exit_password_offline']),
     );
 
 Map<String, dynamic> _$DeviceRegistrationToJson(_DeviceRegistration instance) =>
@@ -48,6 +49,7 @@ Map<String, dynamic> _$DeviceRegistrationToJson(_DeviceRegistration instance) =>
       'name': instance.name,
       'number': instance.number,
       'approved': instance.approved,
+      'exit_password_offline': instance.exitPasswordOffline,
     };
 
 _DeviceHeartbeat _$DeviceHeartbeatFromJson(Map<String, dynamic> json) =>

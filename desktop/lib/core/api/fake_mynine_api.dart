@@ -106,6 +106,31 @@ class FakeMynineApi implements MynineApi {
   /// `/exam/submit` fails with a network error (connection lost).
   bool failSubmitExam = false;
 
+  /// `/exam/submit` is applied by the server, but its answer is lost on the
+  /// way (network error on the client) this many times.
+  int loseSubmitExamResponses = 0;
+
+  /// Audio downloads fail with this error (null: they work).
+  Object? audioDownloadError;
+
+  /// Audio downloads that reached the fake server.
+  int audioDownloads = 0;
+
+  /// `/exam/prefetch` fails with this error (null: works).
+  Object? prefetchError;
+
+  /// `/exam/modules/{type}/start` fails with this error (null: works).
+  ApiException? startModuleError;
+
+  /// `/exam/modules/{type}/submit` fails with this error (null: works).
+  ApiException? submitModuleError;
+
+  /// `/device/unlock` answers with this error (403 device_blocked, 429, …).
+  ApiException? deviceUnlockError;
+
+  /// `POST /device/register` includes `exit_password_offline` (newer server).
+  bool registerReturnsOfflineHash = true;
+
   /// Exam-token requests answer 426 `client_outdated` (cannot happen with
   /// API v1.1; the client must not loop on it).
   bool outdatedExamCalls = false;
@@ -233,6 +258,7 @@ class FakeMynineApi implements MynineApi {
       name: deviceName,
       number: approved ? number : null,
       approved: approved,
+      exitPasswordOffline: registerReturnsOfflineHash ? offlineHash : null,
     );
   }
 
@@ -255,6 +281,7 @@ class FakeMynineApi implements MynineApi {
   @override
   Future<bool> deviceUnlock(String password) async {
     await _io('deviceUnlock');
+    if (deviceUnlockError != null) throw deviceUnlockError!;
     return password == exitPassword;
   }
 
@@ -430,6 +457,7 @@ class FakeMynineApi implements MynineApi {
   Future<PrefetchPayload> prefetch(String examToken) async {
     await _io('prefetch');
     _requireToken(examToken);
+    if (prefetchError != null) throw prefetchError!;
     _autoFinishExpired();
     _tick();
     final audio = _audio();
@@ -462,6 +490,7 @@ class FakeMynineApi implements MynineApi {
   Future<ModuleStartResponse> startModule(String examToken, int typeId) async {
     await _io('startModule');
     _requireToken(examToken);
+    if (startModuleError != null) throw startModuleError!;
     _autoFinishExpired();
     final modules = _modules();
     final idx = modules.indexWhere((m) => m.typeId == typeId);
@@ -558,6 +587,7 @@ class FakeMynineApi implements MynineApi {
   Future<ModuleSubmitResponse> submitModule(String examToken, int typeId) async {
     await _io('submitModule');
     _requireToken(examToken);
+    if (submitModuleError != null) throw submitModuleError!;
     _submitted.add(typeId);
     _tick();
     return ModuleSubmitResponse(typeId: typeId, status: ModuleStatus.submitted, serverTime: _serverNow);
@@ -571,6 +601,10 @@ class FakeMynineApi implements MynineApi {
     examSubmitted = true;
     _token = null;
     _tick();
+    if (loseSubmitExamResponses > 0) {
+      loseSubmitExamResponses--;
+      throw ApiException(code: ApiErrorCode.network, message: 'response lost (fake)');
+    }
     return ExamSubmitResponse(status: 'completed', serverTime: _serverNow);
   }
 
@@ -620,6 +654,10 @@ class FakeMynineApi implements MynineApi {
   }) async {
     await _io('download');
     if (url.startsWith('fake://desktop/')) downloadedFiles.add(url.substring('fake://desktop/'.length));
+    if (url.startsWith('fake://audio')) {
+      audioDownloads++;
+      if (audioDownloadError != null) throw audioDownloadError!;
+    }
     final bytes = url == 'fake://background'
         ? backgroundBytes!
         : url.startsWith('fake://audio')

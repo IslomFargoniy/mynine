@@ -106,7 +106,14 @@ class SyncService extends ChangeNotifier {
         try {
           await syncSession(s);
         } on ApiException catch (e) {
-          if (e.isAuthLost) {
+          if (e.isAuthLost && s.submitPending) {
+            // A final submit was pending: the token is revoked when the
+            // server closes the attempt, so an earlier submit did arrive (its
+            // answer was lost). The attempt is finished; data stays in SQLite.
+            debugPrint('Session ${s.attemptId}: token refused after a submit; attempt closed.');
+            await db.markSession(s.attemptId, submitPending: false, closed: true);
+            onSessionClosed?.call(s.attemptId);
+          } else if (e.isAuthLost) {
             // Token revoked / expired: keep every queued item (it is sent once
             // the session is restored by a new login on this PC).
             debugPrint('Session ${s.attemptId}: token refused (${e.code.wire}); queue kept.');

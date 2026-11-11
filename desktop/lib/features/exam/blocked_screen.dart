@@ -89,12 +89,15 @@ class _BlockedScreenState extends ConsumerState<BlockedScreen> {
                       controller: _code,
                       enabled: !exam.busy,
                       textAlign: TextAlign.center,
-                      keyboardType: TextInputType.number,
+                      // Candidates of attempts made before the 6-digit codes
+                      // keep their old codes (e.g. AVGUST17-697100).
+                      textCapitalization: TextCapitalization.characters,
                       inputFormatters: [
-                        FilteringTextInputFormatter.digitsOnly,
-                        LengthLimitingTextInputFormatter(6),
+                        FilteringTextInputFormatter.allow(RegExp('[A-Za-z0-9-]')),
+                        LengthLimitingTextInputFormatter(32),
+                        const _UpperCaseFormatter(),
                       ],
-                      decoration: const InputDecoration(hintText: '000000'),
+                      decoration: const InputDecoration(hintText: 'Exam code'),
                       onSubmitted: (_) => exam.login(_code.text),
                     ),
                   ),
@@ -124,4 +127,12 @@ class _BlockedScreenState extends ConsumerState<BlockedScreen> {
       ]),
     );
   }
+}
+
+class _UpperCaseFormatter extends TextInputFormatter {
+  const _UpperCaseFormatter();
+
+  @override
+  TextEditingValue formatEditUpdate(TextEditingValue oldValue, TextEditingValue newValue) =>
+      newValue.copyWith(text: newValue.text.toUpperCase());
 }

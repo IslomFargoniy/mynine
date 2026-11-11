@@ -7,6 +7,7 @@ import '../../app/providers.dart';
 import '../exam/exam_controller.dart';
 import '../../app/theme.dart';
 import '../../core/api/api_exception.dart';
+import '../../data/repositories/device_repository.dart' show ExitPasswordCheck;
 import '../setup/setup_views.dart' show setupErrorMessage;
 import '../updater/update_dialog.dart';
 
@@ -51,14 +52,14 @@ class _PasswordDialogState extends ConsumerState<_PasswordDialog> {
       _checking = true;
       _error = null;
     });
-    final ok = await ref.read(deviceRepositoryProvider).verifyExitPassword(_controller.text);
+    final result = await ref.read(deviceRepositoryProvider).checkExitPassword(_controller.text);
     if (!mounted) return;
-    if (ok) {
+    if (result == ExitPasswordCheck.ok) {
       Navigator.of(context).pop(true);
     } else {
       setState(() {
         _checking = false;
-        _error = 'Incorrect password.';
+        _error = result.message;
         _controller.clear();
       });
     }
@@ -77,12 +78,13 @@ class _PasswordDialogState extends ConsumerState<_PasswordDialog> {
             Text(widget.reason ?? 'Enter the center password to continue.'),
             const SizedBox(height: 16),
             TextField(
+              key: const Key('exit-password'),
               controller: _controller,
               autofocus: true,
               obscureText: true,
               enabled: !_checking,
               onSubmitted: (_) => _submit(),
-              decoration: InputDecoration(labelText: 'Center password', errorText: _error),
+              decoration: InputDecoration(labelText: 'Center password', errorText: _error, errorMaxLines: 3),
             ),
           ],
         ),

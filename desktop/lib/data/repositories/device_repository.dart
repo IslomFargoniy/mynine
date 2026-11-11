@@ -14,6 +14,30 @@ import '../../platform/lockdown/lockdown.dart';
 import '../models/app_models.dart';
 import 'exam_repository.dart' show verifySha256;
 
+/// Result of a center-password check.
+enum ExitPasswordCheck {
+  ok,
+  wrong,
+
+  /// 403 `device_blocked` and no offline hash on this PC.
+  blocked,
+
+  /// 403 `device_not_approved` and no offline hash on this PC.
+  notApproved,
+
+  /// 429: too many attempts.
+  tooManyAttempts;
+
+  /// Text for the password dialog (null for [ok]).
+  String? get message => switch (this) {
+        ok => null,
+        wrong => 'Incorrect password.',
+        blocked => 'This PC is blocked on the server — unblock it in Exam PCs.',
+        notApproved => 'This PC is waiting for approval in Exam PCs.',
+        tooManyAttempts => 'Too many attempts, wait a minute.',
+      };
+}
+
 /// Device identity, registration, config cache and exit-password checks.
 class DeviceRepository extends ChangeNotifier {
   DeviceRepository({
@@ -120,6 +144,13 @@ class DeviceRepository extends ChangeNotifier {
       await store.write(SettingsKeys.pcName, r.name);
       _registered = true;
       _blocked = false;
+      // The offline hash comes with the registration (newer servers): the
+      // exit password then works even while the PC is not approved / blocked.
+      final hash = r.exitPasswordOffline;
+      if (hash != null && hash.isNotEmpty && hash != _config.exitPasswordOffline) {
+        _config = _config.copyWith(exitPasswordOffline: hash);
+        await store.write(SettingsKeys.deviceConfig, jsonEncode(_config.toJson()));
+      }
       await _setApproval(approved: r.approved, number: r.number);
     } on ApiException catch (e) {
       if (e.code == ApiErrorCode.deviceBlocked) _blocked = true;
@@ -220,20 +251,35 @@ class DeviceRepository extends ChangeNotifier {
 
   /// Verifies the center password: online first, then offline against
   /// the cached PBKDF2 hash when the server is unreachable.
-  Future<bool> verifyExitPassword(String password) async {
-    if (password.isEmpty) return false;
+  Future<bool> verifyExitPassword(String password) async =>
+      await checkExitPassword(password) == ExitPasswordCheck.ok;
+
+  /// Like [verifyExitPassword], with the reason of a refusal. A PC the
+  /// server blocked / has not approved is checked against the offline hash;
+  /// without one the result says why instead of "incorrect password".
+  Future<ExitPasswordCheck> checkExitPassword(String password) async {
+    if (password.isEmpty) return ExitPasswordCheck.wrong;
+    ExitPasswordCheck? refusedBy;
     if (_registered) {
       try {
-        return await api.deviceUnlock(password);
+        return await api.deviceUnlock(password) ? ExitPasswordCheck.ok : ExitPasswordCheck.wrong;
       } on ApiException catch (e) {
-        if (e.code == ApiErrorCode.invalidPassword) return false;
-        if (e.code == ApiErrorCode.tooManyRequests || e.statusCode == 429) return false;
-        // Network / server problems: fall back to the offline hash below.
+        if (e.code == ApiErrorCode.invalidPassword) return ExitPasswordCheck.wrong;
+        if (e.code == ApiErrorCode.tooManyRequests || e.statusCode == 429) {
+          return ExitPasswordCheck.tooManyAttempts;
+        }
+        if (e.code == ApiErrorCode.deviceBlocked) {
+          _blocked = true;
+          refusedBy = ExitPasswordCheck.blocked;
+        } else if (e.code == ApiErrorCode.deviceNotApproved) {
+          refusedBy = ExitPasswordCheck.notApproved;
+        }
+        // Network / server problems (and a refused PC): offline hash below.
       }
     }
     final hash = _config.exitPasswordOffline;
-    if (hash == null) return false;
-    return compute(_verifyOffline, [password, hash]);
+    if (hash == null || hash.isEmpty) return refusedBy ?? ExitPasswordCheck.wrong;
+    return await compute(_verifyOffline, [password, hash]) ? ExitPasswordCheck.ok : ExitPasswordCheck.wrong;
   }
 
   static bool _verifyOffline(List<String> args) => verifyPbkdf2Password(args[0], args[1]);
