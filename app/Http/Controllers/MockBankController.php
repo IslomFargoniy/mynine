@@ -56,6 +56,7 @@ class MockBankController extends Controller
                     'id' => $tt->id,
                     'type' => $tt->type?->name,
                     'parts_count' => $tt->parts_count,
+                    'questions_count' => $tt->parts_count > 0 ? $this->bank->questionCount($tt) : 0,
                     'issues' => $issues,
                     'ready' => $issues === [],
                     'uses' => $uses[$tt->id] ?? 0,

@@ -64,8 +64,7 @@ class MockBankService
 
             // A full Listening / Reading paper has 40 numbered questions. A "choose TWO" question
             // covers as many numbers as it has correct options (same rule as the exam payload).
-            $numbers = (clone $questions)->with('options:id,question_id,is_correct')->get()
-                ->sum(fn (Question $q) => $q->options->isEmpty() ? 1 : max(1, $q->options->where('is_correct', true)->count()));
+            $numbers = $this->countNumbers(clone $questions);
 
             $expected = config('desktop.questions_per_paper', self::QUESTIONS_PER_PAPER);
             if ($expected && $numbers !== (int) $expected) {
@@ -89,6 +88,26 @@ class MockBankService
         }
 
         return $issues;
+    }
+
+    /**
+     * How many numbered questions a module holds (a "choose TWO" question counts as two), as shown on the bank card.
+     */
+    public function questionCount(TestType $testType): int
+    {
+        $partIds = Part::withoutEagerLoads()->where('test_type_id', $testType->id)->pluck('id');
+        if ($partIds->isEmpty()) {
+            return 0;
+        }
+
+        return $this->countNumbers(Question::withoutEagerLoads()
+            ->whereHas('section', fn ($q) => $q->withoutEagerLoads()->whereIn('part_id', $partIds)));
+    }
+
+    private function countNumbers($questions): int
+    {
+        return (int) $questions->with('options:id,question_id,is_correct')->get()
+            ->sum(fn (Question $q) => $q->options->isEmpty() ? 1 : max(1, $q->options->where('is_correct', true)->count()));
     }
 
     /**

@@ -17,6 +17,7 @@ interface BankModuleRow {
     id: number;
     type: string;
     parts_count: number;
+    questions_count: number;
     issues: string[];
     ready: boolean;
     uses: number;
@@ -524,7 +525,7 @@ export default function MockBankIndex() {
                                             </div>
                                             <div className="mt-2 space-y-0.5 text-[11px] text-muted-foreground">
                                                 <div>
-                                                    {t('exam_admin.bank.parts')}: <b>{module.parts_count}</b> · {t('exam_admin.bank.used')}: <b>{module.uses}</b>
+                                                    {t('exam_admin.bank.parts')}: <b>{module.parts_count}</b> · {t('exam_admin.bank.questions')}: <b>{module.questions_count}</b> · {t('exam_admin.bank.used')}: <b>{module.uses}</b>
                                                 </div>
                                                 <div className={module.recently_used ? 'font-semibold text-amber-700 dark:text-amber-300' : ''}>
                                                     {t('exam_admin.bank.last_used')}: <b>{fmtDateTime(module.last_used_at, 'dd.MM.yyyy')}</b>
