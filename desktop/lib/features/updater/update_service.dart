@@ -52,14 +52,24 @@ class UpdateStateData {
     this.installerPath,
     this.firstLaunchAt,
     this.rolledBackFrom,
+    this.runMs = 0,
   });
 
   bool pendingVerify;
   String? targetVersion;
   String? fromVersion;
   String? installerPath;
+
+  /// Informational: when the new version first started.
   DateTime? firstLaunchAt;
+
+  /// The version that failed its self-check and was rolled back; it is not
+  /// installed automatically again (a newer one is).
   String? rolledBackFrom;
+
+  /// How long the new version has been running without passing the
+  /// self-check (only time while the app runs counts).
+  int runMs;
 
   Map<String, Object?> toJson() => {
         'pending_verify': pendingVerify,
@@ -68,6 +78,7 @@ class UpdateStateData {
         'installer_path': installerPath,
         'first_launch_at': firstLaunchAt?.toIso8601String(),
         'rolled_back_from': rolledBackFrom,
+        'run_ms': runMs,
       };
 
   factory UpdateStateData.fromJson(Map<String, Object?> j) => UpdateStateData(
@@ -77,6 +88,7 @@ class UpdateStateData {
         installerPath: j['installer_path'] as String?,
         firstLaunchAt: DateTime.tryParse(j['first_launch_at'] as String? ?? ''),
         rolledBackFrom: j['rolled_back_from'] as String?,
+        runMs: (j['run_ms'] as num?)?.toInt() ?? 0,
       );
 }
 
@@ -91,8 +103,13 @@ class UpdateStateData {
 /// * Automatic downloads wait a random 0–10 min (spreads 20 PCs); manual ones don't.
 /// * HTTP Range resume into `updates/`, SHA-256 verify, silent install, relaunch.
 /// * The installer of the version being replaced is kept in `previous/`; if the
-///   new version does not pass the self-check (API reachable + code screen
-///   rendered) within 2 minutes, the previous installer is run again.
+///   new version does not pass the self-check (any successful API response +
+///   the UI rendered) within 2 minutes of running time, the previous
+///   installer is run again, and that version is not installed automatically
+///   again until a newer one is published.
+/// * Never installs, rolls back or exits while an exam session is active or
+///   a login is in progress ([canAutoInstall], [isExamSessionActive] and
+///   [hasUnfinishedSession] are checked right before the installer starts).
 class UpdateService extends ChangeNotifier {
   UpdateService({
     required this.api,
@@ -120,13 +137,40 @@ class UpdateService extends ChangeNotifier {
   Timer? _periodic;
   Timer? _jitterTimer;
   Timer? _selfCheckTimer;
+  Timer? _rollbackRetry;
+  final Stopwatch _runClock = Stopwatch();
+  int _runBaseMs = 0;
+  UpdateStateData? _selfCheckState;
   bool _apiReachable = false;
   bool _codeScreenRendered = false;
   bool _selfCheckPending = false;
+  bool _skippedRolledBack = false;
 
   /// Returns true when an automatic install may happen right now
   /// (code screen visible, no exam running).
   bool Function() canAutoInstall = () => false;
+
+  /// True while a candidate's exam session is open in the app (any stage
+  /// after login, or a login in progress).
+  bool Function() isExamSessionActive = () => false;
+
+  /// True when the database holds an unfinished exam session (it is resumed
+  /// right after the start, before the UI reports it).
+  Future<bool> Function() hasUnfinishedSession = () async => false;
+
+  /// The available release is the version that was rolled back on this PC:
+  /// it is offered for a manual install only.
+  bool get skippedRolledBack => _skippedRolledBack;
+
+  /// Whether the app may be replaced / exited right now.
+  Future<bool> safeToInterrupt() async {
+    if (isExamSessionActive()) return false;
+    try {
+      return !await hasUnfinishedSession();
+    } catch (_) {
+      return false;
+    }
+  }
 
   UpdatePhase get phase => _phase;
   UpdateManifest? get release => _release;
@@ -193,8 +237,10 @@ class UpdateService extends ChangeNotifier {
     }
     _release = manifest;
     _mandatory = r.mandatory;
+    final rolledBack = (await readState())?.rolledBackFrom;
+    _skippedRolledBack = rolledBack != null && rolledBack == manifest!.version;
     _set(UpdatePhase.available);
-    if (!manual) _scheduleAutoDownload();
+    if (!manual && !_skippedRolledBack) _scheduleAutoDownload();
     return true;
   }
 
@@ -221,7 +267,7 @@ class UpdateService extends ChangeNotifier {
     _jitterTimer = Timer(delay, () async {
       _jitterTimer = null;
       final file = await download();
-      if (file != null && canAutoInstall()) await install(file);
+      if (file != null && canAutoInstall()) await install(file, auto: true);
     });
   }
 
@@ -288,23 +334,38 @@ class UpdateService extends ChangeNotifier {
     }
   }
 
-  Future<void> install(File installer) async {
+  /// Installs [installer] and exits. With [auto] (background update) the
+  /// install is abandoned when [canAutoInstall] no longer holds right before
+  /// the installer starts; any install is abandoned while an exam session is
+  /// active. Returns false when nothing was started.
+  Future<bool> install(File installer, {bool auto = false}) async {
     final release = _release;
-    if (release == null) return;
+    if (release == null) return false;
     if (!runner.canInstall) {
       _set(UpdatePhase.unsupported,
           error: 'Installing updates is only supported on Windows.');
-      return;
+      return false;
     }
+    if ((auto && !canAutoInstall()) || !await safeToInterrupt()) return false;
     _set(UpdatePhase.installing);
     await ensurePreviousInstaller();
+    final previousState = await readState();
     await writeState(UpdateStateData(
       pendingVerify: true,
       targetVersion: release.version,
       fromVersion: currentVersion,
       installerPath: installer.path,
+      rolledBackFrom: previousState?.rolledBackFrom,
     ));
+    // Re-check right before the app goes away (a login may have started
+    // while the previous installer was downloaded).
+    if ((auto && !canAutoInstall()) || !await safeToInterrupt()) {
+      await writeState(previousState);
+      _set(UpdatePhase.available);
+      return false;
+    }
     await runner.runSilentAndExit(installer);
+    return true;
   }
 
   // ---- Post-update self-check and rollback -------------------------------------
@@ -330,31 +391,51 @@ class UpdateService extends ChangeNotifier {
     await f.writeAsString(jsonEncode(s.toJson()));
   }
 
-  /// Call once on startup.
+  /// Call once on startup. The self-check window counts only while the app
+  /// runs (the time is persisted every few seconds), so a PC switched off
+  /// right after an update is not rolled back the next morning.
   Future<void> startupSelfCheck() async {
     final s = await readState();
     if (s == null || !s.pendingVerify) return;
     if (s.targetVersion != currentVersion) {
       // The install did not happen (or we are the rolled-back version).
       debugPrint('Update to ${s.targetVersion} not active (running $currentVersion).');
-      await writeState(null);
+      await writeState(s.rolledBackFrom == null ? null : UpdateStateData(rolledBackFrom: s.rolledBackFrom));
       return;
     }
-    final now = _now();
-    if (s.firstLaunchAt != null &&
-        now.difference(s.firstLaunchAt!) > AppConfig.updateSelfCheckWindow) {
-      // A previous launch of this version never passed the self-check.
-      await rollback(s);
+    final window = AppConfig.updateSelfCheckWindow.inMilliseconds;
+    if (s.runMs >= window) {
+      // A previous run of this version never passed the self-check.
+      await _rollbackWhenSafe(s);
       return;
     }
-    s.firstLaunchAt ??= now;
+    s.firstLaunchAt ??= _now();
     await writeState(s);
+    _selfCheckState = s;
     _selfCheckPending = true;
-    final remaining = AppConfig.updateSelfCheckWindow - now.difference(s.firstLaunchAt!);
-    _selfCheckTimer = Timer(remaining.isNegative ? Duration.zero : remaining, () async {
-      if (_selfCheckPending) await rollback(s);
-    });
+    _runBaseMs = s.runMs;
+    _runClock
+      ..reset()
+      ..start();
+    _selfCheckTimer = Timer.periodic(const Duration(seconds: 5), (_) => unawaited(_selfCheckTick()));
     _maybeVerified();
+  }
+
+  /// Running time of this version without a passed self-check.
+  int get selfCheckRunMs => _runBaseMs + _runClock.elapsedMilliseconds;
+
+  Future<void> _selfCheckTick() async {
+    final s = _selfCheckState;
+    if (!_selfCheckPending || s == null) {
+      _selfCheckTimer?.cancel();
+      return;
+    }
+    s.runMs = selfCheckRunMs;
+    await writeState(s);
+    if (s.runMs >= AppConfig.updateSelfCheckWindow.inMilliseconds) {
+      _selfCheckTimer?.cancel();
+      await _rollbackWhenSafe(s);
+    }
   }
 
   void reportApiReachable() {
@@ -367,10 +448,16 @@ class UpdateService extends ChangeNotifier {
     _maybeVerified();
   }
 
+  /// Any screen of the app was rendered (the self-check does not require
+  /// the code screen: an exam may be resumed first).
+  void reportUiRendered() => reportCodeScreenRendered();
+
   Future<void> _maybeVerified() async {
     if (!_selfCheckPending || !_apiReachable || !_codeScreenRendered) return;
     _selfCheckPending = false;
     _selfCheckTimer?.cancel();
+    _rollbackRetry?.cancel();
+    _runClock.stop();
     final s = await readState();
     // Keep the verified installer as the rollback target for the next update.
     if (s?.installerPath != null) {
@@ -388,8 +475,28 @@ class UpdateService extends ChangeNotifier {
     debugPrint('Update self-check passed for $currentVersion');
   }
 
+  /// Rolls back as soon as no exam session is active (checked again every
+  /// 30 s). A self-check that passes meanwhile cancels the rollback.
+  Future<void> _rollbackWhenSafe(UpdateStateData s) async {
+    _selfCheckPending = true;
+    _rollbackRetry?.cancel();
+    if (await safeToInterrupt()) {
+      await rollback(s);
+      return;
+    }
+    debugPrint('Self-check failed; rollback waits for the exam session to end.');
+    _rollbackRetry = Timer(const Duration(seconds: 30), () {
+      if (_selfCheckPending) unawaited(_rollbackWhenSafe(s));
+    });
+  }
+
   Future<void> rollback(UpdateStateData s) async {
+    if (!await safeToInterrupt()) {
+      await _rollbackWhenSafe(s);
+      return;
+    }
     _selfCheckPending = false;
+    _selfCheckTimer?.cancel();
     final from = s.fromVersion;
     final prev = from == null
         ? null
@@ -407,6 +514,7 @@ class UpdateService extends ChangeNotifier {
   void dispose() {
     stopPeriodic();
     _selfCheckTimer?.cancel();
+    _rollbackRetry?.cancel();
     super.dispose();
   }
 }

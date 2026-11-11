@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'dart:io';
 
 import 'package:crypto/crypto.dart';
+import 'package:flutter/foundation.dart' show debugPrint;
 import 'package:path/path.dart' as p;
 
 import '../../core/api/api_exception.dart';
@@ -71,7 +72,7 @@ class ExamRepository {
     var doneBytes = 0;
     final audioFiles = <String, String>{};
     for (final asset in payload.audio) {
-      final file = File(p.join(audioDir.path, '${_safe(asset.key)}${_ext(asset.url, '.mp3')}'));
+      final file = audioTarget(asset, audioDir);
       final weight = asset.size > 0 ? asset.size : 1;
       await _downloadVerified(
         asset.url,
@@ -98,10 +99,13 @@ class ExamRepository {
       final name = '${sha1.convert(utf8.encode(url))}${_ext(url, '.img')}';
       final file = File(p.join(imageDir.path, name));
       try {
-        if (!await file.exists()) await api.download(url, file);
+        // Anonymous: images may live on another host; no credentials.
+        if (!await file.exists()) await api.download(url, file, anonymous: true);
         imageFiles[url] = file.path;
-      } on ApiException {
-        // Images are not critical: the renderer falls back to the network.
+      } catch (e) {
+        // Images are not critical (and may live on other hosts): the renderer
+        // falls back to the network / an empty box.
+        debugPrint('Image not cached ($url): $e');
       }
     }
 
@@ -141,6 +145,73 @@ class ExamRepository {
       code: ApiErrorCode.unknown,
       message: 'Checksum mismatch for $url',
     );
+  }
+
+  /// Where an audio asset is stored: `audio_cache/<sha256><ext>` (shared by
+  /// every candidate of the same test) when the checksum is known, else the
+  /// attempt's own folder.
+  File audioTarget(AudioAsset asset, Directory attemptAudioDir) {
+    final ext = _ext(asset.url, '.mp3');
+    final sha = asset.sha256?.trim().toLowerCase();
+    if (sha != null && RegExp(r'^[0-9a-f]{64}$').hasMatch(sha)) {
+      return File(p.join(paths.audioCache.path, '$sha$ext'));
+    }
+    return File(p.join(attemptAudioDir.path, '${_safe(asset.key)}$ext'));
+  }
+
+  /// Startup housekeeping: removes the downloaded files (exam folder) and the
+  /// cached payloads of sessions that are over — closed, completed or with a
+  /// refused token — since more than [maxAge], and of all but the [keep]
+  /// newest such sessions. The session rows and the answer / violation
+  /// queues are kept. Audio in the shared cache that no remaining session
+  /// references is deleted too. Never touches the unfinished session.
+  Future<int> cleanup({
+    Duration maxAge = const Duration(days: 3),
+    int keep = 20,
+    DateTime? now,
+  }) async {
+    final at = (now ?? DateTime.now()).toUtc();
+    final sessions = await db.allSessions(); // newest first
+    var over = 0;
+    var purged = 0;
+    for (final s in sessions) {
+      final done = s.closed || s.completed || s.authLost;
+      if (!done) continue;
+      over++;
+      final since = (s.closedAt ?? s.createdAt).toUtc();
+      if (at.difference(since) > maxAge || over > keep) {
+        final dir = paths.examDir(s.attemptId);
+        try {
+          if (await dir.exists()) await dir.delete(recursive: true);
+        } on FileSystemException catch (e) {
+          debugPrint('cleanup: cannot delete ${dir.path}: $e');
+          continue;
+        }
+        await db.deleteExamCache(s.attemptId);
+        purged++;
+      }
+    }
+    // Shared audio no longer referenced by any cached exam.
+    final cacheDir = paths.audioCache;
+    if (await cacheDir.exists()) {
+      final referenced = <String>{};
+      for (final s in await db.allSessions()) {
+        final c = await loadCached(s.attemptId);
+        if (c != null) referenced.addAll(c.audioFiles.values.map(p.normalize));
+      }
+      await for (final f in cacheDir.list()) {
+        if (f is! File) continue;
+        final path = p.normalize(f.path);
+        final base = path.endsWith('.part') ? path.substring(0, path.length - 5) : path;
+        if (referenced.contains(base)) continue;
+        try {
+          await f.delete();
+        } on FileSystemException catch (e) {
+          debugPrint('cleanup: cannot delete $path: $e');
+        }
+      }
+    }
+    return purged;
   }
 
   static String _safe(String s) => s.replaceAll(RegExp(r'[^A-Za-z0-9_-]'), '_');

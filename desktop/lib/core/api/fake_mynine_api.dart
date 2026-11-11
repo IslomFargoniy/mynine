@@ -83,8 +83,29 @@ class FakeMynineApi implements MynineApi {
   /// Request log (method names), for tests.
   final List<String> calls = [];
 
-  /// Applied answers per question: (changedAt, text, optionIds).
-  final Map<int, ({DateTime changedAt, String? text, List<int> optionIds})> savedAnswers = {};
+  /// Applied answers per question: (changedAt, text, optionIds, seq).
+  final Map<int, ({DateTime changedAt, String? text, List<int> optionIds, int? seq})> savedAnswers = {};
+
+  /// API v1.1 test hooks: answers with a text longer than this make the whole
+  /// batch fail with 422 (an "unexpected" item error); null = off.
+  int? rejectBatchTextLongerThan;
+
+  /// Violations whose type is this make the whole batch fail with 422.
+  String? rejectViolationType;
+
+  /// Next exam-token check fails with 401 and this code
+  /// (`session_revoked` / `session_expired`) until a new login.
+  String? revokedCode;
+
+  /// `/exam/login` answers 409 `session_active_elsewhere`.
+  bool activeElsewhere = false;
+
+  /// `/exam/submit` fails with a network error (connection lost).
+  bool failSubmitExam = false;
+
+  /// Exam-token requests answer 426 `client_outdated` (cannot happen with
+  /// API v1.1; the client must not loop on it).
+  bool outdatedExamCalls = false;
   final Set<String> appliedUuids = {};
   final List<ViolationItem> receivedViolations = [];
   bool examSubmitted = false;
@@ -93,6 +114,7 @@ class FakeMynineApi implements MynineApi {
   bool unlockRequested = false;
 
   String? _token;
+  int _tokenSerial = 0;
   final Map<int, DateTime> _started = {};
   final Map<int, DateTime> _finished = {};
   final Set<int> _submitted = {};
@@ -113,10 +135,19 @@ class FakeMynineApi implements MynineApi {
   void _tick() => clock.update(_serverNow);
 
   void _requireToken(String token) {
+    if (outdatedExamCalls) {
+      throw ApiException(code: ApiErrorCode.clientOutdated, statusCode: 426, minVersion: '9.9.9');
+    }
+    if (revokedCode != null) {
+      throw ApiException(code: ApiErrorCode.fromWire(revokedCode, 401), statusCode: 401, message: revokedCode);
+    }
     if (token != _token) {
       throw ApiException(code: ApiErrorCode.unauthenticated, statusCode: 401);
     }
   }
+
+  /// Simulates the admin revoking / expiring the current exam token.
+  void revokeToken([String code = 'session_revoked']) => revokedCode = code;
 
   // ---- App -------------------------------------------------------------------
 
@@ -272,7 +303,16 @@ class FakeMynineApi implements MynineApi {
     if (examSubmitted) {
       throw ApiException(code: ApiErrorCode.attemptFinished, statusCode: 409);
     }
-    _token = 'fake-exam-token-${_serverNow.millisecondsSinceEpoch}';
+    if (activeElsewhere) {
+      throw ApiException(
+        code: ApiErrorCode.sessionActiveElsewhere,
+        statusCode: 409,
+        message: 'This candidate is active on another PC — ask the invigilator.',
+      );
+    }
+    revokedCode = null;
+    _tokenSerial++;
+    _token = 'fake-exam-token-${_serverNow.millisecondsSinceEpoch}-$_tokenSerial';
     _tick();
     return LoginResponse(
       token: _token!,
@@ -459,6 +499,10 @@ class FakeMynineApi implements MynineApi {
       throw ApiException(code: ApiErrorCode.network, message: 'flaky (fake)');
     }
     _requireToken(examToken);
+    final limit = rejectBatchTextLongerThan;
+    if (limit != null && answers.any((a) => (a.text?.length ?? 0) > limit)) {
+      throw ApiException(code: ApiErrorCode.validationFailed, statusCode: 422, message: 'answers.0.text too long');
+    }
     final results = <AnswerResult>[];
     for (final a in answers) {
       if (appliedUuids.contains(a.clientUuid)) {
@@ -472,8 +516,9 @@ class FakeMynineApi implements MynineApi {
         continue;
       }
       if (paused) {
+        // API v1.1: not final — the client keeps it and resends after resume.
         results.add(AnswerResult(
-            clientUuid: a.clientUuid, status: AnswerResultStatus.rejected, reason: 'paused'));
+            clientUuid: a.clientUuid, status: AnswerResultStatus.deferred, reason: 'paused'));
         continue;
       }
       final finished = _finished[typeId];
@@ -487,12 +532,17 @@ class FakeMynineApi implements MynineApi {
       }
       final existing = savedAnswers[a.questionId];
       appliedUuids.add(a.clientUuid);
-      if (existing != null && existing.changedAt.isAfter(a.changedAt)) {
+      // Last-write-wins by `seq` when both sides have one, else `changed_at`.
+      final older = existing != null &&
+          (existing.seq != null && a.seq != null
+              ? a.seq! < existing.seq!
+              : existing.changedAt.isAfter(a.changedAt));
+      if (older) {
         results.add(AnswerResult(clientUuid: a.clientUuid, status: AnswerResultStatus.stale));
         continue;
       }
       savedAnswers[a.questionId] =
-          (changedAt: a.changedAt, text: a.text, optionIds: List.of(a.optionIds));
+          (changedAt: a.changedAt, text: a.text, optionIds: List.of(a.optionIds), seq: a.seq);
       results.add(AnswerResult(clientUuid: a.clientUuid, status: AnswerResultStatus.saved));
     }
     _tick();
@@ -511,6 +561,7 @@ class FakeMynineApi implements MynineApi {
   @override
   Future<ExamSubmitResponse> submitExam(String examToken) async {
     await _io('submitExam');
+    if (failSubmitExam) throw ApiException(code: ApiErrorCode.network, message: 'offline (fake)');
     _requireToken(examToken);
     examSubmitted = true;
     _token = null;
@@ -535,6 +586,7 @@ class FakeMynineApi implements MynineApi {
       paused: paused,
       finished: forceFinished,
       unlock: unlockRequested,
+      expiresAt: _serverNow.add(const Duration(hours: 6)),
       modules: [
         for (final m in _modules())
           ModuleTimer(typeId: m.typeId, status: m.status, finishedAt: m.finishedAt),
@@ -546,6 +598,9 @@ class FakeMynineApi implements MynineApi {
   Future<ViolationsResponse> sendViolations(String examToken, List<ViolationItem> violations) async {
     await _io('sendViolations');
     _requireToken(examToken);
+    if (rejectViolationType != null && violations.any((v) => v.type == rejectViolationType)) {
+      throw ApiException(code: ApiErrorCode.validationFailed, statusCode: 422);
+    }
     receivedViolations.addAll(violations);
     return ViolationsResponse(accepted: violations.length, serverTime: _serverNow);
   }

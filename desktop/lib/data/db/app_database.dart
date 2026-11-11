@@ -23,6 +23,15 @@ class AnswerQueue extends Table {
   /// ISO-8601 server time of the change.
   TextColumn get changedAt => text()();
   IntColumn get tries => integer().withDefault(const Constant(0))();
+
+  /// Per-question change counter (API v1.1 `seq`), schema v2.
+  IntColumn get seq => integer().nullable()();
+
+  /// The server refused this item with an unexpected error (422) even when
+  /// sent alone: kept for audit, never sent again and not counted as pending,
+  /// so it cannot block the rest of the queue or the final submit.
+  BoolColumn get quarantined => boolean().withDefault(const Constant(false))();
+  TextColumn get lastError => text().nullable()();
 }
 
 /// Latest local value of every answered question (source of truth for the UI
@@ -36,6 +45,9 @@ class LocalAnswers extends Table {
   TextColumn get optionIds => text().withDefault(const Constant('[]'))();
   TextColumn get changedAt => text()();
 
+  /// Last `seq` used for this question (schema v2).
+  IntColumn get seq => integer().withDefault(const Constant(0))();
+
   @override
   Set<Column<Object>> get primaryKey => {attemptId, questionId};
 }
@@ -48,6 +60,9 @@ class ViolationQueue extends Table {
   TextColumn get type => text()();
   TextColumn get detail => text().nullable()();
   TextColumn get occurredAt => text()();
+
+  /// Refused by the server (422) even alone: kept, never resent (schema v2).
+  BoolColumn get quarantined => boolean().withDefault(const Constant(false))();
 }
 
 /// Cached JSON payloads (prefetch, exam state, asset maps).
@@ -106,9 +121,17 @@ class ExamSessions extends Table {
   /// Exam is over on this PC (Completed screen reached).
   BoolColumn get completed => boolean().withDefault(const Constant(false))();
 
-  /// Server confirmed the final submit (or the token is dead).
+  /// Server confirmed the final submit (or the attempt is finished).
   BoolColumn get closed => boolean().withDefault(const Constant(false))();
   DateTimeColumn get createdAt => dateTime().withDefault(currentDateAndTime)();
+
+  /// The server answered 401 (`session_revoked` / `session_expired`) for this
+  /// token: background sync skips the session (its queue is kept) until a
+  /// new login on this PC replaces the token. Schema v2.
+  BoolColumn get authLost => boolean().withDefault(const Constant(false))();
+
+  /// When [closed] was set (cleanup of old exam files). Schema v2.
+  DateTimeColumn get closedAt => dateTime().nullable()();
 
   @override
   Set<Column<Object>> get primaryKey => {attemptId};
@@ -139,7 +162,23 @@ class AppDatabase extends _$AppDatabase {
   factory AppDatabase.memory() => AppDatabase(NativeDatabase.memory());
 
   @override
-  int get schemaVersion => 1;
+  int get schemaVersion => 2;
+
+  @override
+  MigrationStrategy get migration => MigrationStrategy(
+        onCreate: (m) => m.createAll(),
+        onUpgrade: (m, from, to) async {
+          if (from < 2) {
+            await m.addColumn(answerQueue, answerQueue.seq);
+            await m.addColumn(answerQueue, answerQueue.quarantined);
+            await m.addColumn(answerQueue, answerQueue.lastError);
+            await m.addColumn(localAnswers, localAnswers.seq);
+            await m.addColumn(violationQueue, violationQueue.quarantined);
+            await m.addColumn(examSessions, examSessions.authLost);
+            await m.addColumn(examSessions, examSessions.closedAt);
+          }
+        },
+      );
 
   // ---- Cached payloads -------------------------------------------------------
 
@@ -176,15 +215,22 @@ class AppDatabase extends _$AppDatabase {
         ..limit(1))
       .getSingleOrNull();
 
-  /// Sessions that still need background delivery.
-  Future<List<ExamSessionRow>> openSessions() =>
-      (select(examSessions)..where((t) => t.closed.equals(false))).get();
+  /// Sessions that still need background delivery (sessions whose token was
+  /// refused are skipped until a new login replaces the token).
+  Future<List<ExamSessionRow>> openSessions() => (select(examSessions)
+        ..where((t) => t.closed.equals(false) & t.authLost.equals(false)))
+      .get();
+
+  Future<List<ExamSessionRow>> allSessions() => (select(examSessions)
+        ..orderBy([(t) => OrderingTerm.desc(t.createdAt)]))
+      .get();
 
   Future<void> markSession(
     int attemptId, {
     bool? submitPending,
     bool? completed,
     bool? closed,
+    bool? authLost,
   }) =>
       (update(examSessions)..where((t) => t.attemptId.equals(attemptId))).write(
         ExamSessionsCompanion(
@@ -192,6 +238,23 @@ class AppDatabase extends _$AppDatabase {
               submitPending == null ? const Value.absent() : Value(submitPending),
           completed: completed == null ? const Value.absent() : Value(completed),
           closed: closed == null ? const Value.absent() : Value(closed),
+          closedAt: closed == true ? Value(DateTime.now().toUtc()) : const Value.absent(),
+          authLost: authLost == null ? const Value.absent() : Value(authLost),
         ),
       );
+
+  Future<void> setSessionExpiry(int attemptId, DateTime? expiresAt) =>
+      (update(examSessions)..where((t) => t.attemptId.equals(attemptId)))
+          .write(ExamSessionsCompanion(expiresAt: Value(expiresAt)));
+
+  /// Removes everything cached for [attemptId] except the answer/violation
+  /// queues and the session row (those are kept for audit).
+  Future<void> deleteExamCache(int attemptId) =>
+      (delete(cachedPayloads)
+            ..where((t) =>
+                t.key.equals('prefetch:$attemptId') |
+                t.key.equals('modules:$attemptId') |
+                t.key.equals('flags:$attemptId') |
+                t.key.equals('pauses:$attemptId')))
+          .go();
 }

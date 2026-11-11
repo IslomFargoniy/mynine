@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api\V1;
 
 use App\Exceptions\ApiException;
 use App\Http\Controllers\Controller;
+use App\Models\AttemptAnswer;
 use App\Models\Device;
 use App\Models\Mock;
 use App\Models\MockStudent;
@@ -80,6 +81,14 @@ class ExamAuthController extends Controller
             $attempt = $this->exam->findOrCreateMockAttempt($student, ['device_id' => $device->id]);
             if (! $attempt) {
                 throw ApiException::unprocessable('mock_not_active', 'This mock exam has no modules.');
+            }
+
+            // A different PC starts its per-question `seq` counters at 1 again: forget the old PC's
+            // counters so its higher numbers can't mark the new PC's answers stale (changed_at decides).
+            if ($attempt->device_id && (int) $attempt->device_id !== (int) $device->id) {
+                AttemptAnswer::whereHas('attempt_part', fn ($q) => $q->where('attempt_id', $attempt->id))
+                    ->whereNotNull('client_seq')
+                    ->update(['client_seq' => null]);
             }
 
             $attempt->forceFill(['device_id' => $device->id])->save();

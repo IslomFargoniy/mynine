@@ -21,6 +21,14 @@ enum ApiErrorCode {
   tooManyRequests('too_many_requests'),
   serverError('server_error'),
 
+  /// 401 on exam endpoints (API v1.1): the candidate signed in on another PC
+  /// (token revoked) or the token ran out.
+  sessionRevoked('session_revoked'),
+  sessionExpired('session_expired'),
+
+  /// 409 on `/exam/login` (API v1.1): the candidate is active on another PC.
+  sessionActiveElsewhere('session_active_elsewhere'),
+
   /// Client-side: no connection / timeout / DNS.
   network('network'),
 
@@ -70,6 +78,12 @@ class ApiException implements Exception {
 
   bool get isNetwork => code == ApiErrorCode.network;
 
+  /// The exam token is no longer accepted (revoked, expired or unknown).
+  bool get isAuthLost =>
+      code == ApiErrorCode.unauthenticated ||
+      code == ApiErrorCode.sessionRevoked ||
+      code == ApiErrorCode.sessionExpired;
+
   /// True when retrying later may succeed (network or 5xx / 429).
   bool get isTransient =>
       isNetwork ||
@@ -103,6 +117,11 @@ class ApiException implements Exception {
         ApiErrorCode.methodNotAllowed => 'Something went wrong. Please try again.',
         ApiErrorCode.tooManyRequests => 'Too many attempts. Please wait a minute and try again.',
         ApiErrorCode.serverError => 'The server has a problem. Please try again shortly.',
+        ApiErrorCode.sessionRevoked ||
+        ApiErrorCode.sessionExpired =>
+          'Your session was moved or expired. Please call the invigilator.',
+        ApiErrorCode.sessionActiveElsewhere =>
+          'This candidate is active on another PC. Please ask the invigilator.',
         ApiErrorCode.unknown => statusCode == 429
             ? 'Too many attempts. Please wait a minute and try again.'
             : 'Something went wrong. Please try again.',

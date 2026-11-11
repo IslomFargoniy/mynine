@@ -16,7 +16,7 @@ import 'package:mynine_desktop/features/exam/exam_controller.dart';
 import 'package:mynine_desktop/platform/lockdown/lockdown.dart';
 
 class Harness {
-  Harness._(this.api, this.db, this.exam, this.device, this.sync, this.tmp, this.clock);
+  Harness._(this.api, this.db, this.exam, this.device, this.sync, this.tmp, this.clock, this.connection);
 
   final FakeMynineApi api;
   final AppDatabase db;
@@ -25,6 +25,22 @@ class Harness {
   final SyncService sync;
   final Directory tmp;
   final ServerClock clock;
+  final ConnectionStatus connection;
+
+  ExamRepository get examRepo => ExamRepository(api: api, db: db, paths: AppPaths(tmp));
+
+  /// A second controller on the same database / API (simulates an app restart).
+  ExamController restartController() => ExamController(
+        api: api,
+        db: db,
+        clock: clock,
+        examRepo: examRepo,
+        answerQueue: AnswerQueueRepository(db),
+        violationQueue: ViolationQueueRepository(db),
+        sync: sync,
+        device: device,
+        connection: connection,
+      );
 
   /// Builds the harness with the PC already registered (center password
   /// `mynine`). [approved] = admin approval; [number] = its exam-room number
@@ -68,11 +84,11 @@ class Harness {
       device: device,
       connection: connection,
     );
-    return Harness._(api, db, exam, device, sync, tmp, clock);
+    return Harness._(api, db, exam, device, sync, tmp, clock, connection);
   }
 
-  Future<void> dispose() async {
-    exam.dispose();
+  Future<void> dispose({bool disposeExam = true}) async {
+    if (disposeExam) exam.dispose();
     sync.dispose();
     await db.close();
     await tmp.delete(recursive: true);

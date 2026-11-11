@@ -9,7 +9,9 @@
 //   scanProcesses({names: [String]})                  -> [String] (lower-case exe names found
 //                                                        in this user's session)
 //   terminateProcesses({names: [String]})             -> [{process, terminated}] (this session
-//                                                        only, protected system processes skipped)
+//                                                        only, protected system processes skipped;
+//                                                        runs on a worker thread, the result is
+//                                                        posted back to the platform thread)
 //   clearClipboard()                                  -> null
 //   machineId()                                       -> String? (HKLM MachineGuid)
 //   isVirtualMachine()                                -> bool
@@ -19,10 +21,18 @@
 //
 // System policies (HKCU, only while locked): Task Manager, Lock and Change
 // password disabled (Ctrl+Alt+Del screen), precision-touchpad 3/4-finger
-// gestures off, toast notifications off. The original values are written to
+// gestures off, toast notifications off; accessibility shortcut keys
+// (StickyKeys: Shift x5, FilterKeys: right Shift 8 s, ToggleKeys: NumLock
+// 5 s) off. The original values (registry values with their type and raw
+// data; accessibility flags) are written to
 // %LOCALAPPDATA%\Mynine\lockdown_applied.ini BEFORE anything is changed and
 // restored on disable(), on WM_ENDSESSION, and at the next start if the app
 // crashed (the constructor restores a leftover marker file).
+//
+// The low-level keyboard hook is re-installed every 30 s and when the window
+// regains the focus: Windows silently removes a hook whose thread was too
+// slow (LowLevelHooksTimeout), so slow work (closing programs) never runs on
+// the hook's (platform) thread.
 //
 // Self-contained: only Win32 + the Flutter C++ client wrapper.
 #ifndef RUNNER_LOCKDOWN_CHANNEL_H_
@@ -63,6 +73,7 @@ class LockdownChannel {
   void ExitKiosk();
   void FitToMonitor();
   void InstallKeyboardHook();
+  void ReinstallKeyboardHook();
   void RemoveKeyboardHook();
   void SendEvent(const std::string& type);
   void SendEvent(const std::string& type, const flutter::EncodableMap& extra);
@@ -77,6 +88,7 @@ class LockdownChannel {
       const std::vector<std::string>& names);
   static std::string ProcessNameFromPid(DWORD pid);
   static std::wstring PolicyMarkerPath();
+  static void ReleaseHeldWinKeys();
   static void BroadcastPolicyChange();
   static std::optional<std::string> ReadMachineGuid();
   static bool LooksLikeVirtualMachine();
@@ -85,6 +97,7 @@ class LockdownChannel {
   std::unique_ptr<flutter::MethodChannel<flutter::EncodableValue>> channel_;
   HWND window_;
   HHOOK keyboard_hook_ = nullptr;
+  bool hook_wanted_ = false;
   bool kiosk_ = false;
   bool capture_protected_ = false;
   bool policies_applied_ = false;

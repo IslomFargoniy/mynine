@@ -188,6 +188,31 @@ test('h) a silent bound PC (no heartbeat for 90 s) does not block the login, and
         ->and((int) $this->attempt->fresh()->device_id)->toBe(Device::where('machine_id', 'MACHINE-2')->value('id'));
 });
 
+test('c) moving to another PC forgets the old seq counters, so the new PC (seq from 1) is not stale', function () {
+    startListening();
+    $q = $this->exam['fillQuestion']->id;
+    v11Send([v11Item(['text' => 'old pc', 'seq' => 9])])->assertJsonPath('results.0.status', 'saved');
+
+    $this->actingAs(makeUser('Reception'))->postJson(route('monitor.release-device', $this->attempt))->assertOk();
+    expect(AttemptAnswer::where('question_id', $q)->value('client_seq'))->toBeNull();
+
+    $second = registerDesktopDevice('MACHINE-2', 'PC-02');
+    $token = desktopLogin($second, 'MOCK-100001');
+    desktopApi('POST', 'exam/answers', ['answers' => [v11Item(['text' => 'new pc', 'seq' => 1])]], $second, $token)
+        ->assertJsonPath('results.0.status', 'saved');
+    expect(AttemptAnswer::where('question_id', $q)->value('answer_text'))->toBe('new pc');
+});
+
+test('c) a silent PC taken over by another also loses its seq counters', function () {
+    startListening();
+    v11Send([v11Item(['text' => 'old pc', 'seq' => 9])])->assertJsonPath('results.0.status', 'saved');
+    $this->travel(2)->minutes();
+
+    $second = registerDesktopDevice('MACHINE-2', 'PC-02');
+    $token = desktopLogin($second, 'MOCK-100001');
+    expect(AttemptAnswer::where('question_id', $this->exam['fillQuestion']->id)->value('client_seq'))->toBeNull();
+});
+
 test('14) audio goes through nginx with X-Accel-Redirect when enabled', function () {
     Storage::fake('local');
     Storage::disk('local')->put('audio/test l.mp3', 'ID3audio');

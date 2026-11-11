@@ -69,19 +69,33 @@ void main() {
       gate.dispose();
     });
 
-    test('an app that cannot be closed keeps Start blocked and is reported', () async {
+    test('an app that cannot be closed blocks Start only until one close attempt failed', () async {
       final lockdown = FakeLockdown(['anydesk.exe', 'chrome.exe'])..unkillable.add('anydesk.exe');
       final gate = BannedAppsGate(lockdown: lockdown, bannedProcesses: () => ['anydesk.exe', 'chrome.exe']);
       await gate.refresh();
+      expect(gate.canStart, isFalse); // nothing tried yet
+      expect(gate.overridden, isFalse);
       await gate.closeAll();
       expect(gate.running, ['anydesk.exe']);
       expect(gate.notClosed, ['anydesk.exe']);
+      // An unkillable (elevated / other user) program must not block forever:
+      // Start is allowed, the screen records a violation for the invigilator.
+      expect(gate.canStart, isTrue);
+      expect(gate.overridden, isTrue);
+      expect(gate.unkillableRunning, ['anydesk.exe']);
+
+      // A new banned app that was never tried blocks Start again.
+      lockdown.running.add('chrome.exe');
+      await gate.refresh();
       expect(gate.canStart, isFalse);
 
-      // Closed by hand later → the next check unblocks Start.
-      lockdown.running.remove('anydesk.exe');
+      // Closed by hand later → the next check unblocks Start normally.
+      lockdown.running
+        ..remove('anydesk.exe')
+        ..remove('chrome.exe');
       await gate.refresh();
       expect(gate.canStart, isTrue);
+      expect(gate.overridden, isFalse);
       expect(gate.notClosed, isEmpty);
       gate.dispose();
     });

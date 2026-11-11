@@ -355,6 +355,7 @@ class InsperaHeader extends ConsumerWidget {
             module: module,
             clock: clock,
             paused: exam.paused,
+            pausedSince: exam.pausedSince,
           ),
           const SizedBox(width: 4),
         ],
@@ -384,6 +385,7 @@ class InsperaHeader extends ConsumerWidget {
           finishedAt: module.finishedAt,
           clock: clock,
           hidden: settings.timerHidden,
+          paused: exam.paused,
           onToggle: notifier.toggleTimer,
         ),
         const SizedBox(width: 10),
@@ -581,12 +583,17 @@ class TimerDisplay extends StatefulWidget {
     required this.finishedAt,
     required this.clock,
     this.hidden = false,
+    this.paused = false,
     this.onToggle,
   });
 
   final DateTime? finishedAt;
   final ServerClock clock;
   final bool hidden;
+
+  /// While paused the server clock for the module stands still: the display
+  /// freezes at the value shown when the pause began.
+  final bool paused;
   final VoidCallback? onToggle;
 
   @override
@@ -595,6 +602,7 @@ class TimerDisplay extends StatefulWidget {
 
 class _TimerDisplayState extends State<TimerDisplay> with SingleTickerProviderStateMixin {
   Timer? _t;
+  Duration? _frozen;
   late final AnimationController _pulse =
       AnimationController(vsync: this, duration: const Duration(milliseconds: 2000));
 
@@ -615,7 +623,13 @@ class _TimerDisplayState extends State<TimerDisplay> with SingleTickerProviderSt
 
   @override
   Widget build(BuildContext context) {
-    final left = widget.clock.remaining(widget.finishedAt);
+    final Duration left;
+    if (widget.paused) {
+      left = _frozen ??= widget.clock.remaining(widget.finishedAt);
+    } else {
+      _frozen = null;
+      left = widget.clock.remaining(widget.finishedAt);
+    }
     final low = left <= WebTokens.lowTimeThreshold;
     if (low && !widget.hidden && !_pulse.isAnimating) {
       _pulse.repeat();
@@ -1123,11 +1137,24 @@ class _Arrow extends StatelessWidget {
       );
 }
 
-class _PauseOverlay extends StatelessWidget {
+class _PauseOverlay extends StatefulWidget {
   const _PauseOverlay();
 
   @override
+  State<_PauseOverlay> createState() => _PauseOverlayState();
+}
+
+class _PauseOverlayState extends State<_PauseOverlay> {
+  @override
+  void initState() {
+    super.initState();
+    // No typing into a field that kept the focus while paused.
+    FocusManager.instance.primaryFocus?.unfocus();
+  }
+
+  @override
   Widget build(BuildContext context) => Positioned.fill(
+        key: const Key('pause-overlay'),
         child: Container(
           color: WebTokens.modalOverlay,
           alignment: Alignment.center,

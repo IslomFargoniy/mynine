@@ -34,14 +34,30 @@ Product decisions: `mynine.uz/docs/desktop/ARCHITECTURE.md`.
 - Own TinyMCE-HTML renderer (no webview): paragraphs, headings, lists, tables,
   images, inline styles, inline gaps; Inspera highlighter + candidate notes stored
   as character offsets in SQLite.
-- **Offline answer queue** (drift/SQLite): each change gets a `client_uuid`,
-  is stored locally first, sent in batches of ≤ 200, retried with exponential
-  backoff, never dropped. Final submit only after the queue is empty (or after a
-  5 min offline grace — then it keeps syncing in the background).
-- Timers from the server `finished_at` + clock offset (`server_time`), extra
-  time / pause / force submit / remote unlock via the exam heartbeat.
-- Listening audio plays once from the cached file, positioned from the server
-  timer, no pause/seek (media_kit).
+- **Offline answer queue** (drift/SQLite): each change gets a `client_uuid` and a
+  per-question `seq` (API v1.1, persisted) with a monotonic `changed_at`, is
+  stored locally first, sent in batches of ≤ 200, retried with exponential
+  backoff, never dropped. `deferred` (paused) items stay queued and are resent
+  after the resume; a batch refused with 422 is bisected and the one bad item is
+  quarantined (kept, never resent) so the rest syncs. Text answers are capped at
+  20 000 characters. Final submit only after the queue is empty (or after a 5 min
+  offline grace that does not run while paused — then it keeps syncing in the
+  background). "Completed" says *submitted* only when `/exam/submit` succeeded,
+  otherwise "Saved on this PC — not yet submitted, call the invigilator".
+- A refused exam token (401 `session_revoked` / `session_expired`) locks the
+  exam ("Your session was moved or expired — call the invigilator"); the answers
+  stay queued and are uploaded once the session is released by an admin and the
+  candidate signs in again on this PC.
+- Timers from the server `finished_at` + clock offset (`server_time`; the sample
+  with the lowest round trip is kept, local clock jumps are detected, the last
+  good offset is persisted), extra time / pause (header timer frozen) / force
+  submit / remote unlock via the exam heartbeat.
+- Listening audio plays once from the cached file (shared by SHA-256 between
+  candidates of the same test), positioned from the module `started_at` minus
+  the pause time tracked from the heartbeat (extra time does not move it), and
+  re-synced after sleep / hibernate. No pause/seek (media_kit).
+- Startup cleanup: downloaded files and cached payloads of sessions finished
+  more than 3 days ago (and beyond the 20 newest) are deleted; queues are kept.
 - **Lockdown on Windows** (`windows/runner/lockdown_channel.cpp`, MethodChannel
   `mynine/lockdown`), active while the app is locked (kiosk) and fully undone on
   unlock / exit:
@@ -49,6 +65,11 @@ Product decisions: `mynine.uz/docs/desktop/ARCHITECTURE.md`.
     lock and again whenever the app takes the focus back;
   - low-level keyboard hook: Win and every Win+key, Alt+Tab, Ctrl+Alt+Tab, Alt+F4,
     Alt+Esc, Ctrl+Esc, Ctrl+Shift+Esc, Alt+Space, PrintScreen, keyboard launch keys;
+    re-installed every 30 s and on focus (Windows silently drops a hook that timed
+    out); a Win key held while locking is released first; closing programs runs
+    on a worker thread so the hook thread never stalls;
+  - accessibility shortcut keys off while locked (StickyKeys Shift ×5, FilterKeys,
+    ToggleKeys hotkeys), originals restored like the policies;
   - per-user policies (HKCU): `Policies\System` `DisableTaskMgr`,
     `DisableLockWorkstation`, `DisableChangePassword` = 1 (Task Manager and Lock
     disappear from Ctrl+Alt+Del; sign-out is left on so a PC can always be
@@ -64,7 +85,10 @@ Product decisions: `mynine.uz/docs/desktop/ARCHITECTURE.md`.
     processes such as csrss, winlogon, explorer, dwm, svchost, lsass) when the exam
     starts and on every 5 s scan, and reported as `banned_process`
     `{process, terminated}`. The rules screen lists the ones still running and keeps
-    **Start** disabled until they are closed ("Close these programs" button);
+    **Start** disabled until they are closed ("Close these programs" button); a
+    program that cannot be closed (elevated / other user) no longer blocks: after
+    one failed attempt Start is allowed, a `banned_process` violation is recorded
+    and the screen asks to tell the invigilator;
   - `SetWindowDisplayAffinity(WDA_EXCLUDEFROMCAPTURE)`, monitor count, clipboard
     clear, focus-loss events with the process that took the focus
     (`focus_lost {process}`), VM detection, `MachineGuid` as machine id.
@@ -75,7 +99,10 @@ Product decisions: `mynine.uz/docs/desktop/ARCHITECTURE.md`.
   "Check for updates" button (center password needed in kiosk mode). Resumable
   download, SHA-256 check, silent Inno Setup install and relaunch, automatic
   rollback to the previous installer when the new version fails its self-check
-  (API reachable + code screen rendered) within 2 minutes.
+  (any successful API response + UI rendered) within 2 minutes of *running* time;
+  a rolled-back version is not installed automatically again until a newer one is
+  published. Never installs, rolls back or exits while an exam session is active
+  or a login is running (checked again right before the installer starts).
 - Hidden admin menu: **Ctrl+Shift+M** → center password (online, or offline
   PBKDF2) → re-register (PC name + center password), server URL, check for updates, exit.
 

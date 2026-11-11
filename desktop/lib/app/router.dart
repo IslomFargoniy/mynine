@@ -3,6 +3,7 @@ import 'package:go_router/go_router.dart';
 
 import '../features/code_entry/code_entry_screen.dart';
 import '../features/completed/completed_screen.dart';
+import '../features/exam/blocked_screen.dart';
 import '../features/exam/exam_controller.dart';
 import '../features/exam/exam_shell.dart';
 import '../features/exam/transition_screen.dart';
@@ -18,6 +19,7 @@ abstract final class Routes {
   static const exam = '/exam';
   static const transition = '/transition';
   static const completed = '/completed';
+  static const blocked = '/blocked';
 
   static String forStage(ExamStage s) => switch (s) {
         ExamStage.idle => code,
@@ -27,6 +29,7 @@ abstract final class Routes {
         ExamStage.exam => exam,
         ExamStage.transition => transition,
         ExamStage.completed => completed,
+        ExamStage.blocked => blocked,
       };
 }
 
@@ -50,6 +53,7 @@ GoRouter buildRouter(ExamController exam) {
       GoRoute(path: Routes.exam, pageBuilder: (_, _) => page(const ExamShell())),
       GoRoute(path: Routes.transition, pageBuilder: (_, _) => page(const TransitionScreen())),
       GoRoute(path: Routes.completed, pageBuilder: (_, _) => page(const CompletedScreen())),
+      GoRoute(path: Routes.blocked, pageBuilder: (_, _) => page(const BlockedScreen())),
     ],
   );
 }

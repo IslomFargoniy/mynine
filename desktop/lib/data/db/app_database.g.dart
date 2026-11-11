@@ -109,6 +109,41 @@ class $AnswerQueueTable extends AnswerQueue
     requiredDuringInsert: false,
     defaultValue: const Constant(0),
   );
+  static const VerificationMeta _seqMeta = const VerificationMeta('seq');
+  @override
+  late final GeneratedColumn<int> seq = GeneratedColumn<int>(
+    'seq',
+    aliasedName,
+    true,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _quarantinedMeta = const VerificationMeta(
+    'quarantined',
+  );
+  @override
+  late final GeneratedColumn<bool> quarantined = GeneratedColumn<bool>(
+    'quarantined',
+    aliasedName,
+    false,
+    type: DriftSqlType.bool,
+    requiredDuringInsert: false,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'CHECK ("quarantined" IN (0, 1))',
+    ),
+    defaultValue: const Constant(false),
+  );
+  static const VerificationMeta _lastErrorMeta = const VerificationMeta(
+    'lastError',
+  );
+  @override
+  late final GeneratedColumn<String> lastError = GeneratedColumn<String>(
+    'last_error',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
   @override
   List<GeneratedColumn> get $columns => [
     id,
@@ -120,6 +155,9 @@ class $AnswerQueueTable extends AnswerQueue
     optionIds,
     changedAt,
     tries,
+    seq,
+    quarantined,
+    lastError,
   ];
   @override
   String get aliasedName => _alias ?? actualTableName;
@@ -194,6 +232,27 @@ class $AnswerQueueTable extends AnswerQueue
         tries.isAcceptableOrUnknown(data['tries']!, _triesMeta),
       );
     }
+    if (data.containsKey('seq')) {
+      context.handle(
+        _seqMeta,
+        seq.isAcceptableOrUnknown(data['seq']!, _seqMeta),
+      );
+    }
+    if (data.containsKey('quarantined')) {
+      context.handle(
+        _quarantinedMeta,
+        quarantined.isAcceptableOrUnknown(
+          data['quarantined']!,
+          _quarantinedMeta,
+        ),
+      );
+    }
+    if (data.containsKey('last_error')) {
+      context.handle(
+        _lastErrorMeta,
+        lastError.isAcceptableOrUnknown(data['last_error']!, _lastErrorMeta),
+      );
+    }
     return context;
   }
 
@@ -239,6 +298,18 @@ class $AnswerQueueTable extends AnswerQueue
         DriftSqlType.int,
         data['${effectivePrefix}tries'],
       )!,
+      seq: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}seq'],
+      ),
+      quarantined: attachedDatabase.typeMapping.read(
+        DriftSqlType.bool,
+        data['${effectivePrefix}quarantined'],
+      )!,
+      lastError: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}last_error'],
+      ),
     );
   }
 
@@ -262,6 +333,15 @@ class QueuedAnswer extends DataClass implements Insertable<QueuedAnswer> {
   /// ISO-8601 server time of the change.
   final String changedAt;
   final int tries;
+
+  /// Per-question change counter (API v1.1 `seq`), schema v2.
+  final int? seq;
+
+  /// The server refused this item with an unexpected error (422) even when
+  /// sent alone: kept for audit, never sent again and not counted as pending,
+  /// so it cannot block the rest of the queue or the final submit.
+  final bool quarantined;
+  final String? lastError;
   const QueuedAnswer({
     required this.id,
     required this.clientUuid,
@@ -272,6 +352,9 @@ class QueuedAnswer extends DataClass implements Insertable<QueuedAnswer> {
     required this.optionIds,
     required this.changedAt,
     required this.tries,
+    this.seq,
+    required this.quarantined,
+    this.lastError,
   });
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
@@ -287,6 +370,13 @@ class QueuedAnswer extends DataClass implements Insertable<QueuedAnswer> {
     map['option_ids'] = Variable<String>(optionIds);
     map['changed_at'] = Variable<String>(changedAt);
     map['tries'] = Variable<int>(tries);
+    if (!nullToAbsent || seq != null) {
+      map['seq'] = Variable<int>(seq);
+    }
+    map['quarantined'] = Variable<bool>(quarantined);
+    if (!nullToAbsent || lastError != null) {
+      map['last_error'] = Variable<String>(lastError);
+    }
     return map;
   }
 
@@ -303,6 +393,11 @@ class QueuedAnswer extends DataClass implements Insertable<QueuedAnswer> {
       optionIds: Value(optionIds),
       changedAt: Value(changedAt),
       tries: Value(tries),
+      seq: seq == null && nullToAbsent ? const Value.absent() : Value(seq),
+      quarantined: Value(quarantined),
+      lastError: lastError == null && nullToAbsent
+          ? const Value.absent()
+          : Value(lastError),
     );
   }
 
@@ -321,6 +416,9 @@ class QueuedAnswer extends DataClass implements Insertable<QueuedAnswer> {
       optionIds: serializer.fromJson<String>(json['optionIds']),
       changedAt: serializer.fromJson<String>(json['changedAt']),
       tries: serializer.fromJson<int>(json['tries']),
+      seq: serializer.fromJson<int?>(json['seq']),
+      quarantined: serializer.fromJson<bool>(json['quarantined']),
+      lastError: serializer.fromJson<String?>(json['lastError']),
     );
   }
   @override
@@ -336,6 +434,9 @@ class QueuedAnswer extends DataClass implements Insertable<QueuedAnswer> {
       'optionIds': serializer.toJson<String>(optionIds),
       'changedAt': serializer.toJson<String>(changedAt),
       'tries': serializer.toJson<int>(tries),
+      'seq': serializer.toJson<int?>(seq),
+      'quarantined': serializer.toJson<bool>(quarantined),
+      'lastError': serializer.toJson<String?>(lastError),
     };
   }
 
@@ -349,6 +450,9 @@ class QueuedAnswer extends DataClass implements Insertable<QueuedAnswer> {
     String? optionIds,
     String? changedAt,
     int? tries,
+    Value<int?> seq = const Value.absent(),
+    bool? quarantined,
+    Value<String?> lastError = const Value.absent(),
   }) => QueuedAnswer(
     id: id ?? this.id,
     clientUuid: clientUuid ?? this.clientUuid,
@@ -359,6 +463,9 @@ class QueuedAnswer extends DataClass implements Insertable<QueuedAnswer> {
     optionIds: optionIds ?? this.optionIds,
     changedAt: changedAt ?? this.changedAt,
     tries: tries ?? this.tries,
+    seq: seq.present ? seq.value : this.seq,
+    quarantined: quarantined ?? this.quarantined,
+    lastError: lastError.present ? lastError.value : this.lastError,
   );
   QueuedAnswer copyWithCompanion(AnswerQueueCompanion data) {
     return QueuedAnswer(
@@ -377,6 +484,11 @@ class QueuedAnswer extends DataClass implements Insertable<QueuedAnswer> {
       optionIds: data.optionIds.present ? data.optionIds.value : this.optionIds,
       changedAt: data.changedAt.present ? data.changedAt.value : this.changedAt,
       tries: data.tries.present ? data.tries.value : this.tries,
+      seq: data.seq.present ? data.seq.value : this.seq,
+      quarantined: data.quarantined.present
+          ? data.quarantined.value
+          : this.quarantined,
+      lastError: data.lastError.present ? data.lastError.value : this.lastError,
     );
   }
 
@@ -391,7 +503,10 @@ class QueuedAnswer extends DataClass implements Insertable<QueuedAnswer> {
           ..write('answerText: $answerText, ')
           ..write('optionIds: $optionIds, ')
           ..write('changedAt: $changedAt, ')
-          ..write('tries: $tries')
+          ..write('tries: $tries, ')
+          ..write('seq: $seq, ')
+          ..write('quarantined: $quarantined, ')
+          ..write('lastError: $lastError')
           ..write(')'))
         .toString();
   }
@@ -407,6 +522,9 @@ class QueuedAnswer extends DataClass implements Insertable<QueuedAnswer> {
     optionIds,
     changedAt,
     tries,
+    seq,
+    quarantined,
+    lastError,
   );
   @override
   bool operator ==(Object other) =>
@@ -420,7 +538,10 @@ class QueuedAnswer extends DataClass implements Insertable<QueuedAnswer> {
           other.answerText == this.answerText &&
           other.optionIds == this.optionIds &&
           other.changedAt == this.changedAt &&
-          other.tries == this.tries);
+          other.tries == this.tries &&
+          other.seq == this.seq &&
+          other.quarantined == this.quarantined &&
+          other.lastError == this.lastError);
 }
 
 class AnswerQueueCompanion extends UpdateCompanion<QueuedAnswer> {
@@ -433,6 +554,9 @@ class AnswerQueueCompanion extends UpdateCompanion<QueuedAnswer> {
   final Value<String> optionIds;
   final Value<String> changedAt;
   final Value<int> tries;
+  final Value<int?> seq;
+  final Value<bool> quarantined;
+  final Value<String?> lastError;
   const AnswerQueueCompanion({
     this.id = const Value.absent(),
     this.clientUuid = const Value.absent(),
@@ -443,6 +567,9 @@ class AnswerQueueCompanion extends UpdateCompanion<QueuedAnswer> {
     this.optionIds = const Value.absent(),
     this.changedAt = const Value.absent(),
     this.tries = const Value.absent(),
+    this.seq = const Value.absent(),
+    this.quarantined = const Value.absent(),
+    this.lastError = const Value.absent(),
   });
   AnswerQueueCompanion.insert({
     this.id = const Value.absent(),
@@ -454,6 +581,9 @@ class AnswerQueueCompanion extends UpdateCompanion<QueuedAnswer> {
     this.optionIds = const Value.absent(),
     required String changedAt,
     this.tries = const Value.absent(),
+    this.seq = const Value.absent(),
+    this.quarantined = const Value.absent(),
+    this.lastError = const Value.absent(),
   }) : clientUuid = Value(clientUuid),
        attemptId = Value(attemptId),
        partId = Value(partId),
@@ -469,6 +599,9 @@ class AnswerQueueCompanion extends UpdateCompanion<QueuedAnswer> {
     Expression<String>? optionIds,
     Expression<String>? changedAt,
     Expression<int>? tries,
+    Expression<int>? seq,
+    Expression<bool>? quarantined,
+    Expression<String>? lastError,
   }) {
     return RawValuesInsertable({
       if (id != null) 'id': id,
@@ -480,6 +613,9 @@ class AnswerQueueCompanion extends UpdateCompanion<QueuedAnswer> {
       if (optionIds != null) 'option_ids': optionIds,
       if (changedAt != null) 'changed_at': changedAt,
       if (tries != null) 'tries': tries,
+      if (seq != null) 'seq': seq,
+      if (quarantined != null) 'quarantined': quarantined,
+      if (lastError != null) 'last_error': lastError,
     });
   }
 
@@ -493,6 +629,9 @@ class AnswerQueueCompanion extends UpdateCompanion<QueuedAnswer> {
     Value<String>? optionIds,
     Value<String>? changedAt,
     Value<int>? tries,
+    Value<int?>? seq,
+    Value<bool>? quarantined,
+    Value<String?>? lastError,
   }) {
     return AnswerQueueCompanion(
       id: id ?? this.id,
@@ -504,6 +643,9 @@ class AnswerQueueCompanion extends UpdateCompanion<QueuedAnswer> {
       optionIds: optionIds ?? this.optionIds,
       changedAt: changedAt ?? this.changedAt,
       tries: tries ?? this.tries,
+      seq: seq ?? this.seq,
+      quarantined: quarantined ?? this.quarantined,
+      lastError: lastError ?? this.lastError,
     );
   }
 
@@ -537,6 +679,15 @@ class AnswerQueueCompanion extends UpdateCompanion<QueuedAnswer> {
     if (tries.present) {
       map['tries'] = Variable<int>(tries.value);
     }
+    if (seq.present) {
+      map['seq'] = Variable<int>(seq.value);
+    }
+    if (quarantined.present) {
+      map['quarantined'] = Variable<bool>(quarantined.value);
+    }
+    if (lastError.present) {
+      map['last_error'] = Variable<String>(lastError.value);
+    }
     return map;
   }
 
@@ -551,7 +702,10 @@ class AnswerQueueCompanion extends UpdateCompanion<QueuedAnswer> {
           ..write('answerText: $answerText, ')
           ..write('optionIds: $optionIds, ')
           ..write('changedAt: $changedAt, ')
-          ..write('tries: $tries')
+          ..write('tries: $tries, ')
+          ..write('seq: $seq, ')
+          ..write('quarantined: $quarantined, ')
+          ..write('lastError: $lastError')
           ..write(')'))
         .toString();
   }
@@ -628,6 +782,16 @@ class $LocalAnswersTable extends LocalAnswers
     type: DriftSqlType.string,
     requiredDuringInsert: true,
   );
+  static const VerificationMeta _seqMeta = const VerificationMeta('seq');
+  @override
+  late final GeneratedColumn<int> seq = GeneratedColumn<int>(
+    'seq',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+    defaultValue: const Constant(0),
+  );
   @override
   List<GeneratedColumn> get $columns => [
     attemptId,
@@ -636,6 +800,7 @@ class $LocalAnswersTable extends LocalAnswers
     answerText,
     optionIds,
     changedAt,
+    seq,
   ];
   @override
   String get aliasedName => _alias ?? actualTableName;
@@ -693,6 +858,12 @@ class $LocalAnswersTable extends LocalAnswers
     } else if (isInserting) {
       context.missing(_changedAtMeta);
     }
+    if (data.containsKey('seq')) {
+      context.handle(
+        _seqMeta,
+        seq.isAcceptableOrUnknown(data['seq']!, _seqMeta),
+      );
+    }
     return context;
   }
 
@@ -726,6 +897,10 @@ class $LocalAnswersTable extends LocalAnswers
         DriftSqlType.string,
         data['${effectivePrefix}changed_at'],
       )!,
+      seq: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}seq'],
+      )!,
     );
   }
 
@@ -742,6 +917,9 @@ class LocalAnswer extends DataClass implements Insertable<LocalAnswer> {
   final String? answerText;
   final String optionIds;
   final String changedAt;
+
+  /// Last `seq` used for this question (schema v2).
+  final int seq;
   const LocalAnswer({
     required this.attemptId,
     required this.questionId,
@@ -749,6 +927,7 @@ class LocalAnswer extends DataClass implements Insertable<LocalAnswer> {
     this.answerText,
     required this.optionIds,
     required this.changedAt,
+    required this.seq,
   });
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
@@ -761,6 +940,7 @@ class LocalAnswer extends DataClass implements Insertable<LocalAnswer> {
     }
     map['option_ids'] = Variable<String>(optionIds);
     map['changed_at'] = Variable<String>(changedAt);
+    map['seq'] = Variable<int>(seq);
     return map;
   }
 
@@ -774,6 +954,7 @@ class LocalAnswer extends DataClass implements Insertable<LocalAnswer> {
           : Value(answerText),
       optionIds: Value(optionIds),
       changedAt: Value(changedAt),
+      seq: Value(seq),
     );
   }
 
@@ -789,6 +970,7 @@ class LocalAnswer extends DataClass implements Insertable<LocalAnswer> {
       answerText: serializer.fromJson<String?>(json['answerText']),
       optionIds: serializer.fromJson<String>(json['optionIds']),
       changedAt: serializer.fromJson<String>(json['changedAt']),
+      seq: serializer.fromJson<int>(json['seq']),
     );
   }
   @override
@@ -801,6 +983,7 @@ class LocalAnswer extends DataClass implements Insertable<LocalAnswer> {
       'answerText': serializer.toJson<String?>(answerText),
       'optionIds': serializer.toJson<String>(optionIds),
       'changedAt': serializer.toJson<String>(changedAt),
+      'seq': serializer.toJson<int>(seq),
     };
   }
 
@@ -811,6 +994,7 @@ class LocalAnswer extends DataClass implements Insertable<LocalAnswer> {
     Value<String?> answerText = const Value.absent(),
     String? optionIds,
     String? changedAt,
+    int? seq,
   }) => LocalAnswer(
     attemptId: attemptId ?? this.attemptId,
     questionId: questionId ?? this.questionId,
@@ -818,6 +1002,7 @@ class LocalAnswer extends DataClass implements Insertable<LocalAnswer> {
     answerText: answerText.present ? answerText.value : this.answerText,
     optionIds: optionIds ?? this.optionIds,
     changedAt: changedAt ?? this.changedAt,
+    seq: seq ?? this.seq,
   );
   LocalAnswer copyWithCompanion(LocalAnswersCompanion data) {
     return LocalAnswer(
@@ -831,6 +1016,7 @@ class LocalAnswer extends DataClass implements Insertable<LocalAnswer> {
           : this.answerText,
       optionIds: data.optionIds.present ? data.optionIds.value : this.optionIds,
       changedAt: data.changedAt.present ? data.changedAt.value : this.changedAt,
+      seq: data.seq.present ? data.seq.value : this.seq,
     );
   }
 
@@ -842,7 +1028,8 @@ class LocalAnswer extends DataClass implements Insertable<LocalAnswer> {
           ..write('partId: $partId, ')
           ..write('answerText: $answerText, ')
           ..write('optionIds: $optionIds, ')
-          ..write('changedAt: $changedAt')
+          ..write('changedAt: $changedAt, ')
+          ..write('seq: $seq')
           ..write(')'))
         .toString();
   }
@@ -855,6 +1042,7 @@ class LocalAnswer extends DataClass implements Insertable<LocalAnswer> {
     answerText,
     optionIds,
     changedAt,
+    seq,
   );
   @override
   bool operator ==(Object other) =>
@@ -865,7 +1053,8 @@ class LocalAnswer extends DataClass implements Insertable<LocalAnswer> {
           other.partId == this.partId &&
           other.answerText == this.answerText &&
           other.optionIds == this.optionIds &&
-          other.changedAt == this.changedAt);
+          other.changedAt == this.changedAt &&
+          other.seq == this.seq);
 }
 
 class LocalAnswersCompanion extends UpdateCompanion<LocalAnswer> {
@@ -875,6 +1064,7 @@ class LocalAnswersCompanion extends UpdateCompanion<LocalAnswer> {
   final Value<String?> answerText;
   final Value<String> optionIds;
   final Value<String> changedAt;
+  final Value<int> seq;
   final Value<int> rowid;
   const LocalAnswersCompanion({
     this.attemptId = const Value.absent(),
@@ -883,6 +1073,7 @@ class LocalAnswersCompanion extends UpdateCompanion<LocalAnswer> {
     this.answerText = const Value.absent(),
     this.optionIds = const Value.absent(),
     this.changedAt = const Value.absent(),
+    this.seq = const Value.absent(),
     this.rowid = const Value.absent(),
   });
   LocalAnswersCompanion.insert({
@@ -892,6 +1083,7 @@ class LocalAnswersCompanion extends UpdateCompanion<LocalAnswer> {
     this.answerText = const Value.absent(),
     this.optionIds = const Value.absent(),
     required String changedAt,
+    this.seq = const Value.absent(),
     this.rowid = const Value.absent(),
   }) : attemptId = Value(attemptId),
        questionId = Value(questionId),
@@ -904,6 +1096,7 @@ class LocalAnswersCompanion extends UpdateCompanion<LocalAnswer> {
     Expression<String>? answerText,
     Expression<String>? optionIds,
     Expression<String>? changedAt,
+    Expression<int>? seq,
     Expression<int>? rowid,
   }) {
     return RawValuesInsertable({
@@ -913,6 +1106,7 @@ class LocalAnswersCompanion extends UpdateCompanion<LocalAnswer> {
       if (answerText != null) 'answer_text': answerText,
       if (optionIds != null) 'option_ids': optionIds,
       if (changedAt != null) 'changed_at': changedAt,
+      if (seq != null) 'seq': seq,
       if (rowid != null) 'rowid': rowid,
     });
   }
@@ -924,6 +1118,7 @@ class LocalAnswersCompanion extends UpdateCompanion<LocalAnswer> {
     Value<String?>? answerText,
     Value<String>? optionIds,
     Value<String>? changedAt,
+    Value<int>? seq,
     Value<int>? rowid,
   }) {
     return LocalAnswersCompanion(
@@ -933,6 +1128,7 @@ class LocalAnswersCompanion extends UpdateCompanion<LocalAnswer> {
       answerText: answerText ?? this.answerText,
       optionIds: optionIds ?? this.optionIds,
       changedAt: changedAt ?? this.changedAt,
+      seq: seq ?? this.seq,
       rowid: rowid ?? this.rowid,
     );
   }
@@ -958,6 +1154,9 @@ class LocalAnswersCompanion extends UpdateCompanion<LocalAnswer> {
     if (changedAt.present) {
       map['changed_at'] = Variable<String>(changedAt.value);
     }
+    if (seq.present) {
+      map['seq'] = Variable<int>(seq.value);
+    }
     if (rowid.present) {
       map['rowid'] = Variable<int>(rowid.value);
     }
@@ -973,6 +1172,7 @@ class LocalAnswersCompanion extends UpdateCompanion<LocalAnswer> {
           ..write('answerText: $answerText, ')
           ..write('optionIds: $optionIds, ')
           ..write('changedAt: $changedAt, ')
+          ..write('seq: $seq, ')
           ..write('rowid: $rowid')
           ..write(')'))
         .toString();
@@ -1050,6 +1250,21 @@ class $ViolationQueueTable extends ViolationQueue
     type: DriftSqlType.string,
     requiredDuringInsert: true,
   );
+  static const VerificationMeta _quarantinedMeta = const VerificationMeta(
+    'quarantined',
+  );
+  @override
+  late final GeneratedColumn<bool> quarantined = GeneratedColumn<bool>(
+    'quarantined',
+    aliasedName,
+    false,
+    type: DriftSqlType.bool,
+    requiredDuringInsert: false,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'CHECK ("quarantined" IN (0, 1))',
+    ),
+    defaultValue: const Constant(false),
+  );
   @override
   List<GeneratedColumn> get $columns => [
     id,
@@ -1058,6 +1273,7 @@ class $ViolationQueueTable extends ViolationQueue
     type,
     detail,
     occurredAt,
+    quarantined,
   ];
   @override
   String get aliasedName => _alias ?? actualTableName;
@@ -1112,6 +1328,15 @@ class $ViolationQueueTable extends ViolationQueue
     } else if (isInserting) {
       context.missing(_occurredAtMeta);
     }
+    if (data.containsKey('quarantined')) {
+      context.handle(
+        _quarantinedMeta,
+        quarantined.isAcceptableOrUnknown(
+          data['quarantined']!,
+          _quarantinedMeta,
+        ),
+      );
+    }
     return context;
   }
 
@@ -1145,6 +1370,10 @@ class $ViolationQueueTable extends ViolationQueue
         DriftSqlType.string,
         data['${effectivePrefix}occurred_at'],
       )!,
+      quarantined: attachedDatabase.typeMapping.read(
+        DriftSqlType.bool,
+        data['${effectivePrefix}quarantined'],
+      )!,
     );
   }
 
@@ -1161,6 +1390,9 @@ class QueuedViolation extends DataClass implements Insertable<QueuedViolation> {
   final String type;
   final String? detail;
   final String occurredAt;
+
+  /// Refused by the server (422) even alone: kept, never resent (schema v2).
+  final bool quarantined;
   const QueuedViolation({
     required this.id,
     required this.clientUuid,
@@ -1168,6 +1400,7 @@ class QueuedViolation extends DataClass implements Insertable<QueuedViolation> {
     required this.type,
     this.detail,
     required this.occurredAt,
+    required this.quarantined,
   });
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
@@ -1180,6 +1413,7 @@ class QueuedViolation extends DataClass implements Insertable<QueuedViolation> {
       map['detail'] = Variable<String>(detail);
     }
     map['occurred_at'] = Variable<String>(occurredAt);
+    map['quarantined'] = Variable<bool>(quarantined);
     return map;
   }
 
@@ -1193,6 +1427,7 @@ class QueuedViolation extends DataClass implements Insertable<QueuedViolation> {
           ? const Value.absent()
           : Value(detail),
       occurredAt: Value(occurredAt),
+      quarantined: Value(quarantined),
     );
   }
 
@@ -1208,6 +1443,7 @@ class QueuedViolation extends DataClass implements Insertable<QueuedViolation> {
       type: serializer.fromJson<String>(json['type']),
       detail: serializer.fromJson<String?>(json['detail']),
       occurredAt: serializer.fromJson<String>(json['occurredAt']),
+      quarantined: serializer.fromJson<bool>(json['quarantined']),
     );
   }
   @override
@@ -1220,6 +1456,7 @@ class QueuedViolation extends DataClass implements Insertable<QueuedViolation> {
       'type': serializer.toJson<String>(type),
       'detail': serializer.toJson<String?>(detail),
       'occurredAt': serializer.toJson<String>(occurredAt),
+      'quarantined': serializer.toJson<bool>(quarantined),
     };
   }
 
@@ -1230,6 +1467,7 @@ class QueuedViolation extends DataClass implements Insertable<QueuedViolation> {
     String? type,
     Value<String?> detail = const Value.absent(),
     String? occurredAt,
+    bool? quarantined,
   }) => QueuedViolation(
     id: id ?? this.id,
     clientUuid: clientUuid ?? this.clientUuid,
@@ -1237,6 +1475,7 @@ class QueuedViolation extends DataClass implements Insertable<QueuedViolation> {
     type: type ?? this.type,
     detail: detail.present ? detail.value : this.detail,
     occurredAt: occurredAt ?? this.occurredAt,
+    quarantined: quarantined ?? this.quarantined,
   );
   QueuedViolation copyWithCompanion(ViolationQueueCompanion data) {
     return QueuedViolation(
@@ -1250,6 +1489,9 @@ class QueuedViolation extends DataClass implements Insertable<QueuedViolation> {
       occurredAt: data.occurredAt.present
           ? data.occurredAt.value
           : this.occurredAt,
+      quarantined: data.quarantined.present
+          ? data.quarantined.value
+          : this.quarantined,
     );
   }
 
@@ -1261,14 +1503,22 @@ class QueuedViolation extends DataClass implements Insertable<QueuedViolation> {
           ..write('attemptId: $attemptId, ')
           ..write('type: $type, ')
           ..write('detail: $detail, ')
-          ..write('occurredAt: $occurredAt')
+          ..write('occurredAt: $occurredAt, ')
+          ..write('quarantined: $quarantined')
           ..write(')'))
         .toString();
   }
 
   @override
-  int get hashCode =>
-      Object.hash(id, clientUuid, attemptId, type, detail, occurredAt);
+  int get hashCode => Object.hash(
+    id,
+    clientUuid,
+    attemptId,
+    type,
+    detail,
+    occurredAt,
+    quarantined,
+  );
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
@@ -1278,7 +1528,8 @@ class QueuedViolation extends DataClass implements Insertable<QueuedViolation> {
           other.attemptId == this.attemptId &&
           other.type == this.type &&
           other.detail == this.detail &&
-          other.occurredAt == this.occurredAt);
+          other.occurredAt == this.occurredAt &&
+          other.quarantined == this.quarantined);
 }
 
 class ViolationQueueCompanion extends UpdateCompanion<QueuedViolation> {
@@ -1288,6 +1539,7 @@ class ViolationQueueCompanion extends UpdateCompanion<QueuedViolation> {
   final Value<String> type;
   final Value<String?> detail;
   final Value<String> occurredAt;
+  final Value<bool> quarantined;
   const ViolationQueueCompanion({
     this.id = const Value.absent(),
     this.clientUuid = const Value.absent(),
@@ -1295,6 +1547,7 @@ class ViolationQueueCompanion extends UpdateCompanion<QueuedViolation> {
     this.type = const Value.absent(),
     this.detail = const Value.absent(),
     this.occurredAt = const Value.absent(),
+    this.quarantined = const Value.absent(),
   });
   ViolationQueueCompanion.insert({
     this.id = const Value.absent(),
@@ -1303,6 +1556,7 @@ class ViolationQueueCompanion extends UpdateCompanion<QueuedViolation> {
     required String type,
     this.detail = const Value.absent(),
     required String occurredAt,
+    this.quarantined = const Value.absent(),
   }) : clientUuid = Value(clientUuid),
        attemptId = Value(attemptId),
        type = Value(type),
@@ -1314,6 +1568,7 @@ class ViolationQueueCompanion extends UpdateCompanion<QueuedViolation> {
     Expression<String>? type,
     Expression<String>? detail,
     Expression<String>? occurredAt,
+    Expression<bool>? quarantined,
   }) {
     return RawValuesInsertable({
       if (id != null) 'id': id,
@@ -1322,6 +1577,7 @@ class ViolationQueueCompanion extends UpdateCompanion<QueuedViolation> {
       if (type != null) 'type': type,
       if (detail != null) 'detail': detail,
       if (occurredAt != null) 'occurred_at': occurredAt,
+      if (quarantined != null) 'quarantined': quarantined,
     });
   }
 
@@ -1332,6 +1588,7 @@ class ViolationQueueCompanion extends UpdateCompanion<QueuedViolation> {
     Value<String>? type,
     Value<String?>? detail,
     Value<String>? occurredAt,
+    Value<bool>? quarantined,
   }) {
     return ViolationQueueCompanion(
       id: id ?? this.id,
@@ -1340,6 +1597,7 @@ class ViolationQueueCompanion extends UpdateCompanion<QueuedViolation> {
       type: type ?? this.type,
       detail: detail ?? this.detail,
       occurredAt: occurredAt ?? this.occurredAt,
+      quarantined: quarantined ?? this.quarantined,
     );
   }
 
@@ -1364,6 +1622,9 @@ class ViolationQueueCompanion extends UpdateCompanion<QueuedViolation> {
     if (occurredAt.present) {
       map['occurred_at'] = Variable<String>(occurredAt.value);
     }
+    if (quarantined.present) {
+      map['quarantined'] = Variable<bool>(quarantined.value);
+    }
     return map;
   }
 
@@ -1375,7 +1636,8 @@ class ViolationQueueCompanion extends UpdateCompanion<QueuedViolation> {
           ..write('attemptId: $attemptId, ')
           ..write('type: $type, ')
           ..write('detail: $detail, ')
-          ..write('occurredAt: $occurredAt')
+          ..write('occurredAt: $occurredAt, ')
+          ..write('quarantined: $quarantined')
           ..write(')'))
         .toString();
   }
@@ -2616,6 +2878,32 @@ class $ExamSessionsTable extends ExamSessions
     requiredDuringInsert: false,
     defaultValue: currentDateAndTime,
   );
+  static const VerificationMeta _authLostMeta = const VerificationMeta(
+    'authLost',
+  );
+  @override
+  late final GeneratedColumn<bool> authLost = GeneratedColumn<bool>(
+    'auth_lost',
+    aliasedName,
+    false,
+    type: DriftSqlType.bool,
+    requiredDuringInsert: false,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'CHECK ("auth_lost" IN (0, 1))',
+    ),
+    defaultValue: const Constant(false),
+  );
+  static const VerificationMeta _closedAtMeta = const VerificationMeta(
+    'closedAt',
+  );
+  @override
+  late final GeneratedColumn<DateTime> closedAt = GeneratedColumn<DateTime>(
+    'closed_at',
+    aliasedName,
+    true,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: false,
+  );
   @override
   List<GeneratedColumn> get $columns => [
     attemptId,
@@ -2628,6 +2916,8 @@ class $ExamSessionsTable extends ExamSessions
     completed,
     closed,
     createdAt,
+    authLost,
+    closedAt,
   ];
   @override
   String get aliasedName => _alias ?? actualTableName;
@@ -2716,6 +3006,18 @@ class $ExamSessionsTable extends ExamSessions
         createdAt.isAcceptableOrUnknown(data['created_at']!, _createdAtMeta),
       );
     }
+    if (data.containsKey('auth_lost')) {
+      context.handle(
+        _authLostMeta,
+        authLost.isAcceptableOrUnknown(data['auth_lost']!, _authLostMeta),
+      );
+    }
+    if (data.containsKey('closed_at')) {
+      context.handle(
+        _closedAtMeta,
+        closedAt.isAcceptableOrUnknown(data['closed_at']!, _closedAtMeta),
+      );
+    }
     return context;
   }
 
@@ -2765,6 +3067,14 @@ class $ExamSessionsTable extends ExamSessions
         DriftSqlType.dateTime,
         data['${effectivePrefix}created_at'],
       )!,
+      authLost: attachedDatabase.typeMapping.read(
+        DriftSqlType.bool,
+        data['${effectivePrefix}auth_lost'],
+      )!,
+      closedAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}closed_at'],
+      ),
     );
   }
 
@@ -2788,9 +3098,17 @@ class ExamSessionRow extends DataClass implements Insertable<ExamSessionRow> {
   /// Exam is over on this PC (Completed screen reached).
   final bool completed;
 
-  /// Server confirmed the final submit (or the token is dead).
+  /// Server confirmed the final submit (or the attempt is finished).
   final bool closed;
   final DateTime createdAt;
+
+  /// The server answered 401 (`session_revoked` / `session_expired`) for this
+  /// token: background sync skips the session (its queue is kept) until a
+  /// new login on this PC replaces the token. Schema v2.
+  final bool authLost;
+
+  /// When [closed] was set (cleanup of old exam files). Schema v2.
+  final DateTime? closedAt;
   const ExamSessionRow({
     required this.attemptId,
     required this.token,
@@ -2802,6 +3120,8 @@ class ExamSessionRow extends DataClass implements Insertable<ExamSessionRow> {
     required this.completed,
     required this.closed,
     required this.createdAt,
+    required this.authLost,
+    this.closedAt,
   });
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
@@ -2818,6 +3138,10 @@ class ExamSessionRow extends DataClass implements Insertable<ExamSessionRow> {
     map['completed'] = Variable<bool>(completed);
     map['closed'] = Variable<bool>(closed);
     map['created_at'] = Variable<DateTime>(createdAt);
+    map['auth_lost'] = Variable<bool>(authLost);
+    if (!nullToAbsent || closedAt != null) {
+      map['closed_at'] = Variable<DateTime>(closedAt);
+    }
     return map;
   }
 
@@ -2835,6 +3159,10 @@ class ExamSessionRow extends DataClass implements Insertable<ExamSessionRow> {
       completed: Value(completed),
       closed: Value(closed),
       createdAt: Value(createdAt),
+      authLost: Value(authLost),
+      closedAt: closedAt == null && nullToAbsent
+          ? const Value.absent()
+          : Value(closedAt),
     );
   }
 
@@ -2854,6 +3182,8 @@ class ExamSessionRow extends DataClass implements Insertable<ExamSessionRow> {
       completed: serializer.fromJson<bool>(json['completed']),
       closed: serializer.fromJson<bool>(json['closed']),
       createdAt: serializer.fromJson<DateTime>(json['createdAt']),
+      authLost: serializer.fromJson<bool>(json['authLost']),
+      closedAt: serializer.fromJson<DateTime?>(json['closedAt']),
     );
   }
   @override
@@ -2870,6 +3200,8 @@ class ExamSessionRow extends DataClass implements Insertable<ExamSessionRow> {
       'completed': serializer.toJson<bool>(completed),
       'closed': serializer.toJson<bool>(closed),
       'createdAt': serializer.toJson<DateTime>(createdAt),
+      'authLost': serializer.toJson<bool>(authLost),
+      'closedAt': serializer.toJson<DateTime?>(closedAt),
     };
   }
 
@@ -2884,6 +3216,8 @@ class ExamSessionRow extends DataClass implements Insertable<ExamSessionRow> {
     bool? completed,
     bool? closed,
     DateTime? createdAt,
+    bool? authLost,
+    Value<DateTime?> closedAt = const Value.absent(),
   }) => ExamSessionRow(
     attemptId: attemptId ?? this.attemptId,
     token: token ?? this.token,
@@ -2895,6 +3229,8 @@ class ExamSessionRow extends DataClass implements Insertable<ExamSessionRow> {
     completed: completed ?? this.completed,
     closed: closed ?? this.closed,
     createdAt: createdAt ?? this.createdAt,
+    authLost: authLost ?? this.authLost,
+    closedAt: closedAt.present ? closedAt.value : this.closedAt,
   );
   ExamSessionRow copyWithCompanion(ExamSessionsCompanion data) {
     return ExamSessionRow(
@@ -2914,6 +3250,8 @@ class ExamSessionRow extends DataClass implements Insertable<ExamSessionRow> {
       completed: data.completed.present ? data.completed.value : this.completed,
       closed: data.closed.present ? data.closed.value : this.closed,
       createdAt: data.createdAt.present ? data.createdAt.value : this.createdAt,
+      authLost: data.authLost.present ? data.authLost.value : this.authLost,
+      closedAt: data.closedAt.present ? data.closedAt.value : this.closedAt,
     );
   }
 
@@ -2929,7 +3267,9 @@ class ExamSessionRow extends DataClass implements Insertable<ExamSessionRow> {
           ..write('submitPending: $submitPending, ')
           ..write('completed: $completed, ')
           ..write('closed: $closed, ')
-          ..write('createdAt: $createdAt')
+          ..write('createdAt: $createdAt, ')
+          ..write('authLost: $authLost, ')
+          ..write('closedAt: $closedAt')
           ..write(')'))
         .toString();
   }
@@ -2946,6 +3286,8 @@ class ExamSessionRow extends DataClass implements Insertable<ExamSessionRow> {
     completed,
     closed,
     createdAt,
+    authLost,
+    closedAt,
   );
   @override
   bool operator ==(Object other) =>
@@ -2960,7 +3302,9 @@ class ExamSessionRow extends DataClass implements Insertable<ExamSessionRow> {
           other.submitPending == this.submitPending &&
           other.completed == this.completed &&
           other.closed == this.closed &&
-          other.createdAt == this.createdAt);
+          other.createdAt == this.createdAt &&
+          other.authLost == this.authLost &&
+          other.closedAt == this.closedAt);
 }
 
 class ExamSessionsCompanion extends UpdateCompanion<ExamSessionRow> {
@@ -2974,6 +3318,8 @@ class ExamSessionsCompanion extends UpdateCompanion<ExamSessionRow> {
   final Value<bool> completed;
   final Value<bool> closed;
   final Value<DateTime> createdAt;
+  final Value<bool> authLost;
+  final Value<DateTime?> closedAt;
   const ExamSessionsCompanion({
     this.attemptId = const Value.absent(),
     this.token = const Value.absent(),
@@ -2985,6 +3331,8 @@ class ExamSessionsCompanion extends UpdateCompanion<ExamSessionRow> {
     this.completed = const Value.absent(),
     this.closed = const Value.absent(),
     this.createdAt = const Value.absent(),
+    this.authLost = const Value.absent(),
+    this.closedAt = const Value.absent(),
   });
   ExamSessionsCompanion.insert({
     this.attemptId = const Value.absent(),
@@ -2997,6 +3345,8 @@ class ExamSessionsCompanion extends UpdateCompanion<ExamSessionRow> {
     this.completed = const Value.absent(),
     this.closed = const Value.absent(),
     this.createdAt = const Value.absent(),
+    this.authLost = const Value.absent(),
+    this.closedAt = const Value.absent(),
   }) : token = Value(token),
        candidateName = Value(candidateName),
        candidateCode = Value(candidateCode);
@@ -3011,6 +3361,8 @@ class ExamSessionsCompanion extends UpdateCompanion<ExamSessionRow> {
     Expression<bool>? completed,
     Expression<bool>? closed,
     Expression<DateTime>? createdAt,
+    Expression<bool>? authLost,
+    Expression<DateTime>? closedAt,
   }) {
     return RawValuesInsertable({
       if (attemptId != null) 'attempt_id': attemptId,
@@ -3023,6 +3375,8 @@ class ExamSessionsCompanion extends UpdateCompanion<ExamSessionRow> {
       if (completed != null) 'completed': completed,
       if (closed != null) 'closed': closed,
       if (createdAt != null) 'created_at': createdAt,
+      if (authLost != null) 'auth_lost': authLost,
+      if (closedAt != null) 'closed_at': closedAt,
     });
   }
 
@@ -3037,6 +3391,8 @@ class ExamSessionsCompanion extends UpdateCompanion<ExamSessionRow> {
     Value<bool>? completed,
     Value<bool>? closed,
     Value<DateTime>? createdAt,
+    Value<bool>? authLost,
+    Value<DateTime?>? closedAt,
   }) {
     return ExamSessionsCompanion(
       attemptId: attemptId ?? this.attemptId,
@@ -3049,6 +3405,8 @@ class ExamSessionsCompanion extends UpdateCompanion<ExamSessionRow> {
       completed: completed ?? this.completed,
       closed: closed ?? this.closed,
       createdAt: createdAt ?? this.createdAt,
+      authLost: authLost ?? this.authLost,
+      closedAt: closedAt ?? this.closedAt,
     );
   }
 
@@ -3085,6 +3443,12 @@ class ExamSessionsCompanion extends UpdateCompanion<ExamSessionRow> {
     if (createdAt.present) {
       map['created_at'] = Variable<DateTime>(createdAt.value);
     }
+    if (authLost.present) {
+      map['auth_lost'] = Variable<bool>(authLost.value);
+    }
+    if (closedAt.present) {
+      map['closed_at'] = Variable<DateTime>(closedAt.value);
+    }
     return map;
   }
 
@@ -3100,7 +3464,9 @@ class ExamSessionsCompanion extends UpdateCompanion<ExamSessionRow> {
           ..write('submitPending: $submitPending, ')
           ..write('completed: $completed, ')
           ..write('closed: $closed, ')
-          ..write('createdAt: $createdAt')
+          ..write('createdAt: $createdAt, ')
+          ..write('authLost: $authLost, ')
+          ..write('closedAt: $closedAt')
           ..write(')'))
         .toString();
   }
@@ -3145,6 +3511,9 @@ typedef $$AnswerQueueTableCreateCompanionBuilder =
       Value<String> optionIds,
       required String changedAt,
       Value<int> tries,
+      Value<int?> seq,
+      Value<bool> quarantined,
+      Value<String?> lastError,
     });
 typedef $$AnswerQueueTableUpdateCompanionBuilder =
     AnswerQueueCompanion Function({
@@ -3157,6 +3526,9 @@ typedef $$AnswerQueueTableUpdateCompanionBuilder =
       Value<String> optionIds,
       Value<String> changedAt,
       Value<int> tries,
+      Value<int?> seq,
+      Value<bool> quarantined,
+      Value<String?> lastError,
     });
 
 class $$AnswerQueueTableFilterComposer
@@ -3210,6 +3582,21 @@ class $$AnswerQueueTableFilterComposer
 
   ColumnFilters<int> get tries => $composableBuilder(
     column: $table.tries,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get seq => $composableBuilder(
+    column: $table.seq,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<bool> get quarantined => $composableBuilder(
+    column: $table.quarantined,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get lastError => $composableBuilder(
+    column: $table.lastError,
     builder: (column) => ColumnFilters(column),
   );
 }
@@ -3267,6 +3654,21 @@ class $$AnswerQueueTableOrderingComposer
     column: $table.tries,
     builder: (column) => ColumnOrderings(column),
   );
+
+  ColumnOrderings<int> get seq => $composableBuilder(
+    column: $table.seq,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<bool> get quarantined => $composableBuilder(
+    column: $table.quarantined,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get lastError => $composableBuilder(
+    column: $table.lastError,
+    builder: (column) => ColumnOrderings(column),
+  );
 }
 
 class $$AnswerQueueTableAnnotationComposer
@@ -3310,6 +3712,17 @@ class $$AnswerQueueTableAnnotationComposer
 
   GeneratedColumn<int> get tries =>
       $composableBuilder(column: $table.tries, builder: (column) => column);
+
+  GeneratedColumn<int> get seq =>
+      $composableBuilder(column: $table.seq, builder: (column) => column);
+
+  GeneratedColumn<bool> get quarantined => $composableBuilder(
+    column: $table.quarantined,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get lastError =>
+      $composableBuilder(column: $table.lastError, builder: (column) => column);
 }
 
 class $$AnswerQueueTableTableManager
@@ -3352,6 +3765,9 @@ class $$AnswerQueueTableTableManager
                 Value<String> optionIds = const Value.absent(),
                 Value<String> changedAt = const Value.absent(),
                 Value<int> tries = const Value.absent(),
+                Value<int?> seq = const Value.absent(),
+                Value<bool> quarantined = const Value.absent(),
+                Value<String?> lastError = const Value.absent(),
               }) => AnswerQueueCompanion(
                 id: id,
                 clientUuid: clientUuid,
@@ -3362,6 +3778,9 @@ class $$AnswerQueueTableTableManager
                 optionIds: optionIds,
                 changedAt: changedAt,
                 tries: tries,
+                seq: seq,
+                quarantined: quarantined,
+                lastError: lastError,
               ),
           createCompanionCallback:
               ({
@@ -3374,6 +3793,9 @@ class $$AnswerQueueTableTableManager
                 Value<String> optionIds = const Value.absent(),
                 required String changedAt,
                 Value<int> tries = const Value.absent(),
+                Value<int?> seq = const Value.absent(),
+                Value<bool> quarantined = const Value.absent(),
+                Value<String?> lastError = const Value.absent(),
               }) => AnswerQueueCompanion.insert(
                 id: id,
                 clientUuid: clientUuid,
@@ -3384,6 +3806,9 @@ class $$AnswerQueueTableTableManager
                 optionIds: optionIds,
                 changedAt: changedAt,
                 tries: tries,
+                seq: seq,
+                quarantined: quarantined,
+                lastError: lastError,
               ),
           withReferenceMapper: (p0) => p0
               .map(
@@ -3427,6 +3852,7 @@ typedef $$LocalAnswersTableCreateCompanionBuilder =
       Value<String?> answerText,
       Value<String> optionIds,
       required String changedAt,
+      Value<int> seq,
       Value<int> rowid,
     });
 typedef $$LocalAnswersTableUpdateCompanionBuilder =
@@ -3437,6 +3863,7 @@ typedef $$LocalAnswersTableUpdateCompanionBuilder =
       Value<String?> answerText,
       Value<String> optionIds,
       Value<String> changedAt,
+      Value<int> seq,
       Value<int> rowid,
     });
 
@@ -3476,6 +3903,11 @@ class $$LocalAnswersTableFilterComposer
 
   ColumnFilters<String> get changedAt => $composableBuilder(
     column: $table.changedAt,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get seq => $composableBuilder(
+    column: $table.seq,
     builder: (column) => ColumnFilters(column),
   );
 }
@@ -3518,6 +3950,11 @@ class $$LocalAnswersTableOrderingComposer
     column: $table.changedAt,
     builder: (column) => ColumnOrderings(column),
   );
+
+  ColumnOrderings<int> get seq => $composableBuilder(
+    column: $table.seq,
+    builder: (column) => ColumnOrderings(column),
+  );
 }
 
 class $$LocalAnswersTableAnnotationComposer
@@ -3550,6 +3987,9 @@ class $$LocalAnswersTableAnnotationComposer
 
   GeneratedColumn<String> get changedAt =>
       $composableBuilder(column: $table.changedAt, builder: (column) => column);
+
+  GeneratedColumn<int> get seq =>
+      $composableBuilder(column: $table.seq, builder: (column) => column);
 }
 
 class $$LocalAnswersTableTableManager
@@ -3589,6 +4029,7 @@ class $$LocalAnswersTableTableManager
                 Value<String?> answerText = const Value.absent(),
                 Value<String> optionIds = const Value.absent(),
                 Value<String> changedAt = const Value.absent(),
+                Value<int> seq = const Value.absent(),
                 Value<int> rowid = const Value.absent(),
               }) => LocalAnswersCompanion(
                 attemptId: attemptId,
@@ -3597,6 +4038,7 @@ class $$LocalAnswersTableTableManager
                 answerText: answerText,
                 optionIds: optionIds,
                 changedAt: changedAt,
+                seq: seq,
                 rowid: rowid,
               ),
           createCompanionCallback:
@@ -3607,6 +4049,7 @@ class $$LocalAnswersTableTableManager
                 Value<String?> answerText = const Value.absent(),
                 Value<String> optionIds = const Value.absent(),
                 required String changedAt,
+                Value<int> seq = const Value.absent(),
                 Value<int> rowid = const Value.absent(),
               }) => LocalAnswersCompanion.insert(
                 attemptId: attemptId,
@@ -3615,6 +4058,7 @@ class $$LocalAnswersTableTableManager
                 answerText: answerText,
                 optionIds: optionIds,
                 changedAt: changedAt,
+                seq: seq,
                 rowid: rowid,
               ),
           withReferenceMapper: (p0) => p0
@@ -3659,6 +4103,7 @@ typedef $$ViolationQueueTableCreateCompanionBuilder =
       required String type,
       Value<String?> detail,
       required String occurredAt,
+      Value<bool> quarantined,
     });
 typedef $$ViolationQueueTableUpdateCompanionBuilder =
     ViolationQueueCompanion Function({
@@ -3668,6 +4113,7 @@ typedef $$ViolationQueueTableUpdateCompanionBuilder =
       Value<String> type,
       Value<String?> detail,
       Value<String> occurredAt,
+      Value<bool> quarantined,
     });
 
 class $$ViolationQueueTableFilterComposer
@@ -3706,6 +4152,11 @@ class $$ViolationQueueTableFilterComposer
 
   ColumnFilters<String> get occurredAt => $composableBuilder(
     column: $table.occurredAt,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<bool> get quarantined => $composableBuilder(
+    column: $table.quarantined,
     builder: (column) => ColumnFilters(column),
   );
 }
@@ -3748,6 +4199,11 @@ class $$ViolationQueueTableOrderingComposer
     column: $table.occurredAt,
     builder: (column) => ColumnOrderings(column),
   );
+
+  ColumnOrderings<bool> get quarantined => $composableBuilder(
+    column: $table.quarantined,
+    builder: (column) => ColumnOrderings(column),
+  );
 }
 
 class $$ViolationQueueTableAnnotationComposer
@@ -3778,6 +4234,11 @@ class $$ViolationQueueTableAnnotationComposer
 
   GeneratedColumn<String> get occurredAt => $composableBuilder(
     column: $table.occurredAt,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<bool> get quarantined => $composableBuilder(
+    column: $table.quarantined,
     builder: (column) => column,
   );
 }
@@ -3825,6 +4286,7 @@ class $$ViolationQueueTableTableManager
                 Value<String> type = const Value.absent(),
                 Value<String?> detail = const Value.absent(),
                 Value<String> occurredAt = const Value.absent(),
+                Value<bool> quarantined = const Value.absent(),
               }) => ViolationQueueCompanion(
                 id: id,
                 clientUuid: clientUuid,
@@ -3832,6 +4294,7 @@ class $$ViolationQueueTableTableManager
                 type: type,
                 detail: detail,
                 occurredAt: occurredAt,
+                quarantined: quarantined,
               ),
           createCompanionCallback:
               ({
@@ -3841,6 +4304,7 @@ class $$ViolationQueueTableTableManager
                 required String type,
                 Value<String?> detail = const Value.absent(),
                 required String occurredAt,
+                Value<bool> quarantined = const Value.absent(),
               }) => ViolationQueueCompanion.insert(
                 id: id,
                 clientUuid: clientUuid,
@@ -3848,6 +4312,7 @@ class $$ViolationQueueTableTableManager
                 type: type,
                 detail: detail,
                 occurredAt: occurredAt,
+                quarantined: quarantined,
               ),
           withReferenceMapper: (p0) => p0
               .map(
@@ -4536,6 +5001,8 @@ typedef $$ExamSessionsTableCreateCompanionBuilder =
       Value<bool> completed,
       Value<bool> closed,
       Value<DateTime> createdAt,
+      Value<bool> authLost,
+      Value<DateTime?> closedAt,
     });
 typedef $$ExamSessionsTableUpdateCompanionBuilder =
     ExamSessionsCompanion Function({
@@ -4549,6 +5016,8 @@ typedef $$ExamSessionsTableUpdateCompanionBuilder =
       Value<bool> completed,
       Value<bool> closed,
       Value<DateTime> createdAt,
+      Value<bool> authLost,
+      Value<DateTime?> closedAt,
     });
 
 class $$ExamSessionsTableFilterComposer
@@ -4607,6 +5076,16 @@ class $$ExamSessionsTableFilterComposer
 
   ColumnFilters<DateTime> get createdAt => $composableBuilder(
     column: $table.createdAt,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<bool> get authLost => $composableBuilder(
+    column: $table.authLost,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<DateTime> get closedAt => $composableBuilder(
+    column: $table.closedAt,
     builder: (column) => ColumnFilters(column),
   );
 }
@@ -4669,6 +5148,16 @@ class $$ExamSessionsTableOrderingComposer
     column: $table.createdAt,
     builder: (column) => ColumnOrderings(column),
   );
+
+  ColumnOrderings<bool> get authLost => $composableBuilder(
+    column: $table.authLost,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<DateTime> get closedAt => $composableBuilder(
+    column: $table.closedAt,
+    builder: (column) => ColumnOrderings(column),
+  );
 }
 
 class $$ExamSessionsTableAnnotationComposer
@@ -4715,6 +5204,12 @@ class $$ExamSessionsTableAnnotationComposer
 
   GeneratedColumn<DateTime> get createdAt =>
       $composableBuilder(column: $table.createdAt, builder: (column) => column);
+
+  GeneratedColumn<bool> get authLost =>
+      $composableBuilder(column: $table.authLost, builder: (column) => column);
+
+  GeneratedColumn<DateTime> get closedAt =>
+      $composableBuilder(column: $table.closedAt, builder: (column) => column);
 }
 
 class $$ExamSessionsTableTableManager
@@ -4758,6 +5253,8 @@ class $$ExamSessionsTableTableManager
                 Value<bool> completed = const Value.absent(),
                 Value<bool> closed = const Value.absent(),
                 Value<DateTime> createdAt = const Value.absent(),
+                Value<bool> authLost = const Value.absent(),
+                Value<DateTime?> closedAt = const Value.absent(),
               }) => ExamSessionsCompanion(
                 attemptId: attemptId,
                 token: token,
@@ -4769,6 +5266,8 @@ class $$ExamSessionsTableTableManager
                 completed: completed,
                 closed: closed,
                 createdAt: createdAt,
+                authLost: authLost,
+                closedAt: closedAt,
               ),
           createCompanionCallback:
               ({
@@ -4782,6 +5281,8 @@ class $$ExamSessionsTableTableManager
                 Value<bool> completed = const Value.absent(),
                 Value<bool> closed = const Value.absent(),
                 Value<DateTime> createdAt = const Value.absent(),
+                Value<bool> authLost = const Value.absent(),
+                Value<DateTime?> closedAt = const Value.absent(),
               }) => ExamSessionsCompanion.insert(
                 attemptId: attemptId,
                 token: token,
@@ -4793,6 +5294,8 @@ class $$ExamSessionsTableTableManager
                 completed: completed,
                 closed: closed,
                 createdAt: createdAt,
+                authLost: authLost,
+                closedAt: closedAt,
               ),
           withReferenceMapper: (p0) => p0
               .map(

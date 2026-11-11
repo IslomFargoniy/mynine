@@ -11,21 +11,31 @@ import '../../core/time/server_clock.dart';
 import '../../data/models/exam_models.dart';
 import '../sound_check/sound_check_screen.dart' show listeningVolume;
 
-/// Where the recording should be now, from the server timer:
-/// elapsed = duration_seconds − remaining (mirrors the web AudioEqualizer,
-/// so a restarted PC or a resumed pause continues at the right place).
-Duration listeningPosition(ExamModule module, ServerClock clock) {
-  final finished = module.finishedAt;
-  if (finished == null) return Duration.zero;
-  if (module.durationSeconds > 0) {
-    final elapsed = Duration(seconds: module.durationSeconds) - clock.remaining(finished);
-    return elapsed.isNegative ? Duration.zero : elapsed;
-  }
+/// Total pause time of the attempt since a server time (see
+/// `ExamController.pausedSince`).
+typedef PausedSince = Duration Function(DateTime from);
+
+/// Where the recording should be now:
+/// elapsed = now − module `started_at` − time the attempt was paused since
+/// then (pauses are tracked locally from the heartbeat). Extra time moves
+/// `finished_at` but not the recording, so `finished_at` is only a fallback
+/// for a module without `started_at`.
+Duration listeningPosition(ExamModule module, ServerClock clock, {PausedSince? pausedSince}) {
   final started = module.startedAt;
-  if (started == null) return Duration.zero;
-  final e = clock.now().difference(started.toUtc());
-  return e.isNegative ? Duration.zero : e;
+  if (started != null) {
+    var e = clock.now().difference(started.toUtc());
+    if (pausedSince != null) e -= pausedSince(started);
+    return e.isNegative ? Duration.zero : e;
+  }
+  final finished = module.finishedAt;
+  if (finished == null || module.durationSeconds <= 0) return Duration.zero;
+  final elapsed = Duration(seconds: module.durationSeconds) - clock.remaining(finished);
+  return elapsed.isNegative ? Duration.zero : elapsed;
 }
+
+/// The player is re-positioned when it is off by more than this (sleep /
+/// hibernate, a stalled audio device, a clock correction).
+const listeningDriftTolerance = Duration(seconds: 3);
 
 /// Plays the cached Listening recording once, without pause/seek controls.
 /// Shows a small level indicator and a volume slider.
@@ -36,12 +46,14 @@ class ListeningAudio extends StatefulWidget {
     required this.module,
     required this.clock,
     required this.paused,
+    this.pausedSince,
   });
 
   final String file;
   final ExamModule module;
   final ServerClock clock;
   final bool paused;
+  final PausedSince? pausedSince;
 
   @override
   State<ListeningAudio> createState() => _ListeningAudioState();
@@ -50,6 +62,9 @@ class ListeningAudio extends StatefulWidget {
 class _ListeningAudioState extends State<ListeningAudio> {
   Player? _p;
   StreamSubscription<bool>? _playingSub;
+  Timer? _watchdog;
+  final Stopwatch _sinceSeek = Stopwatch();
+  DateTime? _lastWall;
   bool _playing = false;
   bool _ended = false;
   String? _error;
@@ -62,6 +77,9 @@ class _ListeningAudioState extends State<ListeningAudio> {
   }
 
   void _applyVolume() => _p?.setVolume(listeningVolume.value);
+
+  Duration _expected() =>
+      listeningPosition(widget.module, widget.clock, pausedSince: widget.pausedSince);
 
   Future<void> _start() async {
     try {
@@ -84,8 +102,27 @@ class _ListeningAudioState extends State<ListeningAudio> {
           .firstWhere((d) => d > Duration.zero)
           .timeout(const Duration(seconds: 10), onTimeout: () => Duration.zero);
       await _sync(duration);
+      _lastWall = DateTime.now();
+      _watchdog = Timer.periodic(const Duration(seconds: 2), (_) => unawaited(_check()));
     } catch (e) {
       if (mounted) setState(() => _error = 'Audio error');
+    }
+  }
+
+  /// Re-syncs after a wall-clock jump (sleep / hibernate) or when the player
+  /// drifted away from where the recording should be.
+  Future<void> _check() async {
+    final player = _p;
+    if (player == null || !mounted || _ended || widget.paused) return;
+    final now = DateTime.now();
+    final last = _lastWall;
+    _lastWall = now;
+    final jumped = last != null && now.difference(last) > const Duration(seconds: 6);
+    if (!jumped && _sinceSeek.elapsed < const Duration(seconds: 4)) return;
+    final drift = (player.state.position - _expected()).abs();
+    if (jumped || drift > listeningDriftTolerance) {
+      debugPrint('Listening audio re-sync (jump: $jumped, drift: $drift)');
+      await _sync();
     }
   }
 
@@ -97,13 +134,16 @@ class _ListeningAudioState extends State<ListeningAudio> {
       return;
     }
     final duration = knownDuration ?? player.state.duration;
-    final pos = listeningPosition(widget.module, widget.clock);
+    final pos = _expected();
     if (duration > Duration.zero && pos >= duration) {
       await player.stop();
       if (mounted) setState(() => _ended = true);
       return;
     }
     if (pos > const Duration(seconds: 1)) await player.seek(pos);
+    _sinceSeek
+      ..reset()
+      ..start();
     await player.play();
   }
 
@@ -116,6 +156,7 @@ class _ListeningAudioState extends State<ListeningAudio> {
   @override
   void dispose() {
     listeningVolume.removeListener(_applyVolume);
+    _watchdog?.cancel();
     _playingSub?.cancel();
     _p?.dispose();
     super.dispose();

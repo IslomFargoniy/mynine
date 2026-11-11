@@ -1,3 +1,6 @@
+import 'dart:convert';
+
+import 'package:flutter/foundation.dart' show debugPrint;
 import 'package:flutter_riverpod/misc.dart' show Override;
 import 'package:package_info_plus/package_info_plus.dart';
 
@@ -29,6 +32,7 @@ Future<List<Override>> bootstrap() async {
   final db = AppDatabase.open(paths.data);
   final store = config.apiFake ? MemorySettingsStore() : SecureSettingsStore(paths.data);
   final clock = ServerClock();
+  await restoreClockOffset(db, clock);
   final credentials = DeviceCredentials();
   final serverUrl = ServerUrl(config.defaultBaseUrl);
   final lockdown = config.kioskEnabled ? createLockdown() : NoopLockdown();
@@ -50,6 +54,7 @@ Future<List<Override>> bootstrap() async {
           clock: clock,
         );
 
+  final examRepo = ExamRepository(api: api, db: db, paths: paths);
   final connection = ConnectionStatus();
   final answers = AnswerQueueRepository(db);
   final violations = ViolationQueueRepository(db);
@@ -71,7 +76,7 @@ Future<List<Override>> bootstrap() async {
     api: api,
     db: db,
     clock: clock,
-    examRepo: ExamRepository(api: api, db: db, paths: paths),
+    examRepo: examRepo,
     answerQueue: answers,
     violationQueue: violations,
     sync: sync,
@@ -97,6 +102,18 @@ Future<List<Override>> bootstrap() async {
     serverUrl: serverUrl,
   );
 
+  // The self-check after an update passes on any successful API response.
+  if (api is HttpMynineApi) api.onApiSuccess = updates.reportApiReachable;
+  updates.isExamSessionActive = () => exam.examActive || exam.busy || exam.attemptId != null;
+  updates.hasUnfinishedSession = () async => await db.activeSession() != null;
+
+  // Old exam files (audio, images, cached payloads) of finished sessions.
+  try {
+    await examRepo.cleanup();
+  } catch (e) {
+    debugPrint('Startup cleanup failed: $e');
+  }
+
   await kiosk.init();
   await updates.startupSelfCheck();
   sync.start();
@@ -115,4 +132,31 @@ Future<List<Override>> bootstrap() async {
     updateServiceProvider.overrideWithValue(updates),
     kioskControllerProvider.overrideWithValue(kiosk),
   ];
+}
+
+const _clockKey = 'clock_offset';
+
+/// Restores the last good server clock offset (so an offline restart keeps
+/// correct timers) and persists every new kept offset (throttled).
+Future<void> restoreClockOffset(AppDatabase db, ServerClock clock) async {
+  try {
+    final raw = await db.getCache(_clockKey);
+    if (raw != null) {
+      final us = (jsonDecode(raw) as Map)['offset_us'];
+      if (us is int) clock.restore(Duration(microseconds: us));
+    }
+  } catch (_) {}
+  Duration? lastSaved;
+  DateTime? lastSavedAt;
+  clock.onOffsetChanged = (offset, uncertainty) {
+    final now = DateTime.now();
+    final moved = lastSaved == null || (offset - lastSaved!).abs() > const Duration(milliseconds: 200);
+    final stale = lastSavedAt == null || now.difference(lastSavedAt!) > const Duration(minutes: 5);
+    if (!moved && !stale) return;
+    lastSaved = offset;
+    lastSavedAt = now;
+    db
+        .putCache(_clockKey, jsonEncode({'offset_us': offset.inMicroseconds, 'uncertainty_us': uncertainty.inMicroseconds}))
+        .catchError((Object e) => debugPrint('Cannot persist the clock offset: $e'));
+  };
 }

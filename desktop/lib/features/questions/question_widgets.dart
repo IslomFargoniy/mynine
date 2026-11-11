@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart' show LengthLimitingTextInputFormatter;
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 
 import '../../app/theme.dart';
 import '../../core/theme/web_tokens.dart';
 import '../../data/models/part_payload.dart';
+import '../../data/repositories/answer_queue.dart' show kMaxAnswerChars;
 import '../exam/exam_controller.dart';
 import '../passage/html_document.dart';
 import '../passage/html_view.dart';
@@ -456,6 +458,8 @@ class _GapInputState extends State<GapInput> {
           controller: _c,
           enabled: widget.enabled,
           onChanged: widget.onChanged,
+          // Also cuts long pastes (one oversized answer must never block sync).
+          inputFormatters: [LengthLimitingTextInputFormatter(kMaxAnswerChars)],
           autocorrect: false,
           enableSuggestions: false,
           cursorColor: p.standard ? TW.black : p.text,
@@ -1044,6 +1048,7 @@ class _EssayQuestionState extends State<EssayQuestion> {
             controller: _c,
             focusNode: _focus,
             enabled: !ctx.locked,
+            inputFormatters: [LengthLimitingTextInputFormatter(kMaxAnswerChars)],
             minLines: 16,
             maxLines: null,
             keyboardType: TextInputType.multiline,

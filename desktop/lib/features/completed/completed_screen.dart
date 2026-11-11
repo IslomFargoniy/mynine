@@ -26,10 +26,14 @@ class _CompletedScreenState extends ConsumerState<CompletedScreen> {
     super.initState();
     _timer = Timer.periodic(const Duration(seconds: 1), (t) {
       if (!mounted) return;
+      final exam = ref.read(examControllerProvider);
+      // Not submitted yet: stay until the background sync delivers the
+      // submit (or staff use the admin menu); no countdown meanwhile.
+      if (!exam.submitConfirmed) return;
       setState(() => _left--);
       if (_left <= 0) {
         t.cancel();
-        ref.read(examControllerProvider).returnToCodeScreen();
+        exam.returnToCodeScreen();
       }
     });
   }
@@ -42,27 +46,57 @@ class _CompletedScreenState extends ConsumerState<CompletedScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final name = ref.read(examControllerProvider).candidateName;
+    final exam = ref.watch(examControllerProvider);
     return Scaffold(
-      body: CenterCard(
-        maxWidth: 560,
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            const Icon(Icons.check_circle, size: 72, color: TW.emerald500),
-            const SizedBox(height: 16),
-            Text('Completed', style: inter(30, weight: FontWeight.w700, color: TW.gray900, letterSpacing: -0.75)),
-            const SizedBox(height: 12),
-            Text(
-              'Thank you${name.isEmpty ? '' : ', $name'}. Your exam has been submitted.\n'
-              'Please leave the room quietly. Your results will be given at the reception.',
-              textAlign: TextAlign.center,
-              style: inter(16, color: TW.gray600, height: 1.5),
+      body: ListenableBuilder(
+        listenable: exam,
+        builder: (context, _) {
+          final name = exam.candidateName;
+          final confirmed = exam.submitConfirmed;
+          return CenterCard(
+            maxWidth: 560,
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: confirmed
+                  ? [
+                      const Icon(Icons.check_circle, size: 72, color: TW.emerald500),
+                      const SizedBox(height: 16),
+                      Text('Completed',
+                          key: const Key('completed-title'),
+                          style: inter(30, weight: FontWeight.w700, color: TW.gray900, letterSpacing: -0.75)),
+                      const SizedBox(height: 12),
+                      Text(
+                        'Thank you${name.isEmpty ? '' : ', $name'}. Your exam has been submitted.\n'
+                        'Please leave the room quietly. Your results will be given at the reception.',
+                        textAlign: TextAlign.center,
+                        style: inter(16, color: TW.gray600, height: 1.5),
+                      ),
+                      const SizedBox(height: 24),
+                      Text('Returning to the start screen in $_left s', style: inter(12, color: TW.gray500)),
+                    ]
+                  : [
+                      const Icon(Icons.save_outlined, size: 72, color: TW.amber500),
+                      const SizedBox(height: 16),
+                      Text('Saved on this PC — not yet submitted',
+                          key: const Key('completed-title'),
+                          textAlign: TextAlign.center,
+                          style: inter(24, weight: FontWeight.w700, color: TW.gray900)),
+                      const SizedBox(height: 12),
+                      Text(
+                        'Your answers are saved on this computer and will be sent automatically '
+                        'when the connection returns.\nPlease call the invigilator.',
+                        textAlign: TextAlign.center,
+                        style: inter(16, color: TW.gray600, height: 1.5),
+                      ),
+                      const SizedBox(height: 24),
+                      ConnectionIndicator(
+                        connection: ref.watch(connectionProvider),
+                        sync: ref.watch(syncServiceProvider),
+                      ),
+                    ],
             ),
-            const SizedBox(height: 24),
-            Text('Returning to the start screen in $_left s', style: inter(12, color: TW.gray500)),
-          ],
-        ),
+          );
+        },
       ),
     );
   }

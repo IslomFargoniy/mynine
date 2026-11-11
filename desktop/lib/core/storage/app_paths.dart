@@ -26,6 +26,9 @@ class AppPaths {
   Directory get updates => Directory(p.join(root.path, 'updates'));
   Directory get previous => Directory(p.join(root.path, 'previous'));
   Directory examDir(int attemptId) => Directory(p.join(root.path, 'exam', '$attemptId'));
+
+  /// Audio files by SHA-256, shared by every candidate of the same test.
+  Directory get audioCache => Directory(p.join(root.path, 'audio_cache'));
   File get updateStateFile => File(p.join(root.path, 'update_state.json'));
   File get logFile => File(p.join(root.path, 'mynine.log'));
 }

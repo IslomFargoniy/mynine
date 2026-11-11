@@ -66,6 +66,16 @@ class SyncService extends ChangeNotifier {
   /// Called when a final submit has been confirmed by the server.
   void Function(int attemptId)? onSessionClosed;
 
+  /// Called when the server refused a session's token (401
+  /// `session_revoked` / `session_expired`). The session's queue is kept; it
+  /// is skipped until a new login on this PC replaces the token.
+  void Function(int attemptId)? onSessionAuthLost;
+
+  /// Called when the server deferred answers because the attempt is paused.
+  void Function(int attemptId)? onPausedDetected;
+
+  bool _deferred = false;
+
   void start() {
     _schedule(Duration.zero);
   }
@@ -88,6 +98,7 @@ class SyncService extends ChangeNotifier {
   Future<void> _run() async {
     if (_running || _disposed) return;
     _running = true;
+    _deferred = false;
     var failed = false;
     try {
       final sessions = await db.openSessions();
@@ -95,11 +106,16 @@ class SyncService extends ChangeNotifier {
         try {
           await syncSession(s);
         } on ApiException catch (e) {
-          if (e.code == ApiErrorCode.unauthenticated ||
-              e.code == ApiErrorCode.attemptFinished) {
-            // Token revoked/expired or attempt finished (answers refused with
-            // 409): data stays in SQLite for audit, stop retrying it.
-            debugPrint('Session ${s.attemptId}: token rejected, closing.');
+          if (e.isAuthLost) {
+            // Token revoked / expired: keep every queued item (it is sent once
+            // the session is restored by a new login on this PC).
+            debugPrint('Session ${s.attemptId}: token refused (${e.code.wire}); queue kept.');
+            await db.markSession(s.attemptId, authLost: true);
+            onSessionAuthLost?.call(s.attemptId);
+          } else if (e.code == ApiErrorCode.attemptFinished) {
+            // The attempt is finished: the server refuses every further batch.
+            // Data stays in SQLite for audit.
+            debugPrint('Session ${s.attemptId}: attempt finished, closing.');
             await db.markSession(s.attemptId, closed: true);
           } else {
             failed = true;
@@ -124,19 +140,30 @@ class SyncService extends ChangeNotifier {
     if (_again) {
       _again = false;
       _schedule(Duration.zero);
-    } else if (failed || _pendingAnswers > 0 || _pendingViolations > 0) {
-      _schedule(failed ? _backoff.nextDelay : const Duration(seconds: 2));
+    } else if (failed) {
+      _schedule(_backoff.nextDelay);
+    } else if (_deferred) {
+      // Paused: the server keeps deferring; check again a little later.
+      _schedule(const Duration(seconds: 10));
+    } else if (_pendingAnswers > 0 || _pendingViolations > 0) {
+      _schedule(const Duration(seconds: 2));
     } else {
       _schedule(const Duration(seconds: 15));
     }
   }
 
   /// Delivers everything queued for one session; sends the final submit when
-  /// the queue is empty and the session is marked `submitPending`.
+  /// the answer queue is empty and the session is marked `submitPending`.
+  /// Violations are best effort: a failure there never blocks the submit.
   Future<void> syncSession(ExamSessionRow s) async {
-    final left = await answers.drain(api, s.token, s.attemptId);
+    final r = await answers.drainDetailed(api, s.token, s.attemptId);
     connection.reportSuccess();
-    while (await violations.syncOnce(api, s.token, s.attemptId) > 0) {}
+    if (r.deferred > 0) {
+      _deferred = true;
+      onPausedDetected?.call(s.attemptId);
+    }
+    await syncViolations(s);
+    final left = r.remaining;
     if (s.submitPending && left == 0) {
       try {
         await api.submitExam(s.token);
@@ -147,6 +174,19 @@ class SyncService extends ChangeNotifier {
       onSessionClosed?.call(s.attemptId);
     } else if (s.completed && !s.submitPending && left == 0) {
       await db.markSession(s.attemptId, closed: true);
+    }
+  }
+
+  /// Sends queued violations; errors other than a refused token are logged
+  /// and left for the next pass.
+  Future<void> syncViolations(ExamSessionRow s) async {
+    try {
+      while (await violations.syncOnce(api, s.token, s.attemptId) > 0) {}
+    } on ApiException catch (e) {
+      if (e.isAuthLost) rethrow;
+      debugPrint('Violations of ${s.attemptId} not sent yet: $e');
+    } catch (e) {
+      debugPrint('Violations of ${s.attemptId} not sent yet: $e');
     }
   }
 

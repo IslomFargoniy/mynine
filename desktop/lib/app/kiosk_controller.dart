@@ -36,6 +36,8 @@ class KioskController extends ChangeNotifier {
     );
     exam.addListener(_onExamChanged);
     exam.onRemoteUnlock = () => unawaited(exitApp());
+    // Never log in while an update is being installed (the app exits).
+    exam.loginBlocked = () => updates.phase == UpdatePhase.installing;
   }
 
   final AppConfig config;
@@ -110,7 +112,9 @@ class KioskController extends ChangeNotifier {
   }
 
   Future<void> _beat() async {
-    if (exam.examActive) return; // the exam heartbeat covers this PC
+    // The exam heartbeat covers this PC — except on the locked screen, where
+    // the exam token no longer works.
+    if (exam.examActive && exam.stage != ExamStage.blocked) return;
     try {
       if (!device.isRegistered) return;
       final state = updates.phase == UpdatePhase.downloading || updates.phase == UpdatePhase.installing

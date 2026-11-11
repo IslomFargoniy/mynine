@@ -12,6 +12,8 @@
 #include <map>
 #include <set>
 #include <thread>
+#include <utility>
+#include <vector>
 
 // Windows 10 2004+ (SDK 10.0.19041). Older SDKs do not define it.
 #ifndef WDA_EXCLUDEFROMCAPTURE
@@ -22,6 +24,24 @@ namespace {
 
 constexpr UINT_PTR kRefocusTimerId = 0x4D59;  // 'MY'
 constexpr UINT kRefocusDelayMs = 400;
+
+// Re-installs the low-level keyboard hook (Windows drops a hook that timed
+// out once too often, without telling the app).
+constexpr UINT_PTR kHookTimerId = 0x4D5A;
+constexpr UINT kHookRefreshMs = 30000;
+
+// Posted by the terminate worker thread back to the platform thread.
+constexpr UINT kTerminateDoneMessage = WM_APP + 0x4D;
+
+// Unassigned virtual key, sent before a synthesized Win key-up so the
+// Start menu does not open (a lone Win tap opens it).
+constexpr WORD kMaskKey = 0xE8;
+
+// A terminateProcesses call in flight on the worker thread.
+struct TerminateJob {
+  std::unique_ptr<flutter::MethodResult<flutter::EncodableValue>> result;
+  flutter::EncodableList list;
+};
 
 // Per-user values changed while the PC is locked (HKEY_CURRENT_USER). Logoff
 // is deliberately NOT disabled so a stuck PC can always be recovered.
@@ -144,6 +164,154 @@ bool GetBoolArg(const flutter::EncodableMap* args, const char* key,
   return fallback;
 }
 
+std::string ToHex(const std::vector<BYTE>& data) {
+  static const char kDigits[] = "0123456789abcdef";
+  std::string out;
+  out.reserve(data.size() * 2);
+  for (const BYTE b : data) {
+    out.push_back(kDigits[(b >> 4) & 0x0F]);
+    out.push_back(kDigits[b & 0x0F]);
+  }
+  return out;
+}
+
+int HexDigit(char c) {
+  if (c >= '0' && c <= '9') return c - '0';
+  if (c >= 'a' && c <= 'f') return c - 'a' + 10;
+  if (c >= 'A' && c <= 'F') return c - 'A' + 10;
+  return -1;
+}
+
+bool FromHex(const std::string& hex, std::vector<BYTE>* out) {
+  out->clear();
+  if (hex.size() % 2 != 0) return false;
+  for (size_t i = 0; i < hex.size(); i += 2) {
+    const int hi = HexDigit(hex[i]);
+    const int lo = HexDigit(hex[i + 1]);
+    if (hi < 0 || lo < 0) return false;
+    out->push_back(static_cast<BYTE>((hi << 4) | lo));
+  }
+  return true;
+}
+
+std::vector<std::string> SplitFields(const std::string& line) {
+  std::vector<std::string> fields;
+  size_t start = 0;
+  size_t bar = line.find('|');
+  for (; bar != std::string::npos; bar = line.find('|', start)) {
+    fields.push_back(line.substr(start, bar - start));
+    start = bar + 1;
+  }
+  fields.push_back(line.substr(start));
+  return fields;
+}
+
+// Accessibility shortcut keys. Only the flags are saved / changed; the other
+// fields keep their current values. Changes are not written to the user
+// profile (fWinIni = 0): they last until sign-out at most.
+const char* const kAccessFeatures[] = {"STICKY", "FILTER", "TOGGLE"};
+
+bool GetAccessFlags(const std::string& name, DWORD* flags) {
+  if (name == "STICKY") {
+    STICKYKEYS v{};
+    v.cbSize = static_cast<UINT>(sizeof(v));
+    if (!::SystemParametersInfoW(SPI_GETSTICKYKEYS, v.cbSize, &v, 0)) return false;
+    *flags = v.dwFlags;
+    return true;
+  }
+  if (name == "FILTER") {
+    FILTERKEYS v{};
+    v.cbSize = static_cast<UINT>(sizeof(v));
+    if (!::SystemParametersInfoW(SPI_GETFILTERKEYS, v.cbSize, &v, 0)) return false;
+    *flags = v.dwFlags;
+    return true;
+  }
+  if (name == "TOGGLE") {
+    TOGGLEKEYS v{};
+    v.cbSize = static_cast<UINT>(sizeof(v));
+    if (!::SystemParametersInfoW(SPI_GETTOGGLEKEYS, v.cbSize, &v, 0)) return false;
+    *flags = v.dwFlags;
+    return true;
+  }
+  return false;
+}
+
+bool SetAccessFlags(const std::string& name, DWORD flags) {
+  if (name == "STICKY") {
+    STICKYKEYS v{};
+    v.cbSize = static_cast<UINT>(sizeof(v));
+    if (!::SystemParametersInfoW(SPI_GETSTICKYKEYS, v.cbSize, &v, 0)) return false;
+    v.dwFlags = flags;
+    return ::SystemParametersInfoW(SPI_SETSTICKYKEYS, v.cbSize, &v, 0) != FALSE;
+  }
+  if (name == "FILTER") {
+    FILTERKEYS v{};
+    v.cbSize = static_cast<UINT>(sizeof(v));
+    if (!::SystemParametersInfoW(SPI_GETFILTERKEYS, v.cbSize, &v, 0)) return false;
+    v.dwFlags = flags;
+    return ::SystemParametersInfoW(SPI_SETFILTERKEYS, v.cbSize, &v, 0) != FALSE;
+  }
+  if (name == "TOGGLE") {
+    TOGGLEKEYS v{};
+    v.cbSize = static_cast<UINT>(sizeof(v));
+    if (!::SystemParametersInfoW(SPI_GETTOGGLEKEYS, v.cbSize, &v, 0)) return false;
+    v.dwFlags = flags;
+    return ::SystemParametersInfoW(SPI_SETTOGGLEKEYS, v.cbSize, &v, 0) != FALSE;
+  }
+  return false;
+}
+
+// The flags with the shortcut key (and its confirmation dialog) switched off.
+DWORD WithoutHotkey(const std::string& name, DWORD flags) {
+  if (name == "STICKY") return flags & ~static_cast<DWORD>(SKF_HOTKEYACTIVE | SKF_CONFIRMHOTKEY);
+  if (name == "FILTER") return flags & ~static_cast<DWORD>(FKF_HOTKEYACTIVE | FKF_CONFIRMHOTKEY);
+  if (name == "TOGGLE") return flags & ~static_cast<DWORD>(TKF_HOTKEYACTIVE | TKF_CONFIRMHOTKEY);
+  return flags;
+}
+
+std::string AccessibilityMarkerLines() {
+  std::string lines;
+  for (const char* name : kAccessFeatures) {
+    DWORD flags = 0;
+    if (GetAccessFlags(name, &flags)) {
+      lines += std::string("A|") + name + "|" + std::to_string(flags) + "\n";
+    }
+  }
+  return lines;
+}
+
+void DisableAccessibilityHotkeys() {
+  for (const char* name : kAccessFeatures) {
+    DWORD flags = 0;
+    if (GetAccessFlags(name, &flags)) {
+      const DWORD locked = WithoutHotkey(name, flags);
+      if (locked != flags) SetAccessFlags(name, locked);
+    }
+  }
+}
+
+bool ReadWholeFile(const std::wstring& path, std::string* content) {
+  FILE* file = nullptr;
+  if (_wfopen_s(&file, path.c_str(), L"rb") != 0 || file == nullptr) return false;
+  char buffer[1024];
+  size_t n = 0;
+  while ((n = fread(buffer, 1, sizeof(buffer), file)) > 0) {
+    content->append(buffer, n);
+  }
+  fclose(file);
+  return true;
+}
+
+bool WriteWholeFile(const std::wstring& path, const std::string& content,
+                    const wchar_t* mode) {
+  FILE* file = nullptr;
+  if (_wfopen_s(&file, path.c_str(), mode) != 0 || file == nullptr) return false;
+  const size_t written = fwrite(content.data(), 1, content.size(), file);
+  const bool ok = written == content.size() && fflush(file) == 0;
+  fclose(file);
+  return ok;
+}
+
 }  // namespace
 
 LockdownChannel* LockdownChannel::instance_ = nullptr;
@@ -221,7 +389,21 @@ void LockdownChannel::HandleMethodCall(
         }
       }
     }
-    result->Success(flutter::EncodableValue(TerminateProcesses(names)));
+    // Closing programs waits for each of them: never on this (platform)
+    // thread, which also runs the low-level keyboard hook. The result is
+    // posted back and delivered in HandleMessage.
+    auto* job = new TerminateJob{std::move(result), {}};
+    const HWND target = window_;
+    std::thread([job, names, target]() {
+      job->list = TerminateProcesses(names);
+      if (!::PostMessageW(target, kTerminateDoneMessage, 0,
+                          reinterpret_cast<LPARAM>(job))) {
+        // The window is gone (app exiting): the result must not be touched
+        // from this thread, so it is deliberately leaked.
+        static_cast<void>(job->result.release());
+        delete job;
+      }
+    }).detach();
   } else if (method == "clearClipboard") {
     if (::OpenClipboard(window_)) {
       ::EmptyClipboard();
@@ -324,16 +506,65 @@ void LockdownChannel::ExitKiosk() {
 // README recommends Group Policy / Assigned Access as the OS-level layer.
 
 void LockdownChannel::InstallKeyboardHook() {
+  hook_wanted_ = true;
+  ::SetTimer(window_, kHookTimerId, kHookRefreshMs, nullptr);
   if (keyboard_hook_) return;
+  // A Win key held right now would stay "down" for Windows once the hook
+  // swallows its key-up (every later key would then act as Win+key).
+  ReleaseHeldWinKeys();
   keyboard_hook_ = ::SetWindowsHookExW(WH_KEYBOARD_LL, KeyboardProc,
                                        ::GetModuleHandleW(nullptr), 0);
 }
 
+void LockdownChannel::ReinstallKeyboardHook() {
+  if (!hook_wanted_) return;
+  // New hook first, then the old one: no moment without a hook. A hook that
+  // Windows already removed makes UnhookWindowsHookEx fail harmlessly.
+  HHOOK fresh = ::SetWindowsHookExW(WH_KEYBOARD_LL, KeyboardProc,
+                                    ::GetModuleHandleW(nullptr), 0);
+  if (!fresh) return;  // keep the current one
+  HHOOK old = keyboard_hook_;
+  keyboard_hook_ = fresh;
+  if (old) ::UnhookWindowsHookEx(old);
+}
+
 void LockdownChannel::RemoveKeyboardHook() {
+  hook_wanted_ = false;
+  ::KillTimer(window_, kHookTimerId);
   if (keyboard_hook_) {
     ::UnhookWindowsHookEx(keyboard_hook_);
     keyboard_hook_ = nullptr;
   }
+}
+
+void LockdownChannel::ReleaseHeldWinKeys() {
+  const bool lwin = (::GetAsyncKeyState(VK_LWIN) & 0x8000) != 0;
+  const bool rwin = (::GetAsyncKeyState(VK_RWIN) & 0x8000) != 0;
+  if (!lwin && !rwin) return;
+  INPUT inputs[4] = {};
+  UINT count = 0;
+  // An unassigned key first, so the Win key-up is not a "Win tap" that
+  // opens the Start menu.
+  inputs[count].type = INPUT_KEYBOARD;
+  inputs[count].ki.wVk = kMaskKey;
+  ++count;
+  inputs[count].type = INPUT_KEYBOARD;
+  inputs[count].ki.wVk = kMaskKey;
+  inputs[count].ki.dwFlags = KEYEVENTF_KEYUP;
+  ++count;
+  if (lwin) {
+    inputs[count].type = INPUT_KEYBOARD;
+    inputs[count].ki.wVk = VK_LWIN;
+    inputs[count].ki.dwFlags = KEYEVENTF_KEYUP | KEYEVENTF_EXTENDEDKEY;
+    ++count;
+  }
+  if (rwin) {
+    inputs[count].type = INPUT_KEYBOARD;
+    inputs[count].ki.wVk = VK_RWIN;
+    inputs[count].ki.dwFlags = KEYEVENTF_KEYUP | KEYEVENTF_EXTENDEDKEY;
+    ++count;
+  }
+  ::SendInput(count, inputs, static_cast<int>(sizeof(INPUT)));
 }
 
 LRESULT CALLBACK LockdownChannel::KeyboardProc(int code, WPARAM wparam,
@@ -344,10 +575,15 @@ LRESULT CALLBACK LockdownChannel::KeyboardProc(int code, WPARAM wparam,
     const bool alt = (key->flags & LLKHF_ALTDOWN) != 0;
     const bool ctrl = (::GetAsyncKeyState(VK_CONTROL) & 0x8000) != 0;
     bool block = false;
+    const bool key_up = wparam == WM_KEYUP || wparam == WM_SYSKEYUP;
+    const bool injected = (key->flags & LLKHF_INJECTED) != 0;
     switch (vk) {
       case VK_LWIN:
       case VK_RWIN:
-        block = true;  // Start menu, Win+D, Win+Tab, Win+Shift+S, ...
+        // Start menu, Win+D, Win+Tab, Win+Shift+S, ... A synthesized key-up
+        // (ReleaseHeldWinKeys: Win was held when the hook was installed)
+        // must reach Windows, or it keeps the key "down".
+        block = !(key_up && injected);
         break;
       case VK_TAB:
         block = alt;  // Alt+Tab, Alt+Shift+Tab, Ctrl+Alt+Tab
@@ -425,8 +661,16 @@ std::optional<LRESULT> LockdownChannel::HandleMessage(HWND hwnd, UINT message,
         if (kiosk_) ::SetTimer(hwnd, kRefocusTimerId, kRefocusDelayMs, nullptr);
       } else {
         SendEvent("focus_gained");
+        ReinstallKeyboardHook();
       }
       break;  // let Flutter see it too
+    case kTerminateDoneMessage: {
+      std::unique_ptr<TerminateJob> job(reinterpret_cast<TerminateJob*>(lparam));
+      if (job && job->result) {
+        job->result->Success(flutter::EncodableValue(std::move(job->list)));
+      }
+      return 0;
+    }
     case WM_ENDSESSION:
       // Sign-out / shutdown while locked: leave the account as it was.
       if (wparam) RestoreSystemPolicies();
@@ -447,6 +691,10 @@ std::optional<LRESULT> LockdownChannel::HandleMessage(HWND hwnd, UINT message,
                          SWP_NOMOVE | SWP_NOSIZE | SWP_SHOWWINDOW);
           ::SetForegroundWindow(hwnd);
         }
+        return 0;
+      }
+      if (wparam == kHookTimerId) {
+        ReinstallKeyboardHook();
         return 0;
       }
       break;
@@ -513,8 +761,11 @@ void LockdownChannel::MinimizeOtherWindows() {
 // ---------------------------------------------------------------------------
 // System policies (HKCU) with crash-safe restore.
 //
-// Marker file format, one line per value (UTF-8):
-//   <subkey>|<value name>|<1 = existed, 0 = absent>|<original DWORD>
+// Marker file format, one line per saved item (UTF-8):
+//   R|<subkey>|<value name>|<1 = existed, 0 = absent>|<REG_* type>|<hex data>
+//   A|<STICKY|FILTER|TOGGLE>|<original dwFlags>
+// Desktop 1.0.2 wrote "<subkey>|<value name>|<existed>|<DWORD>" lines; they
+// are still restored (as REG_DWORD).
 
 std::wstring LockdownChannel::PolicyMarkerPath() {
   wchar_t base[MAX_PATH] = {};
@@ -546,23 +797,38 @@ void LockdownChannel::ApplySystemPolicies() {
   if (::GetFileAttributesW(path.c_str()) == INVALID_FILE_ATTRIBUTES) {
     std::string content;
     for (const auto& p : kPolicies) {
-      DWORD value = 0;
-      DWORD size = sizeof(value);
-      const bool existed =
-          ::RegGetValueW(HKEY_CURRENT_USER, p.subkey, p.name, RRF_RT_REG_DWORD,
-                         nullptr, &value, &size) == ERROR_SUCCESS;
-      content += WideToUtf8(p.subkey) + "|" + WideToUtf8(p.name) + "|" +
+      // Any type: a pre-existing value of another type is restored as it was
+      // (never deleted, never turned into a DWORD).
+      DWORD type = REG_NONE;
+      DWORD size = 0;
+      const DWORD flags = RRF_RT_ANY | RRF_NOEXPAND;
+      LSTATUS status = ::RegGetValueW(HKEY_CURRENT_USER, p.subkey, p.name,
+                                      flags, &type, nullptr, &size);
+      const bool existed = status == ERROR_SUCCESS;
+      std::vector<BYTE> data;
+      if (existed && size > 0) {
+        data.resize(size);
+        status = ::RegGetValueW(HKEY_CURRENT_USER, p.subkey, p.name, flags,
+                                &type, data.data(), &size);
+        if (status != ERROR_SUCCESS) return;  // cannot save it: change nothing
+        data.resize(size);
+      }
+      content += "R|" + WideToUtf8(p.subkey) + "|" + WideToUtf8(p.name) + "|" +
                  (existed ? "1" : "0") + "|" +
-                 std::to_string(existed ? value : 0) + "\n";
+                 std::to_string(existed ? type : 0) + "|" + ToHex(data) + "\n";
     }
-    FILE* file = nullptr;
-    if (_wfopen_s(&file, path.c_str(), L"wb") != 0 || file == nullptr) return;
-    const size_t written = fwrite(content.data(), 1, content.size(), file);
-    const bool ok = written == content.size() && fflush(file) == 0;
-    fclose(file);
-    if (!ok) {
+    content += AccessibilityMarkerLines();
+    if (!WriteWholeFile(path, content, L"wb")) {
       ::DeleteFileW(path.c_str());
       return;
+    }
+  } else {
+    // Marker of desktop 1.0.2 (no accessibility lines): add the current
+    // flags, which that version never changed.
+    std::string content;
+    if (ReadWholeFile(path, &content) &&
+        content.find("A|STICKY|") == std::string::npos) {
+      WriteWholeFile(path, AccessibilityMarkerLines(), L"ab");
     }
   }
 
@@ -575,9 +841,11 @@ void LockdownChannel::ApplySystemPolicies() {
     }
     const DWORD value = p.locked_value;
     ::RegSetValueExW(key, p.name, 0, REG_DWORD,
-                     reinterpret_cast<const BYTE*>(&value), sizeof(value));
+                     reinterpret_cast<const BYTE*>(&value),
+                     static_cast<DWORD>(sizeof(value)));
     ::RegCloseKey(key);
   }
+  DisableAccessibilityHotkeys();
   policies_applied_ = true;
   BroadcastPolicyChange();
 }
@@ -588,37 +856,63 @@ void LockdownChannel::RestoreSystemPolicies() {
     policies_applied_ = false;
     return;
   }
-  FILE* file = nullptr;
-  if (_wfopen_s(&file, path.c_str(), L"rb") != 0 || file == nullptr) {
+  std::string content;
+  if (!ReadWholeFile(path, &content)) {
     policies_applied_ = false;  // nothing saved = nothing changed
     return;
   }
-  std::string content;
-  char buffer[1024];
-  size_t n = 0;
-  while ((n = fread(buffer, 1, sizeof(buffer), file)) > 0) {
-    content.append(buffer, n);
-  }
-  fclose(file);
 
   bool all_ok = true;
   size_t start = 0;
   while (start < content.size()) {
     size_t end = content.find('\n', start);
     if (end == std::string::npos) end = content.size();
-    const std::string line = content.substr(start, end - start);
+    std::string line = content.substr(start, end - start);
     start = end + 1;
+    if (!line.empty() && line.back() == '\r') line.pop_back();
+    if (line.empty()) continue;
+    const std::vector<std::string> f = SplitFields(line);
 
-    // subkey|name|existed|value
-    const size_t a = line.find('|');
-    const size_t b = a == std::string::npos ? a : line.find('|', a + 1);
-    const size_t c = b == std::string::npos ? b : line.find('|', b + 1);
-    if (c == std::string::npos) continue;
-    const std::wstring subkey = Utf8ToWide(line.substr(0, a));
-    const std::wstring name = Utf8ToWide(line.substr(a + 1, b - a - 1));
-    const bool existed = line.substr(b + 1, c - b - 1) == "1";
-    const DWORD value =
-        static_cast<DWORD>(std::strtoul(line.substr(c + 1).c_str(), nullptr, 10));
+    if (f[0] == "A") {
+      // A|<feature>|<flags>
+      if (f.size() < 3) continue;
+      const DWORD flags =
+          static_cast<DWORD>(std::strtoul(f[2].c_str(), nullptr, 10));
+      DWORD current = 0;
+      if (GetAccessFlags(f[1], &current) && current != flags &&
+          !SetAccessFlags(f[1], flags)) {
+        all_ok = false;
+      }
+      continue;
+    }
+
+    std::wstring subkey;
+    std::wstring name;
+    bool existed = false;
+    DWORD type = REG_DWORD;
+    std::vector<BYTE> data;
+    if (f[0] == "R") {
+      // R|subkey|name|existed|type|hex
+      if (f.size() < 6) continue;
+      subkey = Utf8ToWide(f[1]);
+      name = Utf8ToWide(f[2]);
+      existed = f[3] == "1";
+      type = static_cast<DWORD>(std::strtoul(f[4].c_str(), nullptr, 10));
+      if (existed && !FromHex(f[5], &data)) {
+        all_ok = false;  // unreadable: keep the marker, touch nothing
+        continue;
+      }
+    } else {
+      // Desktop 1.0.2: subkey|name|existed|DWORD
+      if (f.size() < 4) continue;
+      subkey = Utf8ToWide(f[0]);
+      name = Utf8ToWide(f[1]);
+      existed = f[2] == "1";
+      const DWORD value =
+          static_cast<DWORD>(std::strtoul(f[3].c_str(), nullptr, 10));
+      const BYTE* bytes = reinterpret_cast<const BYTE*>(&value);
+      data.assign(bytes, bytes + sizeof(value));
+    }
     if (subkey.empty() || name.empty()) continue;
 
     LSTATUS status;
@@ -627,9 +921,9 @@ void LockdownChannel::RestoreSystemPolicies() {
       status = ::RegCreateKeyExW(HKEY_CURRENT_USER, subkey.c_str(), 0, nullptr,
                                  0, KEY_SET_VALUE, nullptr, &key, nullptr);
       if (status == ERROR_SUCCESS) {
-        status = ::RegSetValueExW(key, name.c_str(), 0, REG_DWORD,
-                                  reinterpret_cast<const BYTE*>(&value),
-                                  sizeof(value));
+        status = ::RegSetValueExW(key, name.c_str(), 0, type,
+                                  data.empty() ? nullptr : data.data(),
+                                  static_cast<DWORD>(data.size()));
         ::RegCloseKey(key);
       }
     } else {

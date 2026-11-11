@@ -81,12 +81,16 @@ void main() {
     await queue.enqueue(
         attemptId: attempt, partId: 101, questionId: 7001, text: 'new', changedAt: t0.add(const Duration(minutes: 1)));
     await queue.syncOnce(api, token, attempt);
-    // An older change arriving later (e.g. from a queue on disk) must not win.
-    await queue.enqueue(attemptId: attempt, partId: 101, questionId: 7001, text: 'old', changedAt: t0);
-    // A question of a part that is not in the attempt → rejected.
+    // An older change (lower seq) arriving later — e.g. from another queue —
+    // must not win on the server.
+    final r0 = await api.sendAnswers(token, [
+      AnswerItem(clientUuid: 'other-pc-1', partId: 101, questionId: 7001, text: 'old', changedAt: t0, seq: 0),
+    ]);
+    expect(r0.results.single.status, AnswerResultStatus.stale);
+    // A question of a part that is not in the attempt → rejected (final).
     await queue.enqueue(attemptId: attempt, partId: 999, questionId: 1, text: 'x', changedAt: t0);
     final r = await queue.syncOnce(api, token, attempt);
-    expect(r.removed, 2);
+    expect(r.removed, 1);
     expect(r.rejected.single.reason, 'invalid_question');
     expect(api.savedAnswers[7001]!.text, 'new');
     expect(await queue.pendingCount(), 0);

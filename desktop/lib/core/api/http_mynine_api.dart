@@ -34,21 +34,29 @@ class HttpMynineApi implements MynineApi {
     _dio.interceptors.add(
       InterceptorsWrapper(
         onRequest: (options, handler) {
-          options.headers['Accept'] = 'application/json';
+          options.headers['Accept'] ??= 'application/json';
           options.headers['X-Mynine-Client'] = clientHeader;
+          // Credentials only ever go to the API server itself: never to
+          // external image hosts, CDNs or redirect targets.
+          final toApi = isApiOrigin(options.uri, baseUrl());
           final token = credentials.deviceToken;
-          if (token != null && options.extra[_noDeviceTokenExtra] != true) {
+          if (toApi && token != null && options.extra[_noDeviceTokenExtra] != true) {
             options.headers['X-Device-Token'] = token;
+          } else {
+            options.headers.remove('X-Device-Token');
           }
           final examToken = options.extra[_examTokenExtra];
-          if (examToken is String && examToken.isNotEmpty) {
+          if (toApi && examToken is String && examToken.isNotEmpty) {
             options.headers['Authorization'] = 'Bearer $examToken';
+          } else {
+            options.headers.remove('Authorization');
           }
           options.extra[_startedAtExtra] = DateTime.now().toUtc();
           handler.next(options);
         },
         onResponse: (response, handler) {
           _applyServerTime(response);
+          if (isApiOrigin(response.requestOptions.uri, baseUrl())) onApiSuccess?.call();
           handler.next(response);
         },
       ),
@@ -59,6 +67,19 @@ class HttpMynineApi implements MynineApi {
   final DeviceCredentials credentials;
   final ServerClock clock;
   final Dio _dio;
+
+  /// Called after every successful (2xx/3xx) response from the API origin
+  /// (the updater's post-update self-check listens to it).
+  void Function()? onApiSuccess;
+
+  /// True when [uri] has the same scheme, host and port as the API base URL.
+  static bool isApiOrigin(Uri uri, String apiBase) {
+    final base = Uri.tryParse(apiBase.trim());
+    if (base == null || base.host.isEmpty) return false;
+    return uri.scheme.toLowerCase() == base.scheme.toLowerCase() &&
+        uri.host.toLowerCase() == base.host.toLowerCase() &&
+        uri.port == base.port;
+  }
 
   String _url(String path) {
     final base = baseUrl().replaceAll(RegExp(r'/+$'), '');

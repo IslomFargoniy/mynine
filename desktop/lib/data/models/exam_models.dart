@@ -213,6 +213,10 @@ abstract class AnswerItem with _$AnswerItem {
     @Default(<int>[]) List<int> optionIds,
     @JsonKey(fromJson: dateRequired, toJson: dateRequiredToJson)
     required DateTime changedAt,
+
+    /// API v1.1: client-side counter per question per attempt (monotonic,
+    /// persisted), used by the server for last-write-wins. Omitted when null.
+    @JsonKey(includeIfNull: false) int? seq,
   }) = _AnswerItem;
 
   factory AnswerItem.fromJson(Map<String, Object?> json) =>
@@ -226,7 +230,12 @@ abstract final class AnswerResultStatus {
   static const stale = 'stale';
   static const rejected = 'rejected';
 
-  /// All statuses are final: the item is removed from the queue.
+  /// API v1.1: not applied yet (attempt paused) — keep the item queued and
+  /// send it again after the resume.
+  static const deferred = 'deferred';
+
+  /// Final statuses: the item is removed from the queue. `deferred` (and any
+  /// unknown status) keeps it queued.
   static const finalStatuses = {saved, duplicate, stale, rejected};
 }
 
@@ -262,6 +271,9 @@ abstract class ExamHeartbeatResponse with _$ExamHeartbeatResponse {
     @Default(false) bool finished,
     @Default(false) bool unlock,
     @Default(<ModuleTimer>[]) List<ModuleTimer> modules,
+
+    /// API v1.1: the heartbeat extends the exam token (optional field).
+    @JsonKey(fromJson: dateOrNull, toJson: dateToJson) DateTime? expiresAt,
   }) = _ExamHeartbeatResponse;
 
   factory ExamHeartbeatResponse.fromJson(Map<String, Object?> json) =>

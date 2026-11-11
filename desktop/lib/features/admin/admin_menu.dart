@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../app/providers.dart';
+import '../exam/exam_controller.dart';
 import '../../app/theme.dart';
 import '../../core/api/api_exception.dart';
 import '../setup/setup_views.dart' show setupErrorMessage;
@@ -240,6 +241,17 @@ class _AdminMenuDialogState extends ConsumerState<_AdminMenuDialog> {
                       },
                 label: const Text('Check for updates'),
               ),
+              if (exam.stage == ExamStage.blocked || (exam.stage == ExamStage.completed && !exam.submitConfirmed))
+                OutlinedButton.icon(
+                  key: const Key('admin-return-start'),
+                  icon: const Icon(Icons.home_outlined),
+                  onPressed: () {
+                    Navigator.of(context).pop();
+                    exam.returnToCodeScreen();
+                  },
+                  // The answers stay queued on this PC and keep syncing.
+                  label: const Text('Return to start screen'),
+                ),
             ]),
             if (exam.examActive) ...[
               const SizedBox(height: 12),

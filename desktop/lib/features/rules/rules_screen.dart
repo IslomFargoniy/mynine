@@ -106,7 +106,7 @@ class _RulesScreenState extends ConsumerState<RulesScreen> {
                     child: BlackButton(
                       key: const Key('rules-accept'),
                       label: current != null && current.isInProgress ? 'Continue' : 'Start',
-                      onTap: _gate.canStart ? exam.acceptRules : null,
+                      onTap: _gate.canStart ? _start : null,
                     ),
                   ),
                 ],
@@ -116,6 +116,30 @@ class _RulesScreenState extends ConsumerState<RulesScreen> {
         ),
       ),
     );
+  }
+
+  bool _starting = false;
+
+  /// Start / Continue. Programs that could not be closed are recorded as a
+  /// violation (the invigilator sees them in the monitor).
+  Future<void> _start() async {
+    if (_starting) return;
+    _starting = true;
+    try {
+      final exam = ref.read(examControllerProvider);
+      if (_gate.overridden) {
+        for (final name in _gate.unkillableRunning) {
+          await exam.reportViolation(ViolationType.bannedProcess, {
+            'process': name,
+            'terminated': false,
+            'note': 'could_not_close_before_start',
+          });
+        }
+      }
+      exam.acceptRules();
+    } finally {
+      _starting = false;
+    }
   }
 
   TableRow _row(String k, String v) => TableRow(children: [
@@ -166,10 +190,15 @@ class BannedAppsPanel extends StatelessWidget {
             child: Text('•  ${displayProcessName(name)}',
                 key: Key('banned-$name'), style: inter(14, weight: FontWeight.w600, color: TW.gray900)),
           ),
-        if (gate.notClosed.isNotEmpty) ...[
+        if (gate.notClosed.isNotEmpty || gate.overridden) ...[
           const SizedBox(height: 6),
-          Text('Some programs could not be closed. Please ask the invigilator.',
-              key: const Key('banned-not-closed'), style: inter(13, color: TW.red700)),
+          Text(
+              gate.overridden
+                  ? 'Some programs could not be closed. You may start; this is recorded. '
+                      'Please tell the invigilator.'
+                  : 'Some programs could not be closed. Please ask the invigilator.',
+              key: const Key('banned-not-closed'),
+              style: inter(13, color: TW.red700)),
         ],
         const SizedBox(height: 12),
         OutlinedButton.icon(

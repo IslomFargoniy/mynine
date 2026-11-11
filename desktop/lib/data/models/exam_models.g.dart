@@ -251,6 +251,7 @@ _AnswerItem _$AnswerItemFromJson(Map<String, dynamic> json) => _AnswerItem(
           .toList() ??
       const <int>[],
   changedAt: dateRequired(json['changed_at']),
+  seq: (json['seq'] as num?)?.toInt(),
 );
 
 Map<String, dynamic> _$AnswerItemToJson(_AnswerItem instance) =>
@@ -261,6 +262,7 @@ Map<String, dynamic> _$AnswerItemToJson(_AnswerItem instance) =>
       'text': instance.text,
       'option_ids': instance.optionIds,
       'changed_at': dateRequiredToJson(instance.changedAt),
+      'seq': ?instance.seq,
     };
 
 _AnswerResult _$AnswerResultFromJson(Map<String, dynamic> json) =>
@@ -305,6 +307,7 @@ _ExamHeartbeatResponse _$ExamHeartbeatResponseFromJson(
           ?.map((e) => ModuleTimer.fromJson(e as Map<String, dynamic>))
           .toList() ??
       const <ModuleTimer>[],
+  expiresAt: dateOrNull(json['expires_at']),
 );
 
 Map<String, dynamic> _$ExamHeartbeatResponseToJson(
@@ -315,6 +318,7 @@ Map<String, dynamic> _$ExamHeartbeatResponseToJson(
   'finished': instance.finished,
   'unlock': instance.unlock,
   'modules': instance.modules.map((e) => e.toJson()).toList(),
+  'expires_at': dateToJson(instance.expiresAt),
 };
 
 _ModuleTimer _$ModuleTimerFromJson(Map<String, dynamic> json) => _ModuleTimer(

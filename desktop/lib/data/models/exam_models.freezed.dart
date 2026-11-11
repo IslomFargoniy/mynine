@@ -3768,7 +3768,9 @@ as DateTime?,
 /// @nodoc
 mixin _$AnswerItem {
 
- String get clientUuid; int get partId; int get questionId; String? get text; List<int> get optionIds;@JsonKey(fromJson: dateRequired, toJson: dateRequiredToJson) DateTime get changedAt;
+ String get clientUuid; int get partId; int get questionId; String? get text; List<int> get optionIds;@JsonKey(fromJson: dateRequired, toJson: dateRequiredToJson) DateTime get changedAt;/// API v1.1: client-side counter per question per attempt (monotonic,
+/// persisted), used by the server for last-write-wins. Omitted when null.
+@JsonKey(includeIfNull: false) int? get seq;
 /// Create a copy of AnswerItem
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -3782,20 +3784,20 @@ $AnswerItemCopyWith<AnswerItem> get copyWith => _$AnswerItemCopyWithImpl<AnswerI
 @override
 bool operator ==(Object other) {
   final _this = this as AnswerItem;
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is AnswerItem&&(identical(other.clientUuid, _this.clientUuid) || other.clientUuid == _this.clientUuid)&&(identical(other.partId, _this.partId) || other.partId == _this.partId)&&(identical(other.questionId, _this.questionId) || other.questionId == _this.questionId)&&(identical(other.text, _this.text) || other.text == _this.text)&&const DeepCollectionEquality().equals(other.optionIds, _this.optionIds)&&(identical(other.changedAt, _this.changedAt) || other.changedAt == _this.changedAt));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is AnswerItem&&(identical(other.clientUuid, _this.clientUuid) || other.clientUuid == _this.clientUuid)&&(identical(other.partId, _this.partId) || other.partId == _this.partId)&&(identical(other.questionId, _this.questionId) || other.questionId == _this.questionId)&&(identical(other.text, _this.text) || other.text == _this.text)&&const DeepCollectionEquality().equals(other.optionIds, _this.optionIds)&&(identical(other.changedAt, _this.changedAt) || other.changedAt == _this.changedAt)&&(identical(other.seq, _this.seq) || other.seq == _this.seq));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
 int get hashCode {
   final _this = this as AnswerItem;
-  return Object.hash(runtimeType,_this.clientUuid,_this.partId,_this.questionId,_this.text,const DeepCollectionEquality().hash(_this.optionIds),_this.changedAt);
+  return Object.hash(runtimeType,_this.clientUuid,_this.partId,_this.questionId,_this.text,const DeepCollectionEquality().hash(_this.optionIds),_this.changedAt,_this.seq);
 }
 
 @override
 String toString() {
   final _this = this as AnswerItem;
-  return 'AnswerItem(clientUuid: ${_this.clientUuid}, partId: ${_this.partId}, questionId: ${_this.questionId}, text: ${_this.text}, optionIds: ${_this.optionIds}, changedAt: ${_this.changedAt})';
+  return 'AnswerItem(clientUuid: ${_this.clientUuid}, partId: ${_this.partId}, questionId: ${_this.questionId}, text: ${_this.text}, optionIds: ${_this.optionIds}, changedAt: ${_this.changedAt}, seq: ${_this.seq})';
 }
 
 
@@ -3806,7 +3808,7 @@ abstract mixin class $AnswerItemCopyWith<$Res>  {
   factory $AnswerItemCopyWith(AnswerItem value, $Res Function(AnswerItem) _then) = _$AnswerItemCopyWithImpl;
 @useResult
 $Res call({
- String clientUuid, int partId, int questionId, String? text, List<int> optionIds,@JsonKey(fromJson: dateRequired, toJson: dateRequiredToJson) DateTime changedAt
+ String clientUuid, int partId, int questionId, String? text, List<int> optionIds,@JsonKey(fromJson: dateRequired, toJson: dateRequiredToJson) DateTime changedAt,@JsonKey(includeIfNull: false) int? seq
 });
 
 
@@ -3823,7 +3825,7 @@ class _$AnswerItemCopyWithImpl<$Res>
 
 /// Create a copy of AnswerItem
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? clientUuid = null,Object? partId = null,Object? questionId = null,Object? text = freezed,Object? optionIds = null,Object? changedAt = null,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? clientUuid = null,Object? partId = null,Object? questionId = null,Object? text = freezed,Object? optionIds = null,Object? changedAt = null,Object? seq = freezed,}) {
   return _then(AnswerItem(
 clientUuid: null == clientUuid ? _self.clientUuid : clientUuid // ignore: cast_nullable_to_non_nullable
 as String,partId: null == partId ? _self.partId : partId // ignore: cast_nullable_to_non_nullable
@@ -3831,7 +3833,8 @@ as int,questionId: null == questionId ? _self.questionId : questionId // ignore:
 as int,text: freezed == text ? _self.text : text // ignore: cast_nullable_to_non_nullable
 as String?,optionIds: null == optionIds ? _self.optionIds : optionIds // ignore: cast_nullable_to_non_nullable
 as List<int>,changedAt: null == changedAt ? _self.changedAt : changedAt // ignore: cast_nullable_to_non_nullable
-as DateTime,
+as DateTime,seq: freezed == seq ? _self.seq : seq // ignore: cast_nullable_to_non_nullable
+as int?,
   ));
 }
 
@@ -3916,10 +3919,10 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String clientUuid,  int partId,  int questionId,  String? text,  List<int> optionIds, @JsonKey(fromJson: dateRequired, toJson: dateRequiredToJson)  DateTime changedAt)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String clientUuid,  int partId,  int questionId,  String? text,  List<int> optionIds, @JsonKey(fromJson: dateRequired, toJson: dateRequiredToJson)  DateTime changedAt, @JsonKey(includeIfNull: false)  int? seq)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _AnswerItem() when $default != null:
-return $default(_that.clientUuid,_that.partId,_that.questionId,_that.text,_that.optionIds,_that.changedAt);case _:
+return $default(_that.clientUuid,_that.partId,_that.questionId,_that.text,_that.optionIds,_that.changedAt,_that.seq);case _:
   return orElse();
 
 }
@@ -3937,10 +3940,10 @@ return $default(_that.clientUuid,_that.partId,_that.questionId,_that.text,_that.
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String clientUuid,  int partId,  int questionId,  String? text,  List<int> optionIds, @JsonKey(fromJson: dateRequired, toJson: dateRequiredToJson)  DateTime changedAt)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String clientUuid,  int partId,  int questionId,  String? text,  List<int> optionIds, @JsonKey(fromJson: dateRequired, toJson: dateRequiredToJson)  DateTime changedAt, @JsonKey(includeIfNull: false)  int? seq)  $default,) {final _that = this;
 switch (_that) {
 case _AnswerItem():
-return $default(_that.clientUuid,_that.partId,_that.questionId,_that.text,_that.optionIds,_that.changedAt);case _:
+return $default(_that.clientUuid,_that.partId,_that.questionId,_that.text,_that.optionIds,_that.changedAt,_that.seq);case _:
   throw StateError('Unexpected subclass');
 
 }
@@ -3957,10 +3960,10 @@ return $default(_that.clientUuid,_that.partId,_that.questionId,_that.text,_that.
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String clientUuid,  int partId,  int questionId,  String? text,  List<int> optionIds, @JsonKey(fromJson: dateRequired, toJson: dateRequiredToJson)  DateTime changedAt)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String clientUuid,  int partId,  int questionId,  String? text,  List<int> optionIds, @JsonKey(fromJson: dateRequired, toJson: dateRequiredToJson)  DateTime changedAt, @JsonKey(includeIfNull: false)  int? seq)?  $default,) {final _that = this;
 switch (_that) {
 case _AnswerItem() when $default != null:
-return $default(_that.clientUuid,_that.partId,_that.questionId,_that.text,_that.optionIds,_that.changedAt);case _:
+return $default(_that.clientUuid,_that.partId,_that.questionId,_that.text,_that.optionIds,_that.changedAt,_that.seq);case _:
   return null;
 
 }
@@ -3972,7 +3975,7 @@ return $default(_that.clientUuid,_that.partId,_that.questionId,_that.text,_that.
 @JsonSerializable()
 
 class _AnswerItem implements AnswerItem {
-  const _AnswerItem({required this.clientUuid, required this.partId, required this.questionId, this.text,  List<int> optionIds = const <int>[], @JsonKey(fromJson: dateRequired, toJson: dateRequiredToJson) required this.changedAt}): _optionIds = optionIds;
+  const _AnswerItem({required this.clientUuid, required this.partId, required this.questionId, this.text,  List<int> optionIds = const <int>[], @JsonKey(fromJson: dateRequired, toJson: dateRequiredToJson) required this.changedAt, @JsonKey(includeIfNull: false) this.seq}): _optionIds = optionIds;
   factory _AnswerItem.fromJson(Map<String, dynamic> json) => _$AnswerItemFromJson(json);
 
 @override final  String clientUuid;
@@ -3987,6 +3990,9 @@ class _AnswerItem implements AnswerItem {
 }
 
 @override@JsonKey(fromJson: dateRequired, toJson: dateRequiredToJson) final  DateTime changedAt;
+/// API v1.1: client-side counter per question per attempt (monotonic,
+/// persisted), used by the server for last-write-wins. Omitted when null.
+@override@JsonKey(includeIfNull: false) final  int? seq;
 
 /// Create a copy of AnswerItem
 /// with the given fields replaced by the non-null parameter values.
@@ -4001,18 +4007,18 @@ Map<String, dynamic> toJson() {
 
 @override
 bool operator ==(Object other) {
-    return identical(this, other) || (other.runtimeType == runtimeType&&other is _AnswerItem&&(identical(other.clientUuid, clientUuid) || other.clientUuid == clientUuid)&&(identical(other.partId, partId) || other.partId == partId)&&(identical(other.questionId, questionId) || other.questionId == questionId)&&(identical(other.text, text) || other.text == text)&&const DeepCollectionEquality().equals(other.optionIds, _optionIds)&&(identical(other.changedAt, changedAt) || other.changedAt == changedAt));
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is _AnswerItem&&(identical(other.clientUuid, clientUuid) || other.clientUuid == clientUuid)&&(identical(other.partId, partId) || other.partId == partId)&&(identical(other.questionId, questionId) || other.questionId == questionId)&&(identical(other.text, text) || other.text == text)&&const DeepCollectionEquality().equals(other.optionIds, _optionIds)&&(identical(other.changedAt, changedAt) || other.changedAt == changedAt)&&(identical(other.seq, seq) || other.seq == seq));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
 int get hashCode {
-    return Object.hash(runtimeType,clientUuid,partId,questionId,text,const DeepCollectionEquality().hash(_optionIds),changedAt);
+    return Object.hash(runtimeType,clientUuid,partId,questionId,text,const DeepCollectionEquality().hash(_optionIds),changedAt,seq);
 }
 
 @override
 String toString() {
-    return 'AnswerItem(clientUuid: $clientUuid, partId: $partId, questionId: $questionId, text: $text, optionIds: $optionIds, changedAt: $changedAt)';
+    return 'AnswerItem(clientUuid: $clientUuid, partId: $partId, questionId: $questionId, text: $text, optionIds: $optionIds, changedAt: $changedAt, seq: $seq)';
 }
 
 
@@ -4023,7 +4029,7 @@ abstract mixin class _$AnswerItemCopyWith<$Res> implements $AnswerItemCopyWith<$
   factory _$AnswerItemCopyWith(_AnswerItem value, $Res Function(_AnswerItem) _then) = __$AnswerItemCopyWithImpl;
 @override @useResult
 $Res call({
- String clientUuid, int partId, int questionId, String? text, List<int> optionIds,@JsonKey(fromJson: dateRequired, toJson: dateRequiredToJson) DateTime changedAt
+ String clientUuid, int partId, int questionId, String? text, List<int> optionIds,@JsonKey(fromJson: dateRequired, toJson: dateRequiredToJson) DateTime changedAt,@JsonKey(includeIfNull: false) int? seq
 });
 
 
@@ -4040,7 +4046,7 @@ class __$AnswerItemCopyWithImpl<$Res>
 
 /// Create a copy of AnswerItem
 /// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? clientUuid = null,Object? partId = null,Object? questionId = null,Object? text = freezed,Object? optionIds = null,Object? changedAt = null,}) {
+@override @pragma('vm:prefer-inline') $Res call({Object? clientUuid = null,Object? partId = null,Object? questionId = null,Object? text = freezed,Object? optionIds = null,Object? changedAt = null,Object? seq = freezed,}) {
   return _then(_AnswerItem(
 clientUuid: null == clientUuid ? _self.clientUuid : clientUuid // ignore: cast_nullable_to_non_nullable
 as String,partId: null == partId ? _self.partId : partId // ignore: cast_nullable_to_non_nullable
@@ -4048,7 +4054,8 @@ as int,questionId: null == questionId ? _self.questionId : questionId // ignore:
 as int,text: freezed == text ? _self.text : text // ignore: cast_nullable_to_non_nullable
 as String?,optionIds: null == optionIds ? _self._optionIds : optionIds // ignore: cast_nullable_to_non_nullable
 as List<int>,changedAt: null == changedAt ? _self.changedAt : changedAt // ignore: cast_nullable_to_non_nullable
-as DateTime,
+as DateTime,seq: freezed == seq ? _self.seq : seq // ignore: cast_nullable_to_non_nullable
+as int?,
   ));
 }
 
@@ -4614,7 +4621,8 @@ as DateTime?,
 /// @nodoc
 mixin _$ExamHeartbeatResponse {
 
-@JsonKey(fromJson: dateOrNull, toJson: dateToJson) DateTime? get serverTime; bool get paused; bool get finished; bool get unlock; List<ModuleTimer> get modules;
+@JsonKey(fromJson: dateOrNull, toJson: dateToJson) DateTime? get serverTime; bool get paused; bool get finished; bool get unlock; List<ModuleTimer> get modules;/// API v1.1: the heartbeat extends the exam token (optional field).
+@JsonKey(fromJson: dateOrNull, toJson: dateToJson) DateTime? get expiresAt;
 /// Create a copy of ExamHeartbeatResponse
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -4628,20 +4636,20 @@ $ExamHeartbeatResponseCopyWith<ExamHeartbeatResponse> get copyWith => _$ExamHear
 @override
 bool operator ==(Object other) {
   final _this = this as ExamHeartbeatResponse;
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is ExamHeartbeatResponse&&(identical(other.serverTime, _this.serverTime) || other.serverTime == _this.serverTime)&&(identical(other.paused, _this.paused) || other.paused == _this.paused)&&(identical(other.finished, _this.finished) || other.finished == _this.finished)&&(identical(other.unlock, _this.unlock) || other.unlock == _this.unlock)&&const DeepCollectionEquality().equals(other.modules, _this.modules));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is ExamHeartbeatResponse&&(identical(other.serverTime, _this.serverTime) || other.serverTime == _this.serverTime)&&(identical(other.paused, _this.paused) || other.paused == _this.paused)&&(identical(other.finished, _this.finished) || other.finished == _this.finished)&&(identical(other.unlock, _this.unlock) || other.unlock == _this.unlock)&&const DeepCollectionEquality().equals(other.modules, _this.modules)&&(identical(other.expiresAt, _this.expiresAt) || other.expiresAt == _this.expiresAt));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
 int get hashCode {
   final _this = this as ExamHeartbeatResponse;
-  return Object.hash(runtimeType,_this.serverTime,_this.paused,_this.finished,_this.unlock,const DeepCollectionEquality().hash(_this.modules));
+  return Object.hash(runtimeType,_this.serverTime,_this.paused,_this.finished,_this.unlock,const DeepCollectionEquality().hash(_this.modules),_this.expiresAt);
 }
 
 @override
 String toString() {
   final _this = this as ExamHeartbeatResponse;
-  return 'ExamHeartbeatResponse(serverTime: ${_this.serverTime}, paused: ${_this.paused}, finished: ${_this.finished}, unlock: ${_this.unlock}, modules: ${_this.modules})';
+  return 'ExamHeartbeatResponse(serverTime: ${_this.serverTime}, paused: ${_this.paused}, finished: ${_this.finished}, unlock: ${_this.unlock}, modules: ${_this.modules}, expiresAt: ${_this.expiresAt})';
 }
 
 
@@ -4652,7 +4660,7 @@ abstract mixin class $ExamHeartbeatResponseCopyWith<$Res>  {
   factory $ExamHeartbeatResponseCopyWith(ExamHeartbeatResponse value, $Res Function(ExamHeartbeatResponse) _then) = _$ExamHeartbeatResponseCopyWithImpl;
 @useResult
 $Res call({
-@JsonKey(fromJson: dateOrNull, toJson: dateToJson) DateTime? serverTime, bool paused, bool finished, bool unlock, List<ModuleTimer> modules
+@JsonKey(fromJson: dateOrNull, toJson: dateToJson) DateTime? serverTime, bool paused, bool finished, bool unlock, List<ModuleTimer> modules,@JsonKey(fromJson: dateOrNull, toJson: dateToJson) DateTime? expiresAt
 });
 
 
@@ -4669,14 +4677,15 @@ class _$ExamHeartbeatResponseCopyWithImpl<$Res>
 
 /// Create a copy of ExamHeartbeatResponse
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? serverTime = freezed,Object? paused = null,Object? finished = null,Object? unlock = null,Object? modules = null,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? serverTime = freezed,Object? paused = null,Object? finished = null,Object? unlock = null,Object? modules = null,Object? expiresAt = freezed,}) {
   return _then(ExamHeartbeatResponse(
 serverTime: freezed == serverTime ? _self.serverTime : serverTime // ignore: cast_nullable_to_non_nullable
 as DateTime?,paused: null == paused ? _self.paused : paused // ignore: cast_nullable_to_non_nullable
 as bool,finished: null == finished ? _self.finished : finished // ignore: cast_nullable_to_non_nullable
 as bool,unlock: null == unlock ? _self.unlock : unlock // ignore: cast_nullable_to_non_nullable
 as bool,modules: null == modules ? _self.modules : modules // ignore: cast_nullable_to_non_nullable
-as List<ModuleTimer>,
+as List<ModuleTimer>,expiresAt: freezed == expiresAt ? _self.expiresAt : expiresAt // ignore: cast_nullable_to_non_nullable
+as DateTime?,
   ));
 }
 
@@ -4761,10 +4770,10 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function(@JsonKey(fromJson: dateOrNull, toJson: dateToJson)  DateTime? serverTime,  bool paused,  bool finished,  bool unlock,  List<ModuleTimer> modules)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function(@JsonKey(fromJson: dateOrNull, toJson: dateToJson)  DateTime? serverTime,  bool paused,  bool finished,  bool unlock,  List<ModuleTimer> modules, @JsonKey(fromJson: dateOrNull, toJson: dateToJson)  DateTime? expiresAt)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _ExamHeartbeatResponse() when $default != null:
-return $default(_that.serverTime,_that.paused,_that.finished,_that.unlock,_that.modules);case _:
+return $default(_that.serverTime,_that.paused,_that.finished,_that.unlock,_that.modules,_that.expiresAt);case _:
   return orElse();
 
 }
@@ -4782,10 +4791,10 @@ return $default(_that.serverTime,_that.paused,_that.finished,_that.unlock,_that.
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function(@JsonKey(fromJson: dateOrNull, toJson: dateToJson)  DateTime? serverTime,  bool paused,  bool finished,  bool unlock,  List<ModuleTimer> modules)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function(@JsonKey(fromJson: dateOrNull, toJson: dateToJson)  DateTime? serverTime,  bool paused,  bool finished,  bool unlock,  List<ModuleTimer> modules, @JsonKey(fromJson: dateOrNull, toJson: dateToJson)  DateTime? expiresAt)  $default,) {final _that = this;
 switch (_that) {
 case _ExamHeartbeatResponse():
-return $default(_that.serverTime,_that.paused,_that.finished,_that.unlock,_that.modules);case _:
+return $default(_that.serverTime,_that.paused,_that.finished,_that.unlock,_that.modules,_that.expiresAt);case _:
   throw StateError('Unexpected subclass');
 
 }
@@ -4802,10 +4811,10 @@ return $default(_that.serverTime,_that.paused,_that.finished,_that.unlock,_that.
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function(@JsonKey(fromJson: dateOrNull, toJson: dateToJson)  DateTime? serverTime,  bool paused,  bool finished,  bool unlock,  List<ModuleTimer> modules)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function(@JsonKey(fromJson: dateOrNull, toJson: dateToJson)  DateTime? serverTime,  bool paused,  bool finished,  bool unlock,  List<ModuleTimer> modules, @JsonKey(fromJson: dateOrNull, toJson: dateToJson)  DateTime? expiresAt)?  $default,) {final _that = this;
 switch (_that) {
 case _ExamHeartbeatResponse() when $default != null:
-return $default(_that.serverTime,_that.paused,_that.finished,_that.unlock,_that.modules);case _:
+return $default(_that.serverTime,_that.paused,_that.finished,_that.unlock,_that.modules,_that.expiresAt);case _:
   return null;
 
 }
@@ -4817,7 +4826,7 @@ return $default(_that.serverTime,_that.paused,_that.finished,_that.unlock,_that.
 @JsonSerializable()
 
 class _ExamHeartbeatResponse implements ExamHeartbeatResponse {
-  const _ExamHeartbeatResponse({@JsonKey(fromJson: dateOrNull, toJson: dateToJson) this.serverTime, this.paused = false, this.finished = false, this.unlock = false,  List<ModuleTimer> modules = const <ModuleTimer>[]}): _modules = modules;
+  const _ExamHeartbeatResponse({@JsonKey(fromJson: dateOrNull, toJson: dateToJson) this.serverTime, this.paused = false, this.finished = false, this.unlock = false,  List<ModuleTimer> modules = const <ModuleTimer>[], @JsonKey(fromJson: dateOrNull, toJson: dateToJson) this.expiresAt}): _modules = modules;
   factory _ExamHeartbeatResponse.fromJson(Map<String, dynamic> json) => _$ExamHeartbeatResponseFromJson(json);
 
 @override@JsonKey(fromJson: dateOrNull, toJson: dateToJson) final  DateTime? serverTime;
@@ -4831,6 +4840,8 @@ class _ExamHeartbeatResponse implements ExamHeartbeatResponse {
   return EqualUnmodifiableListView(_modules);
 }
 
+/// API v1.1: the heartbeat extends the exam token (optional field).
+@override@JsonKey(fromJson: dateOrNull, toJson: dateToJson) final  DateTime? expiresAt;
 
 /// Create a copy of ExamHeartbeatResponse
 /// with the given fields replaced by the non-null parameter values.
@@ -4845,18 +4856,18 @@ Map<String, dynamic> toJson() {
 
 @override
 bool operator ==(Object other) {
-    return identical(this, other) || (other.runtimeType == runtimeType&&other is _ExamHeartbeatResponse&&(identical(other.serverTime, serverTime) || other.serverTime == serverTime)&&(identical(other.paused, paused) || other.paused == paused)&&(identical(other.finished, finished) || other.finished == finished)&&(identical(other.unlock, unlock) || other.unlock == unlock)&&const DeepCollectionEquality().equals(other.modules, _modules));
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is _ExamHeartbeatResponse&&(identical(other.serverTime, serverTime) || other.serverTime == serverTime)&&(identical(other.paused, paused) || other.paused == paused)&&(identical(other.finished, finished) || other.finished == finished)&&(identical(other.unlock, unlock) || other.unlock == unlock)&&const DeepCollectionEquality().equals(other.modules, _modules)&&(identical(other.expiresAt, expiresAt) || other.expiresAt == expiresAt));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
 int get hashCode {
-    return Object.hash(runtimeType,serverTime,paused,finished,unlock,const DeepCollectionEquality().hash(_modules));
+    return Object.hash(runtimeType,serverTime,paused,finished,unlock,const DeepCollectionEquality().hash(_modules),expiresAt);
 }
 
 @override
 String toString() {
-    return 'ExamHeartbeatResponse(serverTime: $serverTime, paused: $paused, finished: $finished, unlock: $unlock, modules: $modules)';
+    return 'ExamHeartbeatResponse(serverTime: $serverTime, paused: $paused, finished: $finished, unlock: $unlock, modules: $modules, expiresAt: $expiresAt)';
 }
 
 
@@ -4867,7 +4878,7 @@ abstract mixin class _$ExamHeartbeatResponseCopyWith<$Res> implements $ExamHeart
   factory _$ExamHeartbeatResponseCopyWith(_ExamHeartbeatResponse value, $Res Function(_ExamHeartbeatResponse) _then) = __$ExamHeartbeatResponseCopyWithImpl;
 @override @useResult
 $Res call({
-@JsonKey(fromJson: dateOrNull, toJson: dateToJson) DateTime? serverTime, bool paused, bool finished, bool unlock, List<ModuleTimer> modules
+@JsonKey(fromJson: dateOrNull, toJson: dateToJson) DateTime? serverTime, bool paused, bool finished, bool unlock, List<ModuleTimer> modules,@JsonKey(fromJson: dateOrNull, toJson: dateToJson) DateTime? expiresAt
 });
 
 
@@ -4884,14 +4895,15 @@ class __$ExamHeartbeatResponseCopyWithImpl<$Res>
 
 /// Create a copy of ExamHeartbeatResponse
 /// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? serverTime = freezed,Object? paused = null,Object? finished = null,Object? unlock = null,Object? modules = null,}) {
+@override @pragma('vm:prefer-inline') $Res call({Object? serverTime = freezed,Object? paused = null,Object? finished = null,Object? unlock = null,Object? modules = null,Object? expiresAt = freezed,}) {
   return _then(_ExamHeartbeatResponse(
 serverTime: freezed == serverTime ? _self.serverTime : serverTime // ignore: cast_nullable_to_non_nullable
 as DateTime?,paused: null == paused ? _self.paused : paused // ignore: cast_nullable_to_non_nullable
 as bool,finished: null == finished ? _self.finished : finished // ignore: cast_nullable_to_non_nullable
 as bool,unlock: null == unlock ? _self.unlock : unlock // ignore: cast_nullable_to_non_nullable
 as bool,modules: null == modules ? _self._modules : modules // ignore: cast_nullable_to_non_nullable
-as List<ModuleTimer>,
+as List<ModuleTimer>,expiresAt: freezed == expiresAt ? _self.expiresAt : expiresAt // ignore: cast_nullable_to_non_nullable
+as DateTime?,
   ));
 }
 

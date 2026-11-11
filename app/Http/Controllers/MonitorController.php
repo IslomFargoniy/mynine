@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Attempt;
+use App\Models\AttemptAnswer;
 use App\Models\AttemptType;
 use App\Models\AttemptViolation;
 use App\Models\Device;
@@ -126,6 +127,10 @@ class MonitorController extends Controller
             Device::where('current_attempt_id', $attempt->id)->update(['current_attempt_id' => null]);
             $attempt->forceFill(['device_id' => null])->save();
             $attempt->mockStudent?->tokens()->delete();
+            // The next PC counts `seq` from 1 again: drop the old counters so changed_at decides.
+            AttemptAnswer::whereHas('attempt_part', fn ($q) => $q->where('attempt_id', $attempt->id))
+                ->whereNotNull('client_seq')
+                ->update(['client_seq' => null]);
         });
 
         return $this->respond($request, $attempt, true, __('device_released'));

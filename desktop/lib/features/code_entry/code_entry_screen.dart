@@ -35,7 +35,8 @@ class _CodeEntryScreenState extends ConsumerState<CodeEntryScreen> {
     super.initState();
     final updates = ref.read(updateServiceProvider);
     final exam = ref.read(examControllerProvider);
-    updates.canAutoInstall = () => exam.stage == ExamStage.idle && !exam.busy;
+    updates.canAutoInstall =
+        () => exam.stage == ExamStage.idle && !exam.busy && exam.attemptId == null;
     WidgetsBinding.instance.addPostFrameCallback((_) {
       updates.reportCodeScreenRendered();
       updates.startPeriodic();

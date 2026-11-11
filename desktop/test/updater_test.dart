@@ -233,7 +233,23 @@ void main() {
     svc.dispose();
   });
 
-  test('rolls back when a previous launch never passed the self-check', () async {
+  test('rolls back when a previous run never passed the self-check', () async {
+    final runner = RecordingRunner();
+    await paths.previous.create(recursive: true);
+    File(p.join(paths.previous.path, 'mynine-setup-1.0.0.exe')).writeAsStringSync('old');
+    final svc = UpdateService(api: TamperApi(), paths: paths, currentVersion: '1.0.1', runner: runner);
+    await svc.writeState(UpdateStateData(
+      pendingVerify: true,
+      targetVersion: '1.0.1',
+      fromVersion: '1.0.0',
+      runMs: AppConfig.updateSelfCheckWindow.inMilliseconds + 1000,
+    ));
+    await svc.startupSelfCheck();
+    expect(runner.ran, ['mynine-setup-1.0.0.exe']);
+    expect((await svc.readState())!.rolledBackFrom, '1.0.1');
+  });
+
+  test('self-check window counts running time only (PC switched off is not a failure)', () async {
     final runner = RecordingRunner();
     await paths.previous.create(recursive: true);
     File(p.join(paths.previous.path, 'mynine-setup-1.0.0.exe')).writeAsStringSync('old');
@@ -244,11 +260,83 @@ void main() {
       pendingVerify: true,
       targetVersion: '1.0.1',
       fromVersion: '1.0.0',
-      firstLaunchAt: now.subtract(AppConfig.updateSelfCheckWindow + const Duration(seconds: 1)),
+      // First started yesterday, but ran only 10 s before the PC was turned off.
+      firstLaunchAt: now.subtract(const Duration(hours: 16)),
+      runMs: 10000,
     ));
     await svc.startupSelfCheck();
+    expect(runner.ran, isEmpty);
+    expect((await svc.readState())!.pendingVerify, isTrue);
+    expect(svc.selfCheckRunMs, greaterThanOrEqualTo(10000));
+    // Any API success + the UI rendered passes it.
+    svc.reportApiReachable();
+    svc.reportUiRendered();
+    await Future<void>.delayed(const Duration(milliseconds: 50));
+    expect(await svc.readState(), isNull);
+    svc.dispose();
+  });
+
+  test('rollback waits while an exam session is active', () async {
+    final runner = RecordingRunner();
+    await paths.previous.create(recursive: true);
+    File(p.join(paths.previous.path, 'mynine-setup-1.0.0.exe')).writeAsStringSync('old');
+    var unfinished = true;
+    final svc = UpdateService(api: TamperApi(), paths: paths, currentVersion: '1.0.1', runner: runner)
+      ..hasUnfinishedSession = () async => unfinished;
+    final state = UpdateStateData(
+      pendingVerify: true,
+      targetVersion: '1.0.1',
+      fromVersion: '1.0.0',
+      runMs: AppConfig.updateSelfCheckWindow.inMilliseconds + 1,
+    );
+    await svc.writeState(state);
+    await svc.startupSelfCheck();
+    expect(runner.ran, isEmpty); // an unfinished exam on this PC: not now
+    unfinished = false;
+    await svc.rollback(state);
     expect(runner.ran, ['mynine-setup-1.0.0.exe']);
-    expect((await svc.readState())!.rolledBackFrom, '1.0.1');
+    svc.dispose();
+  });
+
+  test('a rolled-back version is not installed automatically again; a newer one is', () async {
+    final api = FakeMynineApi(clock: ServerClock(), latency: Duration.zero, offerUpdate: true);
+    final svc = UpdateService(api: api, paths: paths, currentVersion: '1.0.0', runner: RecordingRunner());
+    await svc.writeState(UpdateStateData(rolledBackFrom: '1.0.1'));
+    expect(await svc.check(), isTrue); // automatic check
+    expect(svc.release!.version, '1.0.1');
+    expect(svc.skippedRolledBack, isTrue);
+    expect(svc.phase, UpdatePhase.available); // still offered for a manual install
+    svc.stopPeriodic();
+
+    api.manifestOverride = (await api.updateManifest()).copyWith(version: '1.0.2', file: 'mynine-setup-1.0.2.exe');
+    expect(await svc.check(), isTrue);
+    expect(svc.skippedRolledBack, isFalse);
+    svc.dispose();
+  });
+
+  test('install is refused during an exam session and re-checked right before exiting', () async {
+    final runner = RecordingRunner();
+    final api = TamperApi();
+    final svc = UpdateService(api: api, paths: paths, currentVersion: '1.0.0', runner: runner);
+    await svc.check(manual: true);
+    final file = (await svc.download())!;
+
+    svc.isExamSessionActive = () => true;
+    expect(await svc.install(file), isFalse);
+    expect(runner.ran, isEmpty);
+
+    // Auto install: allowed at first, but a login starts meanwhile.
+    svc.isExamSessionActive = () => false;
+    var checks = 0;
+    svc.canAutoInstall = () => ++checks < 2;
+    expect(await svc.install(file, auto: true), isFalse);
+    expect(runner.ran, isEmpty);
+    expect(svc.phase, UpdatePhase.available);
+    expect(await svc.readState(), isNull); // pending state rolled back
+
+    svc.canAutoInstall = () => true;
+    expect(await svc.install(file, auto: true), isTrue);
+    expect(runner.ran, ['mynine-setup-1.0.1.exe']);
   });
 
   test('random jitter stays within 0–10 minutes', () {

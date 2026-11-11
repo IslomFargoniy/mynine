@@ -33,6 +33,9 @@ class _MynineAppState extends ConsumerState<MynineApp> with WindowListener {
     windowManager.addListener(this);
     // Resume an exam interrupted by a crash / restart.
     unawaited(exam.resumeIfNeeded());
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) ref.read(updateServiceProvider).reportUiRendered();
+    });
   }
 
   @override
