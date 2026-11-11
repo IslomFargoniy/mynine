@@ -318,7 +318,8 @@ class HtmlViewState extends State<HtmlView> {
   Widget _image(ImageBlock b) {
     final provider = widget.imageResolver?.call(b.src) ?? _defaultProvider(b.src);
     if (provider == null) {
-      return Text('[image: ${b.alt ?? b.src}]');
+      // Never print a data: URI (thousands of base64 characters).
+      return Text('[image${b.alt != null ? ': ${b.alt}' : b.src.startsWith('data:') ? '' : ': ${b.src}'}]');
     }
     return Align(
       alignment: Alignment.centerLeft,
@@ -342,8 +343,21 @@ class HtmlViewState extends State<HtmlView> {
       return NetworkImage(src);
     }
     if (src.startsWith('file://')) return FileImage(File(Uri.parse(src).toFilePath()));
+    if (src.startsWith('data:image/')) return _dataImage(src);
     return null;
   }
+
+  /// Inline `data:image/...;base64,` pictures (imported Writing Task 1 charts).
+  /// Decoded once per source and reused on every rebuild.
+  static final Map<String, MemoryImage?> _dataImages = {};
+
+  static MemoryImage? _dataImage(String src) => _dataImages.putIfAbsent(src, () {
+        try {
+          return MemoryImage(UriData.parse(src).contentAsBytes());
+        } catch (_) {
+          return null;
+        }
+      });
 }
 
 /// Applies an [InlineStyle] on top of a base [TextStyle].

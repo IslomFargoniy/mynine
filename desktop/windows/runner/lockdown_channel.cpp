@@ -697,6 +697,26 @@ std::optional<LRESULT> LockdownChannel::HandleMessage(HWND hwnd, UINT message,
       // Sign-out / shutdown while locked: leave the account as it was.
       if (wparam) RestoreSystemPolicies();
       break;
+    case WM_WINDOWPOSCHANGING:
+      // Kiosk: the window always covers its whole monitor. Without this the
+      // startup options of window_manager (size 1366x820, centre) or the shell
+      // can move it after EnterKiosk — the exam header slid off the top edge
+      // and the desktop showed through a strip at the bottom.
+      if (kiosk_ && !::IsIconic(hwnd)) {
+        auto* pos = reinterpret_cast<WINDOWPOS*>(lparam);
+        HMONITOR monitor = ::MonitorFromWindow(hwnd, MONITOR_DEFAULTTOPRIMARY);
+        MONITORINFO info{};
+        info.cbSize = sizeof(info);
+        if (pos && ::GetMonitorInfo(monitor, &info)) {
+          const RECT& r = info.rcMonitor;
+          pos->x = r.left;
+          pos->y = r.top;
+          pos->cx = r.right - r.left;
+          pos->cy = r.bottom - r.top;
+          pos->flags &= ~(SWP_NOMOVE | SWP_NOSIZE);
+        }
+      }
+      break;
     case WM_DISPLAYCHANGE:
       if (kiosk_) FitToMonitor();
       SendEvent("display_changed");

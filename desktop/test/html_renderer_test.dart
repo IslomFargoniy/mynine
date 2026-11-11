@@ -141,4 +141,11 @@ void main() {
       expect(got!.text, 'Second');
     });
   });
+
+  testWidgets('an inline data: image (imported Writing chart) is drawn, never printed as text', (tester) async {
+    final doc = HtmlDocument.parse('<p>Chart:</p><p><strong>Task</strong> <img alt="chart" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII="></p>');
+    await tester.pumpWidget(MaterialApp(home: Scaffold(body: HtmlView(document: doc))));
+    expect(find.byType(Image), findsOneWidget);
+    expect(find.textContaining('base64'), findsNothing);
+  });
 }
