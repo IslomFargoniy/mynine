@@ -1037,6 +1037,15 @@
             "uses": "Staff use the center password for three things: registering a new exam PC (first install of the app), leaving the locked exam screen, and opening the app's hidden admin menu.",
             "chip_set": "Center password: set",
             "chip_missing": "Center password: not set"
+        },
+        "background": {
+            "title": "Background",
+            "description": "Picture behind the code card on every exam PC. PCs pick it up within a minute.",
+            "none": "No picture — plain background",
+            "updated": "Uploaded {{date}}",
+            "hint": "JPG, PNG or WebP, up to 8 MB. 1920×1080 looks best.",
+            "remove": "Remove",
+            "save": "Upload"
         }
     },
     "Upload a Listening, Reading or Writing file.": "Upload a Listening, Reading or Writing file.",
@@ -1299,5 +1308,7 @@
         "academic": "Academic",
         "general": "General Training",
         "hint": "General Training Reading uses its own band table."
-    }
+    },
+    "desktop_background_saved": "Background saved.",
+    "desktop_background_removed": "Background removed."
 }

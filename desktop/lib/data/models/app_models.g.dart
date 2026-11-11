@@ -83,6 +83,8 @@ _DeviceConfig _$DeviceConfigFromJson(Map<String, dynamic> json) =>
       name: stringOrNull(json['name']),
       number: intOrNull(json['number']),
       approved: boolOrNull(json['approved']),
+      backgroundUrl: stringOrNull(json['background_url']),
+      backgroundSha256: stringOrNull(json['background_sha256']),
     );
 
 Map<String, dynamic> _$DeviceConfigToJson(_DeviceConfig instance) =>
@@ -95,4 +97,6 @@ Map<String, dynamic> _$DeviceConfigToJson(_DeviceConfig instance) =>
       'name': instance.name,
       'number': instance.number,
       'approved': instance.approved,
+      'background_url': instance.backgroundUrl,
+      'background_sha256': instance.backgroundSha256,
     };

@@ -4,11 +4,14 @@ namespace App\Http\Controllers\Api\V1;
 
 use App\Exceptions\ApiException;
 use App\Http\Controllers\Controller;
+use App\Http\Controllers\Desktop\SettingsController;
 use App\Models\Device;
 use App\Models\Setting;
 use App\Services\ExamService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Storage;
+use Symfony\Component\HttpFoundation\BinaryFileResponse;
 
 class DeviceController extends Controller
 {
@@ -120,7 +123,21 @@ class DeviceController extends Controller
             'heartbeat_seconds' => (int) config('desktop.heartbeat_seconds', 20),
             'violation_batch_seconds' => (int) config('desktop.violation_batch_seconds', 10),
             'server_time' => ExamService::apiTime(),
+            // Code-screen background picture (null: the plain default).
+            'background_url' => ($bg = SettingsController::background()) ? route('api.v1.device.background') : null,
+            'background_sha256' => $bg['sha256'] ?? null,
         ]);
+    }
+
+    /**
+     * GET /device/background — the code-screen background picture.
+     */
+    public function background(Request $request): BinaryFileResponse
+    {
+        $this->device($request);
+        $bg = SettingsController::background() ?? throw ApiException::notFound('No background picture is set.');
+
+        return response()->file(Storage::disk('local')->path($bg['path']));
     }
 
     private function device(Request $request): Device

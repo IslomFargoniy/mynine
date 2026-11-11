@@ -1037,6 +1037,15 @@
             "uses": "Markaz paroli uch narsa uchun ishlatiladi: yangi imtihon kompyuterini ro'yxatdan o'tkazish (ilovani birinchi o'rnatishda), qulflangan imtihon ekranidan chiqish va ilovaning yashirin admin menyusini ochish.",
             "chip_set": "Markaz paroli: o'rnatilgan",
             "chip_missing": "Markaz paroli: o'rnatilmagan"
+        },
+        "background": {
+            "title": "Fon rasmi",
+            "description": "Har bir imtihon kompyuterida kod kartasi ortidagi rasm. PC'lar uni bir daqiqa ichida oladi.",
+            "none": "Rasm yo'q — oddiy fon",
+            "updated": "Yuklangan: {{date}}",
+            "hint": "JPG, PNG yoki WebP, 8 MB gacha. 1920×1080 eng yaxshi.",
+            "remove": "O'chirish",
+            "save": "Yuklash"
         }
     },
     "Upload a Listening, Reading or Writing file.": "Listening, Reading yoki Writing faylini yuklang.",
@@ -1299,5 +1308,7 @@
         "academic": "Academic",
         "general": "General Training",
         "hint": "General Training Reading uchun alohida ball jadvali ishlatiladi."
-    }
+    },
+    "desktop_background_saved": "Fon rasmi saqlandi.",
+    "desktop_background_removed": "Fon rasmi o'chirildi."
 }

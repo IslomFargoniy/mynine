@@ -84,6 +84,9 @@ Response: `{ "server_time": "…", "unlock": false, "name": "PC-07", "number": 7
 (`number` is `null` while not approved). Used on the code screen every 60 s (marks the PC online in the admin device list);
 the app updates its displayed number from it (the admin may renumber a PC at any time). Works for unapproved PCs too.
 
+### GET /device/background
+Header `X-Device-Token`. The code-screen background picture (jpg/png/webp), 404 when none is set.
+
 ### POST /device/unlock
 Header `X-Device-Token`. Body: `{ "password": "…" }` → 200 `{ "ok": true }` or 422 `{ "ok": false }`. Rate-limited 5/min.
 
@@ -93,8 +96,11 @@ Header `X-Device-Token`. Response:
 { "name": "PC-07", "number": 7, "approved": true,
   "exit_password_offline": "pbkdf2_sha256$120000$<salt_b64>$<hash_b64>",
   "banned_processes": ["anydesk.exe","teamviewer.exe","discord.exe","obs64.exe","telegram.exe","chrome.exe","msedge.exe","firefox.exe","zoom.exe","skype.exe"],
-  "heartbeat_seconds": 20, "violation_batch_seconds": 10, "server_time": "…" }
+  "heartbeat_seconds": 20, "violation_batch_seconds": 10, "server_time": "…",
+  "background_url": "https://mynine.uz/api/v1/device/background", "background_sha256": "…" }
 ```
+`background_url` / `background_sha256` are null when no background picture is set (Admin: Exam PCs → Background).
+An idle PC re-reads the config every minute and keeps the picture on disk (verified by SHA-256).
 403 `device_not_approved` until the PC is approved (see "Device approval"). `banned_processes` comes from
 `config/desktop.php` (override with `DESKTOP_BANNED_PROCESSES="a.exe,b.exe"`). Since desktop 1.0.2 the app **closes**
 these programs (its own session only, never Windows system processes) when the exam starts and on every scan, and
@@ -105,7 +111,7 @@ blocks "Start" on the rules screen while any is running.
 ## Exam auth
 
 ### POST /exam/login
-Header `X-Device-Token`. Body: `{ "code": "MS1A2B3C" }` (case-insensitive, trimmed). Throttle 10/min per device.
+Header `X-Device-Token`. Body: `{ "code": "849201" }` (six digits since 2026-11; older codes still accepted, trimmed). Throttle 10/min per device.
 Checks: code exists, mock active, inside window (`started_at`/`finished_at`), attempt not finished. Marks `attended`, `checked_in_at` (if empty), creates the attempt if missing (modules from `mock_modules`), binds `attempts.device_id`, revokes previous exam tokens of this candidate (only one PC at a time).
 Response 200:
 ```json

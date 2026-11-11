@@ -87,6 +87,9 @@ abstract class DeviceConfig with _$DeviceConfig {
     @JsonKey(fromJson: stringOrNull) String? name,
     @JsonKey(fromJson: intOrNull) int? number,
     @JsonKey(fromJson: boolOrNull) bool? approved,
+    // Code-screen background picture set by the Admin (null: plain).
+    @JsonKey(fromJson: stringOrNull) String? backgroundUrl,
+    @JsonKey(fromJson: stringOrNull) String? backgroundSha256,
   }) = _DeviceConfig;
 
   factory DeviceConfig.fromJson(Map<String, Object?> json) =>

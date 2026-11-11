@@ -124,6 +124,8 @@ class KioskController extends ChangeNotifier {
       connection.reportSuccess();
       updates.reportApiReachable();
       if (r.unlock) await exitApp();
+      // Idle PC: pick up Admin changes (background picture, banned list) within a minute.
+      if (!exam.examActive) unawaited(_refreshConfig());
     } on ApiException catch (e) {
       connection.reportFailure(e);
     }

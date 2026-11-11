@@ -71,6 +71,7 @@ Future<List<Override>> bootstrap() async {
     credentials: credentials,
     lockdown: lockdown,
     appVersion: config.appVersion,
+    backgroundDir: paths.root,
   );
   final exam = ExamController(
     api: api,

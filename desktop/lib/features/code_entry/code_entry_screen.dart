@@ -98,6 +98,22 @@ class _CodeEntryScreenState extends ConsumerState<CodeEntryScreen> {
     return Scaffold(
       body: Stack(
         children: [
+          // Background picture chosen by the Admin (Exam PCs → Background).
+          Positioned.fill(
+            child: ListenableBuilder(
+              listenable: device,
+              builder: (_, _) {
+                final bg = device.backgroundFile;
+                if (bg == null) return const SizedBox.shrink();
+                return Image.file(
+                  bg,
+                  key: ValueKey(bg.path),
+                  fit: BoxFit.cover,
+                  errorBuilder: (_, _, _) => const SizedBox.shrink(),
+                );
+              },
+            ),
+          ),
           CenterCard(
             maxWidth: 520,
             child: ListenableBuilder(

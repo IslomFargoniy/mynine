@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'dart:io';
 
 import 'package:flutter/foundation.dart';
+import 'package:path/path.dart' as p;
 import 'package:uuid/uuid.dart';
 
 import '../../core/api/api_exception.dart';
@@ -11,6 +12,7 @@ import '../../core/crypto/pbkdf2.dart';
 import '../../core/storage/settings_store.dart';
 import '../../platform/lockdown/lockdown.dart';
 import '../models/app_models.dart';
+import 'exam_repository.dart' show verifySha256;
 
 /// Device identity, registration, config cache and exit-password checks.
 class DeviceRepository extends ChangeNotifier {
@@ -20,7 +22,15 @@ class DeviceRepository extends ChangeNotifier {
     required this.credentials,
     required this.lockdown,
     required this.appVersion,
+    this.backgroundDir,
   });
+
+  /// Where the code-screen background picture is kept (null: feature off).
+  final Directory? backgroundDir;
+  File? _background;
+
+  /// The Admin's background picture for the code screen, once on disk.
+  File? get backgroundFile => _background;
 
   final MynineApi api;
   final SettingsStore store;
@@ -75,6 +85,8 @@ class DeviceRepository extends ChangeNotifier {
         _config = DeviceConfig.fromJson((jsonDecode(cfg) as Map).cast<String, Object?>());
       } catch (_) {}
     }
+    final cachedBg = _backgroundTarget();
+    if (cachedBg != null && cachedBg.existsSync()) _background = cachedBg;
     _machineId = await lockdown.machineId();
     if (_machineId == null || _machineId!.isEmpty) {
       _machineId = await store.read(SettingsKeys.machineIdFallback);
@@ -131,6 +143,7 @@ class DeviceRepository extends ChangeNotifier {
     try {
       _config = await api.deviceConfig();
       await store.write(SettingsKeys.deviceConfig, jsonEncode(_config.toJson()));
+      unawaited(syncBackground());
       _blocked = false;
       _applyIdentity(name: _config.name, number: _config.number, approved: _config.approved ?? true);
       notifyListeners();
@@ -224,6 +237,51 @@ class DeviceRepository extends ChangeNotifier {
   }
 
   static bool _verifyOffline(List<String> args) => verifyPbkdf2Password(args[0], args[1]);
+
+  File? _backgroundTarget() {
+    final dir = backgroundDir;
+    final sha = _config.backgroundSha256;
+    if (dir == null || _config.backgroundUrl == null || sha == null || sha.length < 12) return null;
+    return File(p.join(dir.path, 'background-${sha.substring(0, 12)}.img'));
+  }
+
+  Future<void>? _backgroundJob;
+
+  /// Downloads the background picture named in the config (hash-checked),
+  /// or drops it when the Admin removed it. Old pictures are deleted.
+  /// A call during a running sync waits for that one.
+  Future<void> syncBackground() =>
+      _backgroundJob ??= _syncBackground().whenComplete(() => _backgroundJob = null);
+
+  Future<void> _syncBackground() async {
+    final dir = backgroundDir;
+    if (dir == null) return;
+    try {
+      final target = _backgroundTarget();
+      if (target != null && !(target.existsSync() && await verifySha256(target, _config.backgroundSha256))) {
+        await dir.create(recursive: true);
+        await api.download(_config.backgroundUrl!, target);
+        if (!await verifySha256(target, _config.backgroundSha256)) {
+          await target.delete();
+          return;
+        }
+      }
+      if (_background?.path != target?.path) {
+        _background = target;
+        notifyListeners();
+      }
+      await for (final f in dir.list()) {
+        final name = p.basename(f.path);
+        if (f is File && name.startsWith('background-') && f.path != target?.path) {
+          try {
+            await f.delete();
+          } catch (_) {}
+        }
+      }
+    } catch (e) {
+      debugPrint('Background picture not updated: $e');
+    }
+  }
 
   static String osVersionString() {
     final v = Platform.operatingSystemVersion;

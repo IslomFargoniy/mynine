@@ -51,6 +51,9 @@ class FakeMynineApi implements MynineApi {
   /// When false, login and device config answer 403 `device_not_approved`.
   bool approved = true;
 
+  /// Code-screen background picture (null: none set).
+  Uint8List? backgroundBytes;
+
   /// Exam-room number given by the "admin" (shown once [approved]).
   int? number = 7;
 
@@ -283,6 +286,8 @@ class FakeMynineApi implements MynineApi {
       name: deviceName,
       number: number,
       approved: true,
+      backgroundUrl: backgroundBytes == null ? null : 'fake://background',
+      backgroundSha256: backgroundBytes == null ? null : sha256.convert(backgroundBytes!).toString(),
     );
   }
 
@@ -615,7 +620,11 @@ class FakeMynineApi implements MynineApi {
   }) async {
     await _io('download');
     if (url.startsWith('fake://desktop/')) downloadedFiles.add(url.substring('fake://desktop/'.length));
-    final bytes = url.startsWith('fake://audio') ? _audio() : _installer();
+    final bytes = url == 'fake://background'
+        ? backgroundBytes!
+        : url.startsWith('fake://audio')
+            ? _audio()
+            : _installer();
     await target.parent.create(recursive: true);
     const chunk = 64 * 1024;
     final sink = target.openWrite();

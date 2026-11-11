@@ -11,6 +11,9 @@ class Setting extends Model
 
     public const DESKTOP_EXIT_PASSWORD_OFFLINE = 'desktop_exit_password_offline';
 
+    /** JSON {"path": "<local disk path>", "sha256": "..."}: the exam app's code-screen background. */
+    public const DESKTOP_BACKGROUND = 'desktop_background';
+
     public const PBKDF2_ITERATIONS = 120000;
 
     protected $primaryKey = 'key';

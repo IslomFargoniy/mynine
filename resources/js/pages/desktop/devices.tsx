@@ -1,4 +1,5 @@
 import { CenterPasswordChip, CenterPasswordDialog, type CenterPasswordStatus } from '@/components/exam-admin/center-password-dialog';
+import { DesktopBackgroundDialog, type DesktopBackground } from '@/components/exam-admin/desktop-background-dialog';
 import { EmptyState, fmtDateTime, inputClass, OnlineDot, PageHeader, Panel, PcNumber, useAutoRefresh } from '@/components/exam-admin/shared';
 import { Button } from '@/components/ui/button';
 import { IconAction } from '@/components/ui/icon-action';
@@ -9,7 +10,7 @@ import AppLayout from '@/layouts/app-layout';
 import { cn } from '@/lib/utils';
 import { type BreadcrumbItem } from '@/types';
 import { Head, router, usePage } from '@inertiajs/react';
-import { Ban, CheckCircle2, Download, KeyRound, Monitor, Pencil, ShieldCheck, Trash2 } from 'lucide-react';
+import { Ban, CheckCircle2, Download, ImageIcon, KeyRound, Monitor, Pencil, ShieldCheck, Trash2 } from 'lucide-react';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
@@ -37,6 +38,8 @@ interface PageProps {
     nextNumber: number | null;
     installer: { version: string; file: string; url: string; size: number; sha256: string; available: boolean } | null;
     centerPassword: CenterPasswordStatus | null;
+    background: DesktopBackground | null;
+    canManageSettings: boolean;
     [key: string]: unknown;
 }
 
@@ -196,7 +199,8 @@ function NumberCell({ device }: { device: DeviceRow }) {
 }
 
 export default function DevicesIndex() {
-    const { devices, latestVersion, nextNumber, installer, centerPassword } = usePage<PageProps>().props;
+    const { devices, latestVersion, nextNumber, installer, centerPassword, background, canManageSettings } = usePage<PageProps>().props;
+    const [backgroundOpen, setBackgroundOpen] = useState(false);
     const { t } = useTranslation();
     const [approving, setApproving] = useState<DeviceRow | null>(null);
     // /desktop/settings redirects here with ?settings=1: open the center password dialog.
@@ -236,6 +240,12 @@ export default function DevicesIndex() {
                     })}
                     actions={
                         <>
+                            {canManageSettings && (
+                                <Button size="sm" variant="outline" onClick={() => setBackgroundOpen(true)}>
+                                    <ImageIcon className="h-4 w-4" />
+                                    {t('exam_admin.background.title')}
+                                </Button>
+                            )}
                             {centerPassword && (
                                 <Button size="sm" variant="outline" onClick={() => setPasswordOpen(true)}>
                                     <KeyRound className="h-4 w-4" />
@@ -382,6 +392,7 @@ export default function DevicesIndex() {
             </div>
             {approving && <ApproveDialog device={approving} suggested={nextNumber} onClose={() => setApproving(null)} />}
             {centerPassword && <CenterPasswordDialog status={centerPassword} open={passwordOpen} onOpenChange={setPasswordOpen} />}
+            {canManageSettings && <DesktopBackgroundDialog background={background} open={backgroundOpen} onOpenChange={setBackgroundOpen} />}
         </AppLayout>
     );
 }

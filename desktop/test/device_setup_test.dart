@@ -1,3 +1,5 @@
+import 'dart:typed_data';
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mynine_desktop/app/widgets.dart';
@@ -211,5 +213,34 @@ void main() {
       await tester.pumpWidget(wrap(const PcNumberBadge(number: 7, large: true)));
       expect(find.text('PC 7'), findsOneWidget);
     });
+  });
+
+  test('the Admin background picture is downloaded (hash-checked) and dropped when removed', () async {
+    final dir = await Directory.systemTemp.createTemp('mynine-bg');
+    addTearDown(() => dir.delete(recursive: true));
+    final api = _api()..approved = true;
+    final device = DeviceRepository(
+      api: api,
+      store: MemorySettingsStore(),
+      credentials: DeviceCredentials(),
+      lockdown: NoopLockdown(),
+      appVersion: '1.0.2',
+      backgroundDir: dir,
+    );
+    await device.load();
+    await device.register(password: 'mynine', name: 'PC-01');
+    api.approved = true; // the Admin approved the PC
+
+    api.backgroundBytes = Uint8List.fromList(List.generate(2048, (i) => i % 251));
+    await device.refreshConfig();
+    await device.syncBackground();
+    expect(device.backgroundFile, isNotNull);
+    expect(device.backgroundFile!.readAsBytesSync(), api.backgroundBytes);
+
+    api.backgroundBytes = null;
+    await device.refreshConfig();
+    await device.syncBackground();
+    expect(device.backgroundFile, isNull);
+    expect(dir.listSync().whereType<File>().where((f) => f.path.contains('background-')), isEmpty);
   });
 }

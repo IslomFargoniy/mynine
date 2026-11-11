@@ -61,6 +61,10 @@ class DeviceController extends Controller
             'latestVersion' => $latest,
             'nextNumber' => Device::nextFreeNumber(),
             'centerPassword' => Gate::allows('manage-desktop-settings') ? SettingsController::centerPasswordStatus() : null,
+            'canManageSettings' => Gate::allows('manage-desktop-settings'),
+            'background' => Gate::allows('manage-desktop-settings') && ($bg = SettingsController::background())
+                ? ['sha256' => $bg['sha256'], 'updatedAt' => $bg['updatedAt']]
+                : null,
             // Installer published in public/desktop (served as a static file by nginx).
             'installer' => $release ? [
                 'version' => $release['version'],

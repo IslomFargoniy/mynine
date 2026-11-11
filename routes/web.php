@@ -150,6 +150,9 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
             Route::get('settings', [DesktopSettingsController::class, 'index'])->name('settings.index');
             Route::post('settings/exit-password', [DesktopSettingsController::class, 'updateExitPassword'])->name('settings.exit-password');
+            Route::get('settings/background', [DesktopSettingsController::class, 'showBackground'])->name('settings.background');
+            Route::post('settings/background', [DesktopSettingsController::class, 'updateBackground'])->name('settings.background.update');
+            Route::delete('settings/background', [DesktopSettingsController::class, 'destroyBackground'])->name('settings.background.destroy');
         });
 
         // Grading

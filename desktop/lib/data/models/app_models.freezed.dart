@@ -871,7 +871,7 @@ as bool?,
 /// @nodoc
 mixin _$DeviceConfig {
 
- String? get exitPasswordOffline; List<String> get bannedProcesses; int get heartbeatSeconds; int get violationBatchSeconds;@JsonKey(fromJson: dateOrNull, toJson: dateToJson) DateTime? get serverTime;@JsonKey(fromJson: stringOrNull) String? get name;@JsonKey(fromJson: intOrNull) int? get number;@JsonKey(fromJson: boolOrNull) bool? get approved;
+ String? get exitPasswordOffline; List<String> get bannedProcesses; int get heartbeatSeconds; int get violationBatchSeconds;@JsonKey(fromJson: dateOrNull, toJson: dateToJson) DateTime? get serverTime;@JsonKey(fromJson: stringOrNull) String? get name;@JsonKey(fromJson: intOrNull) int? get number;@JsonKey(fromJson: boolOrNull) bool? get approved;@JsonKey(fromJson: stringOrNull) String? get backgroundUrl;@JsonKey(fromJson: stringOrNull) String? get backgroundSha256;
 /// Create a copy of DeviceConfig
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -885,20 +885,20 @@ $DeviceConfigCopyWith<DeviceConfig> get copyWith => _$DeviceConfigCopyWithImpl<D
 @override
 bool operator ==(Object other) {
   final _this = this as DeviceConfig;
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is DeviceConfig&&(identical(other.exitPasswordOffline, _this.exitPasswordOffline) || other.exitPasswordOffline == _this.exitPasswordOffline)&&const DeepCollectionEquality().equals(other.bannedProcesses, _this.bannedProcesses)&&(identical(other.heartbeatSeconds, _this.heartbeatSeconds) || other.heartbeatSeconds == _this.heartbeatSeconds)&&(identical(other.violationBatchSeconds, _this.violationBatchSeconds) || other.violationBatchSeconds == _this.violationBatchSeconds)&&(identical(other.serverTime, _this.serverTime) || other.serverTime == _this.serverTime)&&(identical(other.name, _this.name) || other.name == _this.name)&&(identical(other.number, _this.number) || other.number == _this.number)&&(identical(other.approved, _this.approved) || other.approved == _this.approved));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is DeviceConfig&&(identical(other.exitPasswordOffline, _this.exitPasswordOffline) || other.exitPasswordOffline == _this.exitPasswordOffline)&&const DeepCollectionEquality().equals(other.bannedProcesses, _this.bannedProcesses)&&(identical(other.heartbeatSeconds, _this.heartbeatSeconds) || other.heartbeatSeconds == _this.heartbeatSeconds)&&(identical(other.violationBatchSeconds, _this.violationBatchSeconds) || other.violationBatchSeconds == _this.violationBatchSeconds)&&(identical(other.serverTime, _this.serverTime) || other.serverTime == _this.serverTime)&&(identical(other.name, _this.name) || other.name == _this.name)&&(identical(other.number, _this.number) || other.number == _this.number)&&(identical(other.approved, _this.approved) || other.approved == _this.approved)&&(identical(other.backgroundUrl, _this.backgroundUrl) || other.backgroundUrl == _this.backgroundUrl)&&(identical(other.backgroundSha256, _this.backgroundSha256) || other.backgroundSha256 == _this.backgroundSha256));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
 int get hashCode {
   final _this = this as DeviceConfig;
-  return Object.hash(runtimeType,_this.exitPasswordOffline,const DeepCollectionEquality().hash(_this.bannedProcesses),_this.heartbeatSeconds,_this.violationBatchSeconds,_this.serverTime,_this.name,_this.number,_this.approved);
+  return Object.hash(runtimeType,_this.exitPasswordOffline,const DeepCollectionEquality().hash(_this.bannedProcesses),_this.heartbeatSeconds,_this.violationBatchSeconds,_this.serverTime,_this.name,_this.number,_this.approved,_this.backgroundUrl,_this.backgroundSha256);
 }
 
 @override
 String toString() {
   final _this = this as DeviceConfig;
-  return 'DeviceConfig(exitPasswordOffline: ${_this.exitPasswordOffline}, bannedProcesses: ${_this.bannedProcesses}, heartbeatSeconds: ${_this.heartbeatSeconds}, violationBatchSeconds: ${_this.violationBatchSeconds}, serverTime: ${_this.serverTime}, name: ${_this.name}, number: ${_this.number}, approved: ${_this.approved})';
+  return 'DeviceConfig(exitPasswordOffline: ${_this.exitPasswordOffline}, bannedProcesses: ${_this.bannedProcesses}, heartbeatSeconds: ${_this.heartbeatSeconds}, violationBatchSeconds: ${_this.violationBatchSeconds}, serverTime: ${_this.serverTime}, name: ${_this.name}, number: ${_this.number}, approved: ${_this.approved}, backgroundUrl: ${_this.backgroundUrl}, backgroundSha256: ${_this.backgroundSha256})';
 }
 
 
@@ -909,7 +909,7 @@ abstract mixin class $DeviceConfigCopyWith<$Res>  {
   factory $DeviceConfigCopyWith(DeviceConfig value, $Res Function(DeviceConfig) _then) = _$DeviceConfigCopyWithImpl;
 @useResult
 $Res call({
- String? exitPasswordOffline, List<String> bannedProcesses, int heartbeatSeconds, int violationBatchSeconds,@JsonKey(fromJson: dateOrNull, toJson: dateToJson) DateTime? serverTime,@JsonKey(fromJson: stringOrNull) String? name,@JsonKey(fromJson: intOrNull) int? number,@JsonKey(fromJson: boolOrNull) bool? approved
+ String? exitPasswordOffline, List<String> bannedProcesses, int heartbeatSeconds, int violationBatchSeconds,@JsonKey(fromJson: dateOrNull, toJson: dateToJson) DateTime? serverTime,@JsonKey(fromJson: stringOrNull) String? name,@JsonKey(fromJson: intOrNull) int? number,@JsonKey(fromJson: boolOrNull) bool? approved,@JsonKey(fromJson: stringOrNull) String? backgroundUrl,@JsonKey(fromJson: stringOrNull) String? backgroundSha256
 });
 
 
@@ -926,7 +926,7 @@ class _$DeviceConfigCopyWithImpl<$Res>
 
 /// Create a copy of DeviceConfig
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? exitPasswordOffline = freezed,Object? bannedProcesses = null,Object? heartbeatSeconds = null,Object? violationBatchSeconds = null,Object? serverTime = freezed,Object? name = freezed,Object? number = freezed,Object? approved = freezed,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? exitPasswordOffline = freezed,Object? bannedProcesses = null,Object? heartbeatSeconds = null,Object? violationBatchSeconds = null,Object? serverTime = freezed,Object? name = freezed,Object? number = freezed,Object? approved = freezed,Object? backgroundUrl = freezed,Object? backgroundSha256 = freezed,}) {
   return _then(DeviceConfig(
 exitPasswordOffline: freezed == exitPasswordOffline ? _self.exitPasswordOffline : exitPasswordOffline // ignore: cast_nullable_to_non_nullable
 as String?,bannedProcesses: null == bannedProcesses ? _self.bannedProcesses : bannedProcesses // ignore: cast_nullable_to_non_nullable
@@ -936,7 +936,9 @@ as int,serverTime: freezed == serverTime ? _self.serverTime : serverTime // igno
 as DateTime?,name: freezed == name ? _self.name : name // ignore: cast_nullable_to_non_nullable
 as String?,number: freezed == number ? _self.number : number // ignore: cast_nullable_to_non_nullable
 as int?,approved: freezed == approved ? _self.approved : approved // ignore: cast_nullable_to_non_nullable
-as bool?,
+as bool?,backgroundUrl: freezed == backgroundUrl ? _self.backgroundUrl : backgroundUrl // ignore: cast_nullable_to_non_nullable
+as String?,backgroundSha256: freezed == backgroundSha256 ? _self.backgroundSha256 : backgroundSha256 // ignore: cast_nullable_to_non_nullable
+as String?,
   ));
 }
 
@@ -1021,10 +1023,10 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String? exitPasswordOffline,  List<String> bannedProcesses,  int heartbeatSeconds,  int violationBatchSeconds, @JsonKey(fromJson: dateOrNull, toJson: dateToJson)  DateTime? serverTime, @JsonKey(fromJson: stringOrNull)  String? name, @JsonKey(fromJson: intOrNull)  int? number, @JsonKey(fromJson: boolOrNull)  bool? approved)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String? exitPasswordOffline,  List<String> bannedProcesses,  int heartbeatSeconds,  int violationBatchSeconds, @JsonKey(fromJson: dateOrNull, toJson: dateToJson)  DateTime? serverTime, @JsonKey(fromJson: stringOrNull)  String? name, @JsonKey(fromJson: intOrNull)  int? number, @JsonKey(fromJson: boolOrNull)  bool? approved, @JsonKey(fromJson: stringOrNull)  String? backgroundUrl, @JsonKey(fromJson: stringOrNull)  String? backgroundSha256)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _DeviceConfig() when $default != null:
-return $default(_that.exitPasswordOffline,_that.bannedProcesses,_that.heartbeatSeconds,_that.violationBatchSeconds,_that.serverTime,_that.name,_that.number,_that.approved);case _:
+return $default(_that.exitPasswordOffline,_that.bannedProcesses,_that.heartbeatSeconds,_that.violationBatchSeconds,_that.serverTime,_that.name,_that.number,_that.approved,_that.backgroundUrl,_that.backgroundSha256);case _:
   return orElse();
 
 }
@@ -1042,10 +1044,10 @@ return $default(_that.exitPasswordOffline,_that.bannedProcesses,_that.heartbeatS
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String? exitPasswordOffline,  List<String> bannedProcesses,  int heartbeatSeconds,  int violationBatchSeconds, @JsonKey(fromJson: dateOrNull, toJson: dateToJson)  DateTime? serverTime, @JsonKey(fromJson: stringOrNull)  String? name, @JsonKey(fromJson: intOrNull)  int? number, @JsonKey(fromJson: boolOrNull)  bool? approved)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String? exitPasswordOffline,  List<String> bannedProcesses,  int heartbeatSeconds,  int violationBatchSeconds, @JsonKey(fromJson: dateOrNull, toJson: dateToJson)  DateTime? serverTime, @JsonKey(fromJson: stringOrNull)  String? name, @JsonKey(fromJson: intOrNull)  int? number, @JsonKey(fromJson: boolOrNull)  bool? approved, @JsonKey(fromJson: stringOrNull)  String? backgroundUrl, @JsonKey(fromJson: stringOrNull)  String? backgroundSha256)  $default,) {final _that = this;
 switch (_that) {
 case _DeviceConfig():
-return $default(_that.exitPasswordOffline,_that.bannedProcesses,_that.heartbeatSeconds,_that.violationBatchSeconds,_that.serverTime,_that.name,_that.number,_that.approved);case _:
+return $default(_that.exitPasswordOffline,_that.bannedProcesses,_that.heartbeatSeconds,_that.violationBatchSeconds,_that.serverTime,_that.name,_that.number,_that.approved,_that.backgroundUrl,_that.backgroundSha256);case _:
   throw StateError('Unexpected subclass');
 
 }
@@ -1062,10 +1064,10 @@ return $default(_that.exitPasswordOffline,_that.bannedProcesses,_that.heartbeatS
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String? exitPasswordOffline,  List<String> bannedProcesses,  int heartbeatSeconds,  int violationBatchSeconds, @JsonKey(fromJson: dateOrNull, toJson: dateToJson)  DateTime? serverTime, @JsonKey(fromJson: stringOrNull)  String? name, @JsonKey(fromJson: intOrNull)  int? number, @JsonKey(fromJson: boolOrNull)  bool? approved)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String? exitPasswordOffline,  List<String> bannedProcesses,  int heartbeatSeconds,  int violationBatchSeconds, @JsonKey(fromJson: dateOrNull, toJson: dateToJson)  DateTime? serverTime, @JsonKey(fromJson: stringOrNull)  String? name, @JsonKey(fromJson: intOrNull)  int? number, @JsonKey(fromJson: boolOrNull)  bool? approved, @JsonKey(fromJson: stringOrNull)  String? backgroundUrl, @JsonKey(fromJson: stringOrNull)  String? backgroundSha256)?  $default,) {final _that = this;
 switch (_that) {
 case _DeviceConfig() when $default != null:
-return $default(_that.exitPasswordOffline,_that.bannedProcesses,_that.heartbeatSeconds,_that.violationBatchSeconds,_that.serverTime,_that.name,_that.number,_that.approved);case _:
+return $default(_that.exitPasswordOffline,_that.bannedProcesses,_that.heartbeatSeconds,_that.violationBatchSeconds,_that.serverTime,_that.name,_that.number,_that.approved,_that.backgroundUrl,_that.backgroundSha256);case _:
   return null;
 
 }
@@ -1077,7 +1079,7 @@ return $default(_that.exitPasswordOffline,_that.bannedProcesses,_that.heartbeatS
 @JsonSerializable()
 
 class _DeviceConfig implements DeviceConfig {
-  const _DeviceConfig({this.exitPasswordOffline,  List<String> bannedProcesses = const <String>[], this.heartbeatSeconds = 20, this.violationBatchSeconds = 10, @JsonKey(fromJson: dateOrNull, toJson: dateToJson) this.serverTime, @JsonKey(fromJson: stringOrNull) this.name, @JsonKey(fromJson: intOrNull) this.number, @JsonKey(fromJson: boolOrNull) this.approved}): _bannedProcesses = bannedProcesses;
+  const _DeviceConfig({this.exitPasswordOffline,  List<String> bannedProcesses = const <String>[], this.heartbeatSeconds = 20, this.violationBatchSeconds = 10, @JsonKey(fromJson: dateOrNull, toJson: dateToJson) this.serverTime, @JsonKey(fromJson: stringOrNull) this.name, @JsonKey(fromJson: intOrNull) this.number, @JsonKey(fromJson: boolOrNull) this.approved, @JsonKey(fromJson: stringOrNull) this.backgroundUrl, @JsonKey(fromJson: stringOrNull) this.backgroundSha256}): _bannedProcesses = bannedProcesses;
   factory _DeviceConfig.fromJson(Map<String, dynamic> json) => _$DeviceConfigFromJson(json);
 
 @override final  String? exitPasswordOffline;
@@ -1094,6 +1096,8 @@ class _DeviceConfig implements DeviceConfig {
 @override@JsonKey(fromJson: stringOrNull) final  String? name;
 @override@JsonKey(fromJson: intOrNull) final  int? number;
 @override@JsonKey(fromJson: boolOrNull) final  bool? approved;
+@override@JsonKey(fromJson: stringOrNull) final  String? backgroundUrl;
+@override@JsonKey(fromJson: stringOrNull) final  String? backgroundSha256;
 
 /// Create a copy of DeviceConfig
 /// with the given fields replaced by the non-null parameter values.
@@ -1108,18 +1112,18 @@ Map<String, dynamic> toJson() {
 
 @override
 bool operator ==(Object other) {
-    return identical(this, other) || (other.runtimeType == runtimeType&&other is _DeviceConfig&&(identical(other.exitPasswordOffline, exitPasswordOffline) || other.exitPasswordOffline == exitPasswordOffline)&&const DeepCollectionEquality().equals(other.bannedProcesses, _bannedProcesses)&&(identical(other.heartbeatSeconds, heartbeatSeconds) || other.heartbeatSeconds == heartbeatSeconds)&&(identical(other.violationBatchSeconds, violationBatchSeconds) || other.violationBatchSeconds == violationBatchSeconds)&&(identical(other.serverTime, serverTime) || other.serverTime == serverTime)&&(identical(other.name, name) || other.name == name)&&(identical(other.number, number) || other.number == number)&&(identical(other.approved, approved) || other.approved == approved));
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is _DeviceConfig&&(identical(other.exitPasswordOffline, exitPasswordOffline) || other.exitPasswordOffline == exitPasswordOffline)&&const DeepCollectionEquality().equals(other.bannedProcesses, _bannedProcesses)&&(identical(other.heartbeatSeconds, heartbeatSeconds) || other.heartbeatSeconds == heartbeatSeconds)&&(identical(other.violationBatchSeconds, violationBatchSeconds) || other.violationBatchSeconds == violationBatchSeconds)&&(identical(other.serverTime, serverTime) || other.serverTime == serverTime)&&(identical(other.name, name) || other.name == name)&&(identical(other.number, number) || other.number == number)&&(identical(other.approved, approved) || other.approved == approved)&&(identical(other.backgroundUrl, backgroundUrl) || other.backgroundUrl == backgroundUrl)&&(identical(other.backgroundSha256, backgroundSha256) || other.backgroundSha256 == backgroundSha256));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
 int get hashCode {
-    return Object.hash(runtimeType,exitPasswordOffline,const DeepCollectionEquality().hash(_bannedProcesses),heartbeatSeconds,violationBatchSeconds,serverTime,name,number,approved);
+    return Object.hash(runtimeType,exitPasswordOffline,const DeepCollectionEquality().hash(_bannedProcesses),heartbeatSeconds,violationBatchSeconds,serverTime,name,number,approved,backgroundUrl,backgroundSha256);
 }
 
 @override
 String toString() {
-    return 'DeviceConfig(exitPasswordOffline: $exitPasswordOffline, bannedProcesses: $bannedProcesses, heartbeatSeconds: $heartbeatSeconds, violationBatchSeconds: $violationBatchSeconds, serverTime: $serverTime, name: $name, number: $number, approved: $approved)';
+    return 'DeviceConfig(exitPasswordOffline: $exitPasswordOffline, bannedProcesses: $bannedProcesses, heartbeatSeconds: $heartbeatSeconds, violationBatchSeconds: $violationBatchSeconds, serverTime: $serverTime, name: $name, number: $number, approved: $approved, backgroundUrl: $backgroundUrl, backgroundSha256: $backgroundSha256)';
 }
 
 
@@ -1130,7 +1134,7 @@ abstract mixin class _$DeviceConfigCopyWith<$Res> implements $DeviceConfigCopyWi
   factory _$DeviceConfigCopyWith(_DeviceConfig value, $Res Function(_DeviceConfig) _then) = __$DeviceConfigCopyWithImpl;
 @override @useResult
 $Res call({
- String? exitPasswordOffline, List<String> bannedProcesses, int heartbeatSeconds, int violationBatchSeconds,@JsonKey(fromJson: dateOrNull, toJson: dateToJson) DateTime? serverTime,@JsonKey(fromJson: stringOrNull) String? name,@JsonKey(fromJson: intOrNull) int? number,@JsonKey(fromJson: boolOrNull) bool? approved
+ String? exitPasswordOffline, List<String> bannedProcesses, int heartbeatSeconds, int violationBatchSeconds,@JsonKey(fromJson: dateOrNull, toJson: dateToJson) DateTime? serverTime,@JsonKey(fromJson: stringOrNull) String? name,@JsonKey(fromJson: intOrNull) int? number,@JsonKey(fromJson: boolOrNull) bool? approved,@JsonKey(fromJson: stringOrNull) String? backgroundUrl,@JsonKey(fromJson: stringOrNull) String? backgroundSha256
 });
 
 
@@ -1147,7 +1151,7 @@ class __$DeviceConfigCopyWithImpl<$Res>
 
 /// Create a copy of DeviceConfig
 /// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? exitPasswordOffline = freezed,Object? bannedProcesses = null,Object? heartbeatSeconds = null,Object? violationBatchSeconds = null,Object? serverTime = freezed,Object? name = freezed,Object? number = freezed,Object? approved = freezed,}) {
+@override @pragma('vm:prefer-inline') $Res call({Object? exitPasswordOffline = freezed,Object? bannedProcesses = null,Object? heartbeatSeconds = null,Object? violationBatchSeconds = null,Object? serverTime = freezed,Object? name = freezed,Object? number = freezed,Object? approved = freezed,Object? backgroundUrl = freezed,Object? backgroundSha256 = freezed,}) {
   return _then(_DeviceConfig(
 exitPasswordOffline: freezed == exitPasswordOffline ? _self.exitPasswordOffline : exitPasswordOffline // ignore: cast_nullable_to_non_nullable
 as String?,bannedProcesses: null == bannedProcesses ? _self._bannedProcesses : bannedProcesses // ignore: cast_nullable_to_non_nullable
@@ -1157,7 +1161,9 @@ as int,serverTime: freezed == serverTime ? _self.serverTime : serverTime // igno
 as DateTime?,name: freezed == name ? _self.name : name // ignore: cast_nullable_to_non_nullable
 as String?,number: freezed == number ? _self.number : number // ignore: cast_nullable_to_non_nullable
 as int?,approved: freezed == approved ? _self.approved : approved // ignore: cast_nullable_to_non_nullable
-as bool?,
+as bool?,backgroundUrl: freezed == backgroundUrl ? _self.backgroundUrl : backgroundUrl // ignore: cast_nullable_to_non_nullable
+as String?,backgroundSha256: freezed == backgroundSha256 ? _self.backgroundSha256 : backgroundSha256 // ignore: cast_nullable_to_non_nullable
+as String?,
   ));
 }
 
