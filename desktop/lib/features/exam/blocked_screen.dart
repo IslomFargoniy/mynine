@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../app/providers.dart';
 import '../../app/widgets.dart';
 import '../../core/theme/web_tokens.dart';
+import '../setup/setup_views.dart';
 import 'exam_controller.dart';
 
 /// The exam is locked: the server refused the session's token (the candidate
@@ -33,13 +34,31 @@ class _BlockedScreenState extends ConsumerState<BlockedScreen> {
   @override
   Widget build(BuildContext context) {
     final exam = ref.watch(examControllerProvider);
+    final device = ref.watch(deviceRepositoryProvider);
     return Scaffold(
       body: Stack(children: [
         CenterCard(
           maxWidth: 560,
           child: ListenableBuilder(
-            listenable: exam,
+            listenable: Listenable.merge([exam, device]),
             builder: (context, _) {
+              // The PC itself was removed in the admin panel: set it up again
+              // here (center password → Admin approval), then the candidate
+              // signs in again and the same attempt continues.
+              if (!device.isRegistered) {
+                return SetupView(
+                  initialName: device.pcName,
+                  onRegister: (password, name) =>
+                      ref.read(kioskControllerProvider).registerDevice(password: password, name: name),
+                );
+              }
+              if (device.isApprovalPending) {
+                return PendingApprovalView(
+                  pcName: device.pcName,
+                  machineIdShort: device.machineIdShort,
+                  onCheckNow: () => ref.read(kioskControllerProvider).checkApprovalNow(),
+                );
+              }
               final lines = exam.blockMessage.split('\n');
               final canRelogin = exam.blockReason == BlockReason.sessionLost;
               return Column(mainAxisSize: MainAxisSize.min, children: [
@@ -70,11 +89,12 @@ class _BlockedScreenState extends ConsumerState<BlockedScreen> {
                       controller: _code,
                       enabled: !exam.busy,
                       textAlign: TextAlign.center,
+                      keyboardType: TextInputType.number,
                       inputFormatters: [
-                        FilteringTextInputFormatter.allow(RegExp('[A-Za-z0-9]')),
-                        LengthLimitingTextInputFormatter(16),
+                        FilteringTextInputFormatter.digitsOnly,
+                        LengthLimitingTextInputFormatter(6),
                       ],
-                      decoration: const InputDecoration(hintText: 'CODE'),
+                      decoration: const InputDecoration(hintText: '000000'),
                       onSubmitted: (_) => exam.login(_code.text),
                     ),
                   ),
