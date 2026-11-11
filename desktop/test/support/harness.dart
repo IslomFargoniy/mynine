@@ -91,7 +91,16 @@ class Harness {
     if (disposeExam) exam.dispose();
     sync.dispose();
     await db.close();
-    await tmp.delete(recursive: true);
+    // Windows refuses to delete a file another handle still holds (a background
+    // download finishing its last write): retry briefly, then leave the temp dir.
+    for (var i = 0; i < 10; i++) {
+      try {
+        if (await tmp.exists()) await tmp.delete(recursive: true);
+        return;
+      } on FileSystemException {
+        await Future<void>.delayed(const Duration(milliseconds: 200));
+      }
+    }
   }
 }
 
