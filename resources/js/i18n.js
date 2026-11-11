@@ -15,7 +15,18 @@ i18n
             uz: { translation: uz },
             ru: { translation: ru }
         },
-        fallbackLng: 'en',
+        // Only the three languages we ship; "en-US" / "ru-RU" from the browser map to "en" / "ru".
+        // Default for new visitors is Uzbek (the center's audience).
+        supportedLngs: ['uz', 'en', 'ru'],
+        nonExplicitSupportedLngs: true,
+        load: 'languageOnly',
+        fallbackLng: 'uz',
+        detection: {
+            // The switcher stores the choice under "lang"; read that first so it survives reloads.
+            order: ['localStorage', 'navigator'],
+            lookupLocalStorage: 'lang',
+            caches: ['localStorage'],
+        },
         interpolation: {
             escapeValue: false
         }

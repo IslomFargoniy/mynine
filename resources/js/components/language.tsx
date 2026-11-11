@@ -13,7 +13,8 @@ const LanguageBar = ({ variant, placement, className }: LanguageBarProps) => {
     const [open, setOpen] = useState(false);
     const dropdownRef = useRef<HTMLDivElement>(null);
 
-    const currentLang = i18n.language || 'uz';
+    // resolvedLanguage is always one of uz/en/ru (i18n.language can be e.g. "en-US").
+    const currentLang = (i18n.resolvedLanguage || i18n.language || 'uz').split('-')[0];
 
     const changeLanguage = (lang: string) => {
         i18n.changeLanguage(lang);
