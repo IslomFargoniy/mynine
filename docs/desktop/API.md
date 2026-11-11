@@ -12,6 +12,7 @@ Authorization: Bearer <exam token>     (exam endpoints only)
 
 Errors: `{ "message": "...", "code": "<machine_code>" }` with HTTP status. Codes used by the app:
 `unauthenticated` 401, `device_blocked` 403, `client_outdated` 426 (body also has `min_version`),
+`invalid_password` 422, `setup_password_missing` 409, `device_not_approved` 403,
 `invalid_code` 422, `mock_not_active` 422, `mock_not_started` 422 (+`starts_at`), `mock_finished` 422,
 `attempt_finished` 409, `paused` 409, `module_locked` 409, `module_time_over` 409, `validation_failed` 422.
 
@@ -59,13 +60,24 @@ copy (if it does not have one yet); without it no automatic rollback is possible
 ## Device
 
 ### POST /device/register
-Body: `{ "machine_id": "<stable GUID from Windows MachineGuid>", "name": "PC-07", "os_version": "Windows 11 23H2", "app_version": "1.0.0" }`
-Response 200: `{ "device_id": 7, "device_token": "<plain token, shown once>", "name": "PC-07" }`.
-Re-registering the same `machine_id` rotates the token. Blocked devices → 403 `device_blocked`.
+**Contract change (desktop 1.0.2):** registration requires the center password (the desktop exit password set in
+Desktop settings / `php artisan desktop:center-password`, alias of `desktop:exit-password`), so only center staff
+can add a PC. The same center password unlocks the exam screen and opens the app's admin menu.
+
+Body: `{ "machine_id": "<stable GUID from Windows MachineGuid>", "password": "<center password>", "name": "PC-07", "os_version": "Windows 11 23H2", "app_version": "1.0.0" }`
+(`name` optional — default `PC-<last 4 characters of machine_id>`, an existing PC keeps its name).
+Response 200: `{ "device_id": 7, "device_token": "<plain token, shown once>", "name": "PC-07", "number": null, "approved": false }`.
+- Missing / wrong `password` → 422 `invalid_password`.
+- No center password configured on the server → 409 `setup_password_missing` ("… Set the center password in Desktop settings first.").
+- Re-registering the same `machine_id` rotates the token and drops the approval (the exam-room number is kept, the admin
+  confirms it again). Blocked devices → 403 `device_blocked`.
+- `number` is the exam-room number ("PC 7") the admin gives when approving; it is `null` until the PC is approved.
 
 ### POST /device/heartbeat
 Header `X-Device-Token`. Body: `{ "app_version": "1.0.0", "state": "idle" }` (state: `idle|updating|exam`).
-Response: `{ "server_time": "…", "unlock": false }`. Used on the code screen every 60 s (marks the PC online in the admin device list).
+Response: `{ "server_time": "…", "unlock": false, "name": "PC-07", "number": 7, "approved": true }`
+(`number` is `null` while not approved). Used on the code screen every 60 s (marks the PC online in the admin device list);
+the app updates its displayed number from it (the admin may renumber a PC at any time). Works for unapproved PCs too.
 
 ### POST /device/unlock
 Header `X-Device-Token`. Body: `{ "password": "…" }` → 200 `{ "ok": true }` or 422 `{ "ok": false }`. Rate-limited 5/min.
@@ -73,10 +85,15 @@ Header `X-Device-Token`. Body: `{ "password": "…" }` → 200 `{ "ok": true }` 
 ### GET /device/config
 Header `X-Device-Token`. Response:
 ```json
-{ "exit_password_offline": "pbkdf2_sha256$120000$<salt_b64>$<hash_b64>",
+{ "name": "PC-07", "number": 7, "approved": true,
+  "exit_password_offline": "pbkdf2_sha256$120000$<salt_b64>$<hash_b64>",
   "banned_processes": ["anydesk.exe","teamviewer.exe","discord.exe","obs64.exe","telegram.exe","chrome.exe","msedge.exe","firefox.exe","zoom.exe","skype.exe"],
   "heartbeat_seconds": 20, "violation_batch_seconds": 10, "server_time": "…" }
 ```
+403 `device_not_approved` until the PC is approved (see "Device approval"). `banned_processes` comes from
+`config/desktop.php` (override with `DESKTOP_BANNED_PROCESSES="a.exe,b.exe"`). Since desktop 1.0.2 the app **closes**
+these programs (its own session only, never Windows system processes) when the exam starts and on every scan, and
+blocks "Start" on the rules screen while any is running.
 
 ---
 
@@ -206,6 +223,8 @@ If `finished` is true (force-submitted by Admin) the app shows Completed.
 ```json
 { "violations": [ { "client_uuid": "…", "type": "focus_lost", "detail": { "process": "chrome.exe" }, "occurred_at": "…" } ] }
 ```
+`detail` (desktop ≥ 1.0.2): `focus_lost` → `{ "process": "chrome.exe" }` (the program that took the focus, when known);
+`banned_process` → `{ "process": "chrome.exe", "terminated": true }`.
 Types: `focus_lost`, `second_monitor`, `banned_process`, `screen_capture_attempt`, `app_restarted`, `network_lost`, `clipboard`, `vm_detected`.
 Response: `{ "accepted": 1, "server_time": "…" }`.
 
@@ -218,6 +237,9 @@ Streams audio with `Range` support; only for tests/parts of the current attempt.
 
 Monitor actions (`Admin` unless noted): `POST /monitor/attempts/{attempt}/extra-time {minutes}`, `/pause`, `/resume`,
 `/force-submit`, `/unlock` (Admin + Reception). Device list and settings live under the web admin (installers are uploaded to the static folder, see above).
+Devices (Admin): `POST /desktop/devices/{device}/approve {number}` (required, 1–999, unique among PCs; the page prefills the
+lowest free number), `PATCH /desktop/devices/{device} {name?, number?}` (renumber / rename), block / unblock keep the number.
+The monitor lists attempts by PC number (`device_number`), the reception list shows `device.number`.
 
 ---
 
@@ -296,13 +318,16 @@ Additive clarifications of the contract above, as implemented on branch `feat/de
 **Storage additions** (not listed in ARCHITECTURE.md): `attempt_answers.client_uuid`, `attempt_answers.client_changed_at`
 (datetime(3)) + index (`attempt_part_id`, `question_id`); `attempt_violations.client_uuid` with unique (`attempt_id`,
 `client_uuid`); index on `mock_students.phone`. `devices.current_attempt_id` has no foreign key.
-The exit password is set with `php artisan desktop:exit-password <password>` (minimum 6 characters, 16-byte salt).
+The center password (setting key `desktop_exit_password`) is set in Desktop settings or with
+`php artisan desktop:center-password <password>` (= `desktop:exit-password`; minimum 6 characters, 16-byte salt).
 
 ### Device approval (added by coordinator)
 - A newly registered PC has `is_approved = false`. Until an Admin approves it in the web panel,
   `POST /exam/login` and `GET /device/config` return **403 `device_not_approved`** (message names the PC).
   `/device/heartbeat` and `/device/unlock` keep working, so the PC shows up as "pending" in the admin device list.
 - **Re-registering** an existing `machine_id` rotates the token **and drops the approval** (someone who learns an approved
-  PC's machine id cannot take over its approval). The app must therefore register only once and keep its token; on
-  `device_not_approved` it shows "This PC is waiting for administrator approval: <name>" on the code screen and retries
-  `GET /device/config` every 30 s.
+  PC's machine id cannot take over its approval); the number stays. The app therefore registers only once and keeps its token.
+- Since desktop 1.0.2 registration needs the center password: on first start (no stored token) the app shows a Setup screen
+  (center password + optional PC name). After registering it shows "Waiting for administrator approval" (PC name + short
+  machine id) and retries `GET /device/config` every 30 s; once approved it opens the code screen, which shows the PC
+  number ("PC 7"). The hidden admin menu's "Re-register" asks for the center password again.

@@ -22,6 +22,15 @@ class DeviceFactory extends Factory
             'app_version' => '1.0.0',
             'os_version' => 'Windows 11 23H2',
             'is_blocked' => false,
+            'number' => null,
         ];
+    }
+
+    /**
+     * An approved PC with its exam-room number.
+     */
+    public function approved(int $number): static
+    {
+        return $this->state(fn () => ['is_approved' => true, 'approved_at' => now(), 'number' => $number]);
     }
 }

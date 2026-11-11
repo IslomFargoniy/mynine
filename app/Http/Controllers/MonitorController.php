@@ -118,7 +118,7 @@ class MonitorController extends Controller
             return response()->json([
                 'ok' => $ok,
                 'message' => $message,
-                'attempt' => $this->attemptRow($attempt->load(['attempt_types.type', 'device:id,name,last_seen_at', 'mockStudent'])),
+                'attempt' => $this->attemptRow($attempt->load(['attempt_types.type', 'device:id,name,number,last_seen_at', 'mockStudent'])),
             ], $ok ? 200 : 409);
         }
 
@@ -134,12 +134,18 @@ class MonitorController extends Controller
             ->where('mock_id', $mock->id)
             ->with([
                 'attempt_types.type',
-                'device:id,name,last_seen_at',
+                'device:id,name,number,last_seen_at',
                 'mockStudent' => fn ($q) => $q->withoutEagerLoads(),
                 'violations' => fn ($q) => $q->latest('occurred_at')->limit(500),
             ])
             ->orderBy('name')
             ->get()
+            // Exam-room order: PCs by their number, then attempts without a numbered PC by name.
+            ->sortBy([
+                fn (Attempt $a, Attempt $b) => ($a->device?->number === null) <=> ($b->device?->number === null),
+                fn (Attempt $a, Attempt $b) => ($a->device?->number ?? 0) <=> ($b->device?->number ?? 0),
+            ])
+            ->values()
             ->map(fn (Attempt $a) => $this->attemptRow($a))
             ->all();
     }
@@ -167,6 +173,7 @@ class MonitorController extends Controller
             'name' => $attempt->mockStudent?->name ?? $attempt->name,
             'code' => $attempt->mockStudent?->code,
             'device' => $attempt->device?->name,
+            'device_number' => $attempt->device?->number,
             'module' => $current?->type?->name,
             'modules_done' => $modules->filter(fn (AttemptType $t) => $t->is_submitted)->map(fn (AttemptType $t) => $t->type?->name)->values(),
             'time_left' => $current?->finished_at ? max(0, (int) $now->diffInSeconds(Carbon::parse($current->finished_at), false)) : null,

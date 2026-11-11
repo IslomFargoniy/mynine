@@ -41,13 +41,16 @@ abstract class UpdateManifest with _$UpdateManifest {
       size > 0;
 }
 
-/// `POST /device/register` response.
+/// `POST /device/register` response. `number` (exam-room number, "PC 7")
+/// is null until an Admin approves the PC.
 @freezed
 abstract class DeviceRegistration with _$DeviceRegistration {
   const factory DeviceRegistration({
     required int deviceId,
     required String deviceToken,
     required String name,
+    @JsonKey(fromJson: intOrNull) int? number,
+    @JsonKey(fromJson: boolTrue) @Default(false) bool approved,
   }) = _DeviceRegistration;
 
   factory DeviceRegistration.fromJson(Map<String, Object?> json) =>
@@ -60,6 +63,10 @@ abstract class DeviceHeartbeat with _$DeviceHeartbeat {
   const factory DeviceHeartbeat({
     @JsonKey(fromJson: dateOrNull, toJson: dateToJson) DateTime? serverTime,
     @Default(false) bool unlock,
+    // PC identity (null when talking to an older server).
+    @JsonKey(fromJson: stringOrNull) String? name,
+    @JsonKey(fromJson: intOrNull) int? number,
+    @JsonKey(fromJson: boolOrNull) bool? approved,
   }) = _DeviceHeartbeat;
 
   factory DeviceHeartbeat.fromJson(Map<String, Object?> json) =>
@@ -76,6 +83,10 @@ abstract class DeviceConfig with _$DeviceConfig {
     @Default(20) int heartbeatSeconds,
     @Default(10) int violationBatchSeconds,
     @JsonKey(fromJson: dateOrNull, toJson: dateToJson) DateTime? serverTime,
+    // PC identity (null when talking to an older server).
+    @JsonKey(fromJson: stringOrNull) String? name,
+    @JsonKey(fromJson: intOrNull) int? number,
+    @JsonKey(fromJson: boolOrNull) bool? approved,
   }) = _DeviceConfig;
 
   factory DeviceConfig.fromJson(Map<String, Object?> json) =>

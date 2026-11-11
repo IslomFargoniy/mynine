@@ -26,11 +26,22 @@ class Harness {
   final Directory tmp;
   final ServerClock clock;
 
-  static Future<Harness> create({bool approved = true, DateTime Function()? now}) async {
+  /// Builds the harness with the PC already registered (center password
+  /// `mynine`). [approved] = admin approval; [number] = its exam-room number
+  /// (null keeps the exam header as in the goldens). [register] = false
+  /// leaves the PC unregistered (Setup screen).
+  static Future<Harness> create({
+    bool approved = true,
+    int? number,
+    bool register = true,
+    DateTime Function()? now,
+  }) async {
     final tmp = await Directory.systemTemp.createTemp('mynine_exam');
     final clock = ServerClock(localNow: now);
     final api = FakeMynineApi(clock: clock, latency: Duration.zero, now: now == null ? null : () => now().toUtc())
-      ..approved = approved;
+      ..autoApprove = approved
+      ..approved = approved
+      ..number = number;
     final db = AppDatabase.memory();
     final answers = AnswerQueueRepository(db);
     final violations = ViolationQueueRepository(db);
@@ -45,6 +56,7 @@ class Harness {
       appVersion: '1.0.0',
     );
     await device.load();
+    if (register) await device.register(password: FakeMynineApi.exitPassword);
     final exam = ExamController(
       api: api,
       db: db,

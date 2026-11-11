@@ -170,3 +170,31 @@ class BlackButton extends StatelessWidget {
         ),
       );
 }
+
+/// Exam-room number of this PC ("PC 7"), given by the Admin on approval.
+class PcNumberBadge extends StatelessWidget {
+  const PcNumberBadge({super.key, required this.number, this.large = false});
+
+  final int number;
+  final bool large;
+
+  @override
+  Widget build(BuildContext context) => Container(
+        key: const Key('pc-number'),
+        padding: EdgeInsets.symmetric(horizontal: large ? 18 : 8, vertical: large ? 8 : 3),
+        decoration: BoxDecoration(
+          color: AppColors.ink,
+          borderRadius: BorderRadius.circular(large ? 10 : 4),
+        ),
+        child: Text(
+          'PC $number',
+          style: TextStyle(
+            color: Colors.white,
+            fontWeight: FontWeight.w900,
+            fontSize: large ? 30 : 13,
+            letterSpacing: large ? 1 : 0.2,
+            fontFeatures: const [FontFeature.tabularFigures()],
+          ),
+        ),
+      );
+}

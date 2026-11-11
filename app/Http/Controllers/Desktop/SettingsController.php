@@ -11,7 +11,8 @@ use Inertia\Inertia;
 use Inertia\Response;
 
 /**
- * Desktop settings (Admin): center-wide exit password of the exam app.
+ * Desktop settings (Admin): the center password of the exam app (registering a PC, leaving the
+ * locked exam screen, the app's admin menu). Stored under the setting key desktop_exit_password.
  */
 class SettingsController extends Controller
 {
@@ -37,6 +38,6 @@ class SettingsController extends Controller
 
         Setting::setExitPassword($data['password']);
 
-        return back()->with('success', 'Chiqish paroli saqlandi. Kompyuterlar keyingi ulanishda yangi parolni oladi.');
+        return back()->with('success', 'Markaz paroli saqlandi. Kompyuterlar keyingi ulanishda yangi parolni oladi.');
     }
 }

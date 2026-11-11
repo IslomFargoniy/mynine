@@ -7,9 +7,14 @@ use Illuminate\Console\Command;
 
 class SetDesktopExitPassword extends Command
 {
-    protected $signature = 'desktop:exit-password {password : New center-wide exit password for the desktop app}';
+    protected $signature = 'desktop:exit-password {password : New center password for the desktop app}';
 
-    protected $description = 'Set the desktop lockdown exit password (bcrypt + offline PBKDF2 hash)';
+    /**
+     * @var array<int, string>
+     */
+    protected $aliases = ['desktop:center-password'];
+
+    protected $description = 'Set the desktop center password (registers PCs, unlocks the exam screen, opens the admin menu; bcrypt + offline PBKDF2 hash)';
 
     public function handle(): int
     {
@@ -23,7 +28,7 @@ class SetDesktopExitPassword extends Command
 
         Setting::setExitPassword($password);
 
-        $this->info('Desktop exit password updated. PCs pick up the offline hash on their next /device/config call.');
+        $this->info('Desktop center password updated. PCs pick up the offline hash on their next /device/config call.');
 
         return self::SUCCESS;
     }

@@ -8,6 +8,7 @@ import 'package:crypto/crypto.dart';
 import '../../data/models/app_models.dart';
 import '../../data/models/exam_models.dart';
 import '../../data/models/part_payload.dart';
+import '../../platform/lockdown/lockdown.dart' show kDefaultBannedProcesses;
 import '../crypto/pbkdf2.dart';
 import '../time/server_clock.dart';
 import 'api_exception.dart';
@@ -18,7 +19,7 @@ import 'mynine_api.dart';
 /// starting with `DEMO` log in, module order is enforced, answers are
 /// idempotent per `client_uuid` and last-write-wins by `changed_at`.
 ///
-/// Demo exit password: `mynine`.
+/// Demo center password (registration, exit, admin menu): `mynine`.
 class FakeMynineApi implements MynineApi {
   FakeMynineApi({
     required this.clock,
@@ -50,12 +51,28 @@ class FakeMynineApi implements MynineApi {
   /// When false, login and device config answer 403 `device_not_approved`.
   bool approved = true;
 
+  /// Exam-room number given by the "admin" (shown once [approved]).
+  int? number = 7;
+
+  /// PC name stored by the fake server.
+  String deviceName = 'PC-DEMO';
+
+  /// When true, registration answers 409 `setup_password_missing`.
+  bool centerPasswordMissing = false;
+
+  /// When true, a register call approves the PC right away (demo mode, so the
+  /// demo is not stuck on the waiting screen). Tests leave it off.
+  bool autoApprove = false;
+
+  /// Number of `registerDevice` calls that reached the server.
+  int registrations = 0;
+
   void _requireApproved() {
     if (!approved) {
       throw ApiException(
         code: ApiErrorCode.deviceNotApproved,
         statusCode: 403,
-        message: 'This PC is waiting for administrator approval: PC-DEMO',
+        message: 'This PC is waiting for administrator approval: $deviceName',
       );
     }
   }
@@ -150,12 +167,39 @@ class FakeMynineApi implements MynineApi {
   @override
   Future<DeviceRegistration> registerDevice({
     required String machineId,
-    required String name,
+    required String password,
+    String? name,
     required String osVersion,
     required String appVersion,
   }) async {
     await _io('registerDevice');
-    return DeviceRegistration(deviceId: 7, deviceToken: 'fake-device-token', name: name);
+    if (centerPasswordMissing) {
+      throw ApiException(
+        code: ApiErrorCode.setupPasswordMissing,
+        statusCode: 409,
+        message: 'The center password is not set yet. Set the desktop password in Desktop settings first.',
+      );
+    }
+    if (password != exitPassword) {
+      throw ApiException(code: ApiErrorCode.invalidPassword, statusCode: 422, message: 'Wrong center password.');
+    }
+    registrations++;
+    final clean = name?.trim() ?? '';
+    if (clean.isNotEmpty) {
+      deviceName = clean;
+    } else if (registrations == 1) {
+      final id = machineId.replaceAll(RegExp('[^A-Za-z0-9]'), '');
+      deviceName = 'PC-${(id.length > 4 ? id.substring(id.length - 4) : id).toUpperCase()}';
+    }
+    // Re-registering drops the approval (the number is kept), like the server.
+    approved = autoApprove;
+    return DeviceRegistration(
+      deviceId: 7,
+      deviceToken: 'fake-device-token-$registrations',
+      name: deviceName,
+      number: approved ? number : null,
+      approved: approved,
+    );
   }
 
   @override
@@ -165,7 +209,13 @@ class FakeMynineApi implements MynineApi {
   }) async {
     await _io('deviceHeartbeat');
     _tick();
-    return DeviceHeartbeat(serverTime: _serverNow, unlock: false);
+    return DeviceHeartbeat(
+      serverTime: _serverNow,
+      unlock: false,
+      name: deviceName,
+      number: approved ? number : null,
+      approved: approved,
+    );
   }
 
   @override
@@ -195,10 +245,13 @@ class FakeMynineApi implements MynineApi {
     _tick();
     return DeviceConfig(
       exitPasswordOffline: offlineHash,
-      bannedProcesses: const ['anydesk.exe', 'teamviewer.exe', 'discord.exe', 'obs64.exe', 'telegram.exe'],
+      bannedProcesses: kDefaultBannedProcesses,
       heartbeatSeconds: 20,
       violationBatchSeconds: 10,
       serverTime: _serverNow,
+      name: deviceName,
+      number: number,
+      approved: true,
     );
   }
 

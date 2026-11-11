@@ -21,6 +21,8 @@ abstract final class SettingsKeys {
   static const deviceId = 'device_id';
   static const machineIdFallback = 'machine_id_fallback';
   static const pcName = 'pc_name';
+  static const pcNumber = 'pc_number';
+  static const deviceApproved = 'device_approved';
   static const serverUrl = 'server_url';
   static const deviceConfig = 'device_config_json';
 }

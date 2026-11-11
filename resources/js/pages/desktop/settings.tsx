@@ -34,11 +34,13 @@ export default function DesktopSettings() {
                 <PageHeader icon={<Settings className="h-5 w-5" />} title={t('exam_admin.nav.settings')} description={t('exam_admin.settings.description')} />
 
                 <Panel>
-                    <form onSubmit={submit} className="space-y-4">
+                    {/* autoComplete="off" + non-credential names: browsers should not offer to save it as a login. */}
+                    <form onSubmit={submit} className="space-y-4" autoComplete="off">
                         <div className="flex items-center gap-2">
                             <KeyRound className="h-4 w-4 text-brand" />
                             <h2 className="text-sm font-black">{t('exam_admin.settings.exit_password')}</h2>
                         </div>
+                        <p className="text-xs text-foreground">{t('exam_admin.settings.uses')}</p>
                         <p className="text-xs text-muted-foreground">
                             {exitPasswordSet
                                 ? t('exam_admin.settings.exit_password_set', { date: fmtDateTime(exitPasswordUpdatedAt) })
@@ -48,6 +50,7 @@ export default function DesktopSettings() {
                             <Label htmlFor="password">{t('exam_admin.settings.new_password')}</Label>
                             <input
                                 id="password"
+                                name="center_password_new"
                                 type="password"
                                 autoComplete="new-password"
                                 className={inputClass}
@@ -60,6 +63,7 @@ export default function DesktopSettings() {
                             <Label htmlFor="password_confirmation">{t('exam_admin.settings.confirm_password')}</Label>
                             <input
                                 id="password_confirmation"
+                                name="center_password_new_confirmation"
                                 type="password"
                                 autoComplete="new-password"
                                 className={inputClass}

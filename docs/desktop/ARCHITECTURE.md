@@ -22,7 +22,7 @@ mock-exam + desktop-client work on branch `feat/desktop-mock-system`. The API co
 | Results | Printed at reception. Result sheet = module bands (L, R, W, S) + overall band only. The desktop app never shows scores: after submit it shows "Completed" and returns to the code screen. |
 | Desktop client | Flutter, Windows 10/11, ≤ 20 PCs, **English UI only**, lockdown/kiosk, offline-tolerant (internet sometimes drops). No code signing (Defender allow-listed once). |
 | Updates | Self-updating from the **static folder `https://mynine.uz/desktop/`** (server `public/desktop/`: `version.json` + installers, uploaded by hand; not GitHub, no DB). Visible "Check for updates" button on the code screen (never during an exam); rollout to all PCs at once; auto-rollback if the new version fails its self-check. PCs only install a **higher** version, so a manual rollback is a new higher version built from the old code. |
-| Lockdown exit | Center-wide exit password (setting `desktop_exit_password`, stored hashed). Admin **and** Reception may unlock (password on the PC, or remote unlock from the monitor). |
+| Center password | One center-wide password (setting `desktop_exit_password`, stored hashed; UI name "Center password" / "Markaz paroli" / "Пароль центра") used to register a new PC, leave the locked exam screen and open the app's admin menu. Admin **and** Reception may unlock (password on the PC, or remote unlock from the monitor). |
 
 ## Role matrix
 
@@ -57,6 +57,7 @@ New / changed columns:
 - `attempt_types`: `reviewed_at` (nullable datetime), `reviewed_by` (nullable FK users).
 - `attempt_violations` (new): `id, attempt_id (cascade), device_id (nullable), type string(40), detail json nullable, occurred_at datetime, timestamps`, index on `attempt_id`. `attempts.tab_switch_count` is still incremented for type `focus_lost` for backward compatibility.
 - `devices` (new): `id, machine_id string unique, name, token_hash string(64), app_version, os_version, ip, last_seen_at, is_blocked bool, current_attempt_id nullable, timestamps`.
+  Later: `is_approved`, `approved_at` (admin approval) and `number` (unsigned smallint, nullable, unique — exam-room number "PC 7", given on approval, migration `2026_11_11_000001`). Registering a PC requires the center password (the desktop exit password).
 - No release table: releases are described by the static `public/desktop/version.json` (see API.md "Updates"), read on the server by `App\Services\Desktop\ReleaseManifest` for `min_version` (426) and the admin devices page (latest version).
 - `tests.folder_id` nullable; existing `purpose=mock` tests detached from their folders.
 - `test_imports` (new): `id, test_id (cascade), user_id (nullable), status (queued|running|done|failed), replace bool, files json, modules json ({Listening: {status, message, warnings[], parts, questions}}), finished_at, timestamps`.
@@ -79,14 +80,14 @@ Rules enforced server-side:
 
 Separate repository/folder: `/Users/macpro/Desktop/myProjects/mynine-desktop`.
 
-Screens: Code entry (+ version label, "Check for updates", hidden admin menu) → Rules → Sound check → Listening → Reading → Writing → Completed (auto-return to code entry after 10 s). Pause overlay when the server reports `paused`.
+Screens: Setup (first run: center password + optional PC name → `/device/register`) → Waiting for approval → Code entry (+ PC number badge, version label, "Check for updates", hidden admin menu) → Rules → Sound check → Listening → Reading → Writing → Completed (auto-return to code entry after 10 s). Pause overlay when the server reports `paused`.
 
 Key behaviour:
 
 - **Prefetch**: after login, download the whole exam (`GET /exam/prefetch`) and all audio files into the local cache before the Rules screen; show progress. The exam must survive internet loss after that point.
 - **Offline answers**: every change is written to local SQLite first, then sent in batches (`POST /exam/answers`) with a client UUID per change; retried until acknowledged. `POST /exam/submit` only after the queue is empty (or after a 5 min grace while offline — then keep retrying in the background on the Completed screen; never drop data).
 - **Timers**: based on server `finished_at` + clock offset from `server_time`, never the local clock alone.
-- **Lockdown (Windows)**: native C++ in `windows/runner` exposed via MethodChannel `mynine/lockdown`: low-level keyboard hook (Win, Alt+Tab, Alt+F4, Ctrl+Esc, Alt+Esc), `SetWindowDisplayAffinity(WDA_EXCLUDEFROMCAPTURE)`, fullscreen topmost kiosk, monitor count, banned process scan every 5 s, clipboard clear, focus-loss detection. Violations are queued and sent to `POST /exam/violations`.
-- **Exit**: only after submit, with the exit password (verified online, or offline against the cached PBKDF2 hash), or by remote unlock (`unlock: true` in heartbeat).
+- **Lockdown (Windows)**: native C++ in `windows/runner` exposed via MethodChannel `mynine/lockdown`: low-level keyboard hook (Win+any, Alt+Tab, Ctrl+Alt+Tab, Alt+F4, Ctrl+Esc, Ctrl+Shift+Esc, Alt+Esc, Alt+Space, PrintScreen), `SetWindowDisplayAffinity(WDA_EXCLUDEFROMCAPTURE)`, fullscreen topmost kiosk with every other window minimized, monitor count, banned processes closed (own session, system processes never) on exam start and every 5 s scan (rules screen blocks Start while any runs), clipboard clear, focus-loss detection with the foreground process name. While locked, HKCU policies disable Task Manager / Lock / Change password, touchpad 3/4-finger gestures and toasts; originals are saved to `%LOCALAPPDATA%\Mynine\lockdown_applied.ini` and restored on unlock/exit/sign-out or at the next start after a crash. Ctrl+Alt+Del itself cannot be blocked by an app — exam PCs should use a dedicated standard account with Assigned Access / Group Policy (desktop/README.md checklist). Violations are queued and sent to `POST /exam/violations`.
+- **Exit**: only after submit, with the center password (verified online, or offline against the cached PBKDF2 hash), or by remote unlock (`unlock: true` in heartbeat).
 - **Updates**: `GET {site}/desktop/version.json?t=<epoch>` (static, see API.md "Updates"); download `{site}/desktop/<file>` with resume, verify size + SHA-256, run installer silently (`/VERYSILENT /SUPPRESSMSGBOXES /NORESTART`), relaunch; on failed self-check after update, reinstall the previous installer kept in `%LOCALAPPDATA%\Mynine\previous\`. Random 0–10 min delay before automatic download (not for the manual button).
 - **Installer**: Inno Setup script in the repo; GitHub Actions `windows-latest` workflow builds `mynine-setup-<version>.exe`, its SHA-256 and a ready `version.json`. Release = upload the exe to the server's `public/desktop/` (keeping older installers: PCs download `mynine-setup-<installed version>.exe` from there as their rollback copy), then update `version.json`.

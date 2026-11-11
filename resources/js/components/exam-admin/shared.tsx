@@ -145,3 +145,19 @@ export const selectClass =
 
 export const inputClass =
     'h-9 w-full rounded-full border border-input bg-glass-subtle px-3.5 text-xs font-medium text-foreground focus:border-ring focus:ring-2 focus:ring-ring/40';
+
+/** Exam-room number of a PC ("№7"); renders nothing without a number. */
+export function PcNumber({ number, className }: { number?: number | null; className?: string }) {
+    if (number === null || number === undefined) return null;
+
+    return (
+        <span
+            className={cn(
+                'glass-subtle inline-flex min-w-7 items-center justify-center rounded-full px-2 py-0.5 font-mono text-[11px] font-black text-brand tabular-nums',
+                className,
+            )}
+        >
+            №{number}
+        </span>
+    );
+}

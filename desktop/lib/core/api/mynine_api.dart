@@ -28,9 +28,14 @@ abstract class MynineApi {
   String updateFileUrl(String fileName);
 
   // ---- Device --------------------------------------------------------------
+
+  /// `POST /device/register`. [password] is the center password; a wrong one
+  /// answers 422 `invalid_password`, a server without one 409
+  /// `setup_password_missing`. Without [name] the server picks `PC-xxxx`.
   Future<DeviceRegistration> registerDevice({
     required String machineId,
-    required String name,
+    required String password,
+    String? name,
     required String osVersion,
     required String appVersion,
   });

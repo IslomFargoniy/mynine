@@ -8,6 +8,7 @@ import 'package:lucide_icons_flutter/lucide_icons.dart';
 
 import '../../app/providers.dart';
 import '../../app/theme.dart';
+import '../../app/widgets.dart' show PcNumberBadge;
 import '../../core/theme/web_tokens.dart';
 import '../../core/time/server_clock.dart';
 import '../../data/models/exam_models.dart';
@@ -330,6 +331,10 @@ class InsperaHeader extends ConsumerWidget {
       child: Row(children: [
         const _IeltsBadge(),
         const SizedBox(width: 12),
+        if (exam.device.pcNumber case final number?) ...[
+          PcNumberBadge(number: number),
+          const SizedBox(width: 12),
+        ],
         Text(exam.candidateName, style: inter(14, weight: FontWeight.w700, color: WebTokens.candidateText)),
         const SizedBox(width: 12),
         Text('|', style: inter(16, weight: FontWeight.w300, color: WebTokens.separator)),

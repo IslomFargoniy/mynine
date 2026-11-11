@@ -756,7 +756,8 @@
             "refresh": "Yangilash",
             "save": "Saqlash",
             "search": "Qidirish...",
-            "status": "Holat"
+            "status": "Holat",
+            "cancel": "Bekor qilish"
         },
         "status": {
             "not_arrived": "Kelmagan",
@@ -977,8 +978,8 @@
         },
         "devices": {
             "description": "{{total}} ta kompyuter, {{online}} ta onlayn. Oxirgi ilova versiyasi: {{latest}}",
-            "pending": "{{count}} ta yangi kompyuter tasdiqlashni kutmoqda.",
-            "empty": "Hali kompyuterlar ro'yxatdan o'tmagan. Imtihon kompyuteriga Mynine desktop ilovasini o'rnating.",
+            "pending": "{{count}} ta yangi kompyuter tasdiqlashni kutmoqda. Har birini tasdiqlab, raqam bering.",
+            "empty": "Hali kompyuter ro'yxatdan o'tmagan. Imtihon kompyuteriga Mynine ilovasini o'rnating va markaz paroli bilan ro'yxatdan o'tkazing.",
             "pc": "Kompyuter",
             "version": "Ilova versiyasi",
             "os_ip": "OT / IP",
@@ -995,16 +996,22 @@
             "block_confirm": "{{name}} bloklansinmi? U imtihon o'tkaza olmaydi.",
             "delete_confirm": "{{name}} o'chirilsinmi? U qaytadan ro'yxatdan o'tishi kerak bo'ladi.",
             "download_installer": "Ilovani yuklab olish {{version}}",
-            "installer_missing": "O'rnatuvchi hali yuklanmagan"
+            "installer_missing": "O'rnatuvchi hali yuklanmagan",
+            "approve_title": "{{name}} ni tasdiqlash",
+            "number_label": "Imtihon xonasidagi kompyuter raqami",
+            "number_hint": "Kompyuter ekranida va monitorda ko'rinadi (masalan, PC 7). Har bir raqam faqat bitta kompyuterga beriladi.",
+            "number_invalid": "1 dan {{max}} gacha raqam kiriting.",
+            "number_edit": "Kompyuter raqamini o'zgartirish"
         },
         "settings": {
             "description": "Mynine desktop imtihon ilovasining markaz bo'yicha sozlamalari.",
-            "exit_password": "Chiqish paroli",
+            "exit_password": "Markaz paroli",
             "exit_password_set": "O'rnatilgan (oxirgi o'zgarish {{date}}).",
-            "exit_password_missing": "Hali o'rnatilmagan: imtihon kompyuterlarini parol bilan ochib bo'lmaydi.",
+            "exit_password_missing": "Hali o'rnatilmagan: yangi kompyuterlarni ro'yxatdan o'tkazib ham, imtihon kompyuterlarini parol bilan ochib ham bo'lmaydi.",
             "new_password": "Yangi parol",
             "confirm_password": "Parolni takrorlang",
-            "hint": "Kamida 6 belgi. Admin va Qabulxona qulflangan imtihon ekranidan chiqish uchun ishlatadi. Kompyuterlar uni oflayn tekshirish uchun ham saqlaydi."
+            "hint": "Kamida 6 belgi. Kompyuterlar uni oflayn tekshirish uchun ham saqlaydi.",
+            "uses": "Markaz paroli uch narsa uchun ishlatiladi: yangi imtihon kompyuterini ro'yxatdan o'tkazish (ilovani birinchi o'rnatishda), qulflangan imtihon ekranidan chiqish va ilovaning yashirin admin menyusini ochish."
         }
     },
     "Upload a Listening, Reading or Writing file.": "Listening, Reading yoki Writing faylini yuklang.",

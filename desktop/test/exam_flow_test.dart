@@ -19,6 +19,7 @@ void main() {
 
   test('unapproved PC shows the approval message and never re-registers', () async {
     final h = await Harness.create(approved: false);
+    expect(h.device.isApprovalPending, isTrue);
     await h.exam.login('DEMO1');
     expect(h.exam.stage, ExamStage.idle);
     expect(h.device.isApprovalPending, isTrue);
@@ -26,6 +27,17 @@ void main() {
     expect(h.api.calls.where((c) => c == 'registerDevice').length, 1);
     await h.exam.login('DEMO1');
     expect(h.api.calls.where((c) => c == 'registerDevice').length, 1);
+    await h.dispose();
+  });
+
+  test('an unregistered PC cannot log in and never registers on its own', () async {
+    final h = await Harness.create(register: false);
+    expect(h.device.isRegistered, isFalse);
+    await h.exam.login('DEMO1');
+    expect(h.exam.stage, ExamStage.idle);
+    expect(h.exam.error, contains('not set up'));
+    expect(h.api.calls, isNot(contains('registerDevice')));
+    expect(h.api.calls, isNot(contains('login')));
     await h.dispose();
   });
 

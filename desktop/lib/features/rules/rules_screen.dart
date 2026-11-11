@@ -5,6 +5,7 @@ import '../../app/providers.dart';
 import '../../app/widgets.dart';
 import '../../core/theme/web_tokens.dart';
 import '../../data/models/exam_models.dart';
+import '../../platform/lockdown/banned_apps_gate.dart';
 
 const _rules = [
   'The exam has three parts in this order: Listening, Reading and Writing. Speaking takes place separately.',
@@ -17,11 +18,37 @@ const _rules = [
 
 /// Layout of the web module-selection card (index.tsx, `!testType` branch):
 /// heading, candidate details box, module list and the black "Start ➔" action.
-class RulesScreen extends ConsumerWidget {
+///
+/// "Start" stays disabled while banned programs (browsers, messengers, remote
+/// desktop, Task Manager, …) are running; they are listed with a button that
+/// closes them.
+class RulesScreen extends ConsumerStatefulWidget {
   const RulesScreen({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<RulesScreen> createState() => _RulesScreenState();
+}
+
+class _RulesScreenState extends ConsumerState<RulesScreen> {
+  late final BannedAppsGate _gate = BannedAppsGate(
+    lockdown: ref.read(lockdownProvider),
+    bannedProcesses: () => ref.read(deviceRepositoryProvider).config.bannedProcesses,
+  );
+
+  @override
+  void initState() {
+    super.initState();
+    _gate.start();
+  }
+
+  @override
+  void dispose() {
+    _gate.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
     final exam = ref.watch(examControllerProvider);
     final current = exam.currentModule;
     return Scaffold(
@@ -68,12 +95,21 @@ class RulesScreen extends ConsumerWidget {
               const SizedBox(height: 12),
             ],
             const SizedBox(height: 8),
-            Align(
-              alignment: Alignment.centerRight,
-              child: BlackButton(
-                key: const Key('rules-accept'),
-                label: current != null && current.isInProgress ? 'Continue' : 'Start',
-                onTap: exam.acceptRules,
+            ListenableBuilder(
+              listenable: _gate,
+              builder: (context, _) => Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  BannedAppsPanel(gate: _gate),
+                  Align(
+                    alignment: Alignment.centerRight,
+                    child: BlackButton(
+                      key: const Key('rules-accept'),
+                      label: current != null && current.isInProgress ? 'Continue' : 'Start',
+                      onTap: _gate.canStart ? exam.acceptRules : null,
+                    ),
+                  ),
+                ],
               ),
             ),
           ],
@@ -93,6 +129,86 @@ class RulesScreen extends ConsumerWidget {
         ),
       ]);
 }
+
+/// Banned programs still running (rules screen). Empty when none.
+class BannedAppsPanel extends StatelessWidget {
+  const BannedAppsPanel({super.key, required this.gate});
+
+  final BannedAppsGate gate;
+
+  @override
+  Widget build(BuildContext context) {
+    if (!gate.checked) {
+      return Padding(
+        padding: const EdgeInsets.only(bottom: 12),
+        child: Text('Checking for other programs…', style: inter(13, color: TW.gray500)),
+      );
+    }
+    if (gate.running.isEmpty) return const SizedBox.shrink();
+    return Container(
+      key: const Key('banned-apps'),
+      margin: const EdgeInsets.only(bottom: 16),
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: TW.red50,
+        border: Border.all(color: TW.red200),
+        borderRadius: BorderRadius.circular(4),
+      ),
+      child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+        Text('Close these programs before you start',
+            style: inter(15, weight: FontWeight.w700, color: TW.red700)),
+        const SizedBox(height: 6),
+        Text('Other programs are not allowed during the exam.', style: inter(13, color: TW.gray700)),
+        const SizedBox(height: 8),
+        for (final name in gate.running)
+          Padding(
+            padding: const EdgeInsets.only(bottom: 2),
+            child: Text('•  ${displayProcessName(name)}',
+                key: Key('banned-$name'), style: inter(14, weight: FontWeight.w600, color: TW.gray900)),
+          ),
+        if (gate.notClosed.isNotEmpty) ...[
+          const SizedBox(height: 6),
+          Text('Some programs could not be closed. Please ask the invigilator.',
+              key: const Key('banned-not-closed'), style: inter(13, color: TW.red700)),
+        ],
+        const SizedBox(height: 12),
+        OutlinedButton.icon(
+          key: const Key('banned-close-all'),
+          onPressed: gate.busy ? null : gate.closeAll,
+          icon: const Icon(Icons.close, size: 16),
+          label: Text(gate.busy ? 'Closing…' : 'Close these programs'),
+        ),
+      ]),
+    );
+  }
+}
+
+/// `chrome.exe` → `Chrome`; unknown names keep the exe name.
+String displayProcessName(String exe) => switch (exe) {
+      'chrome.exe' => 'Google Chrome',
+      'msedge.exe' => 'Microsoft Edge',
+      'firefox.exe' => 'Firefox',
+      'opera.exe' => 'Opera',
+      'brave.exe' => 'Brave',
+      'yandex.exe' || 'browser.exe' => 'Yandex Browser',
+      'telegram.exe' => 'Telegram',
+      'whatsapp.exe' => 'WhatsApp',
+      'discord.exe' => 'Discord',
+      'teams.exe' || 'ms-teams.exe' => 'Microsoft Teams',
+      'zoom.exe' => 'Zoom',
+      'skype.exe' => 'Skype',
+      'slack.exe' => 'Slack',
+      'anydesk.exe' => 'AnyDesk',
+      'teamviewer.exe' => 'TeamViewer',
+      'rustdesk.exe' => 'RustDesk',
+      'taskmgr.exe' => 'Task Manager',
+      'cmd.exe' => 'Command Prompt',
+      'powershell.exe' || 'pwsh.exe' => 'PowerShell',
+      'windowsterminal.exe' => 'Windows Terminal',
+      'notepad.exe' => 'Notepad',
+      'winword.exe' => 'Microsoft Word',
+      _ => exe,
+    };
 
 /// Module row (`p-4 border` button of the web list; here informational).
 class _ModuleRow extends StatelessWidget {

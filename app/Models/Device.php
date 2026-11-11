@@ -14,6 +14,7 @@ class Device extends Model
     protected $fillable = [
         'machine_id',
         'name',
+        'number',
         'token_hash',
         'app_version',
         'os_version',
@@ -30,6 +31,7 @@ class Device extends Model
     ];
 
     protected $casts = [
+        'number' => 'integer',
         'last_seen_at' => 'datetime',
         'is_blocked' => 'boolean',
         'is_approved' => 'boolean',
@@ -61,9 +63,60 @@ class Device extends Model
         return $plain;
     }
 
-    public function approve(): void
+    public const MAX_NUMBER = 999;
+
+    /**
+     * Approve the PC and (optionally) give it its exam-room number. Without a number the
+     * current one is kept, or the next free one is assigned.
+     */
+    public function approve(?int $number = null): void
     {
-        $this->forceFill(['is_approved' => true, 'approved_at' => now()])->save();
+        $this->forceFill([
+            'is_approved' => true,
+            'approved_at' => now(),
+            'number' => $number ?? $this->number ?? static::nextFreeNumber(),
+        ])->save();
+    }
+
+    /**
+     * Lowest exam-room number (1..MAX_NUMBER) not used by any PC.
+     */
+    public static function nextFreeNumber(): ?int
+    {
+        $used = static::query()->whereNotNull('number')->orderBy('number')->pluck('number')->all();
+        $next = 1;
+        foreach ($used as $n) {
+            if ((int) $n > $next) {
+                break;
+            }
+            $next = max($next, (int) $n + 1);
+        }
+
+        return $next <= self::MAX_NUMBER ? $next : null;
+    }
+
+    /**
+     * Default name of a PC that registered without one: "PC-<last 4 characters of the machine id>".
+     */
+    public static function defaultName(string $machineId): string
+    {
+        $tail = strtoupper(substr(preg_replace('/[^A-Za-z0-9]/', '', $machineId) ?: $machineId, -4));
+
+        return 'PC-'.$tail;
+    }
+
+    /**
+     * Fields the app shows about itself (number is null until the PC is approved).
+     *
+     * @return array{name: string, number: int|null, approved: bool}
+     */
+    public function publicInfo(): array
+    {
+        return [
+            'name' => $this->name,
+            'number' => $this->is_approved ? $this->number : null,
+            'approved' => (bool) $this->is_approved,
+        ];
     }
 
     /**

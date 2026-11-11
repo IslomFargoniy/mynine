@@ -37,6 +37,8 @@ _DeviceRegistration _$DeviceRegistrationFromJson(Map<String, dynamic> json) =>
       deviceId: (json['device_id'] as num).toInt(),
       deviceToken: json['device_token'] as String,
       name: json['name'] as String,
+      number: intOrNull(json['number']),
+      approved: json['approved'] == null ? false : boolTrue(json['approved']),
     );
 
 Map<String, dynamic> _$DeviceRegistrationToJson(_DeviceRegistration instance) =>
@@ -44,18 +46,26 @@ Map<String, dynamic> _$DeviceRegistrationToJson(_DeviceRegistration instance) =>
       'device_id': instance.deviceId,
       'device_token': instance.deviceToken,
       'name': instance.name,
+      'number': instance.number,
+      'approved': instance.approved,
     };
 
 _DeviceHeartbeat _$DeviceHeartbeatFromJson(Map<String, dynamic> json) =>
     _DeviceHeartbeat(
       serverTime: dateOrNull(json['server_time']),
       unlock: json['unlock'] as bool? ?? false,
+      name: stringOrNull(json['name']),
+      number: intOrNull(json['number']),
+      approved: boolOrNull(json['approved']),
     );
 
 Map<String, dynamic> _$DeviceHeartbeatToJson(_DeviceHeartbeat instance) =>
     <String, dynamic>{
       'server_time': dateToJson(instance.serverTime),
       'unlock': instance.unlock,
+      'name': instance.name,
+      'number': instance.number,
+      'approved': instance.approved,
     };
 
 _DeviceConfig _$DeviceConfigFromJson(Map<String, dynamic> json) =>
@@ -70,6 +80,9 @@ _DeviceConfig _$DeviceConfigFromJson(Map<String, dynamic> json) =>
       violationBatchSeconds:
           (json['violation_batch_seconds'] as num?)?.toInt() ?? 10,
       serverTime: dateOrNull(json['server_time']),
+      name: stringOrNull(json['name']),
+      number: intOrNull(json['number']),
+      approved: boolOrNull(json['approved']),
     );
 
 Map<String, dynamic> _$DeviceConfigToJson(_DeviceConfig instance) =>
@@ -79,4 +92,7 @@ Map<String, dynamic> _$DeviceConfigToJson(_DeviceConfig instance) =>
       'heartbeat_seconds': instance.heartbeatSeconds,
       'violation_batch_seconds': instance.violationBatchSeconds,
       'server_time': dateToJson(instance.serverTime),
+      'name': instance.name,
+      'number': instance.number,
+      'approved': instance.approved,
     };

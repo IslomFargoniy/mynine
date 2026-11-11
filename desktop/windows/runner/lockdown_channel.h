@@ -2,16 +2,27 @@
 //
 // Exposes MethodChannel "mynine/lockdown" (StandardMethodCodec):
 //
-//   enable({keyboardHook, captureProtection, kiosk})  -> null
+//   enable({keyboardHook, captureProtection, kiosk,
+//           systemPolicies, minimizeOthers})          -> null
 //   disable()                                         -> null
 //   monitorCount()                                    -> int
-//   scanProcesses({names: [String]})                  -> [String] (lower-case exe names found)
+//   scanProcesses({names: [String]})                  -> [String] (lower-case exe names found
+//                                                        in this user's session)
+//   terminateProcesses({names: [String]})             -> [{process, terminated}] (this session
+//                                                        only, protected system processes skipped)
 //   clearClipboard()                                  -> null
 //   machineId()                                       -> String? (HKLM MachineGuid)
 //   isVirtualMachine()                                -> bool
 //
 // Events are pushed to Dart with invokeMethod("onEvent", {type: ...}):
-//   focus_lost | focus_gained | display_changed | capture_blocked
+//   focus_lost {process?} | focus_gained | display_changed | capture_blocked
+//
+// System policies (HKCU, only while locked): Task Manager, Lock and Change
+// password disabled (Ctrl+Alt+Del screen), precision-touchpad 3/4-finger
+// gestures off, toast notifications off. The original values are written to
+// %LOCALAPPDATA%\Mynine\lockdown_applied.ini BEFORE anything is changed and
+// restored on disable(), on WM_ENDSESSION, and at the next start if the app
+// crashed (the constructor restores a leftover marker file).
 //
 // Self-contained: only Win32 + the Flutter C++ client wrapper.
 #ifndef RUNNER_LOCKDOWN_CHANNEL_H_
@@ -45,7 +56,8 @@ class LockdownChannel {
       const flutter::MethodCall<flutter::EncodableValue>& call,
       std::unique_ptr<flutter::MethodResult<flutter::EncodableValue>> result);
 
-  void Enable(bool keyboard_hook, bool capture_protection, bool kiosk);
+  void Enable(bool keyboard_hook, bool capture_protection, bool kiosk,
+              bool system_policies, bool minimize_others);
   void Disable();
   void EnterKiosk();
   void ExitKiosk();
@@ -53,10 +65,19 @@ class LockdownChannel {
   void InstallKeyboardHook();
   void RemoveKeyboardHook();
   void SendEvent(const std::string& type);
+  void SendEvent(const std::string& type, const flutter::EncodableMap& extra);
+  void MinimizeOtherWindows();
+  void ApplySystemPolicies();
+  void RestoreSystemPolicies();
 
   static int CountMonitors();
   static std::vector<std::string> ScanProcesses(
       const std::vector<std::string>& banned);
+  static flutter::EncodableList TerminateProcesses(
+      const std::vector<std::string>& names);
+  static std::string ProcessNameFromPid(DWORD pid);
+  static std::wstring PolicyMarkerPath();
+  static void BroadcastPolicyChange();
   static std::optional<std::string> ReadMachineGuid();
   static bool LooksLikeVirtualMachine();
   static LRESULT CALLBACK KeyboardProc(int code, WPARAM wparam, LPARAM lparam);
@@ -66,6 +87,8 @@ class LockdownChannel {
   HHOOK keyboard_hook_ = nullptr;
   bool kiosk_ = false;
   bool capture_protected_ = false;
+  bool policies_applied_ = false;
+  bool minimize_others_ = false;
   LONG_PTR saved_style_ = 0;
   LONG_PTR saved_ex_style_ = 0;
   RECT saved_rect_{};

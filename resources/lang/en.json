@@ -756,7 +756,8 @@
             "refresh": "Refresh",
             "save": "Save",
             "search": "Search...",
-            "status": "Status"
+            "status": "Status",
+            "cancel": "Cancel"
         },
         "status": {
             "not_arrived": "Not arrived",
@@ -977,8 +978,8 @@
         },
         "devices": {
             "description": "{{total}} PCs, {{online}} online. Latest app version: {{latest}}",
-            "pending": "{{count}} new PC(s) are waiting for approval.",
-            "empty": "No PCs registered yet. Install the Mynine desktop app on an exam PC.",
+            "pending": "{{count}} new PC(s) are waiting for approval. Approve each one and give it its number.",
+            "empty": "No PCs registered yet. Install the Mynine desktop app on an exam PC and register it with the center password.",
             "pc": "PC",
             "version": "App version",
             "os_ip": "OS / IP",
@@ -995,16 +996,22 @@
             "block_confirm": "Block {{name}}? It will not be able to run exams.",
             "delete_confirm": "Delete {{name}}? It will have to register again.",
             "download_installer": "Download app {{version}}",
-            "installer_missing": "Installer not uploaded yet"
+            "installer_missing": "Installer not uploaded yet",
+            "approve_title": "Approve {{name}}",
+            "number_label": "PC number in the exam room",
+            "number_hint": "Shown on the PC screen and in the monitor (e.g. PC 7). Each number can be used once.",
+            "number_invalid": "Enter a number from 1 to {{max}}.",
+            "number_edit": "Change the PC number"
         },
         "settings": {
             "description": "Center-wide settings of the Mynine desktop exam app.",
-            "exit_password": "Exit password",
+            "exit_password": "Center password",
             "exit_password_set": "Set (last changed {{date}}).",
-            "exit_password_missing": "Not set yet: the exam PCs cannot be unlocked with a password.",
+            "exit_password_missing": "Not set yet: new PCs cannot be registered and exam PCs cannot be unlocked with a password.",
             "new_password": "New password",
             "confirm_password": "Repeat password",
-            "hint": "At least 6 characters. Admin and Reception use it to leave the locked exam screen. PCs also keep it for offline checks."
+            "hint": "At least 6 characters. PCs also keep it for offline checks.",
+            "uses": "Staff use the center password for three things: registering a new exam PC (first install of the app), leaving the locked exam screen, and opening the app's hidden admin menu."
         }
     },
     "Upload a Listening, Reading or Writing file.": "Upload a Listening, Reading or Writing file.",

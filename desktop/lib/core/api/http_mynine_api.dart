@@ -198,7 +198,8 @@ class HttpMynineApi implements MynineApi {
   @override
   Future<DeviceRegistration> registerDevice({
     required String machineId,
-    required String name,
+    required String password,
+    String? name,
     required String osVersion,
     required String appVersion,
   }) async =>
@@ -207,7 +208,8 @@ class HttpMynineApi implements MynineApi {
         '/device/register',
         body: {
           'machine_id': machineId,
-          'name': name,
+          'password': password,
+          if (name != null && name.trim().isNotEmpty) 'name': name.trim(),
           'os_version': osVersion,
           'app_version': appVersion,
         },

@@ -47,7 +47,7 @@ class ReceptionController extends Controller
         $mockIds = $mockId && $mocks->contains('id', $mockId) ? [$mockId] : $mocks->pluck('id')->all();
 
         $students = MockStudent::query()
-            ->with(['mock' => fn ($q) => $q->withoutEagerLoads(), 'attempt.attempt_types.type', 'attempt.device:id,name,last_seen_at', 'deliveredBy:id,name'])
+            ->with(['mock' => fn ($q) => $q->withoutEagerLoads(), 'attempt.attempt_types.type', 'attempt.device:id,name,number,last_seen_at', 'deliveredBy:id,name'])
             ->whereIn('mock_id', $mockIds)
             ->when($search !== '', function ($q) use ($search) {
                 $digits = preg_replace('/\D+/', '', $search);
@@ -183,6 +183,7 @@ class ReceptionController extends Controller
                 'attempt_id' => $attempt?->id,
                 'device' => $device ? [
                     'name' => $device->name,
+                    'number' => $device->number,
                     'online' => $device->last_seen_at !== null && $device->last_seen_at->gt(now()->subSeconds($online)),
                 ] : null,
                 'repeats' => $this->candidates->repeatModules($s->mock, $s->phone, $s->id),

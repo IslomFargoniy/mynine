@@ -184,16 +184,23 @@ class ExamController extends ChangeNotifier {
       _updateRequired = false;
     });
     try {
-      if (!device.isRegistered) await device.register();
+      if (!device.isRegistered) {
+        _error = 'This PC is not set up yet. Please ask the reception.';
+        return;
+      }
       LoginResponse login;
       try {
         login = await api.login(trimmed);
       } on ApiException catch (e) {
-        // 401 here can only mean the device token (no exam token yet):
-        // the one case where re-registering is allowed.
-        if (e.code != ApiErrorCode.unauthenticated) rethrow;
-        await device.register(force: true);
-        login = await api.login(trimmed);
+        // 401 here can only mean the device token (no exam token yet): the
+        // server no longer knows this PC. Staff must set it up again with the
+        // center password (Setup screen) — never re-register automatically.
+        if (e.code == ApiErrorCode.unauthenticated) {
+          await device.forgetRegistration();
+          _error = 'This PC must be set up again. Please ask the reception.';
+          return;
+        }
+        rethrow;
       }
       device.markApproved();
       await db.upsertSession(ExamSessionsCompanion.insert(

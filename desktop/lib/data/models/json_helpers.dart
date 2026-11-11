@@ -41,3 +41,13 @@ String dateRequiredToJson(DateTime value) => value.toUtc().toIso8601String();
 
 /// Only a JSON `true` counts as true (strings like "yes" do not).
 bool boolTrue(Object? value) => value == true;
+
+int? intOrNull(Object? value) {
+  if (value is int) return value;
+  if (value is num) return value.toInt();
+  if (value is String) return int.tryParse(value);
+  return null;
+}
+
+/// null when the field is missing (older server), else only `true` is true.
+bool? boolOrNull(Object? value) => value == null ? null : value == true;

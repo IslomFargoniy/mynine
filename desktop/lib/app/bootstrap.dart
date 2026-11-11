@@ -38,7 +38,11 @@ Future<List<Override>> bootstrap() async {
           clock: clock,
           appVersionString: config.appVersion,
           offerUpdate: const bool.fromEnvironment('FAKE_UPDATE'),
-        )..approved = !const bool.fromEnvironment('FAKE_UNAPPROVED'))
+        )
+          // Demo: the Setup screen asks for the center password "mynine";
+          // FAKE_UNAPPROVED=true stops on "Waiting for administrator approval".
+          ..autoApprove = !const bool.fromEnvironment('FAKE_UNAPPROVED')
+          ..approved = false)
       : HttpMynineApi(
           baseUrl: () => serverUrl.value,
           clientHeader: config.clientHeader,

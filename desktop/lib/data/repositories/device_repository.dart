@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 
@@ -29,6 +30,7 @@ class DeviceRepository extends ChangeNotifier {
 
   String? _machineId;
   String? _pcName;
+  int? _pcNumber;
   DeviceConfig _config = const DeviceConfig();
   bool _registered = false;
   bool _blocked = false;
@@ -37,18 +39,36 @@ class DeviceRepository extends ChangeNotifier {
   DeviceConfig get config => _config;
   String get pcName => _pcName ?? Platform.localHostname;
   String? get machineId => _machineId;
+
+  /// Short machine id for screens ("…3F2A"), or '-' when unknown.
+  String get machineIdShort {
+    final id = (_machineId ?? '').replaceAll(RegExp('[{}]'), '');
+    if (id.isEmpty) return '-';
+    return id.length <= 8 ? id.toUpperCase() : '…${id.substring(id.length - 8).toUpperCase()}';
+  }
+
+  /// Exam-room number given by the Admin on approval ("PC 7"); null until approved.
+  int? get pcNumber => _pcNumber;
+
+  /// True once this PC holds a device token (registered with the center password).
   bool get isRegistered => _registered;
   bool get isBlocked => _blocked;
 
-  /// Set while the server answers 403 `device_not_approved` (new PC that an
-  /// Admin has not approved yet). Holds the server message (names the PC).
+  /// Set while the PC is registered but not (yet / any more) approved by an
+  /// Admin. Holds the message shown on the waiting screen.
   String? get notApprovedMessage => _notApprovedMessage;
-  bool get isApprovalPending => _notApprovedMessage != null;
+  bool get isApprovalPending => _registered && _notApprovedMessage != null;
+
+  static String waitingMessage(String name) => 'This PC is waiting for administrator approval: $name';
 
   Future<void> load() async {
     credentials.deviceToken = await store.read(SettingsKeys.deviceToken);
     _registered = credentials.deviceToken != null;
     _pcName = await store.read(SettingsKeys.pcName);
+    _pcNumber = int.tryParse(await store.read(SettingsKeys.pcNumber) ?? '');
+    if (_registered && await store.read(SettingsKeys.deviceApproved) == '0') {
+      _notApprovedMessage = waitingMessage(pcName);
+    }
     final cfg = await store.read(SettingsKeys.deviceConfig);
     if (cfg != null) {
       try {
@@ -66,15 +86,18 @@ class DeviceRepository extends ChangeNotifier {
     notifyListeners();
   }
 
-  /// Registers this PC. Called once on first run; afterwards only when the
-  /// server rejects the device token with 401 or when staff explicitly asks
-  /// for it (re-registering rotates the token AND drops the admin approval).
-  Future<void> register({bool force = false}) async {
-    if (_registered && !force) return;
+  /// Registers this PC with the center [password] (Setup screen, or
+  /// "Re-register" in the admin menu). Never called automatically: a new
+  /// registration rotates the token and drops the admin approval.
+  ///
+  /// Throws [ApiException] `invalid_password` / `setup_password_missing` /
+  /// `device_blocked` / network errors; the stored token is kept on failure.
+  Future<void> register({required String password, String? name}) async {
     try {
       final r = await api.registerDevice(
         machineId: _machineId!,
-        name: pcName,
+        password: password,
+        name: (name?.trim().isNotEmpty ?? false) ? name!.trim() : null,
         osVersion: osVersionString(),
         appVersion: appVersion,
       );
@@ -85,6 +108,7 @@ class DeviceRepository extends ChangeNotifier {
       await store.write(SettingsKeys.pcName, r.name);
       _registered = true;
       _blocked = false;
+      await _setApproval(approved: r.approved, number: r.number);
     } on ApiException catch (e) {
       if (e.code == ApiErrorCode.deviceBlocked) _blocked = true;
       rethrow;
@@ -93,12 +117,22 @@ class DeviceRepository extends ChangeNotifier {
     }
   }
 
+  /// Forgets the device token (the server no longer knows it): the app shows
+  /// the Setup screen again and staff registers the PC with the center password.
+  Future<void> forgetRegistration() async {
+    credentials.deviceToken = null;
+    _registered = false;
+    _notApprovedMessage = null;
+    await store.write(SettingsKeys.deviceToken, null);
+    notifyListeners();
+  }
+
   Future<void> refreshConfig() async {
     try {
       _config = await api.deviceConfig();
       await store.write(SettingsKeys.deviceConfig, jsonEncode(_config.toJson()));
       _blocked = false;
-      _notApprovedMessage = null;
+      _applyIdentity(name: _config.name, number: _config.number, approved: _config.approved ?? true);
       notifyListeners();
     } on ApiException catch (e) {
       await _handleAuthError(e);
@@ -109,10 +143,9 @@ class DeviceRepository extends ChangeNotifier {
   Future<DeviceHeartbeat> heartbeat(DeviceState state) async {
     try {
       final r = await api.deviceHeartbeat(appVersion: appVersion, state: state);
-      if (_blocked) {
-        _blocked = false;
-        notifyListeners();
-      }
+      _blocked = false;
+      _applyIdentity(name: r.name, number: r.number, approved: r.approved);
+      notifyListeners();
       return r;
     } on ApiException catch (e) {
       await _handleAuthError(e);
@@ -120,13 +153,34 @@ class DeviceRepository extends ChangeNotifier {
     }
   }
 
+  /// Name / number / approval as reported by the server (heartbeat, config).
+  /// A null field (older server) leaves the current value.
+  void _applyIdentity({String? name, int? number, bool? approved}) {
+    if (name != null && name.isNotEmpty && name != _pcName) {
+      _pcName = name;
+      unawaited(store.write(SettingsKeys.pcName, name));
+    }
+    if (approved != null) unawaited(_setApproval(approved: approved, number: number));
+  }
+
+  Future<void> _setApproval({required bool approved, int? number}) async {
+    if (approved) {
+      _notApprovedMessage = null;
+      if (number != null && number != _pcNumber) {
+        _pcNumber = number;
+        await store.write(SettingsKeys.pcNumber, '$number');
+      }
+    } else {
+      _notApprovedMessage ??= waitingMessage(pcName);
+    }
+    await store.write(SettingsKeys.deviceApproved, approved ? '1' : '0');
+  }
+
   /// Records the approval state from any device/exam response error.
   void noteApproval(ApiException e) {
     if (e.code == ApiErrorCode.deviceNotApproved) {
-      final name = pcName;
-      _notApprovedMessage = e.message?.isNotEmpty == true
-          ? e.message
-          : 'This PC is waiting for administrator approval: $name';
+      _notApprovedMessage = e.message?.isNotEmpty == true ? e.message : waitingMessage(pcName);
+      unawaited(store.write(SettingsKeys.deviceApproved, '0'));
       notifyListeners();
     }
   }
@@ -134,6 +188,7 @@ class DeviceRepository extends ChangeNotifier {
   void markApproved() {
     if (_notApprovedMessage != null) {
       _notApprovedMessage = null;
+      unawaited(store.write(SettingsKeys.deviceApproved, '1'));
       notifyListeners();
     }
   }
@@ -144,21 +199,13 @@ class DeviceRepository extends ChangeNotifier {
       _blocked = true;
       notifyListeners();
     } else if (e.code == ApiErrorCode.unauthenticated) {
-      // Token rotated or deleted on the server: register again.
-      await register(force: true);
+      // Token rotated or the PC was deleted on the server: back to Setup
+      // (registering needs the center password, never automatic).
+      await forgetRegistration();
     }
   }
 
-  /// Saves the PC name. When [reRegister] is true the device registers again
-  /// so the server learns the new name — this drops the admin approval.
-  Future<void> setPcName(String name, {bool reRegister = false}) async {
-    _pcName = name.trim();
-    await store.write(SettingsKeys.pcName, _pcName);
-    notifyListeners();
-    if (reRegister) await register(force: true);
-  }
-
-  /// Verifies the center exit password: online first, then offline against
+  /// Verifies the center password: online first, then offline against
   /// the cached PBKDF2 hash when the server is unreachable.
   Future<bool> verifyExitPassword(String password) async {
     if (password.isEmpty) return false;

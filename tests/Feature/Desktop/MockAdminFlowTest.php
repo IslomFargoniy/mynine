@@ -543,19 +543,87 @@ test('admins approve, block, unblock, rename and delete PCs', function () {
     $this->actingAs($this->admin)->get(route('desktop.devices.index'))->assertOk()
         ->assertInertia(fn ($page) => $page->component('desktop/devices')->where('devices.0.is_approved', false));
 
-    $this->actingAs($this->admin)->post(route('desktop.devices.approve', $device))->assertSessionHas('success');
-    expect($device->fresh()->is_approved)->toBeTrue()->and($device->fresh()->approved_at)->not->toBeNull();
+    $this->actingAs($this->admin)->post(route('desktop.devices.approve', $device), ['number' => 4])->assertSessionHas('success');
+    expect($device->fresh()->is_approved)->toBeTrue()->and($device->fresh()->approved_at)->not->toBeNull()
+        ->and($device->fresh()->number)->toBe(4);
 
     $this->actingAs($this->admin)->post(route('desktop.devices.block', $device));
-    expect($device->fresh()->is_blocked)->toBeTrue();
+    expect($device->fresh()->is_blocked)->toBeTrue()->and($device->fresh()->number)->toBe(4);
     $this->actingAs($this->admin)->post(route('desktop.devices.unblock', $device));
     expect($device->fresh()->is_blocked)->toBeFalse();
 
     $this->actingAs($this->admin)->patch(route('desktop.devices.update', $device), ['name' => 'PC-99']);
-    expect($device->fresh()->name)->toBe('PC-99');
+    expect($device->fresh()->name)->toBe('PC-99')->and($device->fresh()->number)->toBe(4);
 
     $this->actingAs($this->admin)->delete(route('desktop.devices.destroy', $device));
     expect(Device::find($device->id))->toBeNull();
+});
+
+test('approving a PC requires a free number from 1 to 999', function () {
+    Device::factory()->approved(1)->create(['name' => 'A']);
+    Device::factory()->approved(2)->create(['name' => 'B']);
+    Device::factory()->approved(4)->create(['name' => 'D']);
+    $pending = Device::factory()->create(['name' => 'New', 'is_approved' => false]);
+
+    // The page suggests the lowest free number and lists pending PCs first, then by number.
+    $this->actingAs($this->admin)->get(route('desktop.devices.index'))->assertOk()
+        ->assertInertia(fn ($page) => $page->component('desktop/devices')
+            ->where('nextNumber', 3)
+            ->where('devices.0.name', 'New')->where('devices.0.number', null)
+            ->where('devices.1.number', 1)->where('devices.2.number', 2)->where('devices.3.number', 4));
+
+    foreach ([[], ['number' => null], ['number' => 0], ['number' => 1000], ['number' => 'x'], ['number' => 2]] as $body) {
+        $this->actingAs($this->admin)->post(route('desktop.devices.approve', $pending), $body)->assertSessionHasErrors('number');
+    }
+    expect($pending->fresh()->is_approved)->toBeFalse();
+
+    $this->actingAs($this->admin)->post(route('desktop.devices.approve', $pending), ['number' => 3])->assertSessionHas('success');
+    expect($pending->fresh()->number)->toBe(3)->and($pending->fresh()->is_approved)->toBeTrue()
+        ->and(Device::nextFreeNumber())->toBe(5);
+});
+
+test('admins change the number of a PC (unique among PCs)', function () {
+    $a = Device::factory()->approved(1)->create();
+    $b = Device::factory()->approved(2)->create();
+
+    $this->actingAs($this->admin)->patch(route('desktop.devices.update', $b), ['number' => 1])->assertSessionHasErrors('number');
+    $this->actingAs($this->admin)->patch(route('desktop.devices.update', $b), ['number' => 0])->assertSessionHasErrors('number');
+    expect($b->fresh()->number)->toBe(2);
+
+    // Keeping its own number is fine.
+    $this->actingAs($this->admin)->patch(route('desktop.devices.update', $a), ['number' => 1])->assertSessionHasNoErrors();
+    $this->actingAs($this->admin)->patch(route('desktop.devices.update', $b), ['number' => 7])->assertSessionHasNoErrors();
+    expect($b->fresh()->number)->toBe(7)->and($b->fresh()->is_approved)->toBeTrue();
+});
+
+test('reception and students cannot approve or renumber PCs', function () {
+    $device = Device::factory()->create(['is_approved' => false]);
+
+    foreach ([makeUser('Reception'), makeUser('Student')] as $user) {
+        $this->actingAs($user)->post(route('desktop.devices.approve', $device), ['number' => 5])->assertForbidden();
+        $this->actingAs($user)->patch(route('desktop.devices.update', $device), ['number' => 5])->assertForbidden();
+    }
+
+    expect($device->fresh()->is_approved)->toBeFalse()->and($device->fresh()->number)->toBeNull();
+});
+
+test('the monitor and reception show the PC number and the monitor is ordered by it', function () {
+    $other = MockStudent::create([
+        'mock_id' => $this->exam['mock']->id, 'name' => 'Aaron First', 'code' => 'MOCK-100002', 'phone' => '+998900000002',
+    ]);
+    $exam = app(ExamService::class);
+    $a1 = $exam->findOrCreateMockAttempt($this->exam['student']);
+    $a2 = $exam->findOrCreateMockAttempt($other);
+    $a1->forceFill(['device_id' => Device::factory()->approved(3)->create(['name' => 'PC-C'])->id])->save();
+    $a2->forceFill(['device_id' => Device::factory()->approved(9)->create(['name' => 'PC-I'])->id])->save();
+
+    $this->actingAs($this->admin)->get(route('monitor.index', ['mock_id' => $this->exam['mock']->id]))->assertOk()
+        ->assertInertia(fn ($page) => $page
+            ->where('attempts.0.device_number', 3)->where('attempts.0.device', 'PC-C')
+            ->where('attempts.1.device_number', 9));
+
+    $this->actingAs(makeUser('Reception'))->get(route('reception.index', ['mock_id' => $this->exam['mock']->id]))->assertOk()
+        ->assertInertia(fn ($page) => $page->where('candidates', fn ($rows) => collect($rows)->contains(fn ($r) => ($r['device']['number'] ?? null) === 3)));
 });
 
 test('the devices page shows the latest version from version.json', function () {

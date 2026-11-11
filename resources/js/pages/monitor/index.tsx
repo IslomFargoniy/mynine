@@ -1,4 +1,4 @@
-import { EmptyState, fmtDateTime, fmtSeconds, ModuleBadge, OnlineDot, PageHeader, Panel, postJson, selectClass, useAutoRefresh } from '@/components/exam-admin/shared';
+import { EmptyState, fmtDateTime, fmtSeconds, ModuleBadge, OnlineDot, PageHeader, Panel, PcNumber, postJson, selectClass, useAutoRefresh } from '@/components/exam-admin/shared';
 import { Button } from '@/components/ui/button';
 import AppLayout from '@/layouts/app-layout';
 import { cn } from '@/lib/utils';
@@ -21,6 +21,7 @@ interface MonitorAttempt {
     name: string;
     code: string | null;
     device: string | null;
+    device_number: number | null;
     module: string | null;
     modules_done: string[];
     time_left: number | null;
@@ -115,9 +116,12 @@ export default function MonitorIndex() {
                                     )}
                                 >
                                     <div className="flex items-start justify-between gap-2">
-                                        <div>
-                                            <div className="font-bold text-foreground">{a.name}</div>
-                                            <div className="font-mono text-[11px] text-brand">{a.code ?? `#${a.id}`}</div>
+                                        <div className="flex items-start gap-2">
+                                            <PcNumber number={a.device_number} className="mt-0.5" />
+                                            <div>
+                                                <div className="font-bold text-foreground">{a.name}</div>
+                                                <div className="font-mono text-[11px] text-brand">{a.code ?? `#${a.id}`}</div>
+                                            </div>
                                         </div>
                                         <div className="text-right">
                                             {a.finished ? (

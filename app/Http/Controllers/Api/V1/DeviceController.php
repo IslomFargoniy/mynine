@@ -16,15 +16,25 @@ class DeviceController extends Controller
 
     /**
      * POST /device/register — create the PC or rotate its token (same machine_id).
+     * Only someone who knows the center-wide desktop password can register a PC.
      */
     public function register(Request $request): JsonResponse
     {
         $data = $request->validate([
             'machine_id' => ['required', 'string', 'max:191'],
-            'name' => ['required', 'string', 'max:100'],
+            'password' => ['nullable', 'string', 'max:255'],
+            'name' => ['nullable', 'string', 'max:100'],
             'os_version' => ['nullable', 'string', 'max:191'],
             'app_version' => ['nullable', 'string', 'max:40'],
         ]);
+
+        if (Setting::get(Setting::DESKTOP_EXIT_PASSWORD) === null) {
+            throw ApiException::conflict('setup_password_missing', 'The center password is not set yet. Set the center password in Desktop settings first.');
+        }
+
+        if (! Setting::checkExitPassword((string) ($data['password'] ?? ''))) {
+            throw ApiException::unprocessable('invalid_password', 'Wrong center password.');
+        }
 
         $device = Device::firstOrNew(['machine_id' => $data['machine_id']]);
 
@@ -32,13 +42,16 @@ class DeviceController extends Controller
             throw new ApiException(403, 'device_blocked', 'This PC is blocked. Contact the administrator.');
         }
 
+        $name = trim((string) ($data['name'] ?? ''));
+
         $plainToken = $device->rotateToken();
         // A new token means a new holder: whoever re-registers must be approved again,
         // otherwise knowing an approved PC's machine_id would be enough to take its place.
+        // The exam-room number is kept so the admin only has to confirm it.
         $device->fill([
             'is_approved' => false,
             'approved_at' => null,
-            'name' => $data['name'],
+            'name' => $name !== '' ? $name : ($device->name ?: Device::defaultName($data['machine_id'])),
             'os_version' => $data['os_version'] ?? $device->os_version,
             'app_version' => $data['app_version'] ?? $device->app_version,
             'ip' => $request->ip(),
@@ -49,6 +62,8 @@ class DeviceController extends Controller
             'device_id' => $device->id,
             'device_token' => $plainToken,
             'name' => $device->name,
+            'number' => null,
+            'approved' => false,
         ]);
     }
 
@@ -72,7 +87,7 @@ class DeviceController extends Controller
         return response()->json([
             'server_time' => now()->toIso8601String(),
             'unlock' => $this->exam->consumeUnlock($device->current_attempt_id),
-        ]);
+        ] + $device->publicInfo());
     }
 
     /**
@@ -96,9 +111,10 @@ class DeviceController extends Controller
      */
     public function config(Request $request): JsonResponse
     {
-        $request->attributes->get('device')->ensureApproved();
+        $device = $this->device($request);
+        $device->ensureApproved();
 
-        return response()->json([
+        return response()->json($device->publicInfo() + [
             'exit_password_offline' => Setting::get(Setting::DESKTOP_EXIT_PASSWORD_OFFLINE),
             'banned_processes' => array_values(config('desktop.banned_processes', [])),
             'heartbeat_seconds' => (int) config('desktop.heartbeat_seconds', 20),

@@ -1,4 +1,4 @@
-import { CandidateStatusBadge, EmptyState, fmtDateTime, inputClass, OnlineDot, PageHeader, Panel, selectClass, useAutoRefresh } from '@/components/exam-admin/shared';
+import { CandidateStatusBadge, EmptyState, fmtDateTime, inputClass, OnlineDot, PageHeader, Panel, PcNumber, selectClass, useAutoRefresh } from '@/components/exam-admin/shared';
 import MockStudentManager from '@/components/mock/mock-student-manager';
 import { Button } from '@/components/ui/button';
 import AppLayout from '@/layouts/app-layout';
@@ -41,7 +41,7 @@ interface CandidateRow {
     result_delivered_at: string | null;
     delivered_by: string | null;
     attempt_id: number | null;
-    device: { name: string; online: boolean } | null;
+    device: { name: string; number: number | null; online: boolean } | null;
     repeats: RepeatModule[];
 }
 
@@ -213,7 +213,16 @@ export default function ReceptionIndex() {
                                             )}
                                         </td>
                                         <td className="px-3 py-2.5 font-mono">{fmtDateTime(c.speaking_at, 'HH:mm')}</td>
-                                        <td className="px-3 py-2.5">{c.device ? <OnlineDot online={c.device.online} label={c.device.name} /> : '—'}</td>
+                                        <td className="px-3 py-2.5">
+                                            {c.device ? (
+                                                <span className="inline-flex items-center gap-1.5">
+                                                    <PcNumber number={c.device.number} />
+                                                    <OnlineDot online={c.device.online} label={c.device.name} />
+                                                </span>
+                                            ) : (
+                                                '—'
+                                            )}
+                                        </td>
                                         <td className="px-3 py-2.5">
                                             <div className="flex flex-wrap justify-end gap-1">
                                                 {!c.checked_in_at && (

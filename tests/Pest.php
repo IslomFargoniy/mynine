@@ -10,6 +10,7 @@ use App\Models\Part;
 use App\Models\Question;
 use App\Models\QuestionType;
 use App\Models\Section;
+use App\Models\Setting;
 use App\Models\Test as ExamTest;
 use App\Models\TestType;
 use App\Models\Type;
@@ -175,10 +176,23 @@ function desktopApi(string $method, string $uri, array $data = [], ?string $devi
     return test()->json($method, '/api/v1/'.ltrim($uri, '/'), $data, desktopHeaders($deviceToken, $examToken, $version));
 }
 
+/**
+ * Center-wide desktop password used by the tests (set once per test when missing).
+ */
+function desktopCenterPassword(): string
+{
+    if (Setting::get(Setting::DESKTOP_EXIT_PASSWORD) === null) {
+        Setting::setExitPassword('center-pass');
+    }
+
+    return 'center-pass';
+}
+
 function registerDesktopDevice(string $machineId = 'MACHINE-1', string $name = 'PC-01', bool $approve = true): string
 {
     $token = desktopApi('POST', 'device/register', [
         'machine_id' => $machineId, 'name' => $name, 'os_version' => 'Windows 11 23H2', 'app_version' => '1.0.0',
+        'password' => desktopCenterPassword(),
     ])->assertOk()->json('device_token');
 
     if ($approve) {

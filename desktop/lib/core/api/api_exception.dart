@@ -14,6 +14,7 @@ enum ApiErrorCode {
   validationFailed('validation_failed'),
   deviceNotApproved('device_not_approved'),
   invalidPassword('invalid_password'),
+  setupPasswordMissing('setup_password_missing'),
   forbidden('forbidden'),
   notFound('not_found'),
   methodNotAllowed('method_not_allowed'),
@@ -93,7 +94,10 @@ class ApiException implements Exception {
         ApiErrorCode.validationFailed => message ?? 'Please check the entered data.',
         ApiErrorCode.deviceNotApproved =>
           message ?? 'This PC is waiting for administrator approval.',
-        ApiErrorCode.invalidPassword => 'Incorrect password.',
+        ApiErrorCode.invalidPassword => 'Incorrect center password.',
+        ApiErrorCode.setupPasswordMissing => message?.isNotEmpty == true
+            ? message!
+            : 'The center password is not set on the server yet. Set it in Desktop settings first.',
         ApiErrorCode.forbidden => 'Access denied.',
         ApiErrorCode.notFound => 'Not found on the server.',
         ApiErrorCode.methodNotAllowed => 'Something went wrong. Please try again.',

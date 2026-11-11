@@ -28,18 +28,47 @@ return [
 
     'violation_batch_seconds' => 10,
 
-    'banned_processes' => [
-        'anydesk.exe',
-        'teamviewer.exe',
-        'discord.exe',
-        'obs64.exe',
-        'telegram.exe',
-        'chrome.exe',
-        'msedge.exe',
-        'firefox.exe',
-        'zoom.exe',
-        'skype.exe',
-    ],
+    // Processes the desktop app closes (same-user ones) and reports during an exam (sent via GET /device/config).
+    // Override with DESKTOP_BANNED_PROCESSES="a.exe,b.exe" (comma separated, replaces the list).
+    // System processes (csrss, winlogon, explorer, dwm, svchost, lsass, …) are never terminated by the app.
+    'banned_processes' => env('DESKTOP_BANNED_PROCESSES')
+        ? array_values(array_filter(array_map(fn ($p) => strtolower(trim($p)), explode(',', (string) env('DESKTOP_BANNED_PROCESSES')))))
+        : [
+            'taskmgr.exe',
+            'processhacker.exe',
+            'procexp.exe',
+            'procexp64.exe',
+            'cmd.exe',
+            'powershell.exe',
+            'pwsh.exe',
+            'windowsterminal.exe',
+            'mstsc.exe',
+            'teams.exe',
+            'ms-teams.exe',
+            'slack.exe',
+            'whatsapp.exe',
+            'skype.exe',
+            'zoom.exe',
+            'chrome.exe',
+            'msedge.exe',
+            'firefox.exe',
+            'opera.exe',
+            'brave.exe',
+            'yandex.exe',
+            'browser.exe',
+            'anydesk.exe',
+            'teamviewer.exe',
+            'rustdesk.exe',
+            'discord.exe',
+            'telegram.exe',
+            'obs64.exe',
+            'obs32.exe',
+            'snippingtool.exe',
+            'screenclippinghost.exe',
+            'notepad.exe',
+            'wordpad.exe',
+            'winword.exe',
+        ],
 
     // Numbered questions in a full Listening / Reading paper (Mock Bank readiness check).
     'questions_per_paper' => 40,

@@ -15,10 +15,16 @@ Product decisions: `mynine.uz/docs/desktop/ARCHITECTURE.md`.
 
 ## Features
 
-- Device registration (once; the token is kept — re-registering drops the admin
-  approval), "waiting for approval" message with a 30 s config poll, device
-  heartbeat on the code screen, cached device config (banned processes, offline
-  exit-password hash).
+- **First-run Setup**: without a device token the app asks for the **center
+  password** (+ optional PC name) and only then registers (`POST /device/register`;
+  wrong password → error, server without a center password → "set it in Desktop
+  settings first"). Never registers on its own. Then "Waiting for administrator
+  approval" (PC name + short machine id, 30 s config poll) until an Admin approves
+  the PC and gives it a **number**; the code screen shows it as a large "PC 7"
+  badge and the exam header shows it too (heartbeat picks up renumbering).
+  Re-registering (admin menu, asks for the center password) drops the approval but
+  the server keeps the number. Device heartbeat on the code screen, cached device
+  config (banned processes, offline center-password hash).
 - Exam login by code, **prefetch** of the whole exam (parts, audio with SHA-256,
   images) before the instructions — the exam survives internet loss after that.
 - Every question type of the web exam room: multiple choice, multiple response
@@ -37,20 +43,41 @@ Product decisions: `mynine.uz/docs/desktop/ARCHITECTURE.md`.
 - Listening audio plays once from the cached file, positioned from the server
   timer, no pause/seek (media_kit).
 - **Lockdown on Windows** (`windows/runner/lockdown_channel.cpp`, MethodChannel
-  `mynine/lockdown`): fullscreen topmost kiosk, low-level keyboard hook (Win,
-  Alt+Tab, Alt+F4, Alt+Esc, Ctrl+Esc, Alt+Space, PrintScreen),
-  `SetWindowDisplayAffinity(WDA_EXCLUDEFROMCAPTURE)`, monitor count, banned
-  process scan every 5 s, clipboard clear, focus-loss events, VM detection,
-  `MachineGuid` as machine id. Violations are queued and sent to the server.
+  `mynine/lockdown`), active while the app is locked (kiosk) and fully undone on
+  unlock / exit:
+  - fullscreen topmost kiosk; every other visible top-level window is minimized on
+    lock and again whenever the app takes the focus back;
+  - low-level keyboard hook: Win and every Win+key, Alt+Tab, Ctrl+Alt+Tab, Alt+F4,
+    Alt+Esc, Ctrl+Esc, Ctrl+Shift+Esc, Alt+Space, PrintScreen, keyboard launch keys;
+  - per-user policies (HKCU): `Policies\System` `DisableTaskMgr`,
+    `DisableLockWorkstation`, `DisableChangePassword` = 1 (Task Manager and Lock
+    disappear from Ctrl+Alt+Del; sign-out is left on so a PC can always be
+    recovered); precision touchpad `ThreeFinger/FourFinger Slide/Tap Enabled` = 0
+    (**some Windows builds apply touchpad changes only after the next sign-in**);
+    toast notifications off (`Notifications\Settings\NOC_GLOBAL_SETTING_TOASTS_ENABLED`,
+    `PushNotifications\ToastEnabled` = 0). The original values are saved first to
+    `%LOCALAPPDATA%\Mynine\lockdown_applied.ini`, restored on unlock / exit / sign-out,
+    and at the next start if the app crashed (delete the values by hand only if the
+    app is uninstalled while locked);
+  - banned programs (list from `GET /device/config`, default in the server's
+    `config/desktop.php`) are **closed** (this user's session only, never system
+    processes such as csrss, winlogon, explorer, dwm, svchost, lsass) when the exam
+    starts and on every 5 s scan, and reported as `banned_process`
+    `{process, terminated}`. The rules screen lists the ones still running and keeps
+    **Start** disabled until they are closed ("Close these programs" button);
+  - `SetWindowDisplayAffinity(WDA_EXCLUDEFROMCAPTURE)`, monitor count, clipboard
+    clear, focus-loss events with the process that took the focus
+    (`focus_lost {process}`), VM detection, `MachineGuid` as machine id.
+  Violations are queued and sent to the server.
 - **Self-update** from the static folder `https://mynine.uz/desktop/`
   (`version.json` + installers): check on start, every 30 min on the code screen
   (random 0–10 min delay before the automatic download) and with the
-  "Check for updates" button (exit password needed in kiosk mode). Resumable
+  "Check for updates" button (center password needed in kiosk mode). Resumable
   download, SHA-256 check, silent Inno Setup install and relaunch, automatic
   rollback to the previous installer when the new version fails its self-check
   (API reachable + code screen rendered) within 2 minutes.
-- Hidden admin menu: **Ctrl+Shift+M** → centre exit password (online, or offline
-  PBKDF2) → PC name, server URL, re-register, check for updates, exit.
+- Hidden admin menu: **Ctrl+Shift+M** → center password (online, or offline
+  PBKDF2) → re-register (PC name + center password), server URL, check for updates, exit.
 
 ## Project layout
 
@@ -90,9 +117,11 @@ flutter test                          # golden tests run on macOS only (tag: gol
 flutter run -d windows --dart-define=API_FAKE=true     # or -d macos
 ```
 
-Use any code starting with **DEMO** (e.g. `DEMO1234`). The staff password in demo
-mode is **`mynine`**. Extra flags: `--dart-define=FAKE_UPDATE=true` (offers an
-update), `--dart-define=FAKE_UNAPPROVED=true` (PC waiting for approval).
+The Setup screen asks for the center password: **`mynine`** in demo mode (also used
+for unlock and the admin menu); the demo PC is approved right away as "PC 7". Then
+use any code starting with **DEMO** (e.g. `DEMO1234`). Extra flags:
+`--dart-define=FAKE_UPDATE=true` (offers an update), `--dart-define=FAKE_UNAPPROVED=true`
+(PC stays on "Waiting for administrator approval").
 Lockdown is disabled in demo mode.
 
 ### Against a server
@@ -174,13 +203,27 @@ already updated. Options:
       Keep the exam account a **standard user** (not an administrator).
 - [ ] Auto-start: the installer adds a Startup shortcut (task "Start automatically").
       Optionally enable automatic sign-in of the exam account.
-- [ ] Ctrl+Alt+Del cannot be blocked by an application: hide Task Manager / Lock /
-      Switch user / Sign out with Group Policy (User Configuration → Administrative
-      Templates → System → Ctrl+Alt+Del Options) on the exam account.
+- [ ] **OS-level lockdown (strongest layer).** Ctrl+Alt+Del (and Win+L) cannot be
+      blocked by any application. The app removes Task Manager / Lock / Change password
+      from that screen for the exam account while it runs, but for real exams also:
+  - use a **dedicated standard (non-admin) exam Windows account** with automatic
+    sign-in (`netplwiz` or Sysinternals Autologon), used for nothing else;
+  - preferably **Assigned Access / Shell Launcher** (Windows 10/11 Pro/Enterprise/
+    Education) so the exam account's shell *is* the Mynine app;
+  - or at least **Group Policy** on the exam account (User Configuration →
+    Administrative Templates → System → Ctrl+Alt+Del Options: Remove Task Manager,
+    Remove Lock Computer, Remove Change Password; System → Logon → "Hide entry points
+    for Fast User Switching"). Keep **Sign out** available so staff can always recover
+    a PC. Win+L is disabled by `DisableLockWorkstation`.
+- [ ] Touchpad laptops: after the first exam session sign out and back in once, so the
+      disabled 3/4-finger gestures take effect on builds that need it.
 - [ ] Single monitor only (a second monitor is reported as a violation).
-- [ ] First start: press **Ctrl+Shift+M**, enter the centre password (set on the server
-      with `php artisan desktop:exit-password`), set the PC name (e.g. `PC-07`); then
-      approve the PC in the mynine.uz admin device list.
+- [ ] Set the **center password** on the server first (admin panel → Desktop settings,
+      or `php artisan desktop:center-password <password>`).
+- [ ] First start: the app shows **Set up this PC** → enter the center password and,
+      optionally, the PC name (e.g. `PC-07`). Then approve the PC in the mynine.uz admin
+      device list and give it its **number** (the free one is prefilled); the app
+      leaves "Waiting for administrator approval" within 30 s and shows "PC 7".
 - [ ] Check "Version x.y.z" and "Online" on the code screen; run a demo code exam.
 
 Local data: `%LOCALAPPDATA%\Mynine\` (`data\mynine.sqlite` = queued answers, highlights,

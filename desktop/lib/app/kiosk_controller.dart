@@ -73,20 +73,31 @@ class KioskController extends ChangeNotifier {
     notifyListeners();
   }
 
+  /// Fetches config and reports presence once the PC holds a device token.
+  /// A PC without a token waits on the Setup screen (registration needs the
+  /// center password, so it is never automatic).
   Future<void> _bringOnline() async {
-    try {
-      // No-op once registered: the token is kept forever (re-registering
-      // would drop the admin approval on the server).
-      await device.register();
-      connection.reportSuccess();
-    } catch (e) {
-      connection.reportFailure(e);
-      debugPrint('Device registration postponed: $e');
-      return;
-    }
+    if (!device.isRegistered) return;
     await _refreshConfig();
     await _beat();
   }
+
+  /// Setup screen / admin menu: register this PC with the center [password].
+  /// Rethrows [ApiException] (`invalid_password`, `setup_password_missing`, …).
+  Future<void> registerDevice({required String password, String? name}) async {
+    try {
+      await device.register(password: password, name: name);
+      connection.reportSuccess();
+    } on ApiException catch (e) {
+      if (e.isNetwork) connection.reportFailure(e);
+      rethrow;
+    }
+    notifyListeners();
+    await _bringOnline();
+  }
+
+  /// Waiting screen "Check now" button.
+  Future<void> checkApprovalNow() => _refreshConfig();
 
   Future<void> _refreshConfig() async {
     try {
@@ -101,10 +112,7 @@ class KioskController extends ChangeNotifier {
   Future<void> _beat() async {
     if (exam.examActive) return; // the exam heartbeat covers this PC
     try {
-      if (!device.isRegistered) {
-        await _bringOnline();
-        return;
-      }
+      if (!device.isRegistered) return;
       final state = updates.phase == UpdatePhase.downloading || updates.phase == UpdatePhase.installing
           ? DeviceState.updating
           : DeviceState.idle;
@@ -130,9 +138,9 @@ class KioskController extends ChangeNotifier {
     final clean = url.trim().replaceAll(RegExp(r'/+$'), '');
     serverUrl.value = clean;
     await store.write(SettingsKeys.serverUrl, clean);
-    // A different server does not know this PC: register there (needs approval).
-    await device.register(force: true);
-    await _refreshConfig();
+    // A different server does not know this PC: back to the Setup screen
+    // (register there with that center's password, then admin approval).
+    await device.forgetRegistration();
     notifyListeners();
   }
 

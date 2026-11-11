@@ -7,6 +7,7 @@ use App\Models\Device;
 use App\Services\Desktop\ReleaseManifest;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Validation\Rule;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -26,12 +27,16 @@ class DeviceController extends Controller
 
         $devices = Device::query()
             ->with(['currentAttempt' => fn ($q) => $q->select('id', 'name', 'mock_id', 'mock_student_id', 'finished_at')->with('mock:id,name')])
+            // Pending PCs first, then by exam-room number (unnumbered last), then by name.
             ->orderBy('is_approved')
+            ->orderByRaw('number is null')
+            ->orderBy('number')
             ->orderBy('name')
             ->get()
             ->map(fn (Device $d) => [
                 'id' => $d->id,
                 'name' => $d->name,
+                'number' => $d->number,
                 'machine_id' => $d->machine_id,
                 'is_approved' => $d->is_approved,
                 'approved_at' => $d->approved_at?->toIso8601String(),
@@ -53,6 +58,7 @@ class DeviceController extends Controller
         return Inertia::render('desktop/devices', [
             'devices' => $devices,
             'latestVersion' => $latest,
+            'nextNumber' => Device::nextFreeNumber(),
             // Installer published in public/desktop (served as a static file by nginx).
             'installer' => $release ? [
                 'version' => $release['version'],
@@ -65,13 +71,15 @@ class DeviceController extends Controller
         ]);
     }
 
-    public function approve(Device $device): RedirectResponse
+    public function approve(Request $request, Device $device): RedirectResponse
     {
         $this->authorize('update', $device);
 
-        $device->approve();
+        $data = $request->validate(['number' => $this->numberRules($device)]);
 
-        return back()->with('success', "\"{$device->name}\" tasdiqlandi.");
+        $device->approve((int) $data['number']);
+
+        return back()->with('success', "\"{$device->name}\" tasdiqlandi (№{$device->number}).");
     }
 
     public function block(Device $device): RedirectResponse
@@ -96,10 +104,23 @@ class DeviceController extends Controller
     {
         $this->authorize('update', $device);
 
-        $data = $request->validate(['name' => ['required', 'string', 'max:100']]);
-        $device->forceFill(['name' => $data['name']])->save();
+        $data = $request->validate([
+            'name' => ['sometimes', 'required', 'string', 'max:100'],
+            'number' => ['sometimes', ...$this->numberRules($device)],
+        ]);
+        $device->forceFill($data)->save();
 
-        return back()->with('success', 'Nomi saqlandi.');
+        return back()->with('success', 'Saqlandi.');
+    }
+
+    /**
+     * Exam-room number: 1..999, unique among all PCs (approved or not).
+     *
+     * @return array<int, mixed>
+     */
+    private function numberRules(Device $device): array
+    {
+        return ['required', 'integer', 'between:1,'.Device::MAX_NUMBER, Rule::unique('devices', 'number')->ignore($device->id)];
     }
 
     public function destroy(Device $device): RedirectResponse

@@ -7,21 +7,28 @@ import 'lockdown.dart';
 typedef ViolationSink = Future<void> Function(String type, [Map<String, Object?>? detail]);
 
 /// Watches the PC during an exam and reports violations:
-/// focus loss, second monitor, banned processes, VM; clears the clipboard.
+/// focus loss (with the process that took the focus), second monitor,
+/// banned processes (which it also closes), VM; clears the clipboard.
 class LockdownMonitor {
   LockdownMonitor({
     required this.lockdown,
     required this.report,
     required this.bannedProcesses,
-  });
+    DateTime Function()? now,
+  }) : _now = now ?? DateTime.now;
 
   final Lockdown lockdown;
   final ViolationSink report;
   final List<String> Function() bannedProcesses;
+  final DateTime Function() _now;
+
+  /// The same banned app is reported again only after this long (it keeps
+  /// being closed on every scan).
+  static const bannedReportInterval = Duration(minutes: 1);
 
   Timer? _timer;
   StreamSubscription<LockdownEvent>? _sub;
-  final Set<String> _reportedProcesses = {};
+  final Map<String, DateTime> _reportedProcesses = {};
   bool _multiMonitorReported = false;
   DateTime? _lastFocusLost;
   bool get running => _timer != null;
@@ -49,11 +56,12 @@ class LockdownMonitor {
   void _onEvent(LockdownEvent e) {
     switch (e.type) {
       case LockdownEventType.focusLost:
-        final now = DateTime.now();
+        final now = _now();
         // Collapse bursts (a single Alt+Tab attempt can fire several events).
         if (_lastFocusLost == null || now.difference(_lastFocusLost!) > const Duration(seconds: 3)) {
           _lastFocusLost = now;
-          unawaited(report(ViolationType.focusLost, e.detail.isEmpty ? null : e.detail));
+          final detail = Map<String, Object?>.of(e.detail)..remove('type');
+          unawaited(report(ViolationType.focusLost, detail.isEmpty ? null : detail));
         }
       case LockdownEventType.displayChanged:
         unawaited(scan());
@@ -74,15 +82,27 @@ class LockdownMonitor {
     } else if (monitors <= 1) {
       _multiMonitorReported = false;
     }
-    final banned = bannedProcesses();
-    if (banned.isNotEmpty) {
-      final found = await lockdown.scanProcesses(banned);
-      for (final name in found) {
-        if (_reportedProcesses.add(name)) {
-          await report(ViolationType.bannedProcess, {'process': name});
-        }
+    await closeBannedProcesses();
+    await lockdown.clearClipboard();
+  }
+
+  /// Finds running banned apps, closes them and reports each one
+  /// (`banned_process` with `{process, terminated}`). Returns the results.
+  Future<List<ProcessKillResult>> closeBannedProcesses() async {
+    final banned = effectiveBannedProcesses(bannedProcesses());
+    if (banned.isEmpty) return const [];
+    final found = await lockdown.scanProcesses(banned);
+    if (found.isEmpty) return const [];
+    final killed = {for (final r in await lockdown.terminateProcesses(found)) r.process: r.terminated};
+    final results = [for (final name in found) ProcessKillResult(name, terminated: killed[name] ?? false)];
+    final now = _now();
+    for (final r in results) {
+      final last = _reportedProcesses[r.process];
+      if (last == null || now.difference(last) >= bannedReportInterval) {
+        _reportedProcesses[r.process] = now;
+        await report(ViolationType.bannedProcess, {'process': r.process, 'terminated': r.terminated});
       }
     }
-    await lockdown.clearClipboard();
+    return results;
   }
 }

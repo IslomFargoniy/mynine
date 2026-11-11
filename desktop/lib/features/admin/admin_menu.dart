@@ -5,9 +5,11 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../app/providers.dart';
 import '../../app/theme.dart';
+import '../../core/api/api_exception.dart';
+import '../setup/setup_views.dart' show setupErrorMessage;
 import '../updater/update_dialog.dart';
 
-/// Asks for the center exit password (verified online, or offline against
+/// Asks for the center password (verified online, or offline against
 /// the cached PBKDF2 hash). Returns true when correct.
 Future<bool> askExitPassword(BuildContext context, WidgetRef ref, {String? reason}) async {
   final ok = await showDialog<bool>(
@@ -59,14 +61,14 @@ class _PasswordDialogState extends ConsumerState<_PasswordDialog> {
   @override
   Widget build(BuildContext context) {
     return AlertDialog(
-      title: const Text('Staff password'),
+      title: const Text('Center password'),
       content: SizedBox(
         width: 360,
         child: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(widget.reason ?? 'Enter the center exit password to continue.'),
+            Text(widget.reason ?? 'Enter the center password to continue.'),
             const SizedBox(height: 16),
             TextField(
               controller: _controller,
@@ -74,7 +76,7 @@ class _PasswordDialogState extends ConsumerState<_PasswordDialog> {
               obscureText: true,
               enabled: !_checking,
               onSubmitted: (_) => _submit(),
-              decoration: InputDecoration(labelText: 'Password', errorText: _error),
+              decoration: InputDecoration(labelText: 'Center password', errorText: _error),
             ),
           ],
         ),
@@ -112,6 +114,7 @@ class _AdminMenuDialog extends ConsumerStatefulWidget {
 class _AdminMenuDialogState extends ConsumerState<_AdminMenuDialog> {
   late final TextEditingController _name;
   late final TextEditingController _url;
+  final _centerPassword = TextEditingController();
   String? _message;
   bool _saving = false;
 
@@ -126,6 +129,7 @@ class _AdminMenuDialogState extends ConsumerState<_AdminMenuDialog> {
   void dispose() {
     _name.dispose();
     _url.dispose();
+    _centerPassword.dispose();
     super.dispose();
   }
 
@@ -137,6 +141,8 @@ class _AdminMenuDialogState extends ConsumerState<_AdminMenuDialog> {
     try {
       await action();
       _message = done;
+    } on ApiException catch (e) {
+      _message = 'Failed: ${setupErrorMessage(e)}';
     } catch (e) {
       _message = 'Failed: $e';
     }
@@ -161,20 +167,49 @@ class _AdminMenuDialogState extends ConsumerState<_AdminMenuDialog> {
                 style: const TextStyle(color: AppColors.grey)),
             Text('Machine ID: ${device.machineId ?? '-'}',
                 style: const TextStyle(color: AppColors.grey, fontSize: 12)),
+            Text(
+              device.pcNumber != null ? 'PC number: ${device.pcNumber} (${device.pcName})' : 'PC name: ${device.pcName}',
+              style: const TextStyle(color: AppColors.grey, fontSize: 12),
+            ),
             const SizedBox(height: 16),
+            const Text('Re-register this PC', style: TextStyle(fontWeight: FontWeight.w700)),
+            const SizedBox(height: 4),
             Row(children: [
               Expanded(
-                child: TextField(controller: _name, decoration: const InputDecoration(labelText: 'PC name (e.g. PC-07)')),
+                child: TextField(
+                  key: const Key('admin-pc-name'),
+                  controller: _name,
+                  decoration: const InputDecoration(labelText: 'PC name (e.g. PC-07)'),
+                ),
               ),
               const SizedBox(width: 8),
-              OutlinedButton(
+              Expanded(
+                child: TextField(
+                  key: const Key('admin-center-password'),
+                  controller: _centerPassword,
+                  obscureText: true,
+                  decoration: const InputDecoration(labelText: 'Center password'),
+                ),
+              ),
+              const SizedBox(width: 8),
+              OutlinedButton.icon(
+                key: const Key('admin-reregister'),
+                icon: const Icon(Icons.app_registration),
                 onPressed: _saving
                     ? null
-                    : () => _run(
-                          () => device.setPcName(_name.text, reRegister: true),
-                          'PC name saved. The PC registered again and needs admin approval.',
-                        ),
-                child: const Text('Save'),
+                    : () {
+                        if (_centerPassword.text.isEmpty) {
+                          setState(() => _message = 'Enter the center password to re-register.');
+                          return;
+                        }
+                        final password = _centerPassword.text;
+                        _centerPassword.clear();
+                        _run(
+                          () => kiosk.registerDevice(password: password, name: _name.text),
+                          'Device registered. An Admin must approve this PC again (its number is kept).',
+                        );
+                      },
+                label: const Text('Re-register'),
               ),
             ]),
             const SizedBox(height: 12),
@@ -189,20 +224,12 @@ class _AdminMenuDialogState extends ConsumerState<_AdminMenuDialog> {
               ),
             ]),
             const Text(
-              'Saving the name, changing the server or re-registering rotates the device token '
-              'and requires a new approval by an Admin.',
+              'Re-registering or changing the server rotates the device token and requires a new approval '
+              'by an Admin. A new server asks for its center password on the Setup screen.',
               style: TextStyle(fontSize: 12, color: AppColors.grey),
             ),
             const SizedBox(height: 12),
             Wrap(spacing: 8, runSpacing: 8, children: [
-              OutlinedButton.icon(
-                icon: const Icon(Icons.app_registration),
-                onPressed: _saving
-                    ? null
-                    : () => _run(() => device.register(force: true),
-                        'Device registered. An Admin must approve this PC again.'),
-                label: const Text('Re-register device'),
-              ),
               OutlinedButton.icon(
                 icon: const Icon(Icons.system_update),
                 onPressed: _saving || exam.examActive

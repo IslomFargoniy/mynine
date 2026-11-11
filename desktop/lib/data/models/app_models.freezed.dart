@@ -307,7 +307,7 @@ as DateTime?,
 /// @nodoc
 mixin _$DeviceRegistration {
 
- int get deviceId; String get deviceToken; String get name;
+ int get deviceId; String get deviceToken; String get name;@JsonKey(fromJson: intOrNull) int? get number;@JsonKey(fromJson: boolTrue) bool get approved;
 /// Create a copy of DeviceRegistration
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -321,20 +321,20 @@ $DeviceRegistrationCopyWith<DeviceRegistration> get copyWith => _$DeviceRegistra
 @override
 bool operator ==(Object other) {
   final _this = this as DeviceRegistration;
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is DeviceRegistration&&(identical(other.deviceId, _this.deviceId) || other.deviceId == _this.deviceId)&&(identical(other.deviceToken, _this.deviceToken) || other.deviceToken == _this.deviceToken)&&(identical(other.name, _this.name) || other.name == _this.name));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is DeviceRegistration&&(identical(other.deviceId, _this.deviceId) || other.deviceId == _this.deviceId)&&(identical(other.deviceToken, _this.deviceToken) || other.deviceToken == _this.deviceToken)&&(identical(other.name, _this.name) || other.name == _this.name)&&(identical(other.number, _this.number) || other.number == _this.number)&&(identical(other.approved, _this.approved) || other.approved == _this.approved));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
 int get hashCode {
   final _this = this as DeviceRegistration;
-  return Object.hash(runtimeType,_this.deviceId,_this.deviceToken,_this.name);
+  return Object.hash(runtimeType,_this.deviceId,_this.deviceToken,_this.name,_this.number,_this.approved);
 }
 
 @override
 String toString() {
   final _this = this as DeviceRegistration;
-  return 'DeviceRegistration(deviceId: ${_this.deviceId}, deviceToken: ${_this.deviceToken}, name: ${_this.name})';
+  return 'DeviceRegistration(deviceId: ${_this.deviceId}, deviceToken: ${_this.deviceToken}, name: ${_this.name}, number: ${_this.number}, approved: ${_this.approved})';
 }
 
 
@@ -345,7 +345,7 @@ abstract mixin class $DeviceRegistrationCopyWith<$Res>  {
   factory $DeviceRegistrationCopyWith(DeviceRegistration value, $Res Function(DeviceRegistration) _then) = _$DeviceRegistrationCopyWithImpl;
 @useResult
 $Res call({
- int deviceId, String deviceToken, String name
+ int deviceId, String deviceToken, String name,@JsonKey(fromJson: intOrNull) int? number,@JsonKey(fromJson: boolTrue) bool approved
 });
 
 
@@ -362,12 +362,14 @@ class _$DeviceRegistrationCopyWithImpl<$Res>
 
 /// Create a copy of DeviceRegistration
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? deviceId = null,Object? deviceToken = null,Object? name = null,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? deviceId = null,Object? deviceToken = null,Object? name = null,Object? number = freezed,Object? approved = null,}) {
   return _then(DeviceRegistration(
 deviceId: null == deviceId ? _self.deviceId : deviceId // ignore: cast_nullable_to_non_nullable
 as int,deviceToken: null == deviceToken ? _self.deviceToken : deviceToken // ignore: cast_nullable_to_non_nullable
 as String,name: null == name ? _self.name : name // ignore: cast_nullable_to_non_nullable
-as String,
+as String,number: freezed == number ? _self.number : number // ignore: cast_nullable_to_non_nullable
+as int?,approved: null == approved ? _self.approved : approved // ignore: cast_nullable_to_non_nullable
+as bool,
   ));
 }
 
@@ -452,10 +454,10 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( int deviceId,  String deviceToken,  String name)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( int deviceId,  String deviceToken,  String name, @JsonKey(fromJson: intOrNull)  int? number, @JsonKey(fromJson: boolTrue)  bool approved)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _DeviceRegistration() when $default != null:
-return $default(_that.deviceId,_that.deviceToken,_that.name);case _:
+return $default(_that.deviceId,_that.deviceToken,_that.name,_that.number,_that.approved);case _:
   return orElse();
 
 }
@@ -473,10 +475,10 @@ return $default(_that.deviceId,_that.deviceToken,_that.name);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( int deviceId,  String deviceToken,  String name)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( int deviceId,  String deviceToken,  String name, @JsonKey(fromJson: intOrNull)  int? number, @JsonKey(fromJson: boolTrue)  bool approved)  $default,) {final _that = this;
 switch (_that) {
 case _DeviceRegistration():
-return $default(_that.deviceId,_that.deviceToken,_that.name);case _:
+return $default(_that.deviceId,_that.deviceToken,_that.name,_that.number,_that.approved);case _:
   throw StateError('Unexpected subclass');
 
 }
@@ -493,10 +495,10 @@ return $default(_that.deviceId,_that.deviceToken,_that.name);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( int deviceId,  String deviceToken,  String name)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( int deviceId,  String deviceToken,  String name, @JsonKey(fromJson: intOrNull)  int? number, @JsonKey(fromJson: boolTrue)  bool approved)?  $default,) {final _that = this;
 switch (_that) {
 case _DeviceRegistration() when $default != null:
-return $default(_that.deviceId,_that.deviceToken,_that.name);case _:
+return $default(_that.deviceId,_that.deviceToken,_that.name,_that.number,_that.approved);case _:
   return null;
 
 }
@@ -508,12 +510,14 @@ return $default(_that.deviceId,_that.deviceToken,_that.name);case _:
 @JsonSerializable()
 
 class _DeviceRegistration implements DeviceRegistration {
-  const _DeviceRegistration({required this.deviceId, required this.deviceToken, required this.name});
+  const _DeviceRegistration({required this.deviceId, required this.deviceToken, required this.name, @JsonKey(fromJson: intOrNull) this.number, @JsonKey(fromJson: boolTrue) this.approved = false});
   factory _DeviceRegistration.fromJson(Map<String, dynamic> json) => _$DeviceRegistrationFromJson(json);
 
 @override final  int deviceId;
 @override final  String deviceToken;
 @override final  String name;
+@override@JsonKey(fromJson: intOrNull) final  int? number;
+@override@JsonKey(fromJson: boolTrue) final  bool approved;
 
 /// Create a copy of DeviceRegistration
 /// with the given fields replaced by the non-null parameter values.
@@ -528,18 +532,18 @@ Map<String, dynamic> toJson() {
 
 @override
 bool operator ==(Object other) {
-    return identical(this, other) || (other.runtimeType == runtimeType&&other is _DeviceRegistration&&(identical(other.deviceId, deviceId) || other.deviceId == deviceId)&&(identical(other.deviceToken, deviceToken) || other.deviceToken == deviceToken)&&(identical(other.name, name) || other.name == name));
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is _DeviceRegistration&&(identical(other.deviceId, deviceId) || other.deviceId == deviceId)&&(identical(other.deviceToken, deviceToken) || other.deviceToken == deviceToken)&&(identical(other.name, name) || other.name == name)&&(identical(other.number, number) || other.number == number)&&(identical(other.approved, approved) || other.approved == approved));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
 int get hashCode {
-    return Object.hash(runtimeType,deviceId,deviceToken,name);
+    return Object.hash(runtimeType,deviceId,deviceToken,name,number,approved);
 }
 
 @override
 String toString() {
-    return 'DeviceRegistration(deviceId: $deviceId, deviceToken: $deviceToken, name: $name)';
+    return 'DeviceRegistration(deviceId: $deviceId, deviceToken: $deviceToken, name: $name, number: $number, approved: $approved)';
 }
 
 
@@ -550,7 +554,7 @@ abstract mixin class _$DeviceRegistrationCopyWith<$Res> implements $DeviceRegist
   factory _$DeviceRegistrationCopyWith(_DeviceRegistration value, $Res Function(_DeviceRegistration) _then) = __$DeviceRegistrationCopyWithImpl;
 @override @useResult
 $Res call({
- int deviceId, String deviceToken, String name
+ int deviceId, String deviceToken, String name,@JsonKey(fromJson: intOrNull) int? number,@JsonKey(fromJson: boolTrue) bool approved
 });
 
 
@@ -567,12 +571,14 @@ class __$DeviceRegistrationCopyWithImpl<$Res>
 
 /// Create a copy of DeviceRegistration
 /// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? deviceId = null,Object? deviceToken = null,Object? name = null,}) {
+@override @pragma('vm:prefer-inline') $Res call({Object? deviceId = null,Object? deviceToken = null,Object? name = null,Object? number = freezed,Object? approved = null,}) {
   return _then(_DeviceRegistration(
 deviceId: null == deviceId ? _self.deviceId : deviceId // ignore: cast_nullable_to_non_nullable
 as int,deviceToken: null == deviceToken ? _self.deviceToken : deviceToken // ignore: cast_nullable_to_non_nullable
 as String,name: null == name ? _self.name : name // ignore: cast_nullable_to_non_nullable
-as String,
+as String,number: freezed == number ? _self.number : number // ignore: cast_nullable_to_non_nullable
+as int?,approved: null == approved ? _self.approved : approved // ignore: cast_nullable_to_non_nullable
+as bool,
   ));
 }
 
@@ -583,7 +589,7 @@ as String,
 /// @nodoc
 mixin _$DeviceHeartbeat {
 
-@JsonKey(fromJson: dateOrNull, toJson: dateToJson) DateTime? get serverTime; bool get unlock;
+@JsonKey(fromJson: dateOrNull, toJson: dateToJson) DateTime? get serverTime; bool get unlock;@JsonKey(fromJson: stringOrNull) String? get name;@JsonKey(fromJson: intOrNull) int? get number;@JsonKey(fromJson: boolOrNull) bool? get approved;
 /// Create a copy of DeviceHeartbeat
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -597,20 +603,20 @@ $DeviceHeartbeatCopyWith<DeviceHeartbeat> get copyWith => _$DeviceHeartbeatCopyW
 @override
 bool operator ==(Object other) {
   final _this = this as DeviceHeartbeat;
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is DeviceHeartbeat&&(identical(other.serverTime, _this.serverTime) || other.serverTime == _this.serverTime)&&(identical(other.unlock, _this.unlock) || other.unlock == _this.unlock));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is DeviceHeartbeat&&(identical(other.serverTime, _this.serverTime) || other.serverTime == _this.serverTime)&&(identical(other.unlock, _this.unlock) || other.unlock == _this.unlock)&&(identical(other.name, _this.name) || other.name == _this.name)&&(identical(other.number, _this.number) || other.number == _this.number)&&(identical(other.approved, _this.approved) || other.approved == _this.approved));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
 int get hashCode {
   final _this = this as DeviceHeartbeat;
-  return Object.hash(runtimeType,_this.serverTime,_this.unlock);
+  return Object.hash(runtimeType,_this.serverTime,_this.unlock,_this.name,_this.number,_this.approved);
 }
 
 @override
 String toString() {
   final _this = this as DeviceHeartbeat;
-  return 'DeviceHeartbeat(serverTime: ${_this.serverTime}, unlock: ${_this.unlock})';
+  return 'DeviceHeartbeat(serverTime: ${_this.serverTime}, unlock: ${_this.unlock}, name: ${_this.name}, number: ${_this.number}, approved: ${_this.approved})';
 }
 
 
@@ -621,7 +627,7 @@ abstract mixin class $DeviceHeartbeatCopyWith<$Res>  {
   factory $DeviceHeartbeatCopyWith(DeviceHeartbeat value, $Res Function(DeviceHeartbeat) _then) = _$DeviceHeartbeatCopyWithImpl;
 @useResult
 $Res call({
-@JsonKey(fromJson: dateOrNull, toJson: dateToJson) DateTime? serverTime, bool unlock
+@JsonKey(fromJson: dateOrNull, toJson: dateToJson) DateTime? serverTime, bool unlock,@JsonKey(fromJson: stringOrNull) String? name,@JsonKey(fromJson: intOrNull) int? number,@JsonKey(fromJson: boolOrNull) bool? approved
 });
 
 
@@ -638,11 +644,14 @@ class _$DeviceHeartbeatCopyWithImpl<$Res>
 
 /// Create a copy of DeviceHeartbeat
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? serverTime = freezed,Object? unlock = null,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? serverTime = freezed,Object? unlock = null,Object? name = freezed,Object? number = freezed,Object? approved = freezed,}) {
   return _then(DeviceHeartbeat(
 serverTime: freezed == serverTime ? _self.serverTime : serverTime // ignore: cast_nullable_to_non_nullable
 as DateTime?,unlock: null == unlock ? _self.unlock : unlock // ignore: cast_nullable_to_non_nullable
-as bool,
+as bool,name: freezed == name ? _self.name : name // ignore: cast_nullable_to_non_nullable
+as String?,number: freezed == number ? _self.number : number // ignore: cast_nullable_to_non_nullable
+as int?,approved: freezed == approved ? _self.approved : approved // ignore: cast_nullable_to_non_nullable
+as bool?,
   ));
 }
 
@@ -727,10 +736,10 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function(@JsonKey(fromJson: dateOrNull, toJson: dateToJson)  DateTime? serverTime,  bool unlock)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function(@JsonKey(fromJson: dateOrNull, toJson: dateToJson)  DateTime? serverTime,  bool unlock, @JsonKey(fromJson: stringOrNull)  String? name, @JsonKey(fromJson: intOrNull)  int? number, @JsonKey(fromJson: boolOrNull)  bool? approved)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _DeviceHeartbeat() when $default != null:
-return $default(_that.serverTime,_that.unlock);case _:
+return $default(_that.serverTime,_that.unlock,_that.name,_that.number,_that.approved);case _:
   return orElse();
 
 }
@@ -748,10 +757,10 @@ return $default(_that.serverTime,_that.unlock);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function(@JsonKey(fromJson: dateOrNull, toJson: dateToJson)  DateTime? serverTime,  bool unlock)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function(@JsonKey(fromJson: dateOrNull, toJson: dateToJson)  DateTime? serverTime,  bool unlock, @JsonKey(fromJson: stringOrNull)  String? name, @JsonKey(fromJson: intOrNull)  int? number, @JsonKey(fromJson: boolOrNull)  bool? approved)  $default,) {final _that = this;
 switch (_that) {
 case _DeviceHeartbeat():
-return $default(_that.serverTime,_that.unlock);case _:
+return $default(_that.serverTime,_that.unlock,_that.name,_that.number,_that.approved);case _:
   throw StateError('Unexpected subclass');
 
 }
@@ -768,10 +777,10 @@ return $default(_that.serverTime,_that.unlock);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function(@JsonKey(fromJson: dateOrNull, toJson: dateToJson)  DateTime? serverTime,  bool unlock)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function(@JsonKey(fromJson: dateOrNull, toJson: dateToJson)  DateTime? serverTime,  bool unlock, @JsonKey(fromJson: stringOrNull)  String? name, @JsonKey(fromJson: intOrNull)  int? number, @JsonKey(fromJson: boolOrNull)  bool? approved)?  $default,) {final _that = this;
 switch (_that) {
 case _DeviceHeartbeat() when $default != null:
-return $default(_that.serverTime,_that.unlock);case _:
+return $default(_that.serverTime,_that.unlock,_that.name,_that.number,_that.approved);case _:
   return null;
 
 }
@@ -783,11 +792,14 @@ return $default(_that.serverTime,_that.unlock);case _:
 @JsonSerializable()
 
 class _DeviceHeartbeat implements DeviceHeartbeat {
-  const _DeviceHeartbeat({@JsonKey(fromJson: dateOrNull, toJson: dateToJson) this.serverTime, this.unlock = false});
+  const _DeviceHeartbeat({@JsonKey(fromJson: dateOrNull, toJson: dateToJson) this.serverTime, this.unlock = false, @JsonKey(fromJson: stringOrNull) this.name, @JsonKey(fromJson: intOrNull) this.number, @JsonKey(fromJson: boolOrNull) this.approved});
   factory _DeviceHeartbeat.fromJson(Map<String, dynamic> json) => _$DeviceHeartbeatFromJson(json);
 
 @override@JsonKey(fromJson: dateOrNull, toJson: dateToJson) final  DateTime? serverTime;
 @override@JsonKey() final  bool unlock;
+@override@JsonKey(fromJson: stringOrNull) final  String? name;
+@override@JsonKey(fromJson: intOrNull) final  int? number;
+@override@JsonKey(fromJson: boolOrNull) final  bool? approved;
 
 /// Create a copy of DeviceHeartbeat
 /// with the given fields replaced by the non-null parameter values.
@@ -802,18 +814,18 @@ Map<String, dynamic> toJson() {
 
 @override
 bool operator ==(Object other) {
-    return identical(this, other) || (other.runtimeType == runtimeType&&other is _DeviceHeartbeat&&(identical(other.serverTime, serverTime) || other.serverTime == serverTime)&&(identical(other.unlock, unlock) || other.unlock == unlock));
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is _DeviceHeartbeat&&(identical(other.serverTime, serverTime) || other.serverTime == serverTime)&&(identical(other.unlock, unlock) || other.unlock == unlock)&&(identical(other.name, name) || other.name == name)&&(identical(other.number, number) || other.number == number)&&(identical(other.approved, approved) || other.approved == approved));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
 int get hashCode {
-    return Object.hash(runtimeType,serverTime,unlock);
+    return Object.hash(runtimeType,serverTime,unlock,name,number,approved);
 }
 
 @override
 String toString() {
-    return 'DeviceHeartbeat(serverTime: $serverTime, unlock: $unlock)';
+    return 'DeviceHeartbeat(serverTime: $serverTime, unlock: $unlock, name: $name, number: $number, approved: $approved)';
 }
 
 
@@ -824,7 +836,7 @@ abstract mixin class _$DeviceHeartbeatCopyWith<$Res> implements $DeviceHeartbeat
   factory _$DeviceHeartbeatCopyWith(_DeviceHeartbeat value, $Res Function(_DeviceHeartbeat) _then) = __$DeviceHeartbeatCopyWithImpl;
 @override @useResult
 $Res call({
-@JsonKey(fromJson: dateOrNull, toJson: dateToJson) DateTime? serverTime, bool unlock
+@JsonKey(fromJson: dateOrNull, toJson: dateToJson) DateTime? serverTime, bool unlock,@JsonKey(fromJson: stringOrNull) String? name,@JsonKey(fromJson: intOrNull) int? number,@JsonKey(fromJson: boolOrNull) bool? approved
 });
 
 
@@ -841,11 +853,14 @@ class __$DeviceHeartbeatCopyWithImpl<$Res>
 
 /// Create a copy of DeviceHeartbeat
 /// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? serverTime = freezed,Object? unlock = null,}) {
+@override @pragma('vm:prefer-inline') $Res call({Object? serverTime = freezed,Object? unlock = null,Object? name = freezed,Object? number = freezed,Object? approved = freezed,}) {
   return _then(_DeviceHeartbeat(
 serverTime: freezed == serverTime ? _self.serverTime : serverTime // ignore: cast_nullable_to_non_nullable
 as DateTime?,unlock: null == unlock ? _self.unlock : unlock // ignore: cast_nullable_to_non_nullable
-as bool,
+as bool,name: freezed == name ? _self.name : name // ignore: cast_nullable_to_non_nullable
+as String?,number: freezed == number ? _self.number : number // ignore: cast_nullable_to_non_nullable
+as int?,approved: freezed == approved ? _self.approved : approved // ignore: cast_nullable_to_non_nullable
+as bool?,
   ));
 }
 
@@ -856,7 +871,7 @@ as bool,
 /// @nodoc
 mixin _$DeviceConfig {
 
- String? get exitPasswordOffline; List<String> get bannedProcesses; int get heartbeatSeconds; int get violationBatchSeconds;@JsonKey(fromJson: dateOrNull, toJson: dateToJson) DateTime? get serverTime;
+ String? get exitPasswordOffline; List<String> get bannedProcesses; int get heartbeatSeconds; int get violationBatchSeconds;@JsonKey(fromJson: dateOrNull, toJson: dateToJson) DateTime? get serverTime;@JsonKey(fromJson: stringOrNull) String? get name;@JsonKey(fromJson: intOrNull) int? get number;@JsonKey(fromJson: boolOrNull) bool? get approved;
 /// Create a copy of DeviceConfig
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -870,20 +885,20 @@ $DeviceConfigCopyWith<DeviceConfig> get copyWith => _$DeviceConfigCopyWithImpl<D
 @override
 bool operator ==(Object other) {
   final _this = this as DeviceConfig;
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is DeviceConfig&&(identical(other.exitPasswordOffline, _this.exitPasswordOffline) || other.exitPasswordOffline == _this.exitPasswordOffline)&&const DeepCollectionEquality().equals(other.bannedProcesses, _this.bannedProcesses)&&(identical(other.heartbeatSeconds, _this.heartbeatSeconds) || other.heartbeatSeconds == _this.heartbeatSeconds)&&(identical(other.violationBatchSeconds, _this.violationBatchSeconds) || other.violationBatchSeconds == _this.violationBatchSeconds)&&(identical(other.serverTime, _this.serverTime) || other.serverTime == _this.serverTime));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is DeviceConfig&&(identical(other.exitPasswordOffline, _this.exitPasswordOffline) || other.exitPasswordOffline == _this.exitPasswordOffline)&&const DeepCollectionEquality().equals(other.bannedProcesses, _this.bannedProcesses)&&(identical(other.heartbeatSeconds, _this.heartbeatSeconds) || other.heartbeatSeconds == _this.heartbeatSeconds)&&(identical(other.violationBatchSeconds, _this.violationBatchSeconds) || other.violationBatchSeconds == _this.violationBatchSeconds)&&(identical(other.serverTime, _this.serverTime) || other.serverTime == _this.serverTime)&&(identical(other.name, _this.name) || other.name == _this.name)&&(identical(other.number, _this.number) || other.number == _this.number)&&(identical(other.approved, _this.approved) || other.approved == _this.approved));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
 int get hashCode {
   final _this = this as DeviceConfig;
-  return Object.hash(runtimeType,_this.exitPasswordOffline,const DeepCollectionEquality().hash(_this.bannedProcesses),_this.heartbeatSeconds,_this.violationBatchSeconds,_this.serverTime);
+  return Object.hash(runtimeType,_this.exitPasswordOffline,const DeepCollectionEquality().hash(_this.bannedProcesses),_this.heartbeatSeconds,_this.violationBatchSeconds,_this.serverTime,_this.name,_this.number,_this.approved);
 }
 
 @override
 String toString() {
   final _this = this as DeviceConfig;
-  return 'DeviceConfig(exitPasswordOffline: ${_this.exitPasswordOffline}, bannedProcesses: ${_this.bannedProcesses}, heartbeatSeconds: ${_this.heartbeatSeconds}, violationBatchSeconds: ${_this.violationBatchSeconds}, serverTime: ${_this.serverTime})';
+  return 'DeviceConfig(exitPasswordOffline: ${_this.exitPasswordOffline}, bannedProcesses: ${_this.bannedProcesses}, heartbeatSeconds: ${_this.heartbeatSeconds}, violationBatchSeconds: ${_this.violationBatchSeconds}, serverTime: ${_this.serverTime}, name: ${_this.name}, number: ${_this.number}, approved: ${_this.approved})';
 }
 
 
@@ -894,7 +909,7 @@ abstract mixin class $DeviceConfigCopyWith<$Res>  {
   factory $DeviceConfigCopyWith(DeviceConfig value, $Res Function(DeviceConfig) _then) = _$DeviceConfigCopyWithImpl;
 @useResult
 $Res call({
- String? exitPasswordOffline, List<String> bannedProcesses, int heartbeatSeconds, int violationBatchSeconds,@JsonKey(fromJson: dateOrNull, toJson: dateToJson) DateTime? serverTime
+ String? exitPasswordOffline, List<String> bannedProcesses, int heartbeatSeconds, int violationBatchSeconds,@JsonKey(fromJson: dateOrNull, toJson: dateToJson) DateTime? serverTime,@JsonKey(fromJson: stringOrNull) String? name,@JsonKey(fromJson: intOrNull) int? number,@JsonKey(fromJson: boolOrNull) bool? approved
 });
 
 
@@ -911,14 +926,17 @@ class _$DeviceConfigCopyWithImpl<$Res>
 
 /// Create a copy of DeviceConfig
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? exitPasswordOffline = freezed,Object? bannedProcesses = null,Object? heartbeatSeconds = null,Object? violationBatchSeconds = null,Object? serverTime = freezed,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? exitPasswordOffline = freezed,Object? bannedProcesses = null,Object? heartbeatSeconds = null,Object? violationBatchSeconds = null,Object? serverTime = freezed,Object? name = freezed,Object? number = freezed,Object? approved = freezed,}) {
   return _then(DeviceConfig(
 exitPasswordOffline: freezed == exitPasswordOffline ? _self.exitPasswordOffline : exitPasswordOffline // ignore: cast_nullable_to_non_nullable
 as String?,bannedProcesses: null == bannedProcesses ? _self.bannedProcesses : bannedProcesses // ignore: cast_nullable_to_non_nullable
 as List<String>,heartbeatSeconds: null == heartbeatSeconds ? _self.heartbeatSeconds : heartbeatSeconds // ignore: cast_nullable_to_non_nullable
 as int,violationBatchSeconds: null == violationBatchSeconds ? _self.violationBatchSeconds : violationBatchSeconds // ignore: cast_nullable_to_non_nullable
 as int,serverTime: freezed == serverTime ? _self.serverTime : serverTime // ignore: cast_nullable_to_non_nullable
-as DateTime?,
+as DateTime?,name: freezed == name ? _self.name : name // ignore: cast_nullable_to_non_nullable
+as String?,number: freezed == number ? _self.number : number // ignore: cast_nullable_to_non_nullable
+as int?,approved: freezed == approved ? _self.approved : approved // ignore: cast_nullable_to_non_nullable
+as bool?,
   ));
 }
 
@@ -1003,10 +1021,10 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String? exitPasswordOffline,  List<String> bannedProcesses,  int heartbeatSeconds,  int violationBatchSeconds, @JsonKey(fromJson: dateOrNull, toJson: dateToJson)  DateTime? serverTime)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String? exitPasswordOffline,  List<String> bannedProcesses,  int heartbeatSeconds,  int violationBatchSeconds, @JsonKey(fromJson: dateOrNull, toJson: dateToJson)  DateTime? serverTime, @JsonKey(fromJson: stringOrNull)  String? name, @JsonKey(fromJson: intOrNull)  int? number, @JsonKey(fromJson: boolOrNull)  bool? approved)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _DeviceConfig() when $default != null:
-return $default(_that.exitPasswordOffline,_that.bannedProcesses,_that.heartbeatSeconds,_that.violationBatchSeconds,_that.serverTime);case _:
+return $default(_that.exitPasswordOffline,_that.bannedProcesses,_that.heartbeatSeconds,_that.violationBatchSeconds,_that.serverTime,_that.name,_that.number,_that.approved);case _:
   return orElse();
 
 }
@@ -1024,10 +1042,10 @@ return $default(_that.exitPasswordOffline,_that.bannedProcesses,_that.heartbeatS
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String? exitPasswordOffline,  List<String> bannedProcesses,  int heartbeatSeconds,  int violationBatchSeconds, @JsonKey(fromJson: dateOrNull, toJson: dateToJson)  DateTime? serverTime)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String? exitPasswordOffline,  List<String> bannedProcesses,  int heartbeatSeconds,  int violationBatchSeconds, @JsonKey(fromJson: dateOrNull, toJson: dateToJson)  DateTime? serverTime, @JsonKey(fromJson: stringOrNull)  String? name, @JsonKey(fromJson: intOrNull)  int? number, @JsonKey(fromJson: boolOrNull)  bool? approved)  $default,) {final _that = this;
 switch (_that) {
 case _DeviceConfig():
-return $default(_that.exitPasswordOffline,_that.bannedProcesses,_that.heartbeatSeconds,_that.violationBatchSeconds,_that.serverTime);case _:
+return $default(_that.exitPasswordOffline,_that.bannedProcesses,_that.heartbeatSeconds,_that.violationBatchSeconds,_that.serverTime,_that.name,_that.number,_that.approved);case _:
   throw StateError('Unexpected subclass');
 
 }
@@ -1044,10 +1062,10 @@ return $default(_that.exitPasswordOffline,_that.bannedProcesses,_that.heartbeatS
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String? exitPasswordOffline,  List<String> bannedProcesses,  int heartbeatSeconds,  int violationBatchSeconds, @JsonKey(fromJson: dateOrNull, toJson: dateToJson)  DateTime? serverTime)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String? exitPasswordOffline,  List<String> bannedProcesses,  int heartbeatSeconds,  int violationBatchSeconds, @JsonKey(fromJson: dateOrNull, toJson: dateToJson)  DateTime? serverTime, @JsonKey(fromJson: stringOrNull)  String? name, @JsonKey(fromJson: intOrNull)  int? number, @JsonKey(fromJson: boolOrNull)  bool? approved)?  $default,) {final _that = this;
 switch (_that) {
 case _DeviceConfig() when $default != null:
-return $default(_that.exitPasswordOffline,_that.bannedProcesses,_that.heartbeatSeconds,_that.violationBatchSeconds,_that.serverTime);case _:
+return $default(_that.exitPasswordOffline,_that.bannedProcesses,_that.heartbeatSeconds,_that.violationBatchSeconds,_that.serverTime,_that.name,_that.number,_that.approved);case _:
   return null;
 
 }
@@ -1059,7 +1077,7 @@ return $default(_that.exitPasswordOffline,_that.bannedProcesses,_that.heartbeatS
 @JsonSerializable()
 
 class _DeviceConfig implements DeviceConfig {
-  const _DeviceConfig({this.exitPasswordOffline,  List<String> bannedProcesses = const <String>[], this.heartbeatSeconds = 20, this.violationBatchSeconds = 10, @JsonKey(fromJson: dateOrNull, toJson: dateToJson) this.serverTime}): _bannedProcesses = bannedProcesses;
+  const _DeviceConfig({this.exitPasswordOffline,  List<String> bannedProcesses = const <String>[], this.heartbeatSeconds = 20, this.violationBatchSeconds = 10, @JsonKey(fromJson: dateOrNull, toJson: dateToJson) this.serverTime, @JsonKey(fromJson: stringOrNull) this.name, @JsonKey(fromJson: intOrNull) this.number, @JsonKey(fromJson: boolOrNull) this.approved}): _bannedProcesses = bannedProcesses;
   factory _DeviceConfig.fromJson(Map<String, dynamic> json) => _$DeviceConfigFromJson(json);
 
 @override final  String? exitPasswordOffline;
@@ -1073,6 +1091,9 @@ class _DeviceConfig implements DeviceConfig {
 @override@JsonKey() final  int heartbeatSeconds;
 @override@JsonKey() final  int violationBatchSeconds;
 @override@JsonKey(fromJson: dateOrNull, toJson: dateToJson) final  DateTime? serverTime;
+@override@JsonKey(fromJson: stringOrNull) final  String? name;
+@override@JsonKey(fromJson: intOrNull) final  int? number;
+@override@JsonKey(fromJson: boolOrNull) final  bool? approved;
 
 /// Create a copy of DeviceConfig
 /// with the given fields replaced by the non-null parameter values.
@@ -1087,18 +1108,18 @@ Map<String, dynamic> toJson() {
 
 @override
 bool operator ==(Object other) {
-    return identical(this, other) || (other.runtimeType == runtimeType&&other is _DeviceConfig&&(identical(other.exitPasswordOffline, exitPasswordOffline) || other.exitPasswordOffline == exitPasswordOffline)&&const DeepCollectionEquality().equals(other.bannedProcesses, _bannedProcesses)&&(identical(other.heartbeatSeconds, heartbeatSeconds) || other.heartbeatSeconds == heartbeatSeconds)&&(identical(other.violationBatchSeconds, violationBatchSeconds) || other.violationBatchSeconds == violationBatchSeconds)&&(identical(other.serverTime, serverTime) || other.serverTime == serverTime));
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is _DeviceConfig&&(identical(other.exitPasswordOffline, exitPasswordOffline) || other.exitPasswordOffline == exitPasswordOffline)&&const DeepCollectionEquality().equals(other.bannedProcesses, _bannedProcesses)&&(identical(other.heartbeatSeconds, heartbeatSeconds) || other.heartbeatSeconds == heartbeatSeconds)&&(identical(other.violationBatchSeconds, violationBatchSeconds) || other.violationBatchSeconds == violationBatchSeconds)&&(identical(other.serverTime, serverTime) || other.serverTime == serverTime)&&(identical(other.name, name) || other.name == name)&&(identical(other.number, number) || other.number == number)&&(identical(other.approved, approved) || other.approved == approved));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
 int get hashCode {
-    return Object.hash(runtimeType,exitPasswordOffline,const DeepCollectionEquality().hash(_bannedProcesses),heartbeatSeconds,violationBatchSeconds,serverTime);
+    return Object.hash(runtimeType,exitPasswordOffline,const DeepCollectionEquality().hash(_bannedProcesses),heartbeatSeconds,violationBatchSeconds,serverTime,name,number,approved);
 }
 
 @override
 String toString() {
-    return 'DeviceConfig(exitPasswordOffline: $exitPasswordOffline, bannedProcesses: $bannedProcesses, heartbeatSeconds: $heartbeatSeconds, violationBatchSeconds: $violationBatchSeconds, serverTime: $serverTime)';
+    return 'DeviceConfig(exitPasswordOffline: $exitPasswordOffline, bannedProcesses: $bannedProcesses, heartbeatSeconds: $heartbeatSeconds, violationBatchSeconds: $violationBatchSeconds, serverTime: $serverTime, name: $name, number: $number, approved: $approved)';
 }
 
 
@@ -1109,7 +1130,7 @@ abstract mixin class _$DeviceConfigCopyWith<$Res> implements $DeviceConfigCopyWi
   factory _$DeviceConfigCopyWith(_DeviceConfig value, $Res Function(_DeviceConfig) _then) = __$DeviceConfigCopyWithImpl;
 @override @useResult
 $Res call({
- String? exitPasswordOffline, List<String> bannedProcesses, int heartbeatSeconds, int violationBatchSeconds,@JsonKey(fromJson: dateOrNull, toJson: dateToJson) DateTime? serverTime
+ String? exitPasswordOffline, List<String> bannedProcesses, int heartbeatSeconds, int violationBatchSeconds,@JsonKey(fromJson: dateOrNull, toJson: dateToJson) DateTime? serverTime,@JsonKey(fromJson: stringOrNull) String? name,@JsonKey(fromJson: intOrNull) int? number,@JsonKey(fromJson: boolOrNull) bool? approved
 });
 
 
@@ -1126,14 +1147,17 @@ class __$DeviceConfigCopyWithImpl<$Res>
 
 /// Create a copy of DeviceConfig
 /// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? exitPasswordOffline = freezed,Object? bannedProcesses = null,Object? heartbeatSeconds = null,Object? violationBatchSeconds = null,Object? serverTime = freezed,}) {
+@override @pragma('vm:prefer-inline') $Res call({Object? exitPasswordOffline = freezed,Object? bannedProcesses = null,Object? heartbeatSeconds = null,Object? violationBatchSeconds = null,Object? serverTime = freezed,Object? name = freezed,Object? number = freezed,Object? approved = freezed,}) {
   return _then(_DeviceConfig(
 exitPasswordOffline: freezed == exitPasswordOffline ? _self.exitPasswordOffline : exitPasswordOffline // ignore: cast_nullable_to_non_nullable
 as String?,bannedProcesses: null == bannedProcesses ? _self._bannedProcesses : bannedProcesses // ignore: cast_nullable_to_non_nullable
 as List<String>,heartbeatSeconds: null == heartbeatSeconds ? _self.heartbeatSeconds : heartbeatSeconds // ignore: cast_nullable_to_non_nullable
 as int,violationBatchSeconds: null == violationBatchSeconds ? _self.violationBatchSeconds : violationBatchSeconds // ignore: cast_nullable_to_non_nullable
 as int,serverTime: freezed == serverTime ? _self.serverTime : serverTime // ignore: cast_nullable_to_non_nullable
-as DateTime?,
+as DateTime?,name: freezed == name ? _self.name : name // ignore: cast_nullable_to_non_nullable
+as String?,number: freezed == number ? _self.number : number // ignore: cast_nullable_to_non_nullable
+as int?,approved: freezed == approved ? _self.approved : approved // ignore: cast_nullable_to_non_nullable
+as bool?,
   ));
 }
 
