@@ -11,6 +11,7 @@ use Carbon\Carbon;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
 
 class MockStudentController extends Controller
@@ -174,7 +175,16 @@ class MockStudentController extends Controller
     {
         $this->authorize('deleteStudents', $mockStudent->mock);
 
-        $mockStudent->delete();
+        $attempt = $mockStudent->attempt;
+        if ($attempt && $attempt->finished_at === null) {
+            return back()->with('error', __('candidate_has_running_attempt'));
+        }
+
+        DB::transaction(function () use ($mockStudent) {
+            // Sanctum tokens are polymorphic (no FK): revoke the exam token explicitly.
+            $mockStudent->tokens()->delete();
+            $mockStudent->delete();
+        });
 
         return back()->with('success', __('candidate_deleted'));
     }

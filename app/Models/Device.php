@@ -138,4 +138,22 @@ class Device extends Model
     {
         return $this->hasMany(Attempt::class, 'device_id');
     }
+
+    /**
+     * An exam is running on this PC right now: its current attempt is unfinished and the PC sent an exam
+     * heartbeat recently (same window as "session active elsewhere" on login).
+     */
+    public function hasRunningAttempt(): bool
+    {
+        if (! $this->current_attempt_id) {
+            return false;
+        }
+
+        return Attempt::withoutEagerLoads()
+            ->whereKey($this->current_attempt_id)
+            ->whereNull('finished_at')
+            ->whereNotNull('last_heartbeat_at')
+            ->where('last_heartbeat_at', '>', now()->subSeconds((int) config('desktop.active_elsewhere_seconds', 90)))
+            ->exists();
+    }
 }

@@ -92,6 +92,11 @@ class DeviceController extends Controller
     {
         $this->authorize('update', $device);
 
+        // Blocking mid-exam would cut the candidate off: finish or release the exam in the monitor first.
+        if ($device->hasRunningAttempt()) {
+            return back()->with('error', __('device_has_running_exam', ['name' => $device->name]));
+        }
+
         $device->forceFill(['is_blocked' => true])->save();
 
         return back()->with('success', __('device_blocked', ['name' => $device->name]));
@@ -132,6 +137,10 @@ class DeviceController extends Controller
     public function destroy(Device $device): RedirectResponse
     {
         $this->authorize('delete', $device);
+
+        if ($device->hasRunningAttempt()) {
+            return back()->with('error', __('device_has_running_exam', ['name' => $device->name]));
+        }
 
         $device->delete();
 

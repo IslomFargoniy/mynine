@@ -36,8 +36,8 @@ class MockTestImporter
     public function refusal(TestType $testType, bool $replace): ?string
     {
         $test = $testType->test;
-        if ($test && ($test->attempts()->exists() || $test->mocks()->whereHas('attempts')->exists())) {
-            return 'The test already has attempts; its content cannot be replaced.';
+        if ($test?->inUse()) {
+            return 'The test already has attempts or is used by a mock that has not ended; its content cannot be replaced.';
         }
 
         if (! $replace && Part::withoutEagerLoads()->where('test_type_id', $testType->id)->exists()) {

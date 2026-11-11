@@ -94,10 +94,44 @@ class Test extends Model
         return $this->hasMany(TestType::class, 'test_id');
     }
 
+    /**
+     * Every mock that sits this test: legacy mocks.test_id or a Mock Bank module (mock_modules.test_type_id
+     * of one of the test's modules). attempts.test_id / mocks.test_id only hold the FIRST module's test.
+     */
+    public function usingMocks(): Builder
+    {
+        $typeIds = TestType::withoutEagerLoads()->where('test_id', $this->id)->pluck('id');
+
+        return Mock::query()->withoutEagerLoads()->where(fn ($q) => $q
+            ->where('test_id', $this->id)
+            ->orWhereHas('modules', fn ($m) => $m->whereIn('test_type_id', $typeIds)));
+    }
+
+    /**
+     * Whether the content must not change: the test has attempts, or a mock using it (any module) has
+     * attempts or has not ended yet.
+     */
+    public function inUse(): bool
+    {
+        if ($this->attempts()->exists()) {
+            return true;
+        }
+
+        return $this->usingMocks()
+            ->where(fn ($q) => $q
+                ->whereHas('attempts')
+                ->orWhereNull('finished_at')
+                ->orWhere('finished_at', '>', now()))
+            ->exists();
+    }
+
     protected static function booted()
     {
         static::deleting(function ($test) {
-            $test->mocks()->delete();
+            // Never cascade into mocks (their candidates, codes and results): the caller must refuse.
+            if ($test->usingMocks()->exists()) {
+                throw new \RuntimeException(__('test_used_by_mock'));
+            }
             $test->types->each->delete();
         });
     }

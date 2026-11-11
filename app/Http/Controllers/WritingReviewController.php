@@ -85,6 +85,27 @@ class WritingReviewController extends Controller
             'band' => ['nullable', 'numeric', 'min:0', 'max:9', 'multiple_of:0.5'],
         ]);
 
+        // An explicit module band is the Admin's own decision; otherwise the band is computed from the task
+        // bands, which needs a submitted module and no essay still waiting for its AI band.
+        $manualBand = isset($data['band']) && $data['band'] !== null;
+        if (! $manualBand) {
+            $submitted = $attemptType->is_submitted || $attemptType->attempt?->finished_at !== null;
+            if (! $submitted) {
+                return back()->with('error', __('writing_not_submitted'));
+            }
+
+            $given = collect((array) ($data['scores'] ?? []))->filter(fn ($score) => $score !== null)->keys()->map(fn ($id) => (int) $id)->all();
+            $pending = $this->essayQuery($attemptType)
+                ->whereNull('score')
+                ->whereRaw('LENGTH(answer_text) > 10')
+                ->pluck('attempt_answers.id')
+                ->map(fn ($id) => (int) $id)
+                ->diff($given);
+            if ($pending->isNotEmpty()) {
+                return back()->with('error', __('writing_ai_pending'));
+            }
+        }
+
         DB::transaction(function () use ($attemptType, $data, $request) {
             $essayIds = $this->essayQuery($attemptType)->pluck('attempt_answers.id')->map(fn ($id) => (int) $id)->all();
 

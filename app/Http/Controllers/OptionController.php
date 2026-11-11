@@ -124,8 +124,9 @@ class OptionController extends Controller
     {
         $this->authorize('delete', $option);
 
-        $test = $option->question?->section?->part?->test_type?->test;
-        if ($test && ($test->attempts()->exists() || $test->mocks()->whereHas('attempts')->exists())) {
+        // Drag-and-drop options belong to the section (question_id is null).
+        $test = ($option->question?->section ?? $option->section)?->part?->test_type?->test;
+        if ($test?->inUse()) {
             throw ValidationException::withMessages([
                 'error' => [__('test_has_attempts')],
             ]);

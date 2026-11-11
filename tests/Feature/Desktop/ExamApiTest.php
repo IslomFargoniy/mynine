@@ -55,9 +55,12 @@ test('login error codes', function () {
     desktopApi('POST', 'exam/login', [], $this->device)->assertStatus(422)->assertJsonPath('code', 'validation_failed');
     desktopApi('POST', 'exam/login', ['code' => 'MOCK-100001'])->assertStatus(401)->assertJsonPath('code', 'unauthenticated');
 
+    $fresh = MockStudent::create(['mock_id' => $this->exam['mock']->id, 'name' => 'Fresh', 'code' => 'MOCK-100008', 'phone' => '+998901111112']);
     $this->exam['mock']->update(['started_at' => now()->addHour(), 'finished_at' => now()->addHours(5)]);
-    desktopApi('POST', 'exam/login', ['code' => 'MOCK-100001'], $this->device)
+    desktopApi('POST', 'exam/login', ['code' => $fresh->code], $this->device)
         ->assertStatus(422)->assertJsonPath('code', 'mock_not_started')->assertJsonStructure(['starts_at']);
+    // A candidate who already sat the exam on a PC resumes even though the mock was rescheduled.
+    desktopApi('POST', 'exam/login', ['code' => 'MOCK-100001'], $this->device)->assertOk();
 
     // v1.1: after the window only a candidate with a running attempt may log in again (the PC died).
     $this->exam['mock']->update(['started_at' => now()->subHours(5), 'finished_at' => now()->subHour()]);
@@ -66,7 +69,8 @@ test('login error codes', function () {
     desktopApi('POST', 'exam/login', ['code' => $late->code], $this->device)->assertStatus(422)->assertJsonPath('code', 'mock_finished');
 
     $this->exam['mock']->update(['active' => 0]);
-    desktopApi('POST', 'exam/login', ['code' => 'MOCK-100001'], $this->device)->assertStatus(422)->assertJsonPath('code', 'mock_not_active');
+    desktopApi('POST', 'exam/login', ['code' => $fresh->code], $this->device)->assertStatus(422)->assertJsonPath('code', 'mock_not_active');
+    desktopApi('POST', 'exam/login', ['code' => 'MOCK-100001'], $this->device)->assertOk();
 
     $this->exam['mock']->update(['active' => 1, 'started_at' => now()->subHour(), 'finished_at' => now()->addHour()]);
     $this->attempt->update(['finished_at' => now()]);

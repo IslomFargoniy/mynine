@@ -129,6 +129,12 @@ test('moving a bank test to practice makes it an open practice test in the chose
     $this->actingAs($this->admin)->post(route('mock-bank.to-practice', $this->exam['testR']), ['folder_id' => 999999])->assertSessionHasErrors('folder_id');
     expect($this->exam['testR']->fresh()->purpose)->toBe(ExamTest::PURPOSE_MOCK);
 
+    // The mock that sits its Reading module has not ended yet: refused.
+    $this->actingAs($this->admin)->post(route('mock-bank.to-practice', $this->exam['testR']), ['folder_id' => $folder->id])
+        ->assertSessionHas('error', __('test_in_use_cannot_move'));
+    expect($this->exam['testR']->fresh()->purpose)->toBe(ExamTest::PURPOSE_MOCK);
+
+    $this->exam['mock']->update(['started_at' => now()->subDays(2), 'finished_at' => now()->subDay()]);
     $this->actingAs($this->admin)->post(route('mock-bank.to-practice', $this->exam['testR']), ['folder_id' => $folder->id])->assertSessionHas('success');
 
     $test = $this->exam['testR']->fresh();

@@ -108,7 +108,7 @@ class SectionController extends Controller
         $this->authorize('delete', $section);
 
         $test = $section->part?->test_type?->test;
-        if ($test && ($test->attempts()->exists() || $test->mocks()->whereHas('attempts')->exists())) {
+        if ($test?->inUse()) {
             throw ValidationException::withMessages([
                 'error' => [__('test_has_attempts')],
             ]);

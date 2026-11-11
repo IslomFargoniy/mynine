@@ -460,8 +460,9 @@ class ExamService
     }
 
     /**
-     * After late-synced answers: re-score the touched modules and (re-)evaluate late essays,
-     * unless an Admin already confirmed the module.
+     * After late-synced answers: re-score the touched modules and (re-)evaluate late essays. A Writing module
+     * an Admin already confirmed loses the confirmation (it returns to the Writing review queue): the
+     * confirmed band was given without the late essay text.
      *
      * @param  array<int, array{answer: AttemptAnswer, attempt_type: AttemptType}>  $lateResults
      */
@@ -479,7 +480,11 @@ class ExamService
             $isEssay = Question::withoutEagerLoads()->whereKey($answer->question_id)
                 ->whereHas('section.question_type', fn ($q) => $q->where('type', 'essay'))->exists();
 
-            if ($isEssay && $type->reviewed_at === null && mb_strlen((string) $answer->answer_text) > 10) {
+            if ($isEssay && $type->reviewed_at !== null) {
+                $type->forceFill(['reviewed_at' => null, 'reviewed_by' => null])->save();
+            }
+
+            if ($isEssay && mb_strlen((string) $answer->answer_text) > 10) {
                 // An unscored essay may still have a queued job; it reads the new text. A scored one is re-run.
                 EvaluateEssayJob::dispatch($answer->id, $answer->fresh()?->score !== null);
             }

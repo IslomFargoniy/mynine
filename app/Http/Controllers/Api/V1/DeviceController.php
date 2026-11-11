@@ -67,6 +67,8 @@ class DeviceController extends Controller
             'name' => $device->name,
             'number' => null,
             'approved' => false,
+            // Lets a not-yet-approved (or later blocked) PC still verify the center password offline.
+            'exit_password_offline' => Setting::get(Setting::DESKTOP_EXIT_PASSWORD_OFFLINE),
         ]);
     }
 

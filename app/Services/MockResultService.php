@@ -176,7 +176,7 @@ class MockResultService
         $attempt = $student->attempt;
         $types = $attempt?->attempt_types ?? collect();
         $byName = $types->keyBy(fn (AttemptType $t) => $t->type?->name);
-        $finished = $attempt?->finished_at !== null;
+        $finished = $this->writtenExamClosed($attempt);
         $modules = $this->moduleTypes($student);
 
         $bands = ['listening' => null, 'reading' => null, 'writing' => null, 'speaking' => null];
@@ -216,7 +216,8 @@ class MockResultService
             $missing[] = 'speaking';
         }
 
-        $ready = $attempt !== null && $missing === [];
+        // Offline late sync window still open: answers (and so the bands) may still change.
+        $ready = $attempt !== null && $missing === [] && ! app(ExamService::class)->acceptsLateAnswers($attempt);
         $overall = $ready
             ? IeltsScoreConverter::calculateOverallBand(array_values(array_filter($bands, fn ($b) => $b !== null)))
             : null;
@@ -233,7 +234,7 @@ class MockResultService
         if (! $attempt) {
             return false;
         }
-        if ($attempt->finished_at !== null) {
+        if ($this->writtenExamClosed($attempt)) {
             return true;
         }
 
@@ -245,6 +246,24 @@ class MockResultService
         $modules = $this->moduleTypes($student);
 
         return $modules !== [] && array_diff($modules, $submitted) === [];
+    }
+
+    /**
+     * Whether the written exam of the attempt is over: the attempt is finished and the candidate either
+     * started a written module or the mock window has ended. An attempt that only carries an early Speaking
+     * band (closed while the written exam was still ahead) does not count, so missing modules are not 0.
+     */
+    public function writtenExamClosed(?Attempt $attempt): bool
+    {
+        if (! $attempt || $attempt->finished_at === null) {
+            return false;
+        }
+
+        $types = $attempt->relationLoaded('attempt_types') ? $attempt->attempt_types : $attempt->attempt_types()->get();
+        $startedWritten = $types->contains(fn (AttemptType $t) => $t->started_at !== null
+            && in_array($t->type?->name, MockBankService::MODULE_TYPES, true));
+
+        return $startedWritten || $attempt->mockWindowEnded();
     }
 
     /**

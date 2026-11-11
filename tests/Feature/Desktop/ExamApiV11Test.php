@@ -235,8 +235,8 @@ test('12) a mock keeps its modules once a candidate started one', function () {
     ];
     $current = [$this->exam['listening']->id, $this->exam['reading']->id, $this->exam['writing']->id];
 
-    // Nobody started yet: the modules may change.
-    expect($mock->modulesLocked())->toBeFalse();
+    // The candidate logged in (beforeEach): the PC may already hold the questions, so the modules are fixed.
+    expect($mock->modulesLocked())->toBeTrue();
 
     startListening();
     expect($mock->modulesLocked())->toBeTrue();

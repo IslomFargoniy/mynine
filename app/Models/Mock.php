@@ -118,14 +118,19 @@ class Mock extends Model
     }
 
     /**
-     * Modules cannot be changed once a candidate of this mock has started a module.
+     * Modules cannot be changed once any candidate of this mock has an attempt (logged in on a PC, which may
+     * already have prefetched the questions, or scored in Speaking): answers would no longer match.
      */
     public function modulesLocked(): bool
     {
-        return AttemptType::query()
-            ->whereHas('attempt', fn ($q) => $q->where('mock_id', $this->id))
-            ->whereNotNull('started_at')
-            ->where('started_at', '<=', now())
-            ->exists();
+        return $this->attempts()->exists();
+    }
+
+    /**
+     * Whether a candidate of this mock is still taking it (attempt not finished).
+     */
+    public function hasUnfinishedAttempt(): bool
+    {
+        return $this->attempts()->whereNull('finished_at')->exists();
     }
 }

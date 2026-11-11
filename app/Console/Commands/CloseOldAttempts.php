@@ -44,6 +44,14 @@ class CloseOldAttempts extends Command
                 ->where('is_submitted', false)
                 ->whereNotNull('finished_at')
                 ->where('finished_at', '>', now()->subSeconds($grace)))
+            // Speaking scored before the written exam creates the attempt early: while the mock window is
+            // open and no Listening / Reading / Writing module was started, the written exam is still ahead.
+            ->where(fn ($q) => $q
+                ->whereNull('mock_id')
+                ->orWhereHas('attempt_types', fn ($t) => $t
+                    ->whereNotNull('started_at')
+                    ->whereHas('type', fn ($ty) => $ty->whereIn('name', Attempt::DESKTOP_MODULE_ORDER)))
+                ->orWhereHas('mock', fn ($m) => $m->whereNotNull('finished_at')->where('finished_at', '<', now())))
             ->get();
 
         $count = $oldAttempts->count();

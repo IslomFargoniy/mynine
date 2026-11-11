@@ -610,7 +610,7 @@
     "telegram_id": "Telegram ID",
     "test": "Test",
     "test_finished": "Test Finished",
-    "test_has_attempts": "This test has been solved/taken, therefore it cannot be deleted.",
+    "test_has_attempts": "This test has been taken or a mock that has not ended uses it, so it cannot be changed or deleted.",
     "test_notifications": "Test Notifications",
     "test_options_settings": "Test Options & Settings",
     "test_progress": "Test Progress",
@@ -872,7 +872,7 @@
             "no_ready_modules": "No ready modules of this type in the Mock Bank",
             "speaking_starts": "Speaking starts",
             "slot_minutes": "Speaking slot (minutes)",
-            "modules_locked": "A candidate has already started this mock: the modules can no longer be changed."
+            "modules_locked": "A candidate has already logged in to this mock: the modules can no longer be changed."
         },
         "candidates": {
             "trigger": "Candidates ({{count}})",
@@ -1302,7 +1302,7 @@
     "too_many_options": "You selected more options than this question allows.",
     "device_released": "The PC was released. The candidate can log in on another PC.",
     "device_release_finished": "The exam is already finished.",
-    "mock_modules_locked": "A candidate has already started this mock, so its modules can no longer be changed.",
+    "mock_modules_locked": "A candidate has already logged in to this mock, so its modules can no longer be changed.",
     "test_variant": {
         "label": "IELTS variant",
         "academic": "Academic",
@@ -1310,5 +1310,13 @@
         "hint": "General Training Reading uses its own band table."
     },
     "desktop_background_saved": "Background saved.",
-    "desktop_background_removed": "Background removed."
+    "desktop_background_removed": "Background removed.",
+    "test_used_by_mock": "A mock exam uses this test. Delete that mock or change its modules first.",
+    "test_in_use_cannot_move": "A mock that has not ended (or has results) uses this test, so it cannot be moved to practice.",
+    "mock_has_running_attempt": "A candidate is still taking this mock. Finish their exam in the monitor first.",
+    "candidate_has_running_attempt": "This candidate's exam is not finished yet. Finish it in the monitor first.",
+    "device_has_running_exam": "An exam is running on \":name\" right now. Finish it or release the PC in the monitor first.",
+    "attempt_not_finished": "This attempt is not finished yet. Finish it first.",
+    "writing_not_submitted": "The Writing module is not submitted yet.",
+    "writing_ai_pending": "An essay is still waiting for its AI band. Wait, or enter the band manually."
 }

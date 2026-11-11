@@ -242,6 +242,11 @@ class AttemptController extends Controller
     {
         $this->authorize('delete', $attempt);
 
+        // A running (or resumable) exam must not lose its answers: finish it first.
+        if ($attempt->finished_at === null) {
+            return back()->with('error', __('attempt_not_finished'));
+        }
+
         try {
             // AttemptObserver::deleting removes answers, options, parts and types
             DB::transaction(fn () => $attempt->delete());

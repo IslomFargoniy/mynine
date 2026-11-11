@@ -123,6 +123,11 @@ class MockBankController extends Controller
             'folder_id' => ['required', 'integer', 'exists:folders,id'],
         ]);
 
+        // A mock still sits (or has results on) one of its modules: it must stay a Mock Bank test.
+        if ($test->inUse()) {
+            return back()->with('error', __('test_in_use_cannot_move'));
+        }
+
         $test->forceFill(['purpose' => Test::PURPOSE_PRACTICE, 'open' => 1, 'folder_id' => $data['folder_id']])->save();
 
         return back()->with('success', __('test_moved_to_practice'));

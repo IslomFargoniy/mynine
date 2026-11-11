@@ -610,7 +610,7 @@
     "telegram_id": "Telegram ID",
     "test": "Test",
     "test_finished": "Test yakunlandi",
-    "test_has_attempts": "Bu test ishlangan, shuning uchun o'chirib bo'lmaydi.",
+    "test_has_attempts": "Bu test ishlangan yoki undan tugamagan mock foydalanadi, shuning uchun o'zgartirib yoki o'chirib bo'lmaydi.",
     "test_notifications": "Test Bildirishnomalari",
     "test_options_settings": "Imtihon sozlamalari",
     "test_progress": "Test ko'rsatkichi",
@@ -872,7 +872,7 @@
             "no_ready_modules": "Mock Bankda bu turdagi tayyor modul yo'q",
             "speaking_starts": "Speaking boshlanishi",
             "slot_minutes": "Speaking sloti (daqiqa)",
-            "modules_locked": "Nomzod bu mockni boshlagan: modullarni endi o'zgartirib bo'lmaydi."
+            "modules_locked": "Nomzod bu mockka kirgan: modullarni endi o'zgartirib bo'lmaydi."
         },
         "candidates": {
             "trigger": "Nomzodlar ({{count}})",
@@ -1302,7 +1302,7 @@
     "too_many_options": "Bu savol uchun ruxsat etilganidan ko'p variant tanlandi.",
     "device_released": "Kompyuter bo'shatildi. Nomzod boshqa kompyuterda kirishi mumkin.",
     "device_release_finished": "Imtihon allaqachon yakunlangan.",
-    "mock_modules_locked": "Nomzod bu mockni allaqachon boshlagan, shuning uchun modullarni o'zgartirib bo'lmaydi.",
+    "mock_modules_locked": "Nomzod bu mockka allaqachon kirgan, shuning uchun modullarni o'zgartirib bo'lmaydi.",
     "test_variant": {
         "label": "IELTS turi",
         "academic": "Academic",
@@ -1310,5 +1310,13 @@
         "hint": "General Training Reading uchun alohida ball jadvali ishlatiladi."
     },
     "desktop_background_saved": "Fon rasmi saqlandi.",
-    "desktop_background_removed": "Fon rasmi o'chirildi."
+    "desktop_background_removed": "Fon rasmi o'chirildi.",
+    "test_used_by_mock": "Bu testdan mock imtihon foydalanadi. Avval o'sha mockni o'chiring yoki modullarini o'zgartiring.",
+    "test_in_use_cannot_move": "Bu testdan tugamagan (yoki natijasi bor) mock foydalanadi, shuning uchun uni amaliyotga o'tkazib bo'lmaydi.",
+    "mock_has_running_attempt": "Nomzod hali bu mockni topshirmoqda. Avval monitorda imtihonini yakunlang.",
+    "candidate_has_running_attempt": "Bu nomzodning imtihoni hali tugamagan. Avval monitorda yakunlang.",
+    "device_has_running_exam": "\":name\" kompyuterida hozir imtihon ketmoqda. Avval monitorda uni yakunlang yoki kompyuterni bo'shating.",
+    "attempt_not_finished": "Bu urinish hali tugamagan. Avval uni yakunlang.",
+    "writing_not_submitted": "Writing moduli hali topshirilmagan.",
+    "writing_ai_pending": "Insho hali AI bahosini kutmoqda. Kuting yoki bandni qo'lda kiriting."
 }

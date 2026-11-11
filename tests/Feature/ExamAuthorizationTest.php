@@ -166,6 +166,11 @@ test('a mock owner can delete an attempt together with its answers', function ()
 
     $this->actingAs($this->reception)->delete(route('attempt.destroy', $attempt->id))->assertForbidden();
 
+    // Still running: refused.
+    $this->actingAs($this->admin)->delete(route('attempt.destroy', $attempt->id))->assertSessionHas('error', __('attempt_not_finished'));
+    $this->assertDatabaseHas('attempts', ['id' => $attempt->id]);
+
+    $attempt->forceFill(['finished_at' => now()])->save();
     $this->actingAs($this->admin)->delete(route('attempt.destroy', $attempt->id))->assertRedirect(route('attempt.index'));
 
     $this->assertDatabaseMissing('attempts', ['id' => $attempt->id]);

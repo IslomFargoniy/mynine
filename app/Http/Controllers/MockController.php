@@ -7,6 +7,7 @@ use App\Http\Requests\UpdateMockRequest;
 use App\Models\Attempt;
 use App\Models\Folder;
 use App\Models\Mock;
+use App\Models\MockStudent;
 use App\Models\Test;
 use App\Services\MockBankService;
 use Carbon\Carbon;
@@ -240,8 +241,15 @@ class MockController extends Controller
     {
         $this->authorize('delete', $mock);
 
+        // A candidate is still writing (or resuming) this mock: deleting it would break their exam.
+        if ($mock->hasUnfinishedAttempt()) {
+            return back()->with('error', __('mock_has_running_attempt'));
+        }
+
         try {
             DB::transaction(function () use ($mock) {
+                // Exam tokens of the candidates die with them (Sanctum tokens are polymorphic, no FK).
+                $mock->students()->get()->each(fn (MockStudent $student) => $student->tokens()->delete());
                 // Detach/nullify attempts so history is preserved without FK error
                 Attempt::where('mock_id', $mock->id)->update(['mock_id' => null]);
                 $mock->modules()->delete();

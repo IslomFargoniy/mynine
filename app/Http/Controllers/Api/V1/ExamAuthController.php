@@ -40,14 +40,8 @@ class ExamAuthController extends Controller
         }
 
         $mock = $student->mock;
-        if (! $mock || (int) $mock->active !== 1) {
+        if (! $mock) {
             throw ApiException::unprocessable('mock_not_active', 'This mock exam is not active.');
-        }
-
-        if ($mock->started_at && now()->lt(Carbon::parse($mock->started_at))) {
-            throw ApiException::unprocessable('mock_not_started', 'This mock exam has not started yet.', [
-                'starts_at' => ExamService::apiTime($mock->started_at),
-            ]);
         }
 
         $existing = $student->attempt;
@@ -55,8 +49,23 @@ class ExamAuthController extends Controller
             throw ApiException::conflict('attempt_finished', 'You have already completed this exam.');
         }
 
+        // Resume (the PC died, the mock was deactivated or rescheduled meanwhile): the candidate already sat
+        // the exam on a PC, so the active / start / end checks do not apply. An attempt created only by a
+        // Speaking band (no PC, no written module yet) is not a resume.
+        $resuming = $existing !== null && ($existing->device_id !== null || $existing->hasStartedWrittenModule());
+
+        if (! $resuming && (int) $mock->active !== 1) {
+            throw ApiException::unprocessable('mock_not_active', 'This mock exam is not active.');
+        }
+
+        if (! $resuming && $mock->started_at && now()->lt(Carbon::parse($mock->started_at))) {
+            throw ApiException::unprocessable('mock_not_started', 'This mock exam has not started yet.', [
+                'starts_at' => ExamService::apiTime($mock->started_at),
+            ]);
+        }
+
         // After the window only a candidate whose exam is still running (e.g. the PC died) may log in again.
-        if ($mock->finished_at && now()->gt(Carbon::parse($mock->finished_at)) && ! $existing) {
+        if ($mock->finished_at && now()->gt(Carbon::parse($mock->finished_at)) && ! $resuming) {
             throw ApiException::unprocessable('mock_finished', 'This mock exam has already finished.');
         }
 

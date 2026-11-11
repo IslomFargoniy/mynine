@@ -140,18 +140,22 @@ class TestController extends Controller
     {
         $this->authorize('delete', $test);
 
-        if ($test->attempts()->exists() || $test->mocks()->whereHas('attempts')->exists()) {
+        if ($test->inUse()) {
             return back()->withErrors([
                 'error' => __('test_has_attempts'),
             ]);
         }
 
+        // Mocks are never deleted with the test (their candidates and codes would go too).
+        if ($test->usingMocks()->exists()) {
+            return back()->withErrors([
+                'error' => __('test_used_by_mock'),
+            ]);
+        }
+
         try {
             $folderId = $test->folder_id;
-            DB::transaction(function () use ($test) {
-                $test->mocks()->delete();
-                $test->delete();
-            });
+            DB::transaction(fn () => $test->delete());
             $this->audio->delete($test->audio_path);
 
             if ($test->isMock() || ! $folderId) {

@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Jobs\EvaluateEssayJob;
+use Carbon\Carbon;
 use Database\Factories\AttemptsFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -85,6 +86,28 @@ class Attempt extends Model
     public function isPaused(): bool
     {
         return $this->paused_at !== null;
+    }
+
+    /**
+     * Whether the candidate started a written module (Listening / Reading / Writing). A Speaking band
+     * stored before the written exam creates the attempt without one.
+     */
+    public function hasStartedWrittenModule(): bool
+    {
+        return $this->attempt_types()
+            ->whereNotNull('started_at')
+            ->whereHas('type', fn ($q) => $q->whereIn('name', self::DESKTOP_MODULE_ORDER))
+            ->exists();
+    }
+
+    /**
+     * Whether the mock's exam window (mocks.finished_at) is over. Attempts without a mock: always true.
+     */
+    public function mockWindowEnded(): bool
+    {
+        $finishedAt = $this->mock_id ? Mock::withoutEagerLoads()->whereKey($this->mock_id)->value('finished_at') : null;
+
+        return ! $this->mock_id || ($finishedAt !== null && now()->gt(Carbon::parse($finishedAt)));
     }
 
     /**

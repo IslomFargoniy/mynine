@@ -29,7 +29,7 @@ class TestObserver
     public function deleting(Test $test): void
     {
 
-        if ($test->mocks()->exists() || $test->attempts()->exists()) {
+        if ($test->usingMocks()->exists() || $test->attempts()->exists()) {
             throw new \Exception('Cannot delete Test with associated Tests');
         }
 

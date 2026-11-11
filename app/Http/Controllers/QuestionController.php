@@ -158,7 +158,7 @@ class QuestionController extends Controller
         $this->authorize('delete', $question);
 
         $test = $question->section?->part?->test_type?->test;
-        if ($test && ($test->attempts()->exists() || $test->mocks()->whereHas('attempts')->exists())) {
+        if ($test?->inUse()) {
             throw ValidationException::withMessages([
                 'error' => [__('test_has_attempts')],
             ]);

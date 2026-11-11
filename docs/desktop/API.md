@@ -71,7 +71,10 @@ can add a PC. The same center password unlocks the exam screen and opens the app
 
 Body: `{ "machine_id": "<stable GUID from Windows MachineGuid>", "password": "<center password>", "name": "PC-07", "os_version": "Windows 11 23H2", "app_version": "1.0.0" }`
 (`name` optional — default `PC-<last 4 characters of machine_id>`, an existing PC keeps its name).
-Response 200: `{ "device_id": 7, "device_token": "<plain token, shown once>", "name": "PC-07", "number": null, "approved": false }`.
+Response 200: `{ "device_id": 7, "device_token": "<plain token, shown once>", "name": "PC-07", "number": null, "approved": false, "exit_password_offline": "pbkdf2_sha256$120000$<salt_b64>$<hash_b64>" }`.
+- `exit_password_offline` (same value as in `/device/config`): the app stores it right after registering, so a PC that is
+  not approved yet (403 `device_not_approved` on `/device/config`) or is blocked later can still verify the center
+  password offline (exit / admin menu).
 - Missing / wrong `password` → 422 `invalid_password`.
 - No center password configured on the server → 409 `setup_password_missing` ("… Set the center password in Desktop settings first.").
 - Re-registering the same `machine_id` rotates the token and drops the approval (the exam-room number is kept, the admin
@@ -112,12 +115,15 @@ blocks "Start" on the rules screen while any is running.
 
 ### POST /exam/login
 Header `X-Device-Token`. Body: `{ "code": "849201" }` (six digits since 2026-11; older codes still accepted, trimmed). Throttle 10/min per device.
-Checks: code exists, mock active, inside window (`started_at`/`finished_at`), attempt not finished. Marks `attended`, `checked_in_at` (if empty), creates the attempt if missing (modules from `mock_modules`), binds `attempts.device_id`, revokes previous exam tokens of this candidate (only one PC at a time).
+Checks: code exists, attempt not finished (409 `attempt_finished`), mock active, inside window (`started_at`/`finished_at`).
+A candidate who already has an unfinished attempt that was opened on a PC (or has a started Listening / Reading / Writing
+module) **resumes**: the active / not-started / finished checks are skipped (see v1.1 §i). An attempt that only holds an
+early Speaking band (no PC yet) is not a resume. Marks `attended`, `checked_in_at` (if empty), creates the attempt if missing (modules from `mock_modules`), binds `attempts.device_id`, revokes previous exam tokens of this candidate (only one PC at a time).
 Response 200:
 ```json
 {
   "token": "<sanctum plain-text token>",
-  "expires_at": "…",                       // mock finished_at + 1h, or now + 6h
+  "expires_at": "…",                       // max(mock finished_at, now) + all module durations + 2 h; extended by /exam/heartbeat (v1.1 §g)
   "candidate": { "id": 12, "name": "Ali Valiyev", "code": "MS1A2B3C" },
   "mock": { "id": 3, "name": "Mock 12.11", "starts_at": "…", "ends_at": "…" },
   "attempt_id": 55,
@@ -250,6 +256,24 @@ Monitor actions (`Admin` unless noted): `POST /monitor/attempts/{attempt}/extra-
 `/force-submit`, `/unlock` (Admin + Reception). Device list and settings live under the web admin (installers are uploaded to the static folder, see above).
 Devices (Admin): `POST /desktop/devices/{device}/approve {number}` (required, 1–999, unique among PCs; the page prefills the
 lowest free number), `PATCH /desktop/devices/{device} {name?, number?}` (renumber / rename), block / unblock keep the number.
+`POST /monitor/attempts/{attempt}/release-device` (Admin + Reception): frees the PC of a candidate so the code works on
+another PC (clears `attempts.device_id`, the devices' `current_attempt_id` and the candidate's exam tokens), see v1.1 §h.
+
+Guards (web flash error, nothing changes):
+- Block or delete a PC is refused while an exam runs on it (its `current_attempt_id` is unfinished and sent an exam
+  heartbeat in the last 90 s, `desktop.active_elsewhere_seconds`): finish the exam or release the PC first.
+- A mock / candidate with an unfinished attempt cannot be deleted; deleting them also revokes the candidates' exam tokens.
+  An unfinished attempt cannot be deleted.
+- A mock's modules are locked as soon as any candidate has an attempt (logged in on a PC, possibly prefetched; or a
+  Speaking band), not only after a module started.
+- Test content (part / section / question / option delete, PDF import replace, move to practice) is locked while the test
+  has attempts or any mock that sits one of its modules (`mock_modules` or legacy `mocks.test_id`) has attempts or has not
+  ended. A test used by any mock is never deleted (the mock and its candidates are kept; delete or change the mock first).
+- `attempts:close-old` never closes an attempt that has no started Listening / Reading / Writing module while the mock
+  window is open (a Speaking band given before the written exam creates the attempt early).
+- The result is not ready while offline late answers may still arrive (`acceptsLateAnswers`); a late essay that arrives
+  after the Writing review was confirmed clears the confirmation (back in the Writing review queue). Confirming Writing
+  needs a submitted module and no essay waiting for its AI band, unless the Admin enters the band.
 The monitor lists attempts by PC number (`device_number`), the reception list shows `device.number`.
 
 ---
@@ -413,7 +437,9 @@ remote unlock is never delivered to the wrong PC). Admin and Reception can relea
 clears `attempts.device_id`, the devices' `current_attempt_id` and the candidate's exam tokens.
 
 **i) Login after the mock window.** After the mock's `finished_at`, login is still allowed for a candidate who has an
-unfinished attempt (the PC died); only candidates without an attempt get 422 `mock_finished`. A finished attempt
+unfinished attempt (the PC died); only candidates without an attempt get 422 `mock_finished`. The same resume rule skips
+`mock_not_active` and `mock_not_started` (the mock was deactivated or rescheduled mid-exam). An attempt created only by
+an early Speaking band (no PC, no started written module) does not count as a resume. A finished attempt
 answers 409 `attempt_finished` (checked first).
 
 **j) Images.** `prefetch.images` still lists every `<img src>` as an absolute URL, including external hosts.
