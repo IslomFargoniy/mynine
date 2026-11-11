@@ -1,1 +1,1 @@
-{"version":"1.0.11","file":"mynine-setup-1.0.11.exe","sha256":"6bb8e22b93fd5d337c48fdd552c86daa026d98f47f481d44f58af8d9f025093a","size":19605629,"mandatory":true,"min_version":"1.0.11","notes":"Background picture on the code screen (set in Exam PCs).","published_at":"2026-11-11T15:23:20Z"}
+{"version":"1.0.12","file":"mynine-setup-1.0.12.exe","sha256":"aac6294d9806a86d7c58cb6145df307633b0e95f6ed95266f25d02bdc91ffd41","size":19607117,"mandatory":true,"min_version":"1.0.12","notes":"Banned programs close silently on the rules screen.","published_at":"2026-11-11T15:45:20Z"}
