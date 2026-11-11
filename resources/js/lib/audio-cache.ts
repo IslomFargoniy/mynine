@@ -130,7 +130,8 @@ export async function preloadAudio(
         }
 
         // 2. Download with progress tracking
-        const response = await fetch(url);
+        // no-cache: never trust an HTTP-cached copy (a failed response once got cached for a day).
+        const response = await fetch(url, { cache: 'no-cache' });
         if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
 
         const contentLength = response.headers.get('content-length');
@@ -171,8 +172,17 @@ export async function preloadAudio(
     } catch (err) {
         console.warn('Audio preloading failed, falling back to network stream:', err);
         onProgress?.(100);
-        return url; // Graceful network fallback
+        return networkUrl(url); // Graceful network fallback
     }
+}
+
+/**
+ * URL for streaming straight from the network. The version parameter skips a broken response that browsers
+ * cached on 11.11.2026 (an nginx misconfiguration answered 500 with a one-day Cache-Control).
+ */
+function networkUrl(url: string): string {
+    if (!url || url.startsWith('blob:') || !url.includes('/media/audio/')) return url;
+    return `${url}${url.includes('?') ? '&' : '?'}v=2`;
 }
 
 /**
@@ -193,5 +203,5 @@ export async function getOfflineAudioUrl(url: string): Promise<string> {
         console.warn('Error reading audio cache:', e);
     }
 
-    return url;
+    return networkUrl(url);
 }

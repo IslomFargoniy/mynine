@@ -103,7 +103,9 @@ class AudioUploadService
             $location = '/'.trim((string) config('desktop.x_accel_audio_location', '/_protected_audio/'), '/').'/';
             $encoded = implode('/', array_map('rawurlencode', explode('/', $relative)));
 
-            return response('', 200, $headers + ['X-Accel-Redirect' => $location.$encoded]);
+            // nginx keeps this Cache-Control even when it answers with an error, so let the browser revalidate
+            // (nginx sends ETag / Last-Modified for the file, a repeat play is a cheap 304).
+            return response('', 200, ['Cache-Control' => 'private, no-cache'] + $headers + ['X-Accel-Redirect' => $location.$encoded]);
         }
 
         return response()->file($absolutePath, $headers);

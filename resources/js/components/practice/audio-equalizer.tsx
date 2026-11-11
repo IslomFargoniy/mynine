@@ -14,7 +14,7 @@ export default function AudioEqualizer({
                                            endTime,
                                        }: EqualizerProps) {
     const audioRef = useRef<HTMLAudioElement | null>(null);
-    const [audioSource, setAudioSource] = useState<string>(src);
+    const [audioSource, setAudioSource] = useState<string>(""); // set once the cached / network URL is resolved
     const [bars, setBars] = useState<number[]>(new Array(20).fill(0));
 
     // Resolve offline cached audio blob
@@ -131,7 +131,7 @@ export default function AudioEqualizer({
             {/* Hidden audio */}
             <audio
                 ref={audioRef}
-                src={audioSource}
+                src={audioSource || undefined}
                 autoPlay={false}
                 controls={false}
                 preload="auto"
