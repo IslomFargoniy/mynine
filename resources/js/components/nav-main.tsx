@@ -1,7 +1,7 @@
 import { SidebarGroup, SidebarGroupLabel, SidebarMenu, SidebarMenuButton, SidebarMenuItem } from '@/components/ui/sidebar';
 import { type NavItem } from '@/types';
 import { router, usePage } from '@inertiajs/react';
-import { useEffect, useRef } from 'react';
+import { useEffect, useLayoutEffect, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 
 export function NavMain({ items = [], label }: { items: NavItem[]; label?: string }) {
@@ -9,15 +9,42 @@ export function NavMain({ items = [], label }: { items: NavItem[]; label?: strin
     const page = usePage();
     const activeRef = useRef<HTMLLIElement | null>(null);
 
-    // The sidebar menu scrolls (SidebarContent is overflow-auto) and on short screens the last
-    // groups sit below the fold behind the footer; bring the active item into view on navigation.
+    // Inertia re-mounts the sidebar on every visit, which resets its scroll to the top. Keep the
+    // position the user left it at (saved per tab), and only scroll the active item into view when it
+    // would otherwise be hidden — never jump the menu around on a normal click.
+    useLayoutEffect(() => {
+        const el = document.querySelector<HTMLElement>('[data-sidebar-scroll]');
+        if (!el || el.dataset.restored) return;
+        el.dataset.restored = '1';
+        try {
+            el.scrollTop = Number(sessionStorage.getItem('sidebar-scroll') ?? 0);
+        } catch {
+            /* storage unavailable */
+        }
+        const save = () => {
+            try {
+                sessionStorage.setItem('sidebar-scroll', String(el.scrollTop));
+            } catch {
+                /* storage unavailable */
+            }
+        };
+        el.addEventListener('scroll', save, { passive: true });
+    }, []);
+
     useEffect(() => {
-        activeRef.current?.scrollIntoView({ block: 'nearest' });
+        const item = activeRef.current;
+        const el = document.querySelector<HTMLElement>('[data-sidebar-scroll]');
+        if (!item || !el) return;
+        const box = el.getBoundingClientRect();
+        const r = item.getBoundingClientRect();
+        if (r.top < box.top || r.bottom > box.bottom) {
+            item.scrollIntoView({ block: 'nearest' });
+        }
     }, [page.url]);
 
     return (
         <SidebarGroup className="px-3 py-0">
-            <SidebarGroupLabel className="text-[11px] font-bold uppercase tracking-[0.08em] text-muted-foreground mb-1 px-3">
+            <SidebarGroupLabel className="text-[11px] font-bold uppercase tracking-[0.08em] text-muted-foreground mb-0.5 h-7 px-3">
                 {label ?? t('sidebar.platform') ?? 'Platform'}
             </SidebarGroupLabel>
             <SidebarMenu className="gap-0.5">
@@ -32,7 +59,7 @@ export function NavMain({ items = [], label }: { items: NavItem[]; label?: strin
                                 tooltip={{ children: item.title }}
                                 onClick={() => router.visit(item.href)}
                                 className={`
-                                    group flex h-[42px] items-center gap-3 rounded-[14px] px-3 transition-colors duration-200
+                                    group flex h-9 items-center gap-3 rounded-[12px] px-3 transition-colors duration-200
                                     ${isActive
                                         ? 'font-semibold'
                                         : 'text-foreground hover:bg-glass-subtle'

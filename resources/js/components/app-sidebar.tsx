@@ -117,7 +117,7 @@ export function AppSidebar() {
             collapsible="icon" 
             variant="inset"
         >
-            <SidebarHeader className="py-4 px-4">
+            <SidebarHeader className="py-3 px-4">
                 <SidebarMenu>
                     <SidebarMenuItem>
                         <SidebarMenuButton size="lg" asChild className="hover:bg-transparent active:bg-transparent">
@@ -129,7 +129,7 @@ export function AppSidebar() {
                 </SidebarMenu>
             </SidebarHeader>
 
-            <SidebarContent className="py-4 [scrollbar-gutter:stable] [scrollbar-width:thin] group-data-[collapsible=icon]:[scrollbar-gutter:auto]">
+            <SidebarContent data-sidebar-scroll className="gap-3 py-2 [scrollbar-gutter:stable] [scrollbar-width:thin] group-data-[collapsible=icon]:[scrollbar-gutter:auto]">
                 {groups.map((group, index) => (
                     <NavMain key={group.label ?? index} items={group.items} label={group.label} />
                 ))}
