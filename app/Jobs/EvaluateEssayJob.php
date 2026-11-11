@@ -10,6 +10,7 @@ use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
+use Illuminate\Support\Facades\Log;
 
 class EvaluateEssayJob implements ShouldQueue
 {
@@ -23,15 +24,47 @@ class EvaluateEssayJob implements ShouldQueue
 
     protected $answerId;
 
-    public function __construct($answerId)
+    /** Re-evaluate even when the essay already has a band (Admin "re-run AI"). */
+    protected bool $force;
+
+    public function __construct($answerId, bool $force = false)
     {
         $this->answerId = $answerId;
+        $this->force = $force;
+    }
+
+    /**
+     * AI band of an evaluation: a number clamped to 0–9 and rounded to the nearest half band, or null when
+     * the value is not a number.
+     */
+    public static function normalizeBand(mixed $value): ?float
+    {
+        if (is_string($value)) {
+            $value = trim($value);
+        }
+        if (! is_numeric($value)) {
+            return null;
+        }
+
+        $band = max(0.0, min(9.0, (float) $value));
+
+        return round($band * 2) / 2;
     }
 
     public function handle()
     {
         $answer = AttemptAnswer::find($this->answerId);
         if (! $answer) {
+            return;
+        }
+
+        // Already evaluated (a duplicate job) unless explicitly re-run.
+        if (! $this->force && $answer->score !== null) {
+            return;
+        }
+
+        // Never overwrite a band confirmed (and possibly adjusted) by an Admin.
+        if ($this->moduleReviewed($answer)) {
             return;
         }
 
@@ -51,42 +84,50 @@ class EvaluateEssayJob implements ShouldQueue
                 return;
             }
 
-            $openAIService = new OpenAIService;
+            $openAIService = app(OpenAIService::class);
             $resultJson = $openAIService->evaluateEssay($task, $question, $essay);
 
-            $data = json_decode($resultJson, true);
-            $answer->score = null;
+            $data = json_decode((string) $resultJson, true);
+            $band = is_array($data) ? self::normalizeBand($data['overall'] ?? null) : null;
 
-            if ($data && isset($data['overall'])) {
-                $answer->score = $data['overall'];
-
-                $scores = $data['scores'] ?? [];
-                $feedback = $data['feedback'] ?? '';
-
-                $formattedReview = "### IELTS Writing Evaluation\n\n";
-                $formattedReview .= '**Overall Band Score:** '.$data['overall']."\n\n";
-                if (! empty($scores)) {
-                    $formattedReview .= "#### Individual Criteria Scores:\n";
-                    $formattedReview .= '- **Task Response:** '.($scores['task_response'] ?? 'N/A')."\n";
-                    $formattedReview .= '- **Coherence & Cohesion:** '.($scores['coherence_cohesion'] ?? 'N/A')."\n";
-                    $formattedReview .= '- **Lexical Resource:** '.($scores['lexical_resource'] ?? 'N/A')."\n";
-                    $formattedReview .= '- **Grammatical Range & Accuracy:** '.($scores['grammatical_range_accuracy'] ?? 'N/A')."\n\n";
-                }
-                $formattedReview .= "#### Detailed Feedback:\n".$feedback;
-
-                $answer->review_note_ai = trim($formattedReview);
-            } else {
-                $answer->review_note_ai = $resultJson;
+            if ($band === null) {
+                // Unusable AI output: keep the previous band (and feedback) and let the queue retry.
+                throw new \RuntimeException('AI evaluation returned no valid overall band.');
             }
+
+            if ($this->moduleReviewed($answer->fresh())) {
+                return;
+            }
+
+            $answer->score = $band;
+            $data['overall'] = $band;
+
+            $scores = $data['scores'] ?? [];
+            $feedback = $data['feedback'] ?? '';
+
+            $formattedReview = "### IELTS Writing Evaluation\n\n";
+            $formattedReview .= '**Overall Band Score:** '.$data['overall']."\n\n";
+            if (! empty($scores)) {
+                $formattedReview .= "#### Individual Criteria Scores:\n";
+                $formattedReview .= '- **Task Response:** '.($scores['task_response'] ?? 'N/A')."\n";
+                $formattedReview .= '- **Coherence & Cohesion:** '.($scores['coherence_cohesion'] ?? 'N/A')."\n";
+                $formattedReview .= '- **Lexical Resource:** '.($scores['lexical_resource'] ?? 'N/A')."\n";
+                $formattedReview .= '- **Grammatical Range & Accuracy:** '.($scores['grammatical_range_accuracy'] ?? 'N/A')."\n\n";
+            }
+            $formattedReview .= "#### Detailed Feedback:\n".$feedback;
+
+            $answer->review_note_ai = trim($formattedReview);
             $answer->save();
 
             // Recalculate is_correct_count for the corresponding attempt_type
             $this->recalculateAttemptTypeScore($answer);
 
         } catch (\Throwable $e) {
-            \Illuminate\Support\Facades\Log::error("EvaluateEssayJob error for answer {$this->answerId}: ".$e->getMessage());
-            $answer->review_note_ai = 'Baholash jarayonda... (Qayta urinilmoqda: '.$e->getMessage().')';
-            $answer->save();
+            Log::error("EvaluateEssayJob error for answer {$this->answerId}: ".$e->getMessage());
+            if ($answer->score === null) {
+                $answer->review_note_ai = 'Baholash jarayonda... (Qayta urinilmoqda: '.$e->getMessage().')';
+                $answer->save();
+            }
             throw $e;
         }
     }
@@ -96,12 +137,26 @@ class EvaluateEssayJob implements ShouldQueue
      */
     public function failed(\Throwable $exception)
     {
-        \Illuminate\Support\Facades\Log::error("EvaluateEssayJob permanently failed for answer {$this->answerId}: ".$exception->getMessage());
+        Log::error("EvaluateEssayJob permanently failed for answer {$this->answerId}: ".$exception->getMessage());
         $answer = AttemptAnswer::find($this->answerId);
-        if ($answer) {
+        if ($answer && $answer->score === null) {
             $answer->review_note_ai = "Baholashda xatolik yuz berdi (3 marta urinishdan so'ng). Iltimos, qayta baholashni so'rang.";
             $answer->save();
         }
+    }
+
+    private function moduleReviewed(?AttemptAnswer $answer): bool
+    {
+        $attemptPart = $answer?->attempt_part;
+        $typeId = $attemptPart?->part?->test_type?->type_id;
+        if (! $attemptPart || ! $typeId) {
+            return false;
+        }
+
+        return AttemptType::where('attempt_id', $attemptPart->attempt_id)
+            ->where('type_id', $typeId)
+            ->whereNotNull('reviewed_at')
+            ->exists();
     }
 
     /**

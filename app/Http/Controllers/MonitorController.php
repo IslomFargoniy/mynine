@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Attempt;
 use App\Models\AttemptType;
 use App\Models\AttemptViolation;
+use App\Models\Device;
 use App\Models\Mock;
 use App\Services\ExamService;
 use App\Services\MockBankService;
@@ -12,6 +13,7 @@ use Carbon\Carbon;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -68,46 +70,65 @@ class MonitorController extends Controller
         ]);
 
         if ($attempt->finished_at !== null) {
-            return $this->respond($request, $attempt, false, 'Imtihon allaqachon yakunlangan.');
+            return $this->respond($request, $attempt, false, __('exam_already_finished'));
         }
 
         $extended = $this->exam->addTime($attempt, (int) $data['minutes']);
 
         return $extended > 0
-            ? $this->respond($request, $attempt, true, "{$data['minutes']} daqiqa qo'shildi.")
-            : $this->respond($request, $attempt, false, "Hozir davom etayotgan bo'lim yo'q.");
+            ? $this->respond($request, $attempt, true, __('extra_time_added', ['minutes' => $data['minutes']]))
+            : $this->respond($request, $attempt, false, __('no_running_module'));
     }
 
     public function pause(Request $request, Attempt $attempt): JsonResponse|RedirectResponse
     {
         if ($attempt->finished_at !== null) {
-            return $this->respond($request, $attempt, false, 'Imtihon allaqachon yakunlangan.');
+            return $this->respond($request, $attempt, false, __('exam_already_finished'));
         }
 
         $this->exam->pause($attempt);
 
-        return $this->respond($request, $attempt, true, "Imtihon to'xtatildi.");
+        return $this->respond($request, $attempt, true, __('exam_paused'));
     }
 
     public function resume(Request $request, Attempt $attempt): JsonResponse|RedirectResponse
     {
         $this->exam->resume($attempt);
 
-        return $this->respond($request, $attempt, true, 'Imtihon davom ettirildi.');
+        return $this->respond($request, $attempt, true, __('exam_resumed'));
     }
 
     public function forceSubmit(Request $request, Attempt $attempt): JsonResponse|RedirectResponse
     {
         $this->exam->forceSubmit($attempt);
 
-        return $this->respond($request, $attempt, true, 'Imtihon majburan yakunlandi.');
+        return $this->respond($request, $attempt, true, __('exam_force_submitted'));
     }
 
     public function unlock(Request $request, Attempt $attempt): JsonResponse|RedirectResponse
     {
         $attempt->forceFill(['unlock_requested_at' => now()])->save();
 
-        return $this->respond($request, $attempt, true, "Kompyuterni ochish so'rovi yuborildi.");
+        return $this->respond($request, $attempt, true, __('unlock_requested'));
+    }
+
+    /**
+     * Release the PC binding of an attempt (PC broken / candidate moved): the old PC's exam token stops
+     * working (401 session_revoked) and the candidate can log in on another PC right away.
+     */
+    public function releaseDevice(Request $request, Attempt $attempt): JsonResponse|RedirectResponse
+    {
+        if ($attempt->finished_at !== null) {
+            return $this->respond($request, $attempt, false, __('device_release_finished'));
+        }
+
+        DB::transaction(function () use ($attempt) {
+            Device::where('current_attempt_id', $attempt->id)->update(['current_attempt_id' => null]);
+            $attempt->forceFill(['device_id' => null])->save();
+            $attempt->mockStudent?->tokens()->delete();
+        });
+
+        return $this->respond($request, $attempt, true, __('device_released'));
     }
 
     private function respond(Request $request, Attempt $attempt, bool $ok, string $message): JsonResponse|RedirectResponse

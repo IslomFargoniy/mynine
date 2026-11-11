@@ -2,9 +2,12 @@
 
 namespace App\Models;
 
+use App\Services\AnswerMatcher;
+use Carbon\Carbon;
 use Database\Factories\AttemptTypeFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 
 class AttemptType extends Model
@@ -23,6 +26,11 @@ class AttemptType extends Model
         'finished_at',
         'reviewed_at',
         'reviewed_by',
+        'offline_at_end',
+    ];
+
+    protected $casts = [
+        'offline_at_end' => 'boolean',
     ];
 
     protected $with = [
@@ -42,6 +50,14 @@ class AttemptType extends Model
     public function reviewer()
     {
         return $this->belongsTo(User\User::class, 'reviewed_by');
+    }
+
+    /** Result fields a candidate must not see before the attempt is finished. */
+    public const RESULT_FIELDS = ['score', 'is_correct_count', 'comment', 'reviewed_at', 'reviewed_by'];
+
+    public function hideResults(): static
+    {
+        return $this->makeHidden(self::RESULT_FIELDS);
     }
 
     // AttemptType modelida
@@ -77,8 +93,13 @@ class AttemptType extends Model
     }
 
     /**
-     * is_correct_count ni hisoblash uchun static method
-     * Submit qilganda va essay baholaganda chaqiriladi
+     * Score of a module: Listening / Reading = number of correct answers, Writing / Speaking = sum of the
+     * examiner or AI band scores. Called on submit, after essay evaluation and after answer-key fixes.
+     *
+     * Option questions are scored from the LIVE options.is_correct (never the copy in
+     * attempt_answer_options), so fixing a key and re-scoring corrects old attempts. A question with N
+     * correct options ("choose TWO") is worth 1 point per correct selected option, and 0 when more
+     * options than N were selected.
      */
     public static function calculateIsCorrectCount($attempt_id, $type_id)
     {
@@ -109,71 +130,33 @@ class AttemptType extends Model
                 continue;
             }
 
-            // Listening / Reading: count of correct answers
             if ($question->options->count() > 0) {
-                foreach ($answer->attempt_answer_options as $aao) {
-                    if ($aao->is_correct == 1) {
-                        $correctCount += 1;
-                    }
-                }
-            } else {
-                $studentAnswer = trim(strtolower($answer->answer_text));
-                if ($studentAnswer === '') {
-                    continue;
-                }
-
-                $correctAnswerText = $question->answer_text;
-                if (empty($correctAnswerText)) {
-                    continue;
-                }
-
-                $delimiters = ['/', ';', '|'];
-                $normalizedCorrectAnswers = [$correctAnswerText];
-
-                foreach ($delimiters as $delimiter) {
-                    $tempAnswers = [];
-                    foreach ($normalizedCorrectAnswers as $val) {
-                        if (str_contains($val, $delimiter)) {
-                            $tempAnswers = array_merge($tempAnswers, explode($delimiter, $val));
-                        } else {
-                            $tempAnswers[] = $val;
-                        }
-                    }
-                    $normalizedCorrectAnswers = $tempAnswers;
-                }
-
-                $expandedAnswers = [];
-                foreach ($normalizedCorrectAnswers as $val) {
-                    $clean = trim(strtolower($val));
-                    if ($clean === '') {
-                        continue;
-                    }
-                    $expandedAnswers[] = $clean;
-
-                    // Sonlardagi vergulni hisobga olish: 14,000 -> 14000 yoki aksincha
-                    if (str_contains($clean, ',')) {
-                        $withoutComma = str_replace(',', '', $clean);
-                        if (! in_array($withoutComma, $expandedAnswers)) {
-                            $expandedAnswers[] = $withoutComma;
-                        }
-                    } elseif (is_numeric($clean) && strlen($clean) > 3) {
-                        $withComma = number_format((float) $clean);
-                        if (! in_array($withComma, $expandedAnswers)) {
-                            $expandedAnswers[] = strtolower($withComma);
-                        }
-                    }
-                }
-
-                $studentClean = trim(strtolower($studentAnswer));
-                $studentWithoutComma = str_replace(',', '', $studentClean);
-
-                if (in_array($studentClean, $expandedAnswers) || in_array($studentWithoutComma, $expandedAnswers)) {
-                    $correctCount += 1;
-                }
+                $correctCount += static::optionPoints($question->options, $answer->attempt_answer_options->pluck('option_id')->all());
+            } elseif (AnswerMatcher::matches($answer->answer_text, $question->answer_text)) {
+                $correctCount += 1;
             }
         }
 
         return (float) $correctCount;
+    }
+
+    /**
+     * Points for the selected options of one question: 0 when more options than the key has were selected,
+     * else one point per correctly selected option.
+     *
+     * @param  Collection<int, Option>  $options  the question's options (live keys)
+     * @param  array<int, int|string>  $selectedIds
+     */
+    public static function optionPoints($options, array $selectedIds): int
+    {
+        $correctIds = $options->filter(fn ($option) => (bool) $option->is_correct)->pluck('id')->map(fn ($id) => (int) $id)->all();
+        $selected = array_values(array_unique(array_map('intval', $selectedIds)));
+
+        if ($correctIds === [] || count($selected) > count($correctIds)) {
+            return 0;
+        }
+
+        return count(array_intersect($selected, $correctIds));
     }
 
     /**
@@ -188,28 +171,48 @@ class AttemptType extends Model
     }
 
     /**
-     * AttemptType ni vaqtidan oldin yakunlash
+     * Finish the module (no-op when it is already submitted).
      */
     public function finish()
     {
-        if ($this->is_submitted) {
-            return $this;
+        $this->submit();
+
+        return $this;
+    }
+
+    /**
+     * Atomically submit the module: only the caller whose UPDATE ... WHERE is_submitted = 0 changed the row
+     * gets true (and is the one that may queue the AI evaluation), so concurrent submits / auto-finishes never
+     * evaluate the same essays twice. finished_at keeps an end time that already passed (time over), else now.
+     */
+    public function submit(): bool
+    {
+        $now = now();
+        $current = static::whereKey($this->id)->value('finished_at');
+        $finishedAt = $current !== null && Carbon::parse($current)->lt($now) ? Carbon::parse($current) : $now;
+
+        $changed = static::whereKey($this->id)
+            ->where('is_submitted', false)
+            ->update(['is_submitted' => true, 'finished_at' => $finishedAt, 'updated_at' => $now]);
+
+        if ($changed !== 1) {
+            $this->refresh();
+
+            return false;
         }
 
-        $this->finished_at = now();
-        $this->is_submitted = true;
-        $this->save();
+        $this->forceFill(['is_submitted' => true, 'finished_at' => $finishedAt])->syncOriginal();
 
         // Bog'liq AttemptPartlarni ham yakunlash
         AttemptPart::query()
             ->where('attempt_id', $this->attempt_id)
             ->whereHas('part.test_type', fn ($q) => $q->where('type_id', $this->type_id))
-            ->where(fn ($q) => $q->whereNull('finished_at')->orWhere('finished_at', '>', now()))
-            ->update(['finished_at' => now()]);
+            ->where(fn ($q) => $q->whereNull('finished_at')->orWhere('finished_at', '>', $now))
+            ->update(['finished_at' => $now]);
 
         // Ballarni hisoblash
         $this->recalculateIsCorrectCount();
 
-        return $this;
+        return true;
     }
 }

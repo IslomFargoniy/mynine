@@ -17,8 +17,13 @@ const LanguageBar = ({ variant, placement, className }: LanguageBarProps) => {
     const currentLang = (i18n.resolvedLanguage || i18n.language || 'uz').split('-')[0];
 
     const changeLanguage = (lang: string) => {
+        // i18n.js syncs the choice to the server (X-Locale header + GET /lang/{locale}).
         i18n.changeLanguage(lang);
-        localStorage.setItem('lang', lang);
+        try {
+            localStorage.setItem('lang', lang);
+        } catch {
+            // storage blocked: the detector cache still holds it for this session
+        }
         setOpen(false);
     };
 

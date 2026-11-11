@@ -168,6 +168,8 @@ export interface Test {
     open: number;
     purpose?: 'practice' | 'mock';
     bank_status?: 'draft' | 'ready' | 'archived';
+    /** IELTS variant (Reading band table). */
+    variant?: 'academic' | 'general';
     attempts_count: number;
     created_at: string;
     updated_at: string;
@@ -344,6 +346,8 @@ export interface AttemptType {
     started_at: string;
     finished_at: string;
     is_correct_count: number;
+    /** Server-computed module band (attempt list): Writing = confirmed band or (T1 + 2 × T2) / 3. */
+    band?: number | null;
     type: Type;
 }
 

@@ -2,12 +2,14 @@
 
 namespace App\Models;
 
+use App\Jobs\RescoreQuestionJob;
+use Database\Factories\QuestionFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
 class Question extends Model
 {
-    /** @use HasFactory<\Database\Factories\QuestionFactory> */
+    /** @use HasFactory<QuestionFactory> */
     use HasFactory;
 
     protected $fillable = [
@@ -68,9 +70,16 @@ class Question extends Model
 
     protected static function booted()
     {
+        // Answer-key fix: re-score the submitted modules that answered this question.
+        static::updated(function (Question $question) {
+            if ($question->wasChanged('answer_text')) {
+                RescoreQuestionJob::dispatch($question->id)->afterCommit();
+            }
+        });
+
         static::deleting(function ($question) {
             $question->options->each->delete();
-            \App\Models\Image::where('question_id', $question->id)->delete();
+            Image::where('question_id', $question->id)->delete();
         });
     }
 }

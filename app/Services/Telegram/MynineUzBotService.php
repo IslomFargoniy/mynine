@@ -6,6 +6,7 @@ use App\Models\Mock;
 use App\Models\MockStudent;
 use App\Models\User\User;
 use App\Services\IeltsScoreConverter;
+use App\Services\MockResultService;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\URL;
 use Telegram\Bot\Api;
@@ -153,40 +154,16 @@ class MynineUzBotService
             return;
         }
 
-        // Calculate Module Scores
-        $listeningRaw = null;
-        $readingRaw = null;
-        $listeningBand = null;
-        $readingBand = null;
-        $writingBand = null;
-        $speakingBand = null;
+        // Module scores: same rules as the result page / PDF (Reading by test variant, Writing (T1 + 2*T2) / 3 or confirmed).
+        $bands = app(MockResultService::class)->attemptBands($attempt);
+        $listeningRaw = $bands['listening_correct'];
+        $readingRaw = $bands['reading_correct'];
+        $listeningBand = $bands['listening'];
+        $readingBand = $bands['reading'];
+        $writingBand = $bands['writing_pending'] ? null : $bands['writing'];
+        $speakingBand = $bands['speaking'];
 
-        $validBands = [];
-
-        foreach ($attempt->attempt_types as $typeItem) {
-            $typeName = $typeItem->type?->name ?? '';
-            if ($typeName === 'Listening') {
-                $listeningRaw = (int) ($typeItem->is_correct_count ?? 0);
-                $listeningBand = IeltsScoreConverter::convertListening($listeningRaw);
-                $validBands[] = $listeningBand;
-            } elseif ($typeName === 'Reading') {
-                $readingRaw = (int) ($typeItem->is_correct_count ?? 0);
-                $readingBand = IeltsScoreConverter::convertReading($readingRaw);
-                $validBands[] = $readingBand;
-            } elseif ($typeName === 'Writing') {
-                $writingBand = $typeItem->is_correct_count !== null ? (float) $typeItem->is_correct_count / 2 : null;
-                if ($writingBand !== null) {
-                    $validBands[] = $writingBand;
-                }
-            } elseif ($typeName === 'Speaking') {
-                $speakingBand = $typeItem->score !== null ? (float) $typeItem->score : null;
-                if ($speakingBand !== null) {
-                    $validBands[] = $speakingBand;
-                }
-            }
-        }
-
-        $overallBand = ! empty($validBands) ? IeltsScoreConverter::calculateOverallBand($validBands) : 0.0;
+        $overallBand = $bands['overall'] ?? 0.0;
         $cefr = IeltsScoreConverter::getCefrLevel($overallBand);
         $finishedDate = $attempt->finished_at ? date('d.m.Y H:i', strtotime($attempt->finished_at)) : date('d.m.Y');
 
@@ -306,7 +283,7 @@ class MynineUzBotService
             ->row([
                 Keyboard::inlineButton([
                     'text' => 'Open Mynine 🎓',
-                    'web_app' => ['url' => 'https://mynine.uz/all-test'],
+                    'web_app' => ['url' => 'https://mynine.uz/test-bank'],
                 ]),
             ]);
 

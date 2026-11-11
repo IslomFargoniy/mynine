@@ -2,12 +2,13 @@
 
 namespace App\Models;
 
+use Database\Factories\AttemptAnswerOptionFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
 class AttemptAnswerOption extends Model
 {
-    /** @use HasFactory<\Database\Factories\AttemptAnswerOptionFactory> */
+    /** @use HasFactory<AttemptAnswerOptionFactory> */
     use HasFactory;
 
     protected $fillable = [

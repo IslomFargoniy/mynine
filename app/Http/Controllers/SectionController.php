@@ -4,7 +4,9 @@ namespace App\Http\Controllers;
 
 use App\Http\Requests\StoreSectionRequest;
 use App\Http\Requests\UpdateSectionRequest;
+use App\Models\Part;
 use App\Models\Section;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
 
@@ -31,7 +33,7 @@ class SectionController extends Controller
      */
     public function store(StoreSectionRequest $request)
     {
-        $this->authorize('update', \App\Models\Part::findOrFail($request->part_id));
+        $this->authorize('update', Part::findOrFail($request->part_id));
 
         try {
             DB::beginTransaction();
@@ -165,7 +167,7 @@ class SectionController extends Controller
         $section->questions()->whereNotIn('order', $currentOrders)->delete();
     }
 
-    public function syncOptions(\Illuminate\Http\Request $request, Section $section)
+    public function syncOptions(Request $request, Section $section)
     {
         $this->authorize('update', $section);
 

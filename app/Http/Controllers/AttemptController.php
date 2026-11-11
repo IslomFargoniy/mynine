@@ -7,8 +7,10 @@ use App\Models\Attempt;
 use App\Models\Folder;
 use App\Models\Mock;
 use App\Models\Test;
+use App\Services\AttemptPdfRenderer;
+use App\Services\ExamService;
+use App\Services\MockResultService;
 use Carbon\Carbon;
-use Dompdf\Dompdf;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -80,6 +82,20 @@ class AttemptController extends Controller
 
         $data = $data->paginate($per_page);
 
+        // Scores of a running attempt stay hidden from the candidate; visible rows get the server-computed
+        // module band (attempt_types[].band, e.g. Writing = (T1 + 2*T2) / 3) for the list and the Excel export.
+        $results = app(MockResultService::class);
+        $data->getCollection()->each(function (Attempt $attempt) use ($results) {
+            if (! $attempt->resultsVisibleTo(Auth::user())) {
+                $attempt->attempt_types->each->hideResults();
+
+                return;
+            }
+
+            $bands = $results->attemptBands($attempt);
+            $attempt->attempt_types->each(fn ($type) => $type->setAttribute('band', $bands[strtolower((string) $type->type?->name)] ?? null));
+        });
+
         // Filter dropdown options for search
         $mocks_query = Mock::select('id', 'name');
         $tests_query = Test::select('id', 'name');
@@ -126,22 +142,22 @@ class AttemptController extends Controller
                     ->first();
 
                 if ($active) {
-                    $active->finish();
+                    app(ExamService::class)->finishAttempt($active);
                 }
             } else {
                 $mock = Mock::findOrFail($request->mock_id);
                 if ((int) $mock->test_id !== (int) $test->id) {
-                    throw new \Exception('Mock test boshqa testga tegishli!');
+                    throw new \Exception(__('mock_other_test'));
                 }
                 switch ($mock->status) {
                     case 'inactive':
-                        throw new \Exception('Ushbu Mock test hozirda faol emas!');
+                        throw new \Exception(__('mock_inactive'));
                     case 'scheduled':
                         $formattedStart = Carbon::parse($mock->started_at)->format('d.m.Y H:i');
-                        throw new \Exception("Ushbu Mock test hali boshlanmagan! Boshlanish vaqti: {$formattedStart}");
+                        throw new \Exception(__('mock_not_started', ['time' => $formattedStart]));
                     case 'expired':
                         $formattedFinish = Carbon::parse($mock->finished_at)->format('d.m.Y H:i');
-                        throw new \Exception("Ushbu Mock test vaqti tugagan! Yakunlangan vaqti: {$formattedFinish}");
+                        throw new \Exception(__('mock_finished', ['time' => $formattedFinish]));
                 }
             }
 
@@ -168,20 +184,29 @@ class AttemptController extends Controller
     /**
      * Display the specified resource.
      */
-    public function show(Attempt $attempt)
+    public function show(Attempt $attempt, MockResultService $results)
     {
         $this->authorize('view', $attempt);
 
         $attempt->load(['test.folder', 'user', 'mock', 'mockStudent', 'attempt_types']);
-        // Append attempt_parts only for detail view
-        $attempt->attempt_types->each(function ($attemptType) {
-            $attemptType->append('attempt_parts');
+
+        // Answer keys, candidate answers with correctness and scores only once the attempt is finished
+        // (graders: always) — same rule as AttemptPartController.
+        $visible = $attempt->resultsVisibleTo(Auth::user());
+        $attempt->attempt_types->each(function ($attemptType) use ($visible) {
+            $visible ? $attemptType->append('attempt_parts') : $attemptType->hideResults();
         });
+
+        $bands = $visible ? $results->attemptBands($attempt) : null;
 
         return Inertia::render('attempt/show', [
             'attempt' => $attempt,
+            'results_visible' => $visible,
+            // Server-computed bands (null while hidden): {listening, reading, writing, speaking, overall,
+            // listening_correct, reading_correct, reading_variant, writing_confirmed, writing_pending}.
+            'bands' => $bands,
+            'writing_band' => $bands['writing'] ?? null,
         ]);
-
     }
 
     /**
@@ -194,43 +219,17 @@ class AttemptController extends Controller
             $this->authorize('view', $attempt);
         }
 
+        // No result sheet while the exam is running (graders excepted), signed link or not.
+        abort_unless($attempt->resultsVisibleTo(Auth::user()), 403, 'Results are available after the attempt is finished.');
+
         ini_set('memory_limit', '1024M');
         ini_set('max_execution_time', '300');
 
-        $attempt = $attempt->load([
-            'test.folder',
-            'user',
-            'mock',
-            'mockStudent',
-            'attempt_types.type',
-        ]);
-
-        // Append attempt_parts for PDF view
-        $attempt->attempt_types->each(function ($attemptType) {
-            $attemptType->append('attempt_parts');
-        });
-
-        $options = [
-            'isPhpEnabled' => false,
-            'isRemoteEnabled' => true,
-            'isHtml5ParserEnabled' => true,
-            'isFontSubsettingEnabled' => true,
-            'isUnicodeEnabled' => true,
-            'defaultFont' => 'DejaVu Sans',
-        ];
-
-        $dompdf = new Dompdf($options);
-        $dompdf->loadHtml(view('pdf.attempt', compact('attempt'))->render());
-        $dompdf->setPaper('A4', 'portrait');
-        $dompdf->render();
-
-        // Add page numbers to the footer
-        $canvas = $dompdf->getCanvas();
-        $canvas->page_text(520, 815, '{PAGE_NUM} / {PAGE_COUNT}', null, 9, [0.4, 0.4, 0.4]);
+        $output = app(AttemptPdfRenderer::class)->render($attempt);
 
         $filename = "IELTS_TRF_Attempt_{$attempt->id}_".$attempt->created_at->format('Y-m-d');
 
-        return response($dompdf->output(), 200)
+        return response($output, 200)
             ->header('Content-Type', 'application/pdf')
             ->header('Content-Disposition', 'inline; filename="'.$filename.'.pdf"');
 

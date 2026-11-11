@@ -29,6 +29,12 @@ class ExamService
 
     public const REJECTED = 'rejected';
 
+    /** Desktop v1.1: not applied yet, the client keeps the item and sends it again (e.g. while paused). */
+    public const DEFERRED = 'deferred';
+
+    /** Desktop API timestamp format (ISO-8601 with milliseconds and offset). */
+    public const API_TIME_FORMAT = 'Y-m-d\\TH:i:s.vP';
+
     /**
      * Strip everything a candidate could use to cheat from a part payload and
      * build a neutral, pre-sorted option list for drag-and-drop sections.
@@ -128,13 +134,35 @@ class ExamService
         }
     }
 
-    public function finishTypeWithEvaluation(Attempt $attempt, AttemptType $attemptType): void
+    /**
+     * Submit a module and queue the AI evaluation of its unscored essays. Only the call that actually
+     * submitted the module (atomic UPDATE) queues anything. Returns whether this call submitted it.
+     */
+    public function finishTypeWithEvaluation(Attempt $attempt, AttemptType $attemptType): bool
     {
-        $attemptType->finish();
+        if (! $attemptType->submit()) {
+            return false;
+        }
 
-        foreach ($attempt->essayAnswersForEvaluation($attemptType->type_id) as $answer) {
+        foreach ($attempt->essayAnswersForEvaluation($attemptType->type_id, true) as $answer) {
             EvaluateEssayJob::dispatch($answer->id);
         }
+
+        return true;
+    }
+
+    /**
+     * Desktop API timestamp: ISO-8601 with milliseconds and offset ("2026-11-12T09:14:03.120+05:00").
+     */
+    public static function apiTime(mixed $value = 'now'): ?string
+    {
+        if ($value === null || $value === '') {
+            return null;
+        }
+
+        $time = $value instanceof CarbonInterface ? Carbon::instance($value) : Carbon::parse($value);
+
+        return $time->setTimezone(config('app.timezone'))->format(self::API_TIME_FORMAT);
     }
 
     /**
@@ -178,7 +206,8 @@ class ExamService
     public function startModule(Attempt $attempt, TestType $testType): AttemptType
     {
         return DB::transaction(function () use ($attempt, $testType) {
-            $start = now();
+            // Whole seconds: the timer the app gets now must equal the one stored (and returned later).
+            $start = now()->startOfSecond();
             $attemptType = AttemptType::createOrFirst(
                 ['attempt_id' => $attempt->id, 'type_id' => $testType->type_id],
                 ['started_at' => $start, 'finished_at' => $start->copy()->addSeconds($this->moduleDurationSeconds($testType))]
@@ -203,9 +232,13 @@ class ExamService
     /**
      * Save one answer. Shared by web (one answer per request) and desktop (idempotent batches).
      *
+     * Ordering (desktop): when both the stored answer and the item carry a client `seq`, the higher seq wins;
+     * otherwise the later `changed_at` wins (ms precision); equal values → the later request wins.
+     *
      * @param  array<int>|null  $optionIds  null = leave selected options untouched
      * @param  CarbonInterface|null  $changedAt  client time of the change (desktop queue)
-     * @return array{status: string, reason?: string, answer?: AttemptAnswer}
+     * @param  int|null  $seq  client per-question monotonic counter (desktop v1.1)
+     * @return array{status: string, reason?: string, answer?: AttemptAnswer, late?: bool, attempt_type?: AttemptType}
      */
     public function saveAnswer(
         Attempt $attempt,
@@ -216,9 +249,13 @@ class ExamService
         ?CarbonInterface $changedAt = null,
         ?string $clientUuid = null,
         int $graceSeconds = 0,
+        ?int $seq = null,
     ): array {
         if ($attempt->paused_at !== null && ($changedAt === null || $changedAt->gte($attempt->paused_at))) {
-            return $this->rejected('paused');
+            // Desktop items are kept by the client and re-sent after the resume; the web shows "paused".
+            return $changedAt === null
+                ? $this->rejected('paused')
+                : ['status' => self::DEFERRED, 'reason' => 'paused'];
         }
 
         $question->loadMissing('section.question_type');
@@ -231,12 +268,13 @@ class ExamService
             ->where('type_id', $attemptPart->part->test_type->type_id)
             ->first();
 
+        $late = false;
         if ($attemptType) {
-            if ($attemptType->is_submitted) {
-                return $this->rejected('module_submitted');
-            }
+            $closedReason = null;
 
-            if ($attemptType->finished_at) {
+            if ($attemptType->is_submitted) {
+                $closedReason = 'module_submitted';
+            } elseif ($attemptType->finished_at) {
                 // While paused the clock stands still at paused_at.
                 $now = $attempt->paused_at ? Carbon::parse($attempt->paused_at) : now();
                 $finishedAt = Carbon::parse($attemptType->finished_at);
@@ -249,15 +287,37 @@ class ExamService
                     if (! $inGrace) {
                         if ($attempt->paused_at === null && $now->gt($graceEnd)) {
                             $this->finishTypeWithEvaluation($attempt, $attemptType);
+                            $attemptType->refresh();
                         }
-
-                        return $this->rejected('module_time_over');
+                        $closedReason = 'module_time_over';
                     }
                 }
             }
+
+            if ($closedReason !== null) {
+                if (! $this->lateSyncAllowed($attempt, $attemptType, $changedAt)) {
+                    return $this->rejected($closedReason);
+                }
+                $late = true;
+            }
         }
 
-        return DB::transaction(function () use ($attemptPart, $question, $text, $optionIds, $changedAt, $clientUuid) {
+        if (is_array($optionIds)) {
+            $isMultiple = $question->section->question_type?->type === 'multiple_response';
+            $optionIds = array_values(array_unique(array_map('intval', $optionIds)));
+            $optionIds = $isMultiple ? $optionIds : array_slice($optionIds, 0, 1);
+
+            $options = Option::withoutEagerLoads()->where('question_id', $question->id)->get(['id', 'question_id', 'is_correct'])->keyBy('id');
+            $optionIds = array_values(array_filter($optionIds, fn (int $id) => $options->has($id)));
+
+            // "Choose TWO": never more selections than the key has correct options.
+            $maxSelections = $options->filter(fn (Option $option) => (bool) $option->is_correct)->count();
+            if ($isMultiple && $maxSelections > 0 && count($optionIds) > $maxSelections) {
+                return $this->rejected('too_many_options');
+            }
+        }
+
+        $result = DB::transaction(function () use ($attemptPart, $question, $text, $optionIds, $changedAt, $clientUuid, $seq, $late) {
             // Serialize concurrent saves of the same part.
             AttemptPart::whereKey($attemptPart->id)->lockForUpdate()->first();
 
@@ -269,7 +329,11 @@ class ExamService
                 return ['status' => self::DUPLICATE, 'answer' => $answer];
             }
 
-            if ($answer && $changedAt !== null && $answer->client_changed_at !== null
+            if ($answer && $seq !== null && $answer->client_seq !== null) {
+                if ((int) $answer->client_seq > $seq) {
+                    return ['status' => self::STALE, 'answer' => $answer];
+                }
+            } elseif ($answer && $changedAt !== null && $answer->client_changed_at !== null
                 && Carbon::parse($answer->client_changed_at)->gt($changedAt)) {
                 return ['status' => self::STALE, 'answer' => $answer];
             }
@@ -279,33 +343,153 @@ class ExamService
             if ($clientUuid !== null) {
                 $answer->client_uuid = $clientUuid;
             }
+            if ($seq !== null) {
+                $answer->client_seq = $seq;
+            }
             if ($changedAt !== null) {
                 $answer->client_changed_at = Carbon::instance($changedAt)->setTimezone(config('app.timezone'))->format('Y-m-d H:i:s.v');
+            }
+            if ($late) {
+                $answer->late_synced = true;
             }
             $answer->save();
 
             if (is_array($optionIds)) {
                 $answer->attempt_answer_options()->delete();
 
-                $isMultiple = $question->section->question_type?->type === 'multiple_response';
-                $optionIds = array_values(array_unique(array_map('intval', $optionIds)));
-                $optionIds = $isMultiple ? $optionIds : array_slice($optionIds, 0, 1);
-
-                $options = Option::whereIn('id', $optionIds)->where('question_id', $question->id)->get()->keyBy('id');
+                $correct = Option::withoutEagerLoads()->whereIn('id', $optionIds)->pluck('is_correct', 'id');
                 foreach ($optionIds as $optionId) {
-                    $option = $options->get($optionId);
-                    if (! $option) {
-                        continue;
-                    }
                     $answer->attempt_answer_options()->create([
-                        'option_id' => $option->id,
-                        'is_correct' => $option->is_correct ? 1 : 0,
+                        'option_id' => $optionId,
+                        'is_correct' => ($correct[$optionId] ?? 0) ? 1 : 0,
                     ]);
                 }
             }
 
             return ['status' => self::SAVED, 'answer' => $answer];
         });
+
+        if ($late && $result['status'] === self::SAVED) {
+            $result['late'] = true;
+            $result['attempt_type'] = $attemptType;
+        }
+
+        return $result;
+    }
+
+    /**
+     * Desktop v1.1 offline late sync: after a module ended, an item is still accepted when it was changed
+     * before the end, the PC was offline at the end (no heartbeat after finished_at, see snapshotOfflineAtEnd)
+     * and the module ended at most desktop.offline_late_sync_minutes ago.
+     */
+    public function lateSyncAllowed(Attempt $attempt, AttemptType $attemptType, ?CarbonInterface $changedAt): bool
+    {
+        if ($changedAt === null || $attemptType->finished_at === null) {
+            return false;
+        }
+
+        $finishedAt = Carbon::parse($attemptType->finished_at);
+        if ($changedAt->gt($finishedAt)) {
+            return false;
+        }
+
+        if (now()->gt($finishedAt->copy()->addMinutes($this->lateSyncMinutes()))) {
+            return false;
+        }
+
+        return $this->offlineAtEnd($attempt, $attemptType);
+    }
+
+    public function lateSyncMinutes(): int
+    {
+        return (int) config('desktop.offline_late_sync_minutes', 120);
+    }
+
+    /**
+     * Whether the PC was offline when the module ended: its last exam heartbeat is older than finished_at.
+     * Stored on the module (attempt_types.offline_at_end) once the grace is over, so a heartbeat after the
+     * reconnect does not change the answer.
+     */
+    public function offlineAtEnd(Attempt $attempt, AttemptType $attemptType): bool
+    {
+        if ($attemptType->offline_at_end !== null) {
+            return (bool) $attemptType->offline_at_end;
+        }
+
+        $finishedAt = Carbon::parse($attemptType->finished_at);
+        $lastHeartbeat = $attempt->last_heartbeat_at;
+        $offline = $lastHeartbeat === null || Carbon::parse($lastHeartbeat)->lt($finishedAt);
+
+        if (now()->gt($finishedAt->copy()->addSeconds((int) config('desktop.answer_grace_seconds', 30)))) {
+            $attemptType->forceFill(['offline_at_end' => $offline])->saveQuietly();
+        }
+
+        return $offline;
+    }
+
+    /**
+     * Record offline_at_end for every module that ended (beyond the grace) before this request.
+     * Must run before a heartbeat moves attempts.last_heartbeat_at forward.
+     */
+    public function snapshotOfflineAtEnd(Attempt $attempt): void
+    {
+        if ($attempt->paused_at !== null) {
+            return;
+        }
+
+        AttemptType::withoutEagerLoads()
+            ->where('attempt_id', $attempt->id)
+            ->whereNull('offline_at_end')
+            ->whereNotNull('finished_at')
+            ->where('finished_at', '<', now()->subSeconds((int) config('desktop.answer_grace_seconds', 30)))
+            ->get()
+            ->each(fn (AttemptType $type) => $this->offlineAtEnd($attempt, $type));
+    }
+
+    /**
+     * Whether answers may still arrive for a finished attempt (some module ended while the PC was offline,
+     * within the late-sync cap).
+     */
+    public function acceptsLateAnswers(Attempt $attempt): bool
+    {
+        return AttemptType::withoutEagerLoads()
+            ->where('attempt_id', $attempt->id)
+            ->where('offline_at_end', true)
+            ->where('finished_at', '>=', now()->subMinutes($this->lateSyncMinutes()))
+            ->exists();
+    }
+
+    /**
+     * After late-synced answers: re-score the touched modules and (re-)evaluate late essays,
+     * unless an Admin already confirmed the module.
+     *
+     * @param  array<int, array{answer: AttemptAnswer, attempt_type: AttemptType}>  $lateResults
+     */
+    public function afterLateSync(array $lateResults): void
+    {
+        $types = [];
+        foreach ($lateResults as $result) {
+            $type = $result['attempt_type']->fresh();
+            if (! $type) {
+                continue;
+            }
+            $types[$type->id] = $type;
+
+            $answer = $result['answer'];
+            $isEssay = Question::withoutEagerLoads()->whereKey($answer->question_id)
+                ->whereHas('section.question_type', fn ($q) => $q->where('type', 'essay'))->exists();
+
+            if ($isEssay && $type->reviewed_at === null && mb_strlen((string) $answer->answer_text) > 10) {
+                // An unscored essay may still have a queued job; it reads the new text. A scored one is re-run.
+                EvaluateEssayJob::dispatch($answer->id, $answer->fresh()?->score !== null);
+            }
+        }
+
+        foreach ($types as $type) {
+            if ($type->is_submitted) {
+                $type->recalculateIsCorrectCount();
+            }
+        }
     }
 
     /**
@@ -389,7 +573,8 @@ class ExamService
     }
 
     /**
-     * Finish the whole attempt: close every started module, then score and queue essays (Attempt::finish).
+     * Finish the whole attempt: Attempt::finish submits every open module, scores everything and queues
+     * the essays that were not queued yet (also clears a pause).
      */
     public function finishAttempt(Attempt $attempt): void
     {
@@ -397,19 +582,8 @@ class ExamService
             return;
         }
 
-        DB::transaction(function () use ($attempt) {
-            AttemptType::where('attempt_id', $attempt->id)
-                ->where('is_submitted', false)
-                ->get()
-                ->each(fn (AttemptType $type) => $type->finish());
-
-            if ($attempt->paused_at !== null) {
-                $attempt->paused_at = null;
-            }
-
-            $attempt->unsetRelation('attempt_types')->unsetRelation('attempt_parts');
-            $attempt->finish();
-        });
+        $attempt->unsetRelation('attempt_types')->unsetRelation('attempt_parts');
+        $attempt->finish();
     }
 
     public function forceSubmit(Attempt $attempt): void

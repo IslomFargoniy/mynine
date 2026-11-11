@@ -15,8 +15,25 @@ return [
     // A remote unlock from the monitor is delivered to the PC only within this window.
     'unlock_ttl_minutes' => 15,
 
-    // Exam token lifetime when the mock has no end time.
+    // Exam token lifetime when the mock has no end time (legacy, v1.0).
     'token_fallback_hours' => 6,
+
+    // v1.1 token: expires at max(mock end, now) + module durations + this many hours, and every exam
+    // heartbeat of a running attempt keeps it valid for at least this many hours.
+    'token_sliding_hours' => 2,
+
+    // v1.1: answers changed before a module ended are still accepted this long after the end when the
+    // PC was offline at the end (marked attempt_answers.late_synced).
+    'offline_late_sync_minutes' => (int) env('DESKTOP_OFFLINE_LATE_SYNC_MINUTES', 120),
+
+    // v1.1: login on another PC is refused (409 session_active_elsewhere) while the bound PC sent an exam
+    // heartbeat within this many seconds; the invigilator can release the PC from the monitor.
+    'active_elsewhere_seconds' => 90,
+
+    // Serve exam audio through nginx (X-Accel-Redirect to an internal location) instead of PHP.
+    // nginx: location /_protected_audio/ { internal; alias <storage/app/private/audio/>; }
+    'x_accel_audio' => (bool) env('DESKTOP_X_ACCEL_AUDIO', false),
+    'x_accel_audio_location' => env('DESKTOP_X_ACCEL_AUDIO_LOCATION', '/_protected_audio/'),
 
     'heartbeat_seconds' => 20,
 

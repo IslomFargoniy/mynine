@@ -2,6 +2,7 @@
 
 namespace App\Observers;
 
+use App\Jobs\SendResultEmailJob;
 use App\Jobs\SendResultTelegramJob;
 use App\Models\Attempt;
 use Illuminate\Support\Facades\Auth;
@@ -30,7 +31,7 @@ class AttemptObserver
             if ($attempt->user) {
                 // Send email if user has email
                 if (! empty($attempt->user->email) && filter_var($attempt->user->email, FILTER_VALIDATE_EMAIL)) {
-                    dispatch(new \App\Jobs\SendResultEmailJob($attempt->user, $attempt));
+                    dispatch(new SendResultEmailJob($attempt->user, $attempt));
                 }
 
                 // Send Telegram message if user has Telegram ID

@@ -40,12 +40,12 @@ export default function QuestionTypeGuide({ type, defaultOpen = false }: Questio
                     type="button"
                     onClick={() => setIsOpen(true)}
                     className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold text-brand bg-indigo-500/12 border border-indigo-500/25 hover:bg-indigo-500/20 transition-all cursor-pointer"
-                    title={t('guide.view_instructions') || "Savol turi bo'yicha yo'riqnomani ko'rish"}
+                    title={t('guide.view_instructions')}
                 >
                     <span className="w-4 h-4 rounded-full bg-primary text-primary-foreground flex items-center justify-center font-bold text-[11px] leading-none shrink-0">
                         !
                     </span>
-                    <span>{t('guide.guide_button') || "Ko'rsatma va qoidalar"}</span>
+                    <span>{t('guide.guide_button')}</span>
                 </button>
             </div>
         );
@@ -64,7 +64,7 @@ export default function QuestionTypeGuide({ type, defaultOpen = false }: Questio
                     type="button"
                     onClick={() => setIsOpen(false)}
                     className="p-1 rounded-full text-muted-foreground hover:text-foreground hover:bg-indigo-500/12 transition-colors cursor-pointer"
-                    title={t('guide.close') || "Yopish"}
+                    title={t('guide.close')}
                 >
                     <X className="w-4 h-4" />
                 </button>
@@ -96,7 +96,7 @@ export default function QuestionTypeGuide({ type, defaultOpen = false }: Questio
 
             {hasExample && (
                 <div className="text-[11px] font-mono bg-glass-subtle px-2.5 py-1 rounded-lg border border-indigo-500/25 text-brand inline-block">
-                    {t('guide.example_label') || 'Misol'}: {example}
+                    {t('guide.example_label')}: {example}
                 </div>
             )}
         </div>

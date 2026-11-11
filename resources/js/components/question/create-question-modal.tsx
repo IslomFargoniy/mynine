@@ -89,7 +89,7 @@ export default function CreateQuestionModal({ section }: SectionUpdateProps) {
         setData('options', [...data.options, ...parsedOptions]);
         setSmartPasteText('');
         setShowSmartPaste(false);
-        toast.success(`${parsedOptions.length} ta variant qo'shildi!`);
+        toast.success(t('question_form.options_added', { count: parsedOptions.length }));
     };
 
     const submit: FormEventHandler = (e) => {
@@ -142,10 +142,10 @@ export default function CreateQuestionModal({ section }: SectionUpdateProps) {
 
             <DialogContent className="sm:max-w-4xl w-full overflow-y-auto">
                 <DialogTitle className="text-lg font-bold text-foreground">
-                    {t('modal.create_title') || "Yangi savol qo'shish"}
+                    {t('modal.create_question_title')}
                 </DialogTitle>
                 <DialogDescription className="text-xs text-muted-foreground">
-                    {section.question_type?.name} savoli uchun ma'lumotlarni kiriting.
+                    {t('question_form.enter_details', { type: section.question_type?.name })}
                 </DialogDescription>
 
                 <form onSubmit={submit} className="space-y-4 mt-1">
@@ -154,14 +154,14 @@ export default function CreateQuestionModal({ section }: SectionUpdateProps) {
                     <div className="space-y-1">
                         <div className="flex items-center justify-between gap-2">
                             <Label htmlFor="textarea" className="text-sm font-semibold text-foreground/80">
-                                {t('question_prompt') || "Savol Matni / Prompt"} *
+                                {t('question_prompt')} *
                             </Label>
                             <QuestionTypeGuide type={qType} />
                         </div>
                         <Input
                             id="textarea"
                             ref={nameInput}
-                            placeholder="Masalan: What is the main idea of paragraph A?"
+                            placeholder={t('question_form.prompt_placeholder')}
                             value={data.textarea}
                             onChange={(e) => setData('textarea', e.target.value)}
                             className="text-sm"
@@ -173,17 +173,17 @@ export default function CreateQuestionModal({ section }: SectionUpdateProps) {
                     {qType === 'fill_blank' && (
                         <div className="p-3 bg-indigo-500/12 rounded-[18px] border border-indigo-500/25 space-y-1">
                             <Label htmlFor="answer_text" className="text-sm font-semibold text-brand">
-                                To'g'ri Javob Matni (Correct Answer) *
+                                {t('question_form.correct_text')}
                             </Label>
                             <Input
                                 id="answer_text"
-                                placeholder="Masalan: climate change"
+                                placeholder={t('question_form.correct_text_placeholder')}
                                 value={data.answer_text}
                                 onChange={(e) => setData('answer_text', e.target.value)}
                                 className="bg-glass-strong"
                             />
                             <p className="text-[11px] text-brand">
-                                Foydalanuvchi kiritgan matn ushbu so'z bilan tekshiriladi (harf kattaligi farq qilmaydi).
+                                {t('question_form.correct_text_hint')}
                             </p>
                             <InputError message={errors.answer_text} />
                         </div>
@@ -193,7 +193,7 @@ export default function CreateQuestionModal({ section }: SectionUpdateProps) {
                     {qType === 'matching' && (
                         <div className="p-3 bg-indigo-500/12 rounded-[18px] border border-indigo-500/25 space-y-1">
                             <Label htmlFor="answer_text" className="text-sm font-semibold text-brand">
-                                To'g'ri Mos keluvchi Harf (Select Answer) *
+                                {t('question_form.correct_letter')}
                             </Label>
                             <select
                                 id="answer_text"
@@ -201,7 +201,7 @@ export default function CreateQuestionModal({ section }: SectionUpdateProps) {
                                 onChange={(e) => setData('answer_text', e.target.value)}
                                 className="block w-full rounded-xl border border-input bg-glass-subtle text-foreground focus:border-ring focus:ring-2 focus:ring-ring/40 px-3.5 py-2 text-sm focus:outline-none"
                             >
-                                <option value="">{t('select') || "-- To'g'ri harfni tanlang --"}</option>
+                                <option value="">{t('select')}</option>
                                 {buildRange(section.from_option, section.to_option).map(opt => (
                                     <option key={opt} value={opt}>{opt}</option>
                                 ))}
@@ -216,7 +216,7 @@ export default function CreateQuestionModal({ section }: SectionUpdateProps) {
                             {(qType === 'true_false' || qType === 'yes_no') ? (
                                 <div className="space-y-2">
                                     <Label className="text-xs font-bold text-foreground/80 uppercase tracking-wider">
-                                        To'g'ri javob variantini belgilang *
+                                        {t('question_form.mark_correct')}
                                     </Label>
                                     <div className="grid grid-cols-3 gap-3">
                                         {data.options.map((option, index) => (
@@ -247,7 +247,7 @@ export default function CreateQuestionModal({ section }: SectionUpdateProps) {
                                 <div className="space-y-3">
                                     <div className="flex items-center justify-between">
                                         <Label className="text-sm font-bold text-foreground">
-                                            Javob Variantlari (Options)
+                                            {t('question_form.options')}
                                         </Label>
                                         <Button
                                             type="button"
@@ -257,17 +257,17 @@ export default function CreateQuestionModal({ section }: SectionUpdateProps) {
                                             className="text-xs gap-1.5 border-violet-500/30 text-violet-800 hover:bg-violet-500/12 dark:text-violet-200"
                                         >
                                             <ClipboardList className="w-3.5 h-3.5" />
-                                            {showSmartPaste ? 'Yashirish' : 'Aqlli nusxalash (Smart Paste)'}
+                                            {showSmartPaste ? t('question_form.hide') : t('question_form.smart_paste')}
                                         </Button>
                                     </div>
 
                                     {showSmartPaste && (
                                         <div className="p-3 border border-dashed border-violet-500/30 rounded-[18px] bg-violet-500/10 space-y-2">
                                             <p className="text-xs text-violet-800 dark:text-violet-200 font-medium">
-                                                Matnli variantlarni har bir qatorda nusxalab tashlang (To'g'ri javob ketidan * qo'ying):
+                                                {t('question_form.smart_paste_hint')}
                                             </p>
                                             <textarea
-                                                placeholder={"A) Option 1\nB) Option 2*\nC) Option 3\nD) Option 4"}
+                                                placeholder={t('question_form.paste_placeholder')}
                                                 value={smartPasteText}
                                                 onChange={(e) => setSmartPasteText(e.target.value)}
                                                 className="w-full h-24 p-2 text-xs rounded-xl border border-input bg-glass-subtle text-foreground focus:border-ring focus:ring-2 focus:ring-ring/40 font-mono outline-none"
@@ -278,7 +278,7 @@ export default function CreateQuestionModal({ section }: SectionUpdateProps) {
                                                 onClick={handleSmartPaste}
                                                 className="text-xs font-semibold"
                                             >
-                                                Variantlarni tahlil qilib qo'shish
+                                                {t('question_form.parse_options')}
                                             </Button>
                                         </div>
                                     )}
@@ -302,7 +302,7 @@ export default function CreateQuestionModal({ section }: SectionUpdateProps) {
                                                         }
                                                     />
                                                     <span className="text-xs font-semibold text-foreground/80">
-                                                        {t('correct') || "To'g'ri"}
+                                                        {t('correct')}
                                                     </span>
                                                 </label>
 
@@ -326,7 +326,7 @@ export default function CreateQuestionModal({ section }: SectionUpdateProps) {
                                         className="w-full py-2 border-2 border-dashed border-glass-dash hover:border-ring hover:bg-indigo-500/12 text-muted-foreground hover:text-brand rounded-full text-xs font-semibold flex items-center justify-center gap-1.5 transition-all cursor-pointer"
                                     >
                                         <Plus className="w-4 h-4" />
-                                        {t('add_option') || "Yangi variant qo'shish"}
+                                        {t('add_option')}
                                     </button>
                                 </div>
                             )}

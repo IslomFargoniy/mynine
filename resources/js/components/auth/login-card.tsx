@@ -59,7 +59,7 @@ export default function LoginCard() {
 
                     <div className="grid gap-2">
                         <Label htmlFor="password" className="text-xs font-black uppercase tracking-widest text-muted-foreground ml-1">
-                            {t('login.password') || 'Password'}
+                            {t('login.password')}
                         </Label>
                         <Input
                             id="password"

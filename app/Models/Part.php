@@ -2,13 +2,14 @@
 
 namespace App\Models;
 
+use Database\Factories\PartFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\DB;
 
 class Part extends Model
 {
-    /** @use HasFactory<\Database\Factories\PartFactory> */
+    /** @use HasFactory<PartFactory> */
     use HasFactory;
 
     protected $fillable = [
@@ -43,7 +44,7 @@ class Part extends Model
     {
         static::deleting(function ($part) {
             $part->sections->each->delete();
-            \App\Models\Image::where('part_id', $part->id)->delete();
+            Image::where('part_id', $part->id)->delete();
         });
     }
 

@@ -46,7 +46,7 @@ export default function PartSection({ section, globalIndex }: SectionUpdateProps
     const questionCount = section.questions?.length ?? 0;
     const questionRange = questionCount > 0
         ? `Q${globalIndex + 1}–${globalIndex + questionCount}`
-        : t('no_questions') ?? 'No questions';
+        : t('no_questions');
 
     const typeName = section.question_type?.name ?? section.question_type?.type ?? 'Section';
 
@@ -65,7 +65,7 @@ export default function PartSection({ section, globalIndex }: SectionUpdateProps
                             {typeName}
                         </span>
                         <span className="text-xs text-muted-foreground whitespace-nowrap">
-                            {questionRange} · {questionCount} {t('question') ?? 'questions'}
+                            {questionRange} · {t('questions_count', { count: questionCount })}
                         </span>
                     </div>
                     {section.textarea && (
@@ -80,14 +80,14 @@ export default function PartSection({ section, globalIndex }: SectionUpdateProps
                     <button
                         onClick={() => setOpenUpdate(true)}
                         className="p-1.5 rounded-full hover:bg-indigo-500/12 text-brand transition-colors"
-                        title={t('edit') ?? 'Edit'}
+                        title={t('edit')}
                     >
                         <Edit className="w-3.5 h-3.5" />
                     </button>
                     <button
                         onClick={() => setOpenDelete(true)}
                         className="p-1.5 rounded-full hover:bg-rose-500/12 text-rose-700 dark:text-rose-300 transition-colors"
-                        title={t('delete') ?? 'Delete'}
+                        title={t('delete')}
                     >
                         <TrashIcon className="w-3.5 h-3.5" />
                     </button>
@@ -134,7 +134,7 @@ export default function PartSection({ section, globalIndex }: SectionUpdateProps
                                 </div>
                             ) : (
                                 <div className="p-3 text-center rounded-[18px] border border-dashed border-glass-dash text-xs text-muted-foreground">
-                                    {t('no_incorrect_options') || "Hozircha noto'g'ri variantlar qo'shilmagan"}
+                                    {t('no_incorrect_options')}
                                 </div>
                             )}
                         </div>

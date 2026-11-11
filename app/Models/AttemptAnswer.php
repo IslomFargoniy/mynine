@@ -2,12 +2,13 @@
 
 namespace App\Models;
 
+use Database\Factories\AttemptAnswerFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
 class AttemptAnswer extends Model
 {
-    /** @use HasFactory<\Database\Factories\AttemptAnswerFactory> */
+    /** @use HasFactory<AttemptAnswerFactory> */
     use HasFactory;
 
     protected $fillable = [
@@ -20,6 +21,8 @@ class AttemptAnswer extends Model
         'review_note_ai',
         'is_correct',
         'score',
+        'client_seq',
+        'late_synced',
     ];
 
     public function attempt_part()

@@ -26,27 +26,27 @@ const MockTable = ({ tests: _tests, searchData, ...mock }: MockTableProps) => {
         if (!item.active || status === 'inactive') {
             return (
                 <span className="inline-flex items-center rounded-full bg-muted px-2 py-0.5 text-[10px] font-bold text-muted-foreground">
-                    <MinusCircle className="mr-1 h-3 w-3" /> {t('inactive') || 'Nofaol'}
+                    <MinusCircle className="mr-1 h-3 w-3" /> {t('inactive')}
                 </span>
             );
         }
         if (status === 'scheduled') {
             return (
                 <span className="inline-flex items-center rounded-full bg-amber-500/15 px-2 py-0.5 text-[10px] font-bold text-amber-800 dark:bg-amber-400/15 dark:text-amber-200">
-                    <Clock className="mr-1 h-3 w-3" /> {t('scheduled') || 'Boshlanmagan'}
+                    <Clock className="mr-1 h-3 w-3" /> {t('scheduled')}
                 </span>
             );
         }
         if (status === 'expired') {
             return (
                 <span className="inline-flex items-center rounded-full bg-rose-500/12 px-2 py-0.5 text-[10px] font-bold text-rose-800 dark:bg-rose-400/15 dark:text-rose-200">
-                    <MinusCircle className="mr-1 h-3 w-3" /> {t('expired') || 'Vaqti tugagan'}
+                    <MinusCircle className="mr-1 h-3 w-3" /> {t('expired')}
                 </span>
             );
         }
         return (
             <span className="inline-flex items-center rounded-full bg-emerald-500/12 px-2 py-0.5 text-[10px] font-bold text-emerald-800 dark:bg-emerald-400/15 dark:text-emerald-200">
-                <CheckCircle className="mr-1 h-3 w-3" /> {t('active') || 'Faol'}
+                <CheckCircle className="mr-1 h-3 w-3" /> {t('active')}
             </span>
         );
     };
@@ -190,7 +190,7 @@ const MockTable = ({ tests: _tests, searchData, ...mock }: MockTableProps) => {
             {selectedMock && openDelete && <DeleteItemModal item={selectedMock} open={openDelete} setOpen={setOpenDelete} onDelete={handleDelete} />}
 
             {/* Pagination */}
-            <div className="mt-6 flex items-center justify-between text-sm text-foreground">
+            <div className="mt-6 flex flex-col items-center justify-between gap-3 text-sm text-foreground sm:flex-row">
                 <div>
                     {t('showing', {
                         from: mock.from,
@@ -198,7 +198,7 @@ const MockTable = ({ tests: _tests, searchData, ...mock }: MockTableProps) => {
                         total: mock.total,
                     })}
                 </div>
-                <div className="flex gap-1">
+                <div className="flex flex-wrap justify-center gap-1">
                     {mock.links.map((link, index) => (
                         <Link
                             key={index}

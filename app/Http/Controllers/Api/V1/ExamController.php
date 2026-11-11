@@ -83,6 +83,19 @@ class ExamController extends ExamApiController
         ]);
     }
 
+    private function extendToken(Request $request): void
+    {
+        $token = $request->attributes->get('candidate')?->currentAccessToken();
+        if (! $token || ! method_exists($token, 'forceFill')) {
+            return;
+        }
+
+        $until = now()->addHours((int) config('desktop.token_sliding_hours', 2));
+        if ($token->expires_at === null || $token->expires_at->lt($until)) {
+            $token->forceFill(['expires_at' => $until])->save();
+        }
+    }
+
     /**
      * POST /exam/heartbeat — liveness + pause / force-submit / remote-unlock / timer changes.
      */
@@ -99,7 +112,15 @@ class ExamController extends ExamApiController
         $attempt = $this->attempt($request);
         $device = $this->device($request);
 
+        // Before the heartbeat moves forward: remember which modules ended while this PC was offline.
+        $this->exam->snapshotOfflineAtEnd($attempt);
+
         $attempt->forceFill(['last_heartbeat_at' => now()])->save();
+
+        // Sliding exam token: keep it valid while the attempt is running.
+        if ($attempt->finished_at === null) {
+            $this->extendToken($request);
+        }
         $device->forceFill(['last_seen_at' => now(), 'ip' => $request->ip()])->save();
 
         $this->exam->autoFinishExpiredTypes($attempt, $this->graceSeconds());

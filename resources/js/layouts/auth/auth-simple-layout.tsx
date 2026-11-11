@@ -1,3 +1,4 @@
+import { useTranslation } from 'react-i18next';
 import AppLogo from '@/components/app-logo';
 import LanguageBar from '@/components/language';
 import AppearanceToggleDropdown from '@/components/appearance-dropdown';
@@ -12,6 +13,7 @@ interface AuthLayoutProps {
 }
 
 export default function AuthSimpleLayout({ children, title, description }: PropsWithChildren<AuthLayoutProps>) {
+    const { t } = useTranslation();
     return (
         <div className="relative min-h-svh flex flex-col items-center justify-center p-6 md:p-10 overflow-hidden">
             <GlassBackdrop />
@@ -44,7 +46,7 @@ export default function AuthSimpleLayout({ children, title, description }: Props
                     <LanguageBar placement="top" />
                 </div>
                 <p className="text-muted-foreground text-[11px] uppercase tracking-widest font-bold">
-                    &copy; 2025 Mynine Academy. All Rights Reserved.
+                    {t('auth_pages.copyright', { year: new Date().getFullYear() })}
                 </p>
             </div>
         </div>

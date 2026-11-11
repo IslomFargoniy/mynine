@@ -6,6 +6,7 @@ import InputError from '@/components/input-error';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import TestVariantField, { type TestVariant } from '@/components/test/test-variant-field';
 import { toast } from 'sonner';
 
 import {
@@ -23,6 +24,7 @@ interface UpdateTestModalProps {
     test: Test;
     open: boolean;
     setOpen: (open: boolean) => void;
+    onSuccess?: () => void;
 }
 
 type TestForm = {
@@ -31,18 +33,20 @@ type TestForm = {
     audio_path: File | null;
     active: number;
     open: number;
+    variant: TestVariant;
 };
 
-export default function UpdateTestModal({ test, open, setOpen }: UpdateTestModalProps) {
+export default function UpdateTestModal({ test, open, setOpen, onSuccess }: UpdateTestModalProps) {
     const { t } = useTranslation();
     const nameInput = useRef<HTMLInputElement>(null);
 
     const { data, setData, post, processing, reset, errors, clearErrors } = useForm<TestForm>({
         name: test.name,
-        comment: test.comment,
+        comment: test.comment ?? '',
         audio_path: null,
         active: test.active,
-        open: test.open
+        open: test.open,
+        variant: test.variant ?? 'academic'
     });
 
     const { auth } = usePage().props as unknown as { auth?: Auth };
@@ -53,11 +57,12 @@ export default function UpdateTestModal({ test, open, setOpen }: UpdateTestModal
 
         post(route('test.update', test.id), {
             preserveScroll: true,
+            preserveState: true,
             onSuccess: () => {
-                reset();
                 clearErrors();
                 setOpen(false);
                 toast.success(t('updated_successfully'));
+                onSuccess?.();
             },
             onError: (err) => {
                 nameInput.current?.focus();
@@ -72,10 +77,10 @@ export default function UpdateTestModal({ test, open, setOpen }: UpdateTestModal
             <DialogContent className="sm:max-w-lg w-full">
                 <DialogHeader className="space-y-1 pb-2 border-b border-divider">
                     <DialogTitle className="text-lg font-bold text-foreground">
-                        {t('modal.update_title') || "Testni tahrirlash"}
+                        {t('modal.update_test_title')}
                     </DialogTitle>
                     <DialogDescription className="text-xs text-muted-foreground">
-                        {t('modal.update_description') || "Test ma'lumotlarini yangilang."}
+                        {t('modal.update_test_desc')}
                     </DialogDescription>
                 </DialogHeader>
 
@@ -106,9 +111,11 @@ export default function UpdateTestModal({ test, open, setOpen }: UpdateTestModal
                         <InputError message={errors.comment} />
                     </div>
 
+                    <TestVariantField value={data.variant} onChange={(value) => setData('variant', value)} error={errors.variant} />
+
                     <div className="space-y-1">
                         <Label htmlFor="audio_path" className="text-sm font-semibold text-foreground/80">
-                            {t('audio_path') || 'Audio fayl'}
+                            {t('audio_path')}
                         </Label>
                         <Input
                             type="file"
@@ -134,7 +141,7 @@ export default function UpdateTestModal({ test, open, setOpen }: UpdateTestModal
                                 />
                                 <div className="relative w-11 h-6 bg-foreground/10 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-ring rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-divider after:border after:rounded-full after:w-5 after:h-5 after:transition-all border border-glass-edge peer-checked:bg-primary"></div>
                                 <span className="text-xs font-medium text-foreground/80">
-                                    {data.active === 1 ? 'Aktiv' : 'Nofaol'}
+                                    {data.active === 1 ? t('active') : t('inactive')}
                                 </span>
                             </label>
                             <InputError message={errors.active} />
@@ -143,7 +150,7 @@ export default function UpdateTestModal({ test, open, setOpen }: UpdateTestModal
                         {isAdmin && (
                             <div className="space-y-1">
                                 <Label htmlFor="open" className="text-sm font-semibold text-foreground/80 block">
-                                    {t('open') || 'Ochiq test'}
+                                    {t('test_bank.open_label')}
                                 </Label>
                                 <label className="inline-flex items-center cursor-pointer gap-2">
                                     <input
@@ -155,7 +162,7 @@ export default function UpdateTestModal({ test, open, setOpen }: UpdateTestModal
                                     />
                                     <div className="relative w-11 h-6 bg-foreground/10 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-ring rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-divider after:border after:rounded-full after:w-5 after:h-5 after:transition-all border border-glass-edge peer-checked:bg-primary"></div>
                                     <span className="text-xs font-medium text-foreground/80">
-                                        {data.open === 1 ? 'Ochiq' : 'Yopiq'}
+                                        {data.open === 1 ? t('test_bank.open_state') : t('closed')}
                                     </span>
                                 </label>
                                 <InputError message={errors.open} />

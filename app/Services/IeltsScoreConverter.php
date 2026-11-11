@@ -125,6 +125,37 @@ class IeltsScoreConverter
     }
 
     /**
+     * Convert General Training Reading correct answers (out of 40) to a band, official GT table:
+     * 40 → 9, 39 → 8.5, 37-38 → 8, 36 → 7.5, 34-35 → 7, 32-33 → 6.5, 30-31 → 6, 27-29 → 5.5,
+     * 23-26 → 5, 19-22 → 4.5, 15-18 → 4, 12-14 → 3.5, 8-11 → 3, 5-7 → 2.5 (below: 3-4 → 2, 2 → 1.5, 1 → 1).
+     */
+    public static function convertReadingGeneral(int $correctCount): float
+    {
+        $table = [
+            40 => 9.0, 39 => 8.5, 37 => 8.0, 36 => 7.5, 34 => 7.0, 32 => 6.5, 30 => 6.0, 27 => 5.5,
+            23 => 5.0, 19 => 4.5, 15 => 4.0, 12 => 3.5, 8 => 3.0, 5 => 2.5, 3 => 2.0, 2 => 1.5, 1 => 1.0,
+        ];
+
+        foreach ($table as $min => $band) {
+            if ($correctCount >= $min) {
+                return $band;
+            }
+        }
+
+        return 0.0;
+    }
+
+    /**
+     * Reading band for the test variant ("general" = General Training, anything else = Academic).
+     */
+    public static function convertReadingFor(int $correctCount, ?string $variant): float
+    {
+        return $variant === 'general'
+            ? static::convertReadingGeneral($correctCount)
+            : static::convertReading($correctCount);
+    }
+
+    /**
      * Calculate IELTS Overall Band Score from module scores with standard 0.5 rounding
      */
     public static function calculateOverallBand(array $scores): float

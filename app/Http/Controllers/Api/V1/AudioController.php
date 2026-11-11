@@ -8,7 +8,7 @@ use App\Models\Test;
 use App\Services\AudioUploadService;
 use App\Services\ExamService;
 use Illuminate\Http\Request;
-use Symfony\Component\HttpFoundation\BinaryFileResponse;
+use Symfony\Component\HttpFoundation\Response;
 
 class AudioController extends ExamApiController
 {
@@ -20,7 +20,7 @@ class AudioController extends ExamApiController
     /**
      * GET /exam/audio/test/{test} — the Listening recording of a module in this attempt.
      */
-    public function test(Request $request, int $test): BinaryFileResponse
+    public function test(Request $request, int $test): Response
     {
         $module = $this->modules($this->attempt($request))
             ->first(fn ($testType) => (int) $testType->test_id === $test && $testType->type?->name === 'Listening');
@@ -35,7 +35,7 @@ class AudioController extends ExamApiController
     /**
      * GET /exam/audio/part/{part}
      */
-    public function part(Request $request, int $part): BinaryFileResponse
+    public function part(Request $request, int $part): Response
     {
         $model = Part::withoutEagerLoads()->find($part, ['id', 'test_type_id', 'audio_path']);
         $moduleIds = $this->modules($this->attempt($request))->pluck('id')->map(fn ($id) => (int) $id)->all();
@@ -47,17 +47,14 @@ class AudioController extends ExamApiController
         return $this->stream($model->audio_path);
     }
 
-    private function stream(?string $storedPath): BinaryFileResponse
+    private function stream(?string $storedPath): Response
     {
         $path = $this->audio->absolutePath($storedPath);
         if (! $path) {
             throw ApiException::notFound('Audio file not found.');
         }
 
-        // BinaryFileResponse answers Range requests with 206 Partial Content.
-        return response()->file($path, [
-            'Content-Type' => mime_content_type($path) ?: 'audio/mpeg',
-            'Cache-Control' => 'private, max-age=86400',
-        ]);
+        // PHP (BinaryFileResponse) or nginx (X-Accel-Redirect) answer Range requests with 206 Partial Content.
+        return $this->audio->response($path);
     }
 }

@@ -85,7 +85,7 @@ class DeviceController extends Controller
         ])->save();
 
         return response()->json([
-            'server_time' => now()->toIso8601String(),
+            'server_time' => ExamService::apiTime(),
             'unlock' => $this->exam->consumeUnlock($device->current_attempt_id),
         ] + $device->publicInfo());
     }
@@ -119,7 +119,7 @@ class DeviceController extends Controller
             'banned_processes' => array_values(config('desktop.banned_processes', [])),
             'heartbeat_seconds' => (int) config('desktop.heartbeat_seconds', 20),
             'violation_batch_seconds' => (int) config('desktop.violation_batch_seconds', 10),
-            'server_time' => now()->toIso8601String(),
+            'server_time' => ExamService::apiTime(),
         ]);
     }
 

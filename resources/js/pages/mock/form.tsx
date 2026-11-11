@@ -21,6 +21,8 @@ interface BankModule {
     test_name: string;
     last_used_at: string | null;
     recently_used: boolean;
+    /** Exam dates of the other mocks using this module (reuse rule, re-checked when the date changes). */
+    used_on?: string[];
     uses: number;
 }
 
@@ -29,6 +31,8 @@ interface FormProps {
     modules: BankModule[];
     autoPick: Record<string, number | null>;
     reuseDays: number;
+    /** A candidate already started a module: the modules cannot change any more. */
+    modulesLocked?: boolean;
     [key: string]: unknown;
 }
 
@@ -57,7 +61,7 @@ function DateTimeField({ id, value, onChange }: { id: string; value: string; onC
 }
 
 export default function MockForm() {
-    const { mock, modules, autoPick, reuseDays } = usePage<FormProps>().props;
+    const { mock, modules, autoPick, reuseDays, modulesLocked = false } = usePage<FormProps>().props;
     const { t } = useTranslation();
     const isEdit = !!mock;
     const isLegacy = isEdit && (!mock.modules || mock.modules.length === 0);
@@ -101,6 +105,13 @@ export default function MockForm() {
         });
         return map;
     }, [modules, mock]);
+
+    // Reuse rule against the chosen exam date (both directions); the server value is for "now".
+    const isRecent = (m: BankModule): boolean => {
+        const target = new Date(String(data.started_at ?? '').replace(' ', 'T')).getTime();
+        if (!m.used_on || Number.isNaN(target)) return m.recently_used;
+        return m.used_on.some((d) => Math.abs(new Date(d).getTime() - target) < reuseDays * 86400000);
+    };
 
     const applyAutoPick = () => {
         MODULE_TYPES.forEach((type) => {
@@ -198,11 +209,17 @@ export default function MockForm() {
                             <h2 className="text-sm font-black text-foreground">{t('exam_admin.mock_form.modules')}</h2>
                             <p className="text-[11px] text-muted-foreground">{t('exam_admin.mock_form.modules_hint', { days: reuseDays })}</p>
                         </div>
-                        <Button type="button" variant="outline" className="rounded-full text-xs" onClick={applyAutoPick}>
+                        <Button type="button" variant="outline" className="rounded-full text-xs" onClick={applyAutoPick} disabled={modulesLocked}>
                             <Wand2 className="h-4 w-4 text-brand" />
                             {t('exam_admin.mock_form.auto_pick')}
                         </Button>
                     </div>
+
+                    {modulesLocked && (
+                        <div className="rounded-[18px] border border-amber-500/25 bg-amber-500/15 p-3 text-xs text-amber-800 dark:text-amber-200">
+                            {t('exam_admin.mock_form.modules_locked')}
+                        </div>
+                    )}
 
                     {isLegacy && (
                         <div className="rounded-[18px] border border-amber-500/25 bg-amber-500/15 p-3 text-xs text-amber-800 dark:text-amber-200">
@@ -217,12 +234,12 @@ export default function MockForm() {
                             return (
                                 <div key={type} className="space-y-2">
                                     <ModuleBadge type={type} />
-                                    <select className={`${selectClass} w-full`} value={data[type] || ''} onChange={(e) => setData(type, e.target.value ? Number(e.target.value) : '')}>
+                                    <select disabled={modulesLocked} className={`${selectClass} w-full`} value={data[type] || ''} onChange={(e) => setData(type, e.target.value ? Number(e.target.value) : '')}>
                                         <option value="">{t('exam_admin.mock_form.no_module')}</option>
                                         {options.map((m) => (
                                             <option key={m.id} value={m.id}>
                                                 {m.test_name}
-                                                {m.recently_used ? ' ⚠' : ''}
+                                                {isRecent(m) ? ' ⚠' : ''}
                                                 {autoPick[type] === m.id ? ` (${t('exam_admin.mock_form.suggested')})` : ''}
                                             </option>
                                         ))}
@@ -232,7 +249,7 @@ export default function MockForm() {
                                             <div>
                                                 {t('exam_admin.bank.used')}: <b>{selected.uses}</b> · {t('exam_admin.bank.last_used')}: <b>{fmtDateTime(selected.last_used_at, 'dd.MM.yyyy')}</b>
                                             </div>
-                                            {selected.recently_used && (
+                                            {isRecent(selected) && (
                                                 <div className="flex items-center gap-1 font-semibold text-amber-700 dark:text-amber-300">
                                                     <AlertTriangle className="h-3.5 w-3.5" />
                                                     {t('exam_admin.mock_form.recent_warning', { days: reuseDays })}

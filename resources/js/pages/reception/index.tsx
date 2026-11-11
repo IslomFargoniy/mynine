@@ -4,7 +4,10 @@ import { Button } from '@/components/ui/button';
 import AppLayout from '@/layouts/app-layout';
 import { type BreadcrumbItem } from '@/types';
 import { Head, router, usePage } from '@inertiajs/react';
-import { AlertTriangle, CheckCheck, ConciergeBell, FileText, LogIn, Printer, Search, Unlock } from 'lucide-react';
+import { AlertTriangle, CheckCheck, ConciergeBell, FileText, LogIn, Mic, Printer, Search, Unlock } from 'lucide-react';
+import { PrintCodesButton, printCodeTickets } from '@/components/mock/print-codes';
+import { IconAction } from '@/components/ui/icon-action';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow, TruncatedText } from '@/components/ui/table';
 import { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
@@ -133,6 +136,12 @@ export default function ReceptionIndex() {
                         <Search className="absolute top-1/2 left-3 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground" />
                         <input className={`${inputClass} pl-8`} value={search} onChange={(e) => setSearch(e.target.value)} placeholder={t('exam_admin.reception.search')} />
                     </form>
+                    {targetMock && (
+                        <PrintCodesButton
+                            mockId={targetMock.id}
+                            ids={candidates.filter((c) => c.mock_id === targetMock.id && selected.includes(c.id)).map((c) => c.id)}
+                        />
+                    )}
                     <Button
                         variant="outline"
                         disabled={readySelected.length === 0}
@@ -158,123 +167,141 @@ export default function ReceptionIndex() {
                 ) : candidates.length === 0 ? (
                     <EmptyState>{t('exam_admin.reception.no_candidates')}</EmptyState>
                 ) : (
-                    <Panel className="overflow-x-auto p-0">
-                        <table className="w-full text-left text-xs">
-                            <thead className="bg-muted text-[10px] font-bold text-muted-foreground uppercase tracking-wide">
-                                <tr>
-                                    <th className="px-3 py-2.5">
+                    <Panel className="overflow-hidden p-0">
+                        <Table>
+                            <TableHeader>
+                                <TableRow>
+                                    <TableHead className="w-8">
                                         <input
                                             type="checkbox"
                                             className="accent-primary"
+                                            aria-label={t('exam_admin.reception.select_all')}
                                             checked={selected.length > 0 && selected.length === candidates.length}
                                             onChange={(e) => setSelected(e.target.checked ? candidates.map((c) => c.id) : [])}
                                         />
-                                    </th>
-                                    <th className="px-3 py-2.5">{t('exam_admin.common.candidate')}</th>
-                                    <th className="px-3 py-2.5">{t('exam_admin.common.code')}</th>
-                                    <th className="px-3 py-2.5">{t('exam_admin.common.status')}</th>
-                                    <th className="px-3 py-2.5">{t('exam_admin.reception.speaking')}</th>
-                                    <th className="px-3 py-2.5">{t('exam_admin.reception.pc')}</th>
-                                    <th className="px-3 py-2.5 text-right">{t('exam_admin.common.actions')}</th>
-                                </tr>
-                            </thead>
-                            <tbody className="divide-y divide-divider">
-                                {candidates.map((c) => (
-                                    <tr key={c.id} className="hover:bg-accent/60">
-                                        <td className="px-3 py-2.5">
-                                            <input type="checkbox" className="accent-primary" checked={selected.includes(c.id)} onChange={() => toggle(c.id)} />
-                                        </td>
-                                        <td className="px-3 py-2.5">
-                                            <div className="font-bold text-foreground">{c.name}</div>
-                                            <div className="font-mono text-[11px] text-muted-foreground">{c.phone ?? '—'}</div>
-                                            {!filters.mock_id && mocks.length > 1 && <div className="text-[10px] text-brand">{c.mock_name}</div>}
-                                            {c.repeats.length > 0 && (
-                                                <div
-                                                    className="mt-0.5 flex items-center gap-1 text-[10px] font-bold text-amber-700 dark:text-amber-300"
-                                                    title={c.repeats.map((r) => `${r.type} — ${r.test} (${r.date ?? ''})`).join('\n')}
-                                                >
-                                                    <AlertTriangle className="h-3 w-3" />
-                                                    {t('exam_admin.candidates.repeat')}: {c.repeats.map((r) => r.type).join(', ')}
-                                                </div>
+                                    </TableHead>
+                                    <TableHead>{t('exam_admin.common.candidate')}</TableHead>
+                                    <TableHead>{t('exam_admin.common.code')}</TableHead>
+                                    <TableHead>{t('exam_admin.common.status')}</TableHead>
+                                    <TableHead className="hidden lg:table-cell">
+                                        {t('exam_admin.reception.speaking')} / {t('exam_admin.reception.pc')}
+                                    </TableHead>
+                                    <TableHead className="w-px">
+                                        <span className="sr-only">{t('exam_admin.common.actions')}</span>
+                                    </TableHead>
+                                </TableRow>
+                            </TableHeader>
+                            <TableBody>
+                                {candidates.map((c) => {
+                                    const speakingAndPc = (
+                                        <>
+                                            {c.speaking_at && (
+                                                <span className="font-mono whitespace-nowrap" title={t('exam_admin.reception.speaking')}>
+                                                    <Mic className="mr-0.5 inline h-3 w-3 text-muted-foreground" />
+                                                    {fmtDateTime(c.speaking_at, 'HH:mm')}
+                                                </span>
                                             )}
-                                        </td>
-                                        <td className="px-3 py-2.5 font-mono font-bold text-brand">{c.code}</td>
-                                        <td className="px-3 py-2.5">
-                                            <CandidateStatusBadge status={c.status} module={c.current_module} />
-                                            {c.status === 'delivered' && c.delivered_by && (
-                                                <div className="mt-0.5 text-[10px] text-muted-foreground">
-                                                    {c.delivered_by} · {fmtDateTime(c.result_delivered_at, 'HH:mm')}
-                                                </div>
-                                            )}
-                                            {!c.result_ready && c.status !== 'not_arrived' && c.status !== 'checked_in' && c.missing.length > 0 && (
-                                                <div className="mt-0.5 text-[10px] text-muted-foreground">
-                                                    {t('exam_admin.reception.waiting_for')}: {c.missing.map((m) => t(`exam_admin.reception.missing.${m}`)).join(', ')}
-                                                </div>
-                                            )}
-                                        </td>
-                                        <td className="px-3 py-2.5 font-mono">{fmtDateTime(c.speaking_at, 'HH:mm')}</td>
-                                        <td className="px-3 py-2.5">
-                                            {c.device ? (
-                                                <span className="inline-flex items-center gap-1.5">
+                                            {c.device && (
+                                                <span className="inline-flex items-center gap-1.5" title={t('exam_admin.reception.pc')}>
                                                     <PcNumber number={c.device.number} />
                                                     <OnlineDot online={c.device.online} label={c.device.name} />
                                                 </span>
-                                            ) : (
-                                                '—'
                                             )}
-                                        </td>
-                                        <td className="px-3 py-2.5">
-                                            <div className="flex flex-wrap justify-end gap-1">
-                                                {!c.checked_in_at && (
-                                                    <Button size="sm" onClick={() => post('reception.check-in', c.id)} className="h-7 rounded-full px-3 text-[11px]">
-                                                        <LogIn className="h-3.5 w-3.5" />
-                                                        {t('exam_admin.reception.check_in')}
-                                                    </Button>
-                                                )}
-                                                <Button
-                                                    size="sm"
-                                                    variant="outline"
-                                                    className="h-7 rounded-full px-2 text-[11px]"
-                                                    title={t('exam_admin.candidates.print_card')}
-                                                    onClick={() => window.open(route('mock.code-cards', { mock: c.mock_id, ids: String(c.id) }), '_blank')}
-                                                >
-                                                    <Printer className="h-3.5 w-3.5" />
-                                                </Button>
-                                                {c.result_ready && (
-                                                    <Button size="sm" variant="outline" onClick={() => printResults([c.id])} className="h-7 rounded-full px-2 text-[11px]">
-                                                        <FileText className="h-3.5 w-3.5 text-emerald-700 dark:text-emerald-300" />
-                                                        {c.result_printed_at ? t('exam_admin.reception.reprint') : t('exam_admin.reception.print_result')}
-                                                    </Button>
-                                                )}
-                                                {c.result_ready && !c.result_delivered_at && (
-                                                    <Button
-                                                        size="sm"
-                                                        onClick={() => post('reception.deliver', c.id)}
-                                                        className="h-7 rounded-full bg-emerald-600 px-3 text-[11px] text-white hover:bg-emerald-700"
+                                        </>
+                                    );
+
+                                    return (
+                                        <TableRow key={c.id} className="max-md:relative">
+                                            <TableCell className="max-md:absolute max-md:mt-0.5">
+                                                <input
+                                                    type="checkbox"
+                                                    className="accent-primary"
+                                                    aria-label={c.name}
+                                                    checked={selected.includes(c.id)}
+                                                    onChange={() => toggle(c.id)}
+                                                />
+                                            </TableCell>
+                                            <TableCell className="max-md:pl-6">
+                                                <TruncatedText className="max-w-[14rem] font-bold text-foreground">{c.name}</TruncatedText>
+                                                <div className="font-mono text-[11px] text-muted-foreground">{c.phone ?? '—'}</div>
+                                                {!filters.mock_id && mocks.length > 1 && <TruncatedText className="max-w-[14rem] text-[10px] text-brand">{c.mock_name}</TruncatedText>}
+                                                {c.repeats.length > 0 && (
+                                                    <div
+                                                        className="mt-0.5 flex items-center gap-1 text-[10px] font-bold text-amber-700 dark:text-amber-300"
+                                                        title={c.repeats.map((r) => `${r.type} — ${r.test} (${r.date ?? ''})`).join('\n')}
                                                     >
-                                                        <CheckCheck className="h-3.5 w-3.5" />
-                                                        {t('exam_admin.reception.deliver')}
-                                                    </Button>
+                                                        <AlertTriangle className="h-3 w-3 shrink-0" />
+                                                        {t('exam_admin.candidates.repeat')}: {c.repeats.map((r) => r.type).join(', ')}
+                                                    </div>
                                                 )}
-                                                {c.attempt_id && c.device && (
-                                                    <Button
-                                                        size="sm"
-                                                        variant="outline"
-                                                        className="h-7 rounded-full px-2 text-[11px]"
-                                                        title={t('exam_admin.monitor.unlock')}
-                                                        onClick={() => {
-                                                            if (confirm(t('exam_admin.monitor.unlock_confirm', { name: c.name }))) post('monitor.unlock', c.attempt_id!);
-                                                        }}
-                                                    >
-                                                        <Unlock className="h-3.5 w-3.5" />
-                                                    </Button>
+                                                {(c.speaking_at || c.device) && <div className="mt-1 flex flex-wrap items-center gap-2 text-[11px] lg:hidden">{speakingAndPc}</div>}
+                                            </TableCell>
+                                            <TableCell label={t('exam_admin.common.code')} className="font-mono font-bold whitespace-nowrap text-brand">
+                                                {c.code}
+                                            </TableCell>
+                                            <TableCell label={t('exam_admin.common.status')}>
+                                                <CandidateStatusBadge status={c.status} module={c.current_module} />
+                                                {c.status === 'delivered' && c.delivered_by && (
+                                                    <div className="mt-0.5 text-[10px] text-muted-foreground">
+                                                        {c.delivered_by} · {fmtDateTime(c.result_delivered_at, 'HH:mm')}
+                                                    </div>
                                                 )}
-                                            </div>
-                                        </td>
-                                    </tr>
-                                ))}
-                            </tbody>
-                        </table>
+                                                {!c.result_ready && c.status !== 'not_arrived' && c.status !== 'checked_in' && c.missing.length > 0 && (
+                                                    <div className="mt-0.5 text-[10px] text-muted-foreground">
+                                                        {t('exam_admin.reception.waiting_for')}: {c.missing.map((m) => t(`exam_admin.reception.missing.${m}`)).join(', ')}
+                                                    </div>
+                                                )}
+                                            </TableCell>
+                                            <TableCell className="hidden text-[11px] lg:table-cell">
+                                                <div className="flex flex-col items-start gap-1">{c.speaking_at || c.device ? speakingAndPc : '—'}</div>
+                                            </TableCell>
+                                            <TableCell className="max-md:border-t max-md:border-divider max-md:pt-2">
+                                                <div className="flex items-center justify-end gap-0.5">
+                                                    {!c.checked_in_at && (
+                                                        <Button size="sm" onClick={() => post('reception.check-in', c.id)} className="h-7 rounded-full px-3 text-[11px]">
+                                                            <LogIn className="h-3.5 w-3.5" />
+                                                            {t('exam_admin.reception.check_in')}
+                                                        </Button>
+                                                    )}
+                                                    {c.result_ready && !c.result_delivered_at && (
+                                                        <Button
+                                                            size="sm"
+                                                            onClick={() => post('reception.deliver', c.id)}
+                                                            className="h-7 rounded-full bg-emerald-600 px-3 text-[11px] text-white hover:bg-emerald-700"
+                                                        >
+                                                            <CheckCheck className="h-3.5 w-3.5" />
+                                                            {t('exam_admin.reception.deliver')}
+                                                        </Button>
+                                                    )}
+                                                    <IconAction label={t('exam_admin.candidates.print_ticket')} tone="brand" onClick={() => printCodeTickets(c.mock_id, [c.id])}>
+                                                        <Printer />
+                                                    </IconAction>
+                                                    {c.result_ready && (
+                                                        <IconAction
+                                                            label={c.result_printed_at ? t('exam_admin.reception.reprint') : t('exam_admin.reception.print_result')}
+                                                            tone="success"
+                                                            onClick={() => printResults([c.id])}
+                                                        >
+                                                            <FileText />
+                                                        </IconAction>
+                                                    )}
+                                                    {c.attempt_id && c.device && (
+                                                        <IconAction
+                                                            label={t('exam_admin.monitor.unlock')}
+                                                            onClick={() => {
+                                                                if (confirm(t('exam_admin.monitor.unlock_confirm', { name: c.name }))) post('monitor.unlock', c.attempt_id!);
+                                                            }}
+                                                        >
+                                                            <Unlock />
+                                                        </IconAction>
+                                                    )}
+                                                </div>
+                                            </TableCell>
+                                        </TableRow>
+                                    );
+                                })}
+                            </TableBody>
+                        </Table>
                     </Panel>
                 )}
             </div>

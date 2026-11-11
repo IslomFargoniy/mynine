@@ -117,11 +117,11 @@ export default function ManageSectionOptionsModal({
                 onSuccess: () => {
                     setProcessing(false);
                     setOpen(false);
-                    toast.success(t('updated_successfully') || "Variantlar muvaffaqiyatli saqlandi!");
+                    toast.success(t('updated_successfully'));
                 },
                 onError: (err: any) => {
                     setProcessing(false);
-                    const errorMessage = err?.error || t('update_failed') || "Xatolik yuz berdi";
+                    const errorMessage = err?.error || t('update_failed');
                     toast.error(errorMessage);
                 },
             }
@@ -143,7 +143,7 @@ export default function ManageSectionOptionsModal({
                         className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold btn-glass-primary hover:brightness-110 text-primary-foreground transition-colors cursor-pointer"
                     >
                         <Edit3 className="w-3.5 h-3.5" />
-                        <span>{t('manage_incorrect_options') || "Noto'g'ri variantlarni boshqarish / tahrirlash"}</span>
+                        <span>{t('manage_incorrect_options')}</span>
                         {(section.options?.length ?? 0) > 0 && (
                             <span className="ml-1 px-1.5 py-0.2 rounded-full bg-white/20 text-[10px]">
                                 {section.options?.length}
@@ -158,13 +158,13 @@ export default function ManageSectionOptionsModal({
                 <div className="px-5 py-3 border-b border-divider shrink-0 flex items-center justify-between">
                     <div>
                         <DialogTitle className="text-base font-bold text-foreground flex items-center gap-2">
-                            <span>{t('manage_incorrect_options') || "Noto'g'ri variantlar (Distractors)"}</span>
+                            <span>{t('manage_incorrect_options')}</span>
                             <span className="px-2 py-0.5 rounded-full bg-indigo-500/12 text-brand text-xs font-semibold">
-                                {currentCount} ta variant
+                                {t('options_form.variants_count', { count: currentCount })}
                             </span>
                         </DialogTitle>
                         <DialogDescription className="text-xs text-muted-foreground mt-0.5">
-                            Sudrab joylashtirish (Drag & Drop) uchun barcha qo'shimcha chalg'ituvchi variantlarni bitta joyda kiriting va tahrirlang.
+                            {t('options_form.description')}
                         </DialogDescription>
                     </div>
                 </div>
@@ -182,7 +182,7 @@ export default function ManageSectionOptionsModal({
                             }`}
                         >
                             <List className="w-3.5 h-3.5" />
-                            <span>{t('list_mode') || "Ro'yxat ko'rinishi"}</span>
+                            <span>{t('list_mode')}</span>
                         </button>
                         <button
                             type="button"
@@ -194,7 +194,7 @@ export default function ManageSectionOptionsModal({
                             }`}
                         >
                             <AlignLeft className="w-3.5 h-3.5" />
-                            <span>{t('bulk_text_mode') || "Tezkor matn orqali kiritish"}</span>
+                            <span>{t('bulk_text_mode')}</span>
                         </button>
                     </div>
 
@@ -203,7 +203,7 @@ export default function ManageSectionOptionsModal({
                         onClick={handleClearAll}
                         className="text-[11px] font-semibold text-rose-700 dark:text-rose-300 hover:text-rose-800 dark:hover:text-rose-200 px-2 py-1 hover:bg-rose-500/12 rounded-full transition-colors"
                     >
-                        {t('clear_all_options') || "Barchasini tozalash"}
+                        {t('clear_all_options')}
                     </button>
                 </div>
 
@@ -228,7 +228,7 @@ export default function ManageSectionOptionsModal({
                                             type="text"
                                             value={optionText}
                                             onChange={(e) => handleRowChange(idx, e.target.value)}
-                                            placeholder={`${t('option_row_placeholder') || "Variant matnini kiriting..."} (Masalan: vast range)`}
+                                            placeholder={`${t('option_row_placeholder')} (Masalan: vast range)`}
                                             className="h-8 text-xs flex-1"
                                             autoFocus={idx === optionsList.length - 1 && optionText === ''}
                                         />
@@ -240,7 +240,8 @@ export default function ManageSectionOptionsModal({
                                                 disabled={idx === 0}
                                                 onClick={() => handleMoveRow(idx, 'up')}
                                                 className="p-1 rounded-full text-muted-foreground hover:text-foreground disabled:opacity-30 disabled:pointer-events-none hover:bg-accent"
-                                                title="Yuqoriga surish"
+                                                title={t('options_form.move_up')}
+                                                aria-label={t('options_form.move_up')}
                                             >
                                                 <ArrowUp className="w-3.5 h-3.5" />
                                             </button>
@@ -249,7 +250,8 @@ export default function ManageSectionOptionsModal({
                                                 disabled={idx === optionsList.length - 1}
                                                 onClick={() => handleMoveRow(idx, 'down')}
                                                 className="p-1 rounded-full text-muted-foreground hover:text-foreground disabled:opacity-30 disabled:pointer-events-none hover:bg-accent"
-                                                title="Pastga surish"
+                                                title={t('options_form.move_down')}
+                                                aria-label={t('options_form.move_down')}
                                             >
                                                 <ArrowDown className="w-3.5 h-3.5" />
                                             </button>
@@ -260,7 +262,8 @@ export default function ManageSectionOptionsModal({
                                             type="button"
                                             onClick={() => handleRemoveRow(idx)}
                                             className="p-1 rounded-full text-rose-700 dark:text-rose-300 hover:text-rose-800 dark:hover:text-rose-200 hover:bg-rose-500/12 shrink-0 transition-colors"
-                                            title="O'chirish"
+                                            title={t('delete')}
+                                            aria-label={t('delete')}
                                         >
                                             <Trash2 className="w-3.5 h-3.5" />
                                         </button>
@@ -276,15 +279,15 @@ export default function ManageSectionOptionsModal({
                                     className="w-full h-8 text-xs border-dashed border-glass-dash hover:border-ring hover:text-brand flex items-center justify-center gap-1.5"
                                 >
                                     <Plus className="w-3.5 h-3.5" />
-                                    <span>{t('add_option') || "Yangi variant qatori qo'shish"}</span>
+                                    <span>{t('add_option')}</span>
                                 </Button>
                             </div>
                         </div>
                     ) : (
                         <div className="space-y-2">
                             <div className="text-xs text-muted-foreground flex items-center justify-between">
-                                <span>Har bir variantni alohida yangi qatordan yozing yoki nusxalab qo'ying:</span>
-                                <span className="font-semibold text-brand">{currentCount} ta qator</span>
+                                <span>{t('options_form.bulk_hint')}</span>
+                                <span className="font-semibold text-brand">{t('options_form.lines_count', { count: currentCount })}</span>
                             </div>
                             <textarea
                                 rows={9}
@@ -294,7 +297,7 @@ export default function ManageSectionOptionsModal({
                                 className="w-full rounded-xl border border-input bg-glass-subtle text-foreground focus:border-ring focus:ring-2 focus:ring-ring/40 p-3 font-mono text-xs leading-relaxed min-h-[220px] outline-none"
                             />
                             <p className="text-[11px] text-muted-foreground">
-                                💡 Maslahat: Har bir qatorda bittadan noto'g'ri so'z/ibora yoziladi. Prefikslar (A), 1.) avtomatik tozalanadi.
+                                {t('options_form.tip')}
                             </p>
                         </div>
                     )}
@@ -309,7 +312,7 @@ export default function ManageSectionOptionsModal({
                             className="h-8 text-xs"
                             onClick={() => setOpen(false)}
                         >
-                            {t('cancel') || "Bekor qilish"}
+                            {t('cancel')}
                         </Button>
                     </DialogClose>
 
@@ -319,7 +322,7 @@ export default function ManageSectionOptionsModal({
                         disabled={processing}
                         className="h-8 text-xs font-semibold flex items-center gap-1.5"
                     >
-                        {processing ? (t('saving') || "Saqlanmoqda...") : (t('save_options') || "Barchasini saqlash")}
+                        {processing ? (t('saving')) : (t('save_options'))}
                     </Button>
                 </DialogFooter>
             </DialogContent>

@@ -47,7 +47,7 @@ test('login binds the attempt to the device and returns the contract shape', fun
     expect($response->json('attempt_id'))->toBe($this->attempt->id);
 
     // The previous token was revoked by the second login (one PC at a time).
-    desktopApi('GET', 'exam', [], $this->device, $this->token)->assertStatus(401)->assertJsonPath('code', 'unauthenticated');
+    desktopApi('GET', 'exam', [], $this->device, $this->token)->assertStatus(401)->assertJsonPath('code', 'session_revoked');
 });
 
 test('login error codes', function () {
@@ -59,8 +59,11 @@ test('login error codes', function () {
     desktopApi('POST', 'exam/login', ['code' => 'MOCK-100001'], $this->device)
         ->assertStatus(422)->assertJsonPath('code', 'mock_not_started')->assertJsonStructure(['starts_at']);
 
+    // v1.1: after the window only a candidate with a running attempt may log in again (the PC died).
     $this->exam['mock']->update(['started_at' => now()->subHours(5), 'finished_at' => now()->subHour()]);
-    desktopApi('POST', 'exam/login', ['code' => 'MOCK-100001'], $this->device)->assertStatus(422)->assertJsonPath('code', 'mock_finished');
+    desktopApi('POST', 'exam/login', ['code' => 'MOCK-100001'], $this->device)->assertOk();
+    $late = MockStudent::create(['mock_id' => $this->exam['mock']->id, 'name' => 'Late', 'code' => 'MOCK-100009', 'phone' => '+998901111111']);
+    desktopApi('POST', 'exam/login', ['code' => $late->code], $this->device)->assertStatus(422)->assertJsonPath('code', 'mock_finished');
 
     $this->exam['mock']->update(['active' => 0]);
     desktopApi('POST', 'exam/login', ['code' => 'MOCK-100001'], $this->device)->assertStatus(422)->assertJsonPath('code', 'mock_not_active');
@@ -230,6 +233,8 @@ test('answers after the module time are rejected, with a grace period for queued
         ->assertJsonPath('results.0.status', 'rejected')
         ->assertJsonPath('results.0.reason', 'module_time_over');
 
+    // The PC was online at the end (heartbeat after finished_at): no late sync after the grace.
+    desktopApi('POST', 'exam/heartbeat', [], $this->device, $this->token)->assertOk();
     $this->travelTo($finishedAt->copy()->addSeconds(45));
     sendAnswers([answerItem(['changed_at' => $finishedAt->copy()->subSeconds(5)->toIso8601String()])])
         ->assertJsonPath('results.0.status', 'rejected');
@@ -237,14 +242,18 @@ test('answers after the module time are rejected, with a grace period for queued
     expect((bool) AttemptType::where('attempt_id', $this->attempt->id)->value('is_submitted'))->toBeTrue();
 });
 
-test('pause rejects answers and resume shifts the timers', function () {
+test('pause defers answers and resume shifts the timers', function () {
     $start = desktopApi('POST', 'exam/modules/'.$this->exam['listeningType']->id.'/start', [], $this->device, $this->token)->assertOk();
     $finishedAt = Carbon\Carbon::parse($start->json('finished_at'));
 
     $this->actingAs($this->admin)->post(route('monitor.pause', $this->attempt))->assertRedirect();
 
     desktopApi('POST', 'exam/heartbeat', [], $this->device, $this->token)->assertJsonPath('paused', true);
-    sendAnswers([answerItem()])->assertJsonPath('results.0.status', 'rejected')->assertJsonPath('results.0.reason', 'paused');
+    // v1.1: changed during the pause → deferred (the app keeps it and re-sends it after the resume).
+    $deferred = answerItem(['text' => 'during pause']);
+    sendAnswers([$deferred])->assertJsonPath('results.0.status', 'deferred')->assertJsonPath('results.0.reason', 'paused');
+    // Changed before the pause → still accepted.
+    sendAnswers([answerItem(['text' => 'before', 'changed_at' => now()->subMinute()->toIso8601String()])])->assertJsonPath('results.0.status', 'saved');
     desktopApi('POST', 'exam/modules/'.$this->exam['listeningType']->id.'/submit', [], $this->device, $this->token)->assertStatus(409)->assertJsonPath('code', 'paused');
 
     // Time passes beyond the module end while paused: nothing is auto-finished.
@@ -257,7 +266,8 @@ test('pause rejects answers and resume shifts the timers', function () {
     $newFinishedAt = Carbon\Carbon::parse($heartbeat->json('modules.0.finished_at'));
     expect((int) $finishedAt->diffInSeconds($newFinishedAt))->toBe(40 * 60);
 
-    sendAnswers([answerItem()])->assertJsonPath('results.0.status', 'saved');
+    sendAnswers([$deferred])->assertJsonPath('results.0.status', 'saved');
+    expect(AttemptAnswer::where('question_id', $this->exam['fillQuestion']->id)->value('answer_text'))->toBe('during pause');
 });
 
 test('the web exam room also rejects answers while paused', function () {
@@ -345,9 +355,20 @@ test('logout revokes the exam token', function () {
     desktopApi('GET', 'exam', [], $this->device, $this->token)->assertStatus(401);
 });
 
-test('exam tokens expire one hour after the mock ends', function () {
+test('exam tokens live until the mock end plus every module duration plus 2 hours and slide with heartbeats', function () {
     $token = $this->exam['student']->tokens()->first();
-    expect($token->expires_at->equalTo(Carbon\Carbon::parse($this->exam['mock']->fresh()->finished_at)->addHour()))->toBeTrue()
+    // Listening 30 + Reading 60 + Writing 60 minutes.
+    $expected = Carbon\Carbon::parse($this->exam['mock']->fresh()->finished_at)->addMinutes(150)->addHours(2);
+    expect($token->expires_at->equalTo($expected))->toBeTrue()
         ->and($token->can('exam'))->toBeTrue()
         ->and($token->tokenable)->toBeInstanceOf(MockStudent::class);
+
+    // Close to the end the heartbeat keeps the token valid for at least 2 more hours.
+    $this->travelTo($expected->copy()->subMinutes(30));
+    desktopApi('POST', 'exam/heartbeat', [], $this->device, $this->token)->assertOk();
+    expect($token->fresh()->expires_at->gte(now()->addHours(2)->subSecond()))->toBeTrue();
+
+    // Expired → 401 session_expired.
+    $this->travelTo($token->fresh()->expires_at->copy()->addMinute());
+    desktopApi('GET', 'exam', [], $this->device, $this->token)->assertStatus(401)->assertJsonPath('code', 'session_expired');
 });

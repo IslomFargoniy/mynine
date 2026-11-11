@@ -64,7 +64,7 @@ const Courses: React.FC = () => {
                             <div className="relative rounded-[22px]">
                                 <img
                                     src={`/images/courses/coursethree.png`}
-                                    alt="course"
+                                    alt={t('home.course_image')}
                                     className="m-auto clipPath"
                                     width={389}
                                     height={262}
@@ -82,19 +82,19 @@ const Courses: React.FC = () => {
                                 <div
                                     className="flex justify-between items-center py-6 border-b border-divider">
                                     <div className="flex items-center gap-4">{renderStars(5)}</div>
-                                    <h3 className="text-3xl font-medium text-foreground ">Free</h3>
+                                    <h3 className="text-3xl font-medium text-foreground ">{t('home.free')}</h3>
                                 </div>
 
                                 <div className="flex justify-between pt-6">
                                     <div className="flex gap-2 items-center">
                                         <Icon icon="solar:notebook-minimalistic-outline"
                                               className="text-brand text-xl" />
-                                        <h3 className="text-base font-medium text-muted-foreground ">{items.types.length} steps</h3>
+                                        <h3 className="text-base font-medium text-muted-foreground ">{t('home.steps', { count: items.types.length })}</h3>
                                     </div>
                                     <div className="flex gap-2 items-center">
                                         <Icon icon="solar:users-group-rounded-linear"
                                               className="text-brand text-xl" />
-                                        <h3 className="text-base font-medium text-muted-foreground ">{items.attempts_count} students</h3>
+                                        <h3 className="text-base font-medium text-muted-foreground ">{t('home.students', { count: items.attempts_count })}</h3>
                                     </div>
                                 </div>
                             </div>

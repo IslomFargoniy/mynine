@@ -32,10 +32,21 @@ trait ValidatesMockModules
             return;
         }
 
+        // Once a candidate started a module of this mock, its modules are fixed.
+        $mock = $this->route('mock');
+        if ($mock instanceof Mock && $mock->modulesLocked()) {
+            $current = $mock->modules()->pluck('test_type_id')->map(fn ($id) => (int) $id)->sort()->values()->all();
+            $requested = collect($value)->map(fn ($id) => (int) $id)->sort()->values()->all();
+            if ($current !== $requested) {
+                $fail(__('mock_modules_locked'));
+
+                return;
+            }
+        }
+
         $available = app(MockBankService::class)->availableModules()->keyBy('id');
 
         // Modules already assigned to the mock being edited stay valid even if no longer "ready".
-        $mock = $this->route('mock');
         if ($mock instanceof Mock) {
             TestType::query()->whereIn('id', $mock->modules()->pluck('test_type_id'))->get()
                 ->each(fn (TestType $tt) => $available->put($tt->id, $tt));
@@ -45,7 +56,7 @@ trait ValidatesMockModules
         foreach ($value as $id) {
             $module = $available->get((int) $id);
             if (! $module) {
-                $fail('Modul Mock Bankda tayyor (ready) holatda emas.');
+                $fail(__('module_not_ready'));
 
                 return;
             }
@@ -54,7 +65,7 @@ trait ValidatesMockModules
         }
 
         if (count($types) !== count(array_unique($types))) {
-            $fail("Har bir bo'lim turidan faqat bitta modul tanlanadi.");
+            $fail(__('one_module_per_type'));
         }
     }
 

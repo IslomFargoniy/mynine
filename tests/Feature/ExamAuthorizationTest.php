@@ -6,6 +6,7 @@ use App\Models\Mock;
 use App\Models\MockStudent;
 use App\Models\Option;
 use App\Models\Question;
+use Illuminate\Support\Facades\URL;
 
 beforeEach(function () {
     $this->admin = makeUser('Admin');
@@ -138,7 +139,13 @@ test('the PDF needs a signed link or permission to view the attempt', function (
     $this->get(route('attempt.pdf', $this->attempt->id))->assertForbidden();
     $this->actingAs($this->otherStudent)->get(route('attempt.pdf', $this->attempt->id))->assertForbidden();
 
-    $this->get(\Illuminate\Support\Facades\URL::signedRoute('attempt.pdf', ['attempt' => $this->attempt->id], null, false))
+    // No result sheet while the attempt is running, not even with a signed link or as the candidate.
+    $signed = URL::signedRoute('attempt.pdf', ['attempt' => $this->attempt->id], null, false);
+    $this->get($signed)->assertForbidden();
+    $this->actingAs($this->student)->get(route('attempt.pdf', $this->attempt->id))->assertForbidden();
+
+    $this->attempt->finish();
+    $this->get($signed)
         ->assertOk()
         ->assertHeader('Content-Type', 'application/pdf');
 });

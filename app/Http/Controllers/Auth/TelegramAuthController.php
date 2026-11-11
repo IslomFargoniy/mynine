@@ -63,7 +63,7 @@ class TelegramAuthController extends Controller
 
         return response()->json([
             'success' => true,
-            'redirect' => route('all-test.index'),
+            'redirect' => route('test-bank.index'),
         ]);
     }
 

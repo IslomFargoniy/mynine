@@ -5,6 +5,8 @@ namespace App\Http\Controllers;
 use App\Http\Requests\StoreOptionRequest;
 use App\Http\Requests\UpdateOptionRequest;
 use App\Models\Option;
+use App\Models\Question;
+use App\Models\Section;
 use Illuminate\Validation\ValidationException;
 
 class OptionController extends Controller
@@ -31,8 +33,8 @@ class OptionController extends Controller
     public function store(StoreOptionRequest $request)
     {
         $parent = $request->question_id
-            ? \App\Models\Question::findOrFail($request->question_id)
-            : \App\Models\Section::findOrFail($request->section_id);
+            ? Question::findOrFail($request->question_id)
+            : Section::findOrFail($request->section_id);
         $this->authorize('update', $parent);
 
         try {

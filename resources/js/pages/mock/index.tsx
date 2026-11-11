@@ -46,7 +46,7 @@ export default function Mock() {
 
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
-            <Head title="Mock" />
+            <Head title={t('page_titles.mocks')} />
             <div className="flex h-full flex-1 flex-col gap-4 p-4">
                 {/* Search and Per-Page Selection */}
                 <div className="flex justify-end items-center mb-2">
@@ -73,7 +73,7 @@ export default function Mock() {
                 </div>
 
                 {/* Table */}
-                <div className="overflow-x-auto">
+                <div className="min-w-0">
 
                     <MockTable {...mock}
                                searchData={data}

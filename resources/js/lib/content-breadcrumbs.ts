@@ -2,11 +2,11 @@ import { type BreadcrumbItem, type Test } from '@/types';
 import { type TFunction } from 'i18next';
 
 /**
- * Leading breadcrumbs of the content editor pages (module, part): Folders -> folder -> test for
+ * Leading breadcrumbs of the content editor pages (module, part): Test Bank -> folder -> test for
  * practice tests, Mock Bank -> test for Mock Bank tests (which have no folder).
  */
 export function contentBreadcrumbs(test: Test | null | undefined, t: TFunction): BreadcrumbItem[] {
-    const testName = test?.name || t('test') || 'Test';
+    const testName = test?.name || t('test');
     const folder = test?.folder;
 
     if (test?.purpose === 'mock' || (test && !folder)) {
@@ -17,10 +17,11 @@ export function contentBreadcrumbs(test: Test | null | undefined, t: TFunction):
         ];
     }
 
-    const folderList = route('folder.index');
+    const bank = route('test-bank.index');
+    const folderHref = folder?.id ? route('test-bank.index', { folder_id: folder.id }) : bank;
     return [
-        { title: t('folders') || 'Jildlar', href: folderList },
-        ...(folder?.id ? [{ title: folder.name || t('folder') || 'Jild', href: route('folder.show', folder.id) }] : []),
-        ...(test?.id ? [{ title: testName, href: folder?.id ? route('folder.show', folder.id) : folderList }] : []),
+        { title: t('test_bank.title'), href: bank },
+        ...(folder?.id ? [{ title: folder.name || t('folder'), href: folderHref }] : []),
+        ...(test?.id ? [{ title: testName, href: folderHref }] : []),
     ];
 }

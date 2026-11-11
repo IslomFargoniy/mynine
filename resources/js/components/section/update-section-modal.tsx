@@ -86,10 +86,10 @@ export default function UpdateSectionModal({ section, open, setOpen }: UpdateSec
             <DialogContent className="sm:max-w-6xl w-full h-[80vh] max-h-[80vh] flex flex-col p-0 overflow-hidden">
                 <div className="px-5 py-3 border-b border-divider shrink-0">
                     <DialogTitle className="text-base font-bold text-foreground">
-                        {t('modal.update_title') || "Bo'limni tahrirlash"}
+                        {t('modal.update_section_title')}
                     </DialogTitle>
                     <DialogDescription className="text-xs text-muted-foreground">
-                        {t('modal.update_description') || "Bo'lim ma'lumotlarini va savol turini yangilang."}
+                        {t('modal.update_section_desc')}
                     </DialogDescription>
                 </div>
 
@@ -113,7 +113,7 @@ export default function UpdateSectionModal({ section, open, setOpen }: UpdateSec
                                     onChange={(e) => setData('question_type_id', Number(e.target.value) || 0)}
                                     className="block w-full rounded-xl border border-input bg-glass-subtle text-foreground focus:border-ring focus:ring-2 focus:ring-ring/40 px-3 py-2 text-xs font-medium focus:outline-none"
                                 >
-                                    <option value="">{t('select') || '-- Savol turini tanlang --'}</option>
+                                    <option value="">{t('select')}</option>
                                     {questionTypes.map((type) => (
                                         <option key={type.id} value={type.id}>
                                             {type.name}
@@ -127,16 +127,16 @@ export default function UpdateSectionModal({ section, open, setOpen }: UpdateSec
                             {isMatchingType && (
                                 <div className="p-2.5 rounded-[18px] bg-indigo-500/12 border border-indigo-500/25 space-y-2">
                                     <div className="text-[11px] font-bold text-brand uppercase tracking-wider">
-                                        {t('matching_options_range') || "Matching (Moslashtirish) Variantlar Diapazoni"} *
+                                        {t('matching_options_range')} *
                                     </div>
                                     <div className="grid grid-cols-2 gap-3">
                                         <div>
                                             <Label htmlFor="from_option" className="text-[11px] font-semibold text-foreground/80">
-                                                {t('from_char_or_num') || "Boshlanish harfi / soni (From)"}
+                                                {t('from_char_or_num')}
                                             </Label>
                                             <Input
                                                 id="from_option"
-                                                placeholder="Masalan: A"
+                                                placeholder={t('section_form.from_placeholder')}
                                                 value={data.from_option}
                                                 required={true}
                                                 onChange={(e) => setData('from_option', e.target.value.toUpperCase())}
@@ -146,11 +146,11 @@ export default function UpdateSectionModal({ section, open, setOpen }: UpdateSec
                                         </div>
                                         <div>
                                             <Label htmlFor="to_option" className="text-[11px] font-semibold text-foreground/80">
-                                                {t('to_char_or_num') || "Tugash harfi / soni (To)"}
+                                                {t('to_char_or_num')}
                                             </Label>
                                             <Input
                                                 id="to_option"
-                                                placeholder="Masalan: F"
+                                                placeholder={t('section_form.to_placeholder')}
                                                 value={data.to_option}
                                                 required={true}
                                                 onChange={(e) => setData('to_option', e.target.value.toUpperCase())}
@@ -175,7 +175,7 @@ export default function UpdateSectionModal({ section, open, setOpen }: UpdateSec
                         <div className="lg:col-span-7 space-y-1.5 flex flex-col h-full">
                             <div className="flex items-center justify-between">
                                 <Label className="text-xs font-semibold text-foreground/80">
-                                    {t('section_instructions') || "Bo'lim Yo'riqnomasi / Matni"} *
+                                    {t('section_instructions')} *
                                 </Label>
                                 {isCompleteOrDrag && (
                                     <button
@@ -185,7 +185,7 @@ export default function UpdateSectionModal({ section, open, setOpen }: UpdateSec
                                         }}
                                         className="text-[11px] font-bold text-brand hover:bg-indigo-500/20 bg-indigo-500/12 px-2.5 py-1 rounded-full border border-indigo-500/25 transition-colors cursor-pointer"
                                     >
-                                        + &#123; &#125; {t('insert_bracket_gap') || "Savol qavsi qo'shish"}
+                                        + &#123; &#125; {t('insert_bracket_gap')}
                                     </button>
                                 )}
                             </div>

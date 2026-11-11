@@ -66,8 +66,8 @@ export default function CreateUserModal() {
             </DialogTrigger>
 
             <DialogContent>
-                <DialogTitle>{t('modal.create_title')}</DialogTitle>
-                <DialogDescription>{t('modal.create_description')}</DialogDescription>
+                <DialogTitle>{t('modal.create_user_title')}</DialogTitle>
+                <DialogDescription>{t('modal.create_user_desc')}</DialogDescription>
 
 
                 <form onSubmit={submit} className="space-y-4">
@@ -116,7 +116,7 @@ export default function CreateUserModal() {
                     </div>
 
                     <div>
-                        <Label htmlFor="create_test_limit">Test yaratish limiti</Label>
+                        <Label htmlFor="create_test_limit">{t('user_form.test_limit')}</Label>
                         <Input
                             id="create_test_limit"
                             type="number"

@@ -1,6 +1,6 @@
 import AppLayout from '@/layouts/app-layout';
 import { Head, usePage, useForm } from '@inertiajs/react';
-import { type BreadcrumbItem, type UserPaginate, SearchData, Role, User as UserType } from '@/types';
+import { type BreadcrumbItem, type UserPaginate, SearchData, Role } from '@/types';
 
 import { router } from '@inertiajs/react';
 import UserTable from '@/components/user/user-table';
@@ -42,7 +42,7 @@ export default function User() {
 
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
-            <Head title="User" />
+            <Head title={t('page_titles.users')} />
             <div className="flex h-full flex-1 flex-col gap-4 rounded-xl p-4">
                 {/* Search and Per-Page Selection */}
                 <div className="flex justify-end items-center mb-2">
@@ -65,7 +65,7 @@ export default function User() {
                 </div>
 
                 {/* Table */}
-                <div className="overflow-x-auto">
+                <div className="min-w-0">
 
                     <UserTable
                         {...user}

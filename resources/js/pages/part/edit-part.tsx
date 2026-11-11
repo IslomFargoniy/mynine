@@ -20,7 +20,7 @@ export default function EditPart() {
 
     const test = part?.test_type?.test;
     const testType = part?.test_type;
-    const testName = test?.name || t('test') || 'Test';
+    const testName = test?.name || t('test');
     const typeName = testType?.type?.name || 'Module';
 
     const breadcrumbs: BreadcrumbItem[] = [

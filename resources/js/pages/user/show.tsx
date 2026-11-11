@@ -11,11 +11,14 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 
 const AttemptsChart = lazy(() => import('@/components/dashboard/AttemptsChart'));
 
-const ChartSkeleton = () => (
-    <div className="h-64 w-full animate-pulse glass-subtle rounded-[22px] flex items-center justify-center">
-        <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Loading chart...</span>
-    </div>
-);
+const ChartSkeleton = () => {
+    const { t } = useTranslation();
+    return (
+        <div className="h-64 w-full animate-pulse glass-subtle rounded-[22px] flex items-center justify-center">
+            <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">{t('dashboard_page.loading_chart')}</span>
+        </div>
+    );
+};
 import {
     Trophy,
     Target,
@@ -131,7 +134,7 @@ export default function UserShow() {
                                     <Target className="size-6" />
                                 </div>
                                 <div>
-                                    <p className="text-sm font-medium text-muted-foreground">{t('reading_avg') || 'Reading Avg'}</p>
+                                    <p className="text-sm font-medium text-muted-foreground">{t('reading_avg')}</p>
                                     <h3 className="text-2xl font-bold">{readingAvg}</h3>
                                 </div>
                             </div>
@@ -146,7 +149,7 @@ export default function UserShow() {
                                     <Target className="size-6" />
                                 </div>
                                 <div>
-                                    <p className="text-sm font-medium text-muted-foreground">{t('listening_avg') || 'Listening Avg'}</p>
+                                    <p className="text-sm font-medium text-muted-foreground">{t('listening_avg')}</p>
                                     <h3 className="text-2xl font-bold">{listeningAvg}</h3>
                                 </div>
                             </div>
@@ -205,7 +208,7 @@ export default function UserShow() {
                                                     <div className="flex items-center gap-1 text-emerald-700 dark:text-emerald-300 font-bold">
                                                         <CheckCircle2 className="size-3" />
                                                         <span>
-                                                            {attempt.attempt_types?.reduce((sum, t) => sum + (t.is_correct_count || 0), 0)} pts
+                                                            {t('dashboard_page.pts', { count: attempt.attempt_types?.reduce((sum, type) => sum + (type.is_correct_count || 0), 0) ?? 0 })}
                                                         </span>
                                                     </div>
                                                 </div>
@@ -233,7 +236,7 @@ export default function UserShow() {
                         <div className="glass rounded-[28px] p-6">
                             <h3 className="text-lg font-bold mb-4 flex items-center gap-2">
                                 <TrendingUp className="size-5 text-brand" />
-                                {t('performance_overview')} <span className="text-sm font-normal text-muted-foreground ml-1">{t('last_30_days') || "(last 30 days)"}</span>
+                                {t('performance_overview')} <span className="text-sm font-normal text-muted-foreground ml-1">{t('last_30_days')}</span>
                             </h3>
                             <div className="w-full">
                                 <Suspense fallback={<ChartSkeleton />}>

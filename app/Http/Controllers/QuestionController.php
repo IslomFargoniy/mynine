@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Http\Requests\StoreQuestionRequest;
 use App\Http\Requests\UpdateQuestionRequest;
 use App\Models\Question;
+use App\Models\Section;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
 
@@ -31,7 +32,7 @@ class QuestionController extends Controller
      */
     public function store(StoreQuestionRequest $request)
     {
-        $this->authorize('update', \App\Models\Section::findOrFail($request->section_id));
+        $this->authorize('update', Section::findOrFail($request->section_id));
 
         try {
             $data = $request->validated();

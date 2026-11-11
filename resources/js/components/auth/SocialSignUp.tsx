@@ -1,6 +1,8 @@
 import React from "react";
+import { useTranslation } from 'react-i18next';
 
 const SocialSignUp = () => {
+    const { t } = useTranslation();
 
     const signIn = (provider: string) => {
         if (provider === 'github') {
@@ -20,7 +22,7 @@ const SocialSignUp = () => {
           onClick={() => signIn("google")}
           className="btn-glass-primary flex w-full items-center justify-center gap-2.5 rounded-full p-3.5 hover:brightness-110"
         >
-          Sign Up
+          {t('social.sign_up_google')}
           <svg
             width="23"
             height="22"
@@ -63,7 +65,7 @@ const SocialSignUp = () => {
           onClick={() => signIn("github")}
           className="btn-glass-primary flex w-full items-center justify-center gap-2.5 rounded-full p-3.5 hover:brightness-110"
         >
-          Sign Up
+          {t('social.sign_up_github')}
           <svg
             width="22"
             height="22"

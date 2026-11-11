@@ -47,7 +47,7 @@ const Hero = () => {
                             <div className="glass-subtle flex items-center gap-5 px-8 py-5 rounded-full hover:bg-accent transition-colors duration-300 group">
                                 <img
                                     src="/images/banner/openai.png"
-                                    alt="AI Evaluation"
+                                    alt={t('home.ai_evaluation_alt')}
                                     width={160}
                                     className="opacity-90 group-hover:scale-105 transition-transform duration-300 rounded-lg"
                                 />
@@ -82,7 +82,7 @@ const Hero = () => {
                         <div className="relative z-10 w-full animate-float">
                             <img
                                 src="/images/banner/mahila.png"
-                                alt="IELTS Success"
+                                alt={t('home.success_alt')}
                                 width={800}
                                 height={800}
                                 className="object-contain w-full drop-shadow-[0_20px_50px_rgba(79,70,229,0.25)]"

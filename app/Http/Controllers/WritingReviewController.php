@@ -108,7 +108,7 @@ class WritingReviewController extends Controller
             ])->save();
         });
 
-        return back()->with('success', 'Writing natijasi tasdiqlandi.');
+        return back()->with('success', __('writing_confirmed'));
     }
 
     private function essayQuery(AttemptType $type)

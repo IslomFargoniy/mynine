@@ -1,4 +1,5 @@
 import { EmptyState, fmtBand, fmtDateTime, PageHeader, Panel, selectClass } from '@/components/exam-admin/shared';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow, TruncatedText } from '@/components/ui/table';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import AppLayout from '@/layouts/app-layout';
@@ -166,7 +167,7 @@ export default function SpeakingIndex() {
                     }
                     actions={
                         <select
-                            className={`${selectClass} w-72`}
+                            className={`${selectClass} w-full sm:w-72`}
                             value={mock?.id ?? ''}
                             onChange={(e) => router.get(route('speaking.index'), { mock_id: e.target.value || undefined })}
                         >
@@ -202,45 +203,49 @@ export default function SpeakingIndex() {
                 {candidates.length === 0 ? (
                     <EmptyState>{t('exam_admin.reception.no_candidates')}</EmptyState>
                 ) : (
-                    <Panel className="overflow-x-auto p-0">
-                        <table className="w-full text-left text-xs">
-                            <thead className="bg-muted text-[10px] font-bold text-muted-foreground uppercase tracking-wide">
-                                <tr>
-                                    <th className="px-3 py-2.5">{t('exam_admin.speaking.slot')}</th>
-                                    <th className="px-3 py-2.5">{t('exam_admin.common.candidate')}</th>
-                                    <th className="px-3 py-2.5">{t('exam_admin.speaking.written')}</th>
-                                    <th className="px-3 py-2.5">{t('exam_admin.speaking.band')}</th>
-                                    <th className="px-3 py-2.5 text-right">{t('exam_admin.common.actions')}</th>
-                                </tr>
-                            </thead>
-                            <tbody className="divide-y divide-divider">
+                    <Panel className="overflow-hidden p-0">
+                        <Table>
+                            <TableHeader>
+                                <TableRow>
+                                    <TableHead>{t('exam_admin.speaking.slot')}</TableHead>
+                                    <TableHead>{t('exam_admin.common.candidate')}</TableHead>
+                                    <TableHead>{t('exam_admin.speaking.written')}</TableHead>
+                                    <TableHead>{t('exam_admin.speaking.band')}</TableHead>
+                                    <TableHead className="w-px">
+                                        <span className="sr-only">{t('exam_admin.common.actions')}</span>
+                                    </TableHead>
+                                </TableRow>
+                            </TableHeader>
+                            <TableBody>
                                 {candidates.map((c) => (
-                                    <tr key={c.id}>
-                                        <td className="px-3 py-2">
+                                    <TableRow key={c.id}>
+                                        <TableCell label={t('exam_admin.speaking.slot')}>
                                             <SlotEditor key={c.speaking_at ?? 'none'} candidate={c} />
-                                        </td>
-                                        <td className="px-3 py-2">
-                                            <div className="font-bold">{c.name}</div>
+                                        </TableCell>
+                                        <TableCell className="max-md:order-first">
+                                            <TruncatedText className="max-w-[16rem] font-bold">{c.name}</TruncatedText>
                                             <div className="font-mono text-[11px] text-brand">{c.code}</div>
-                                        </td>
-                                        <td className="px-3 py-2">
+                                        </TableCell>
+                                        <TableCell label={t('exam_admin.speaking.written')}>
                                             {c.written_done ? (
-                                                <CheckCircle2 className="h-4 w-4 text-emerald-500" />
+                                                <CheckCircle2 className="h-4 w-4 text-emerald-500" aria-label={t('exam_admin.speaking.written')} />
                                             ) : (
                                                 <span className="text-[11px] text-muted-foreground">{t('exam_admin.speaking.not_yet')}</span>
                                             )}
-                                        </td>
-                                        <td className="px-3 py-2 text-lg font-black text-violet-700 dark:text-violet-300">{fmtBand(c.band)}</td>
-                                        <td className="px-3 py-2 text-right">
-                                            <Button size="sm" variant="outline" className="rounded-full text-xs" onClick={() => setScoring(c)}>
+                                        </TableCell>
+                                        <TableCell label={t('exam_admin.speaking.band')} className="text-lg font-black text-violet-700 dark:text-violet-300">
+                                            {fmtBand(c.band)}
+                                        </TableCell>
+                                        <TableCell className="text-right">
+                                            <Button size="sm" variant="outline" className="rounded-full text-xs whitespace-nowrap" onClick={() => setScoring(c)}>
                                                 <Mic className="h-3.5 w-3.5 text-violet-700 dark:text-violet-300" />
                                                 {c.band === null ? t('exam_admin.speaking.score') : t('exam_admin.speaking.rescore')}
                                             </Button>
-                                        </td>
-                                    </tr>
+                                        </TableCell>
+                                    </TableRow>
                                 ))}
-                            </tbody>
-                        </table>
+                            </TableBody>
+                        </Table>
                     </Panel>
                 )}
             </div>

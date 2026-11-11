@@ -45,7 +45,7 @@ export function NavMain({ items = [], label }: { items: NavItem[]; label?: strin
     return (
         <SidebarGroup className="px-3 py-0">
             <SidebarGroupLabel className="text-[11px] font-bold uppercase tracking-[0.08em] text-muted-foreground mb-0.5 h-7 px-3">
-                {label ?? t('sidebar.platform') ?? 'Platform'}
+                {label ?? t('sidebar.platform')}
             </SidebarGroupLabel>
             <SidebarMenu className="gap-0.5">
                 {items.map((item) => {

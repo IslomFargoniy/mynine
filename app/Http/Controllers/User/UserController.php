@@ -5,9 +5,11 @@ namespace App\Http\Controllers\User;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\StoreUserRequest;
 use App\Http\Requests\UpdateUserRequest;
+use App\Models\Attempt;
 use App\Models\User\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\ValidationException;
 use Inertia\Inertia;
@@ -146,7 +148,7 @@ class UserController extends Controller
             ->findOrFail($id);
 
         // Get recent 5 attempts
-        $recent_attempts = \App\Models\Attempt::with(['test', 'attempt_types'])
+        $recent_attempts = Attempt::with(['test', 'attempt_types'])
             ->where('user_id', $user->id)
             ->whereNotNull('finished_at')
             ->orderBy('finished_at', 'desc')
@@ -206,12 +208,12 @@ class UserController extends Controller
     {
         if ($user->id === Auth::id()) {
             return redirect()->route('user.index')->withErrors([
-                'error' => "O'z hisobingizni o'chira olmaysiz.",
+                'error' => __('cannot_delete_self'),
             ]);
         }
 
         try {
-            \Illuminate\Support\Facades\DB::transaction(function () use ($user) {
+            DB::transaction(function () use ($user) {
                 // Delete user roles/permissions
                 $user->roles()->detach();
                 $user->delete();

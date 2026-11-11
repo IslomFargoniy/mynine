@@ -1,11 +1,15 @@
+import { CenterPasswordChip, CenterPasswordDialog, type CenterPasswordStatus } from '@/components/exam-admin/center-password-dialog';
 import { EmptyState, fmtDateTime, inputClass, OnlineDot, PageHeader, Panel, PcNumber, useAutoRefresh } from '@/components/exam-admin/shared';
 import { Button } from '@/components/ui/button';
+import { IconAction } from '@/components/ui/icon-action';
+import { MoreActions } from '@/components/ui/more-actions';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow, TruncatedText } from '@/components/ui/table';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import AppLayout from '@/layouts/app-layout';
 import { cn } from '@/lib/utils';
 import { type BreadcrumbItem } from '@/types';
 import { Head, router, usePage } from '@inertiajs/react';
-import { Ban, CheckCircle2, Download, Monitor, Pencil, ShieldCheck, Trash2 } from 'lucide-react';
+import { Ban, CheckCircle2, Download, KeyRound, Monitor, Pencil, ShieldCheck, Trash2 } from 'lucide-react';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
@@ -32,6 +36,7 @@ interface PageProps {
     latestVersion: string | null;
     nextNumber: number | null;
     installer: { version: string; file: string; url: string; size: number; sha256: string; available: boolean } | null;
+    centerPassword: CenterPasswordStatus | null;
     [key: string]: unknown;
 }
 
@@ -191,9 +196,11 @@ function NumberCell({ device }: { device: DeviceRow }) {
 }
 
 export default function DevicesIndex() {
-    const { devices, latestVersion, nextNumber, installer } = usePage<PageProps>().props;
+    const { devices, latestVersion, nextNumber, installer, centerPassword } = usePage<PageProps>().props;
     const { t } = useTranslation();
     const [approving, setApproving] = useState<DeviceRow | null>(null);
+    // /desktop/settings redirects here with ?settings=1: open the center password dialog.
+    const [passwordOpen, setPasswordOpen] = useState(() => typeof window !== 'undefined' && new URLSearchParams(window.location.search).get('settings') === '1');
 
     useAutoRefresh(['devices', 'nextNumber'], 15000);
 
@@ -228,23 +235,34 @@ export default function DevicesIndex() {
                         latest: latestVersion ?? '—',
                     })}
                     actions={
-                        installer?.available ? (
-                            <Button asChild size="sm">
-                                <a href={installer.url} download>
-                                    <Download className="h-4 w-4" />
-                                    {t('exam_admin.devices.download_installer', { version: installer.version })}
-                                    {installer.size > 0 && <span className="opacity-70">({(installer.size / 1048576).toFixed(1)} MB)</span>}
-                                </a>
-                            </Button>
-                        ) : (
-                            <span className="text-xs text-muted-foreground">{t('exam_admin.devices.installer_missing')}</span>
-                        )
+                        <>
+                            {centerPassword && (
+                                <Button size="sm" variant="outline" onClick={() => setPasswordOpen(true)}>
+                                    <KeyRound className="h-4 w-4" />
+                                    {t('exam_admin.settings.exit_password')}
+                                </Button>
+                            )}
+                            {installer?.available ? (
+                                <Button asChild size="sm">
+                                    <a href={installer.url} download>
+                                        <Download className="h-4 w-4" />
+                                        {t('exam_admin.devices.download_installer', { version: installer.version })}
+                                        {installer.size > 0 && <span className="opacity-70">({(installer.size / 1048576).toFixed(1)} MB)</span>}
+                                    </a>
+                                </Button>
+                            ) : (
+                                <span className="text-xs text-muted-foreground">{t('exam_admin.devices.installer_missing')}</span>
+                            )}
+                        </>
                     }
                 />
 
-                {installer?.available && installer.sha256 && (
-                    <p className="font-mono text-[10px] break-all text-muted-foreground">SHA-256: {installer.sha256}</p>
-                )}
+                <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
+                    {centerPassword && <CenterPasswordChip status={centerPassword} onClick={() => setPasswordOpen(true)} />}
+                    {installer?.available && installer.sha256 && (
+                        <p className="min-w-0 font-mono text-[10px] break-all text-muted-foreground">SHA-256: {installer.sha256}</p>
+                    )}
+                </div>
 
                 {pending.length > 0 && (
                     <div className="rounded-[18px] border border-amber-500/25 bg-amber-500/15 p-3 text-xs font-semibold text-amber-800 dark:text-amber-200">
@@ -255,109 +273,115 @@ export default function DevicesIndex() {
                 {devices.length === 0 ? (
                     <EmptyState>{t('exam_admin.devices.empty')}</EmptyState>
                 ) : (
-                    <Panel className="overflow-x-auto p-0">
-                        <table className="w-full text-left text-xs">
-                            <thead className="bg-muted text-[10px] font-bold text-muted-foreground uppercase tracking-wide">
-                                <tr>
-                                    <th className="w-20 px-3 py-2.5">№</th>
-                                    <th className="px-3 py-2.5">{t('exam_admin.devices.pc')}</th>
-                                    <th className="px-3 py-2.5">{t('exam_admin.common.status')}</th>
-                                    <th className="px-3 py-2.5">{t('exam_admin.devices.version')}</th>
-                                    <th className="px-3 py-2.5">{t('exam_admin.devices.os_ip')}</th>
-                                    <th className="px-3 py-2.5">{t('exam_admin.devices.last_seen')}</th>
-                                    <th className="px-3 py-2.5">{t('exam_admin.devices.current_attempt')}</th>
-                                    <th className="px-3 py-2.5 text-right">{t('exam_admin.common.actions')}</th>
-                                </tr>
-                            </thead>
-                            <tbody className="divide-y divide-divider">
-                                {devices.map((d) => (
-                                    <tr key={d.id} className={cn(!d.is_approved && 'bg-amber-500/8', d.is_blocked && 'bg-rose-500/8')}>
-                                        <td className="px-3 py-2.5 align-top">
-                                            <NumberCell device={d} />
-                                        </td>
-                                        <td className="px-3 py-2.5">
-                                            <div className="font-bold text-foreground">{d.name}</div>
-                                            <div className="max-w-[180px] truncate font-mono text-[10px] text-muted-foreground" title={d.machine_id}>
-                                                {d.machine_id}
-                                            </div>
-                                        </td>
-                                        <td className="space-y-1 px-3 py-2.5">
-                                            <OnlineDot online={d.online} label={d.online ? t('exam_admin.monitor.online') : t('exam_admin.monitor.offline')} />
-                                            <div className="flex flex-wrap gap-1">
-                                                {d.is_approved ? (
-                                                    <span className="rounded-full bg-emerald-500/12 px-2 py-0.5 text-[10px] font-bold text-emerald-800 dark:bg-emerald-400/15 dark:text-emerald-200">
-                                                        {t('exam_admin.devices.approved')}
-                                                    </span>
-                                                ) : (
-                                                    <span className="rounded-full bg-amber-500/15 px-2 py-0.5 text-[10px] font-bold text-amber-800 dark:bg-amber-400/15 dark:text-amber-200">
-                                                        {t('exam_admin.devices.pending_badge')}
-                                                    </span>
+                    <Panel className="overflow-hidden p-0">
+                        <Table>
+                            <TableHeader>
+                                <TableRow>
+                                    <TableHead className="w-16">№</TableHead>
+                                    <TableHead>{t('exam_admin.devices.pc')}</TableHead>
+                                    <TableHead>{t('exam_admin.common.status')}</TableHead>
+                                    <TableHead className="hidden lg:table-cell">
+                                        {t('exam_admin.devices.version')} / {t('exam_admin.devices.os_ip')}
+                                    </TableHead>
+                                    <TableHead>{t('exam_admin.devices.last_seen')}</TableHead>
+                                    <TableHead className="w-px">
+                                        <span className="sr-only">{t('exam_admin.common.actions')}</span>
+                                    </TableHead>
+                                </TableRow>
+                            </TableHeader>
+                            <TableBody>
+                                {devices.map((d) => {
+                                    const version = (
+                                        <span className={cn('font-mono', d.outdated && 'font-bold text-amber-700 dark:text-amber-300')}>
+                                            v{d.app_version ?? '—'}
+                                        </span>
+                                    );
+                                    return (
+                                        <TableRow key={d.id} className={cn(!d.is_approved && 'bg-amber-500/8', d.is_blocked && 'bg-rose-500/8')}>
+                                            <TableCell label="№" className="align-top">
+                                                <NumberCell device={d} />
+                                            </TableCell>
+                                            <TableCell>
+                                                <TruncatedText className="max-w-[14rem] font-bold text-foreground">{d.name}</TruncatedText>
+                                                <TruncatedText className="max-w-[12rem] font-mono text-[10px] text-muted-foreground">{d.machine_id}</TruncatedText>
+                                                <div className="text-[10px] text-muted-foreground lg:hidden">
+                                                    {version} · {d.os_version ?? '—'} · <span className="font-mono">{d.ip ?? '—'}</span>
+                                                </div>
+                                            </TableCell>
+                                            <TableCell label={t('exam_admin.common.status')}>
+                                                <div className="space-y-1">
+                                                    <OnlineDot online={d.online} label={d.online ? t('exam_admin.monitor.online') : t('exam_admin.monitor.offline')} />
+                                                    <div className="flex flex-wrap gap-1">
+                                                        {d.is_approved ? (
+                                                            <span className="rounded-full bg-emerald-500/12 px-2 py-0.5 text-[10px] font-bold text-emerald-800 dark:bg-emerald-400/15 dark:text-emerald-200">
+                                                                {t('exam_admin.devices.approved')}
+                                                            </span>
+                                                        ) : (
+                                                            <span className="rounded-full bg-amber-500/15 px-2 py-0.5 text-[10px] font-bold text-amber-800 dark:bg-amber-400/15 dark:text-amber-200">
+                                                                {t('exam_admin.devices.pending_badge')}
+                                                            </span>
+                                                        )}
+                                                        {d.is_blocked && (
+                                                            <span className="rounded-full bg-rose-500/12 px-2 py-0.5 text-[10px] font-bold text-rose-800 dark:bg-rose-400/15 dark:text-rose-200">
+                                                                {t('exam_admin.devices.blocked')}
+                                                            </span>
+                                                        )}
+                                                    </div>
+                                                </div>
+                                            </TableCell>
+                                            <TableCell className="hidden text-[11px] text-muted-foreground lg:table-cell">
+                                                <div className="text-foreground">{version}</div>
+                                                <TruncatedText className="max-w-[10rem]">{d.os_version ?? '—'}</TruncatedText>
+                                                <div className="font-mono">{d.ip ?? '—'}</div>
+                                            </TableCell>
+                                            <TableCell label={t('exam_admin.devices.last_seen')} className="text-[11px]">
+                                                <div className="whitespace-nowrap tabular-nums">{fmtDateTime(d.last_seen_at, 'dd.MM HH:mm')}</div>
+                                                {d.current_attempt && (
+                                                    <div className="mt-0.5" title={t('exam_admin.devices.current_attempt')}>
+                                                        <TruncatedText className="max-w-[12rem] font-semibold">{d.current_attempt.name}</TruncatedText>
+                                                        <TruncatedText className="max-w-[12rem] text-muted-foreground">{d.current_attempt.mock}</TruncatedText>
+                                                    </div>
                                                 )}
-                                                {d.is_blocked && (
-                                                    <span className="rounded-full bg-rose-500/12 px-2 py-0.5 text-[10px] font-bold text-rose-800 dark:bg-rose-400/15 dark:text-rose-200">
-                                                        {t('exam_admin.devices.blocked')}
-                                                    </span>
-                                                )}
-                                            </div>
-                                        </td>
-                                        <td className="px-3 py-2.5 font-mono">
-                                            <span className={cn(d.outdated && 'font-bold text-amber-700 dark:text-amber-300')}>{d.app_version ?? '—'}</span>
-                                        </td>
-                                        <td className="px-3 py-2.5 text-[11px] text-muted-foreground">
-                                            <div>{d.os_version ?? '—'}</div>
-                                            <div className="font-mono">{d.ip ?? '—'}</div>
-                                        </td>
-                                        <td className="px-3 py-2.5 text-[11px]">{fmtDateTime(d.last_seen_at, 'dd.MM HH:mm:ss')}</td>
-                                        <td className="px-3 py-2.5 text-[11px]">
-                                            {d.current_attempt ? (
-                                                <>
-                                                    <div className="font-semibold">{d.current_attempt.name}</div>
-                                                    <div className="text-muted-foreground">{d.current_attempt.mock}</div>
-                                                </>
-                                            ) : (
-                                                '—'
-                                            )}
-                                        </td>
-                                        <td className="px-3 py-2.5">
-                                            <div className="flex justify-end gap-1">
-                                                {!d.is_approved && (
-                                                    <Button size="sm" onClick={() => setApproving(d)} className="h-7 rounded-full bg-emerald-600 px-3 text-[11px] text-white hover:bg-emerald-700">
-                                                        <CheckCircle2 className="h-3.5 w-3.5" />
-                                                        {t('exam_admin.devices.approve')}
-                                                    </Button>
-                                                )}
-                                                {d.is_blocked ? (
-                                                    <Button size="sm" variant="outline" onClick={() => post('desktop.devices.unblock', d)} className="h-7 rounded-full px-2 text-[11px]">
-                                                        <ShieldCheck className="h-3.5 w-3.5" />
-                                                        {t('exam_admin.devices.unblock')}
-                                                    </Button>
-                                                ) : (
-                                                    <Button
-                                                        size="sm"
-                                                        variant="outline"
-                                                        onClick={() => confirm(t('exam_admin.devices.block_confirm', { name: d.name })) && post('desktop.devices.block', d)}
-                                                        className="h-7 rounded-full px-2 text-[11px] text-rose-700 dark:text-rose-300"
-                                                    >
-                                                        <Ban className="h-3.5 w-3.5" />
-                                                        {t('exam_admin.devices.block')}
-                                                    </Button>
-                                                )}
-                                                <Button size="sm" variant="outline" onClick={() => rename(d)} className="h-7 rounded-full px-2" title={t('exam_admin.devices.rename')}>
-                                                    <Pencil className="h-3.5 w-3.5" />
-                                                </Button>
-                                                <Button size="sm" variant="outline" onClick={() => remove(d)} className="h-7 rounded-full px-2 text-rose-700 dark:text-rose-300" title={t('exam_admin.common.delete')}>
-                                                    <Trash2 className="h-3.5 w-3.5" />
-                                                </Button>
-                                            </div>
-                                        </td>
-                                    </tr>
-                                ))}
-                            </tbody>
-                        </table>
+                                            </TableCell>
+                                            <TableCell className="max-md:border-t max-md:border-divider max-md:pt-2">
+                                                <div className="flex items-center justify-end gap-0.5">
+                                                    {!d.is_approved && (
+                                                        <Button size="sm" onClick={() => setApproving(d)} className="h-7 rounded-full bg-emerald-600 px-3 text-[11px] text-white hover:bg-emerald-700">
+                                                            <CheckCircle2 className="h-3.5 w-3.5" />
+                                                            {t('exam_admin.devices.approve')}
+                                                        </Button>
+                                                    )}
+                                                    {d.is_blocked ? (
+                                                        <IconAction label={t('exam_admin.devices.unblock')} tone="success" onClick={() => post('desktop.devices.unblock', d)}>
+                                                            <ShieldCheck />
+                                                        </IconAction>
+                                                    ) : (
+                                                        <IconAction
+                                                            label={t('exam_admin.devices.block')}
+                                                            tone="danger"
+                                                            onClick={() => confirm(t('exam_admin.devices.block_confirm', { name: d.name })) && post('desktop.devices.block', d)}
+                                                        >
+                                                            <Ban />
+                                                        </IconAction>
+                                                    )}
+                                                    <MoreActions
+                                                        items={[
+                                                            { label: t('exam_admin.devices.rename'), icon: <Pencil className="h-4 w-4" />, onSelect: () => rename(d) },
+                                                            { label: t('exam_admin.common.delete'), icon: <Trash2 className="h-4 w-4" />, onSelect: () => remove(d), danger: true },
+                                                        ]}
+                                                    />
+                                                </div>
+                                            </TableCell>
+                                        </TableRow>
+                                    );
+                                })}
+                            </TableBody>
+                        </Table>
                     </Panel>
                 )}
             </div>
             {approving && <ApproveDialog device={approving} suggested={nextNumber} onClose={() => setApproving(null)} />}
+            {centerPassword && <CenterPasswordDialog status={centerPassword} open={passwordOpen} onOpenChange={setPasswordOpen} />}
         </AppLayout>
     );
 }

@@ -100,7 +100,7 @@ export default function Attempt() {
 
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
-            <Head title="Attempt" />
+            <Head title={t('page_titles.attempts')} />
             <div className="flex h-full flex-1 flex-col gap-4 rounded-xl p-4">
                 {/* Search and Per-Page Selection */}
                 <div className="flex justify-end items-center mb-2">
@@ -129,7 +129,7 @@ export default function Attempt() {
                 </div>
 
                 {/* Table */}
-                <div className="overflow-x-auto">
+                <div className="min-w-0">
                     <AttemptTable 
                         {...attempt} 
                         data={attemptsList} 

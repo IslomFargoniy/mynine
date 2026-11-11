@@ -17,7 +17,6 @@ import {
     BarChart3,
     ClipboardList,
     ConciergeBell,
-    Folder,
     GithubIcon as Github,
     GraduationCap,
     LayoutDashboard,
@@ -26,7 +25,6 @@ import {
     Monitor,
     PenLine,
     Send,
-    Settings,
     Users
 } from 'lucide-react';
 import AppLogo from './app-logo';
@@ -66,7 +64,7 @@ export function AppSidebar() {
                     items: [
                         { title: t('exam_admin.nav.reception'), href: '/reception', icon: ConciergeBell },
                         { title: t('exam_admin.nav.monitor'), href: '/monitor', icon: Activity },
-                        { title: t('sidebar.all_tests'), href: '/all-test', icon: ClipboardList },
+                        { title: t('sidebar.test_bank'), href: '/test-bank', icon: ClipboardList },
                     ],
                 },
             ];
@@ -74,13 +72,8 @@ export function AppSidebar() {
 
         const platform: NavItem[] = [
             { title: t('sidebar.dashboard'), href: '/dashboard', icon: LayoutDashboard },
-            ...(isAdmin
-                ? [
-                      { title: t('sidebar.user'), href: '/user', icon: Users },
-                      { title: t('sidebar.folder'), href: '/folder', icon: Folder },
-                  ]
-                : []),
-            { title: t('sidebar.all_tests'), href: '/all-test', icon: ClipboardList },
+            ...(isAdmin ? [{ title: t('sidebar.user'), href: '/user', icon: Users }] : []),
+            { title: t('sidebar.test_bank'), href: '/test-bank', icon: ClipboardList },
             { title: t('sidebar.my_result'), href: '/attempt', icon: BarChart3 },
         ];
 
@@ -105,7 +98,6 @@ export function AppSidebar() {
                 label: t('exam_admin.nav.group_desktop'),
                 items: [
                     { title: t('exam_admin.nav.devices'), href: '/desktop/devices', icon: Monitor },
-                    { title: t('exam_admin.nav.settings'), href: '/desktop/settings', icon: Settings },
                 ],
             },
         ];

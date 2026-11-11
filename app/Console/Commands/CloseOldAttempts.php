@@ -2,6 +2,8 @@
 
 namespace App\Console\Commands;
 
+use App\Models\Attempt;
+use App\Services\ExamService;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\Log;
 
@@ -19,17 +21,29 @@ class CloseOldAttempts extends Command
      *
      * @var string
      */
-    protected $description = 'Close attempts older than 3 hours';
+    protected $description = 'Close abandoned attempts older than 3 hours (never a running, paused or online exam)';
 
     /**
      * Execute the console command.
      */
-    public function handle()
+    public function handle(ExamService $exam)
     {
         Log::info('Command attempts:close-old started.');
 
-        $oldAttempts = \App\Models\Attempt::whereNull('finished_at')
+        $grace = (int) config('desktop.answer_grace_seconds', 30);
+
+        $oldAttempts = Attempt::query()
+            ->whereNull('finished_at')
             ->where('created_at', '<', now()->subHours(3))
+            // Paused by the invigilator: the timers are frozen, not abandoned.
+            ->whereNull('paused_at')
+            // A desktop PC still sends heartbeats: the exam is running (e.g. extra time).
+            ->where(fn ($q) => $q->whereNull('last_heartbeat_at')->orWhere('last_heartbeat_at', '<', now()->subMinutes(10)))
+            // A module whose time (plus the answer grace) has not run out yet is still running.
+            ->whereDoesntHave('attempt_types', fn ($q) => $q
+                ->where('is_submitted', false)
+                ->whereNotNull('finished_at')
+                ->where('finished_at', '>', now()->subSeconds($grace)))
             ->get();
 
         $count = $oldAttempts->count();
@@ -38,7 +52,7 @@ class CloseOldAttempts extends Command
 
         foreach ($oldAttempts as $attempt) {
             try {
-                $attempt->finish();
+                $exam->finishAttempt($attempt);
                 $this->line("Closed attempt ID: {$attempt->id}");
                 Log::debug("Closed attempt ID: {$attempt->id} automatically.");
             } catch (\Exception $e) {

@@ -112,7 +112,7 @@ export default function PartModal({ testType, part, open, setOpen }: PartModalPr
                                 </Label>
                                 <Input
                                     id="part_name"
-                                    placeholder="Masalan: Reading Passage 1"
+                                    placeholder={t('part_form.name_placeholder')}
                                     value={data.name}
                                     onChange={(e) => setData('name', e.target.value)}
                                     required
@@ -127,7 +127,7 @@ export default function PartModal({ testType, part, open, setOpen }: PartModalPr
                                 </Label>
                                 <Input
                                     id="part_comment"
-                                    placeholder="Qarashlar / izoh (ixtiyoriy)"
+                                    placeholder={t('part_form.comment_placeholder')}
                                     value={data.comment}
                                     onChange={(e) => setData('comment', e.target.value)}
                                     className="mt-1"
@@ -139,7 +139,7 @@ export default function PartModal({ testType, part, open, setOpen }: PartModalPr
                         {/* TinyMCE Full Passage Editor */}
                         <div className="space-y-1.5 flex flex-col flex-1">
                             <Label className="text-sm font-semibold text-foreground/80">
-                                Passage Matni (Rich Text Editor)
+                                {t('part_form.passage')}
                             </Label>
                             <TextareaEditor
                                 value={data.textarea}
@@ -163,7 +163,7 @@ export default function PartModal({ testType, part, open, setOpen }: PartModalPr
                             disabled={processing}
                             className="font-semibold px-6"
                         >
-                            {isEdit ? t('update') ?? 'Yangilash' : t('save') ?? 'Saqlash'}
+                            {isEdit ? t('update') : t('save')}
                         </Button>
                     </div>
                 </form>

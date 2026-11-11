@@ -12,7 +12,6 @@ use App\Models\Section;
 use App\Models\TestType;
 use App\Services\AudioUploadService;
 use App\Services\ExamService;
-use Carbon\Carbon;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
@@ -401,6 +400,6 @@ class ExamPayloadBuilder
 
     private function iso($value): ?string
     {
-        return $value ? Carbon::parse($value)->toIso8601String() : null;
+        return $value ? ExamService::apiTime($value) : null;
     }
 }

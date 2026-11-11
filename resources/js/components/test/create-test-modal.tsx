@@ -6,6 +6,7 @@ import InputError from '@/components/input-error';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import TestVariantField, { type TestVariant } from '@/components/test/test-variant-field';
 import { toast } from 'sonner';
 
 import {
@@ -20,7 +21,15 @@ import {
 } from '@/components/ui/dialog';
 import { Plus } from 'lucide-react';
 
-export default function CreateTestModal({ folder_id }: { folder_id: number }) {
+interface CreateTestModalProps {
+    folder_id: number;
+    /** Called after the test was created (the Test Bank reloads its loaded folders). */
+    onSuccess?: () => void;
+    /** Compact trigger for folder section headers. */
+    compact?: boolean;
+}
+
+export default function CreateTestModal({ folder_id, onSuccess, compact = false }: CreateTestModalProps) {
     const { t } = useTranslation();
     const [open, setOpen] = useState(false);
     const nameInput = useRef<HTMLInputElement>(null);
@@ -30,11 +39,13 @@ export default function CreateTestModal({ folder_id }: { folder_id: number }) {
         name: string;
         comment: string;
         audio_path: File | null;
+        variant: TestVariant;
     }>({
         folder_id: folder_id,
         name: '',
         comment: '',
-        audio_path: null
+        audio_path: null,
+        variant: 'academic'
     });
 
     const submit: FormEventHandler = (e) => {
@@ -42,11 +53,13 @@ export default function CreateTestModal({ folder_id }: { folder_id: number }) {
 
         post(route('test.store'), {
             preserveScroll: true,
+            preserveState: true,
             onSuccess: () => {
                 reset();
                 clearErrors();
                 setOpen(false);
                 toast.success(t('created_successfully'));
+                onSuccess?.();
             },
             onError: (err) => {
                 nameInput.current?.focus();
@@ -59,9 +72,12 @@ export default function CreateTestModal({ folder_id }: { folder_id: number }) {
     return (
         <Dialog open={open} onOpenChange={setOpen}>
             <DialogTrigger asChild>
-                <button className="inline-flex items-center gap-2 px-4 py-2.5 btn-glass-primary hover:brightness-110 active:scale-95 text-primary-foreground font-bold text-xs rounded-full transition-all cursor-pointer">
-                    <Plus className="w-4 h-4" />
-                    {t('create')} {t('test')}
+                <button
+                    type="button"
+                    className={`inline-flex items-center gap-1.5 btn-glass-primary hover:brightness-110 active:scale-95 text-primary-foreground font-bold text-xs rounded-full transition-all cursor-pointer ${compact ? 'px-3 py-1.5' : 'px-4 py-2.5'}`}
+                >
+                    <Plus className={compact ? 'w-3.5 h-3.5' : 'w-4 h-4'} />
+                    {t('test_bank.add_test')}
                 </button>
             </DialogTrigger>
 
@@ -83,7 +99,7 @@ export default function CreateTestModal({ folder_id }: { folder_id: number }) {
                         <Input
                             id="name"
                             ref={nameInput}
-                            placeholder="Masalan: Cambridge 18 Test 1"
+                            placeholder={t('test_bank.test_name_placeholder')}
                             value={data.name}
                             onChange={(e) => setData('name', e.target.value)}
                             required
@@ -97,16 +113,18 @@ export default function CreateTestModal({ folder_id }: { folder_id: number }) {
                         </Label>
                         <Input
                             id="comment"
-                            placeholder="Izoh (ixtiyoriy)"
+                            placeholder={t('test_bank.comment_placeholder')}
                             value={data.comment}
                             onChange={(e) => setData('comment', e.target.value)}
                         />
                         <InputError message={errors.comment} />
                     </div>
 
+                    <TestVariantField value={data.variant} onChange={(value) => setData('variant', value)} error={errors.variant} />
+
                     <div className="space-y-1">
                         <Label htmlFor="audio_path" className="text-sm font-semibold text-foreground/80">
-                            {t('audio_path') || 'Audio fayl'}
+                            {t('audio_path')}
                         </Label>
                         <Input
                             type="file"

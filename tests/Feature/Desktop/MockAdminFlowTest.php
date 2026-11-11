@@ -32,18 +32,36 @@ beforeEach(function () {
 /**
  * A ready Mock Bank test with one Listening module (one keyed question, audio present).
  */
-function bankListening(string $name, ?Carbon\Carbon $lastUsedAt = null): TestType
+/**
+ * A ready Listening bank module; $usedOn = date of a mock that uses it (reuse rule input).
+ */
+function bankListening(string $name, ?Carbon\Carbon $usedOn = null): TestType
 {
     $test = ExamTest::create([
         'folder_id' => test()->exam['testL']->folder_id, 'name' => $name, 'active' => 1, 'open' => 0, 'audio_path' => 'audio/'.$name.'.mp3',
         'purpose' => ExamTest::PURPOSE_MOCK, 'bank_status' => ExamTest::BANK_READY,
     ]);
-    $module = TestType::create(['test_id' => $test->id, 'type_id' => test()->exam['listeningType']->id, 'last_used_at' => $lastUsedAt]);
+    $module = TestType::create(['test_id' => $test->id, 'type_id' => test()->exam['listeningType']->id]);
     $part = Part::create(['test_type_id' => $module->id, 'name' => 'Part 1', 'minute' => 30]);
     $section = makeSection($part, 'fill_blank');
     Question::create(['section_id' => $section->id, 'order' => 1, 'textarea' => 'Q', 'answer_text' => 'x']);
 
+    if ($usedOn) {
+        useModuleOn($module, $usedOn);
+    }
+
     return $module;
+}
+
+function useModuleOn(TestType $module, Carbon\Carbon $date): Mock
+{
+    $mock = Mock::create([
+        'name' => 'Used '.$module->id.' '.$date->format('Ymd'), 'test_id' => null, 'user_id' => test()->admin->id,
+        'slug' => 'used-'.uniqid(), 'started_at' => $date, 'finished_at' => $date->copy()->addHours(4), 'active' => 1,
+    ]);
+    MockModule::create(['mock_id' => $mock->id, 'type_id' => $module->type_id, 'test_type_id' => $module->id]);
+
+    return $mock;
 }
 
 /**
@@ -184,7 +202,7 @@ test('admins edit the content of folderless bank tests; reception and students c
 
 test('auto pick takes the least recently used module and skips modules used within 14 days', function () {
     $bank = app(MockBankService::class);
-    $this->exam['listening']->update(['last_used_at' => now()->subDays(3)]);
+    // $this->exam['listening'] is used by the running mock (started an hour ago).
 
     $old = bankListening('Old', now()->subDays(20));
     $older = bankListening('Older', now()->subDays(40));
@@ -196,16 +214,39 @@ test('auto pick takes the least recently used module and skips modules used with
     expect($bank->autoPick()['Listening']?->id)->toBe($never->id);
 
     // Nothing outside the 14-day window: no automatic pick.
-    TestType::whereIn('id', [$old->id, $older->id, $never->id])->update(['last_used_at' => now()->subDays(2)]);
+    foreach ([$old, $older, $never] as $module) {
+        useModuleOn($module, now()->subDays(2));
+    }
     expect($bank->autoPick()['Listening'])->toBeNull()
-        ->and($bank->isRecentlyUsed($recent->fresh()))->toBeTrue()
-        ->and($bank->isRecentlyUsed($recent->fresh()->forceFill(['last_used_at' => now()->subDays(15)])))->toBeFalse();
+        ->and($bank->isRecentlyUsed($recent))->toBeTrue()
+        ->and($bank->isRecentlyUsed($recent, now()->addDays(2)))->toBeFalse();
+});
+
+test('the reuse rule looks at the exam dates of other mocks in both directions', function () {
+    $bank = app(MockBankService::class);
+    $planned = bankListening('Planned');
+    useModuleOn($planned, now()->addDays(10));
+
+    // A mock in 10 days blocks an exam today, but not one in 30 days.
+    expect($bank->isRecentlyUsed($planned))->toBeTrue()
+        ->and($bank->isRecentlyUsed($planned, now()->addDays(30)))->toBeFalse()
+        ->and($bank->autoPick(now()->addDays(30))['Listening']?->id)->not->toBeNull();
+
+    // The mock being edited does not count against itself.
+    $own = useModuleOn(bankListening('Own'), now()->addDays(60));
+    $ownModule = TestType::find($own->modules()->value('test_type_id'));
+    expect($bank->isRecentlyUsed($ownModule, now()->addDays(60)))->toBeTrue()
+        ->and($bank->isRecentlyUsed($ownModule, now()->addDays(60), $own->id))->toBeFalse();
+
+    // last_used_at = latest exam date (display only), recomputed from the mocks.
+    $bank->refreshLastUsed([$planned->id]);
+    expect($planned->fresh()->last_used_at->isSameDay(now()->addDays(10)))->toBeTrue();
 });
 
 test('draft and archived bank tests are never picked', function () {
     $draft = bankListening('Draft', null);
     $draft->test->update(['bank_status' => ExamTest::BANK_DRAFT]);
-    $this->exam['listening']->update(['last_used_at' => now()->subDays(30)]);
+    $this->exam['mock']->update(['started_at' => now()->subDays(30), 'finished_at' => now()->subDays(30)->addHours(4)]);
 
     expect(app(MockBankService::class)->autoPick()['Listening']?->id)->toBe($this->exam['listening']->id);
 });
@@ -243,7 +284,7 @@ test('a mock refuses modules that are not ready and two modules of one type', fu
     $this->actingAs($this->admin)->post(route('mock.store'), $payload([]))->assertSessionHasErrors('modules');
 });
 
-test('changing a module updates last_used_at only for the new module and keeps legacy mocks editable', function () {
+test('changing a module recomputes last_used_at from the exam dates and keeps legacy mocks editable', function () {
     $mock = $this->exam['mock'];
     $replacement = bankListening('Replacement');
 
@@ -254,7 +295,7 @@ test('changing a module updates last_used_at only for the new module and keeps l
 
     expect(MockModule::where('mock_id', $mock->id)->where('type_id', $this->exam['listeningType']->id)->value('test_type_id'))->toBe($replacement->id)
         ->and($replacement->fresh()->last_used_at)->not->toBeNull()
-        ->and($this->exam['reading']->fresh()->last_used_at)->toBeNull()
+        ->and($this->exam['listening']->fresh()->last_used_at)->toBeNull()
         ->and((int) $mock->fresh()->test_id)->toBe($replacement->test_id);
 
     $legacyContent = makeTestContent($this->admin, 'Reading');

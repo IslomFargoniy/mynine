@@ -1,3 +1,4 @@
+import TestVariantField, { type TestVariant } from '@/components/test/test-variant-field';
 import { EmptyState, fmtDateTime, inputClass, ModuleBadge, PageHeader, selectClass, useAutoRefresh } from '@/components/exam-admin/shared';
 import InputError from '@/components/input-error';
 import { Button } from '@/components/ui/button';
@@ -77,6 +78,7 @@ function CreateMockTestDialog() {
         comment: '',
         active: 1,
         purpose: 'mock',
+        variant: 'academic' as TestVariant,
     });
 
     const submit: FormEventHandler = (e) => {
@@ -113,6 +115,7 @@ function CreateMockTestDialog() {
                         <Label htmlFor="test_comment">{t('exam_admin.common.comment')}</Label>
                         <input id="test_comment" className={inputClass} value={data.comment} onChange={(e) => setData('comment', e.target.value)} />
                     </div>
+                    <TestVariantField value={data.variant} onChange={(value) => setData('variant', value)} error={errors.variant} />
                     <DialogFooter>
                         <Button type="submit" disabled={processing || !data.name}>
                             {t('exam_admin.common.save')}
@@ -333,7 +336,12 @@ function MoveToPracticeDialog({ test, folders }: { test: BankTestRow; folders: P
                     <div>
                         <Label htmlFor={`move_folder_${test.id}`}>{t('exam_admin.bank.folder')}</Label>
                         {folders.length === 0 ? (
-                            <p className="mt-1 text-xs text-amber-700 dark:text-amber-300">{t('exam_admin.bank.move.no_folders')}</p>
+                            <p className="mt-1 text-xs text-amber-700 dark:text-amber-300">
+                                {t('exam_admin.bank.move.no_folders')}{' '}
+                                <Link href={route('test-bank.index')} className="font-semibold underline">
+                                    {t('exam_admin.bank.move.open_test_bank')}
+                                </Link>
+                            </p>
                         ) : (
                             <select
                                 id={`move_folder_${test.id}`}

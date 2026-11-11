@@ -22,7 +22,7 @@ export const exportAttemptsToExcel = (attempts: Attempt[], fileName: string = 'A
         item.attempt_types?.forEach((at) => {
             const typeName = at.type.name;
             const score = typeName === 'Writing'
-                ? Number(at.is_correct_count ?? 0) / 2
+                ? (at.band ?? null)
                 : typeName === 'Speaking'
                     ? at.score
                     : at.is_correct_count;

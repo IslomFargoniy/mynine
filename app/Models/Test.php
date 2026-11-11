@@ -21,6 +21,11 @@ class Test extends Model
 
     public const BANK_ARCHIVED = 'archived';
 
+    /** IELTS variant: Reading bands differ between Academic and General Training. */
+    public const VARIANT_ACADEMIC = 'academic';
+
+    public const VARIANT_GENERAL = 'general';
+
     /** @use HasFactory<TestFactory> */
     protected $fillable = [
         'folder_id',
@@ -32,11 +37,13 @@ class Test extends Model
         'open',
         'purpose',
         'bank_status',
+        'variant',
     ];
 
     protected $attributes = [
         'purpose' => self::PURPOSE_PRACTICE,
         'bank_status' => self::BANK_DRAFT,
+        'variant' => self::VARIANT_ACADEMIC,
     ];
 
     /**

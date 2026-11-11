@@ -98,7 +98,7 @@ export default function Welcome() {
                                     <p className="text-muted-foreground font-medium">{t('landing.explore_desc')}</p>
                                 </div>
                                 <Link
-                                    href={route('all-test.index')}
+                                    href={route('test-bank.index')}
                                     className="glass-pill inline-flex items-center gap-2 px-6 py-3 rounded-full text-brand font-bold hover:bg-accent transition-colors duration-300"
                                 >
                                     {t('landing.explore_all')}

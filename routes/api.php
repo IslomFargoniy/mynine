@@ -32,9 +32,10 @@ Route::prefix('v1')->name('api.v1.')->group(function () {
             ->name('device.unlock');
         Route::get('device/config', [DeviceController::class, 'config'])->name('device.config');
 
-        Route::prefix('exam')->name('exam.')->middleware('desktop.client')->group(function () {
+        // v1.1: the version gate (426) runs on login only; a running exam is never interrupted by it.
+        Route::prefix('exam')->name('exam.')->group(function () {
             Route::post('login', [ExamAuthController::class, 'login'])
-                ->middleware('throttle:desktop-login')
+                ->middleware(['desktop.client', 'throttle:desktop-login'])
                 ->name('login');
 
             Route::middleware('desktop.candidate')->group(function () {

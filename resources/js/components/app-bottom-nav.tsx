@@ -15,8 +15,8 @@ export function AppBottomNav() {
             icon: Home,
         },
         {
-            title: t('sidebar.all_tests'),
-            href: '/all-test',
+            title: t('sidebar.test_bank'),
+            href: '/test-bank',
             icon: FileText,
         },
         {
@@ -33,7 +33,7 @@ export function AppBottomNav() {
 
     return (
         <div className="fixed right-4 left-4 bottom-[calc(1.2rem+env(safe-area-inset-bottom))] z-50 md:hidden">
-            <nav aria-label="Asosiy menyu" className="glass-pill flex items-center justify-around gap-1 bg-glass-strong p-1.5">
+            <nav aria-label={t('common.main_menu')} className="glass-pill flex items-center justify-around gap-1 bg-glass-strong p-1.5">
                 {mainNavItems.map((item) => {
                     const isActive = page.url.startsWith(item.href);
 

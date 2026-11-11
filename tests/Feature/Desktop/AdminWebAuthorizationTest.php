@@ -3,6 +3,7 @@
 use App\Models\Attempt;
 use App\Models\AttemptType;
 use App\Models\Device;
+use App\Models\Setting;
 
 /*
 | Authorization of every web route added for the mock-exam system (Admin / Reception / Student / guest).
@@ -98,8 +99,23 @@ test('admins reach every page', function (string $name, array $params = []) {
     $this->actingAs($this->admin)->get(route($name, $params))->assertOk();
 })->with([
     ['mock-bank.index'], ['mock.create'], ['speaking.index'], ['writing-review.index'], ['desktop.devices.index'],
-    ['desktop.settings.index'], ['reception.index'], ['monitor.index'],
+    ['reception.index'], ['monitor.index'],
 ]);
+
+test('the old desktop settings page opens the center password dialog on the Exam PCs page', function () {
+    $this->actingAs($this->admin)->get(route('desktop.settings.index'))
+        ->assertRedirect(route('desktop.devices.index', ['settings' => 1]));
+});
+
+test('the Exam PCs page carries the center password status', function () {
+    $this->actingAs($this->admin)->get(route('desktop.devices.index'))->assertOk()
+        ->assertInertia(fn ($page) => $page->where('centerPassword.set', false)->where('centerPassword.updatedAt', null));
+
+    Setting::setExitPassword('secret12');
+
+    $this->actingAs($this->admin)->get(route('desktop.devices.index'))->assertOk()
+        ->assertInertia(fn ($page) => $page->where('centerPassword.set', true)->where('centerPassword.updatedAt', fn ($v) => is_string($v)));
+});
 
 test('admins open the mock edit page and the code cards', function () {
     $this->actingAs($this->admin)->get(route('mock.edit', $this->exam['mock']))->assertOk()->assertInertia(fn ($page) => $page->component('mock/form'));

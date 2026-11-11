@@ -35,11 +35,11 @@ export default function DeleteItemModal({ item, open, setOpen, onDelete }: Delet
                     <div className="flex items-center gap-2 text-rose-700 dark:text-rose-300">
                         <AlertTriangle className="w-5 h-5 shrink-0" />
                         <DialogTitle className="text-lg font-bold text-foreground">
-                            {t('modal.delete_title') || "O'chirishni tasdiqlang"}
+                            {t('modal.delete_title')}
                         </DialogTitle>
                     </div>
                     <DialogDescription className="text-xs text-muted-foreground">
-                        {t('modal.delete_confirmation') || "Ushbu ma'lumotni o'chirishga ishonchingiz komilmi? Ushbu amalni ortga qaytarib bo'lmaydi."}
+                        {t('modal.delete_confirmation')}
                     </DialogDescription>
                 </DialogHeader>
 

@@ -2,10 +2,11 @@
 
 namespace Database\Factories;
 
+use App\Models\QuestionType;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
 /**
- * @extends \Illuminate\Database\Eloquent\Factories\Factory<\App\Models\QuestionType>
+ * @extends Factory<QuestionType>
  */
 class QuestionTypeFactory extends Factory
 {

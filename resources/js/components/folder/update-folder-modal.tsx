@@ -23,22 +23,23 @@ interface UpdateFolderModalProps {
     folder: Folder;
     open: boolean;
     setOpen: (open: boolean) => void;
+    onSuccess?: () => void;
 }
 
-export default function UpdateFolderModal({ folder, open, setOpen }: UpdateFolderModalProps) {
+export default function UpdateFolderModal({ folder, open, setOpen, onSuccess }: UpdateFolderModalProps) {
     const { t } = useTranslation();
     const nameInput = useRef<HTMLInputElement>(null);
 
     const { data, setData, put, processing, reset, errors, clearErrors } = useForm({
         name: folder.name,
-        comment: folder.comment,
+        comment: folder.comment ?? '',
         active: folder.active
     });
 
     useEffect(() => {
         setData({
             name: folder.name,
-            comment: folder.comment,
+            comment: folder.comment ?? '',
             active: folder.active
         });
     }, [folder, setData]);
@@ -48,11 +49,12 @@ export default function UpdateFolderModal({ folder, open, setOpen }: UpdateFolde
 
         put(route('folder.update', folder.id), {
             preserveScroll: true,
+            preserveState: true,
             onSuccess: () => {
-                reset();
                 clearErrors();
                 setOpen(false);
                 toast.success(t('updated_successfully'));
+                onSuccess?.();
             },
             onError: (err) => {
                 nameInput.current?.focus();
@@ -67,10 +69,10 @@ export default function UpdateFolderModal({ folder, open, setOpen }: UpdateFolde
             <DialogContent className="sm:max-w-lg w-full">
                 <DialogHeader className="space-y-1 pb-2 border-b border-divider">
                     <DialogTitle className="text-lg font-bold text-foreground">
-                        {t('modal.update_title') || "Papkani tahrirlash"}
+                        {t('modal.update_folder_title')}
                     </DialogTitle>
                     <DialogDescription className="text-xs text-muted-foreground">
-                        {t('modal.update_description') || "Papka ma'lumotlarini yangilang."}
+                        {t('modal.update_folder_desc')}
                     </DialogDescription>
                 </DialogHeader>
 
@@ -115,7 +117,7 @@ export default function UpdateFolderModal({ folder, open, setOpen }: UpdateFolde
                             />
                             <div className="relative w-11 h-6 bg-foreground/10 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-ring rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-divider after:border after:rounded-full after:w-5 after:h-5 after:transition-all border border-glass-edge peer-checked:bg-primary"></div>
                             <span className="text-xs font-medium text-foreground/80">
-                                {data.active === 1 ? 'Aktiv' : 'Nofaol'}
+                                {data.active === 1 ? t('active') : t('inactive')}
                             </span>
                         </label>
                         <InputError message={errors.active} />

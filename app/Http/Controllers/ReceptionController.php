@@ -96,7 +96,7 @@ class ReceptionController extends Controller
         $this->authorize('operate', $mockStudent->mock);
 
         if (! $this->results->result($mockStudent)['ready']) {
-            return back()->with('error', 'Natija hali tayyor emas.');
+            return back()->with('error', __('result_not_ready'));
         }
 
         $mockStudent->forceFill([
@@ -104,7 +104,7 @@ class ReceptionController extends Controller
             'delivered_by' => $request->user()->id,
         ])->save();
 
-        return back()->with('success', 'Natija topshirildi deb belgilandi.');
+        return back()->with('success', __('result_delivered'));
     }
 
     /**
@@ -146,7 +146,7 @@ class ReceptionController extends Controller
             $student->forceFill(['result_printed_at' => now()])->saveQuietly();
         }
 
-        abort_if($sheets === [], 422, 'Tanlangan nomzodlarning natijasi hali tayyor emas.');
+        abort_if($sheets === [], 422, __('results_not_ready_selected'));
 
         return Pdf::render('pdf.result-sheet', compact('sheets'), 'Results_'.now()->format('Ymd_His'));
     }

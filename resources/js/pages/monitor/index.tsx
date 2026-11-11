@@ -4,7 +4,7 @@ import AppLayout from '@/layouts/app-layout';
 import { cn } from '@/lib/utils';
 import { type BreadcrumbItem } from '@/types';
 import { Head, router, usePage } from '@inertiajs/react';
-import { Activity, ChevronDown, ChevronUp, Clock, Pause, Play, Plus, Send, ShieldAlert, Unlock } from 'lucide-react';
+import { Activity, ChevronDown, ChevronUp, Clock, MonitorOff, Pause, Play, Plus, Send, ShieldAlert, Unlock } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { toast } from 'sonner';
@@ -85,7 +85,7 @@ export default function MonitorIndex() {
                     description={mock ? `${mock.name} · ${t('exam_admin.monitor.summary', { active: active.length, online, total: attempts.length })}` : undefined}
                     actions={
                         <select
-                            className={`${selectClass} w-72`}
+                            className={`${selectClass} w-full sm:w-72`}
                             value={mock?.id ?? ''}
                             onChange={(e) => router.get(route('monitor.index'), { mock_id: e.target.value || undefined }, { preserveState: false })}
                         >
@@ -239,6 +239,19 @@ export default function MonitorIndex() {
                                             >
                                                 <Unlock className="h-3.5 w-3.5 text-brand" />
                                                 {t('exam_admin.monitor.unlock')}
+                                            </Button>
+                                        )}
+                                        {a.device && !a.finished && (
+                                            <Button
+                                                size="sm"
+                                                variant="outline"
+                                                disabled={busy === a.id}
+                                                className="h-7 rounded-full px-2 text-[11px]"
+                                                title={t('exam_admin.monitor.release_device_hint')}
+                                                onClick={() => act(a, 'release-device', {}, t('exam_admin.monitor.release_device_confirm', { name: a.name }))}
+                                            >
+                                                <MonitorOff className="h-3.5 w-3.5 text-amber-600 dark:text-amber-300" />
+                                                {t('exam_admin.monitor.release_device')}
                                             </Button>
                                         )}
                                     </div>

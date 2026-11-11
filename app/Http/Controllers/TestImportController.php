@@ -52,7 +52,7 @@ class TestImportController extends Controller
 
         if (empty(trim($text))) {
             throw ValidationException::withMessages([
-                'error' => ['Iltimos, matn kiriting yoki fayl yuklang!'],
+                'error' => [__('import_input_required')],
             ]);
         }
 
@@ -64,7 +64,7 @@ class TestImportController extends Controller
             }
 
             if (empty($parsedData['sections'])) {
-                throw new \Exception("Matndan hech qanday savol yoki bo'lim ajratib bo'lmadi.");
+                throw new \Exception(__('import_nothing_parsed'));
             }
 
             DB::beginTransaction();
@@ -127,7 +127,7 @@ class TestImportController extends Controller
         } catch (\Exception $e) {
             DB::rollBack();
             throw ValidationException::withMessages([
-                'error' => ['Import qilishda xatolik yuz berdi: '.$e->getMessage()],
+                'error' => [__('import_failed', ['message' => $e->getMessage()])],
             ]);
         }
     }

@@ -8,6 +8,8 @@ use App\Models\Part;
 use App\Models\Question;
 use App\Models\Test;
 use App\Models\TestType;
+use Carbon\Carbon;
+use Carbon\CarbonInterface;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\Facades\DB;
 
@@ -206,26 +208,62 @@ class MockBankService
             ->get();
     }
 
-    public function isRecentlyUsed(TestType $testType): bool
+    /**
+     * Exam dates (mocks.started_at) of the mocks using each module, optionally without one mock.
+     *
+     * @param  array<int>|null  $testTypeIds  null = every module
+     * @return array<int, array<int, Carbon>> test_type_id => dates
+     */
+    public function usageDates(?array $testTypeIds = null, ?int $exceptMockId = null): array
     {
-        return $testType->last_used_at !== null
-            && $testType->last_used_at->gt(now()->subDays($this->reuseDays()));
+        return MockModule::query()
+            ->join('mocks', 'mocks.id', '=', 'mock_modules.mock_id')
+            ->whereNotNull('mocks.started_at')
+            ->when($testTypeIds !== null, fn ($q) => $q->whereIn('mock_modules.test_type_id', $testTypeIds))
+            ->when($exceptMockId, fn ($q) => $q->where('mock_modules.mock_id', '!=', $exceptMockId))
+            ->get(['mock_modules.test_type_id', 'mocks.started_at'])
+            ->groupBy('test_type_id')
+            ->map(fn ($rows) => $rows->map(fn ($row) => Carbon::parse($row->started_at))->sort()->values()->all())
+            ->all();
     }
 
     /**
-     * Least recently used ready module per type, skipping modules used within the reuse window.
+     * Reuse rule: a module is "recently used" when another mock using it takes place within reuseDays()
+     * of the target date (before or after). The target defaults to now; the mock form passes the mock's date.
+     *
+     * @param  array<int, array<int, Carbon>>|null  $usage  precomputed usageDates()
+     */
+    public function isRecentlyUsed(TestType $testType, ?CarbonInterface $date = null, ?int $exceptMockId = null, ?array $usage = null): bool
+    {
+        $usage ??= $this->usageDates([$testType->id], $exceptMockId);
+        $date = Carbon::instance($date ?? now());
+        $days = $this->reuseDays();
+
+        foreach ($usage[$testType->id] ?? [] as $used) {
+            if (abs($used->diffInSeconds($date, false)) < $days * 86400) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    /**
+     * Least recently used ready module per type, skipping modules used within the reuse window around the
+     * target date.
      *
      * @return array<string, TestType|null> keyed by type name
      */
-    public function autoPick(): array
+    public function autoPick(?CarbonInterface $date = null, ?int $exceptMockId = null): array
     {
         $available = $this->availableModules();
+        $usage = $this->usageDates($available->pluck('id')->all(), $exceptMockId);
         $picked = [];
 
         foreach (self::MODULE_TYPES as $typeName) {
             $picked[$typeName] = $available
-                ->filter(fn (TestType $tt) => $tt->type?->name === $typeName && ! $this->isRecentlyUsed($tt))
-                ->sortBy(fn (TestType $tt) => [$tt->last_used_at?->getTimestamp() ?? 0, $tt->id])
+                ->filter(fn (TestType $tt) => $tt->type?->name === $typeName && ! $this->isRecentlyUsed($tt, $date, $exceptMockId, $usage))
+                ->sortBy(fn (TestType $tt) => [collect($usage[$tt->id] ?? [])->last()?->getTimestamp() ?? 0, $tt->id])
                 ->first();
         }
 
@@ -233,8 +271,23 @@ class MockBankService
     }
 
     /**
+     * test_types.last_used_at = the latest exam date of the mocks using the module (display only).
+     *
+     * @param  array<int>  $testTypeIds
+     */
+    public function refreshLastUsed(array $testTypeIds): void
+    {
+        $latest = $this->usageDates($testTypeIds);
+
+        foreach (array_unique($testTypeIds) as $id) {
+            $dates = $latest[$id] ?? [];
+            TestType::whereKey($id)->update(['last_used_at' => $dates === [] ? null : end($dates)]);
+        }
+    }
+
+    /**
      * Replace the mock's modules. attempts.test_id-compatible mocks.test_id becomes the first module's test,
-     * and modules that were (re)assigned get last_used_at = now.
+     * and last_used_at of every touched module is recomputed from the mocks' exam dates.
      *
      * @param  array<int>  $testTypeIds
      */
@@ -259,10 +312,7 @@ class MockBankService
                 );
             }
 
-            $changed = array_values(array_diff($new, $existing));
-            if ($changed !== []) {
-                TestType::whereIn('id', $changed)->update(['last_used_at' => now()]);
-            }
+            $this->refreshLastUsed(array_merge($new, $existing));
 
             if ($modules->isNotEmpty()) {
                 $mock->forceFill(['test_id' => $modules->first()->test_id])->save();

@@ -17,29 +17,57 @@ class MockStudentController extends Controller
 {
     /**
      * Add candidates to a mock (single or bulk). Phone is mandatory and stored as +998XXXXXXXXX.
+     *
+     * Accepts `candidates` ([{name, phone}]) or `text` (one "Name ; phone" line per candidate, see
+     * CandidateService::parseLine). A row whose phone is empty but whose name holds one ("ali : 911157709")
+     * is split the same way. Every invalid line gets its own error; nothing is saved then.
      */
     public function store(Request $request, CandidateService $candidates)
     {
         $request->validate([
             'mock_id' => 'required|exists:mocks,id',
-            'candidates' => 'required|array|min:1|max:500',
-            'candidates.*.name' => 'required|string|max:255',
-            'candidates.*.phone' => 'required|string|max:32',
+            'text' => 'required_without:candidates|nullable|string|max:50000',
+            'candidates' => 'required_without:text|array|min:1|max:500',
+            'candidates.*.name' => 'nullable|string|max:255',
+            'candidates.*.phone' => 'nullable|string|max:32',
         ]);
 
         $mock = Mock::findOrFail($request->mock_id);
         $this->authorize('manageStudents', $mock);
 
+        $input = $request->filled('candidates')
+            ? array_values($request->input('candidates'))
+            : array_values(array_map(
+                fn ($line) => CandidateService::parseLine($line),
+                array_filter(preg_split('/\r\n|\r|\n/', (string) $request->input('text')), fn ($line) => trim($line) !== ''),
+            ));
+
+        if ($input === [] || count($input) > 500) {
+            throw ValidationException::withMessages(['candidates' => __('candidates_count_invalid')]);
+        }
+
         $rows = [];
         $errors = [];
-        foreach (array_values($request->input('candidates')) as $i => $candidate) {
-            $phone = CandidateService::normalizePhone($candidate['phone'] ?? null);
-            if ($phone === null) {
-                $errors["candidates.{$i}.phone"] = "Telefon raqami noto'g'ri: ".($candidate['phone'] ?? '').' (+998XXXXXXXXX)';
-
-                continue;
+        foreach ($input as $i => $candidate) {
+            $name = (string) ($candidate['name'] ?? '');
+            $rawPhone = trim((string) ($candidate['phone'] ?? ''));
+            if ($rawPhone === '') {
+                ['name' => $name, 'phone' => $rawPhone] = CandidateService::parseLine($name);
+                $rawPhone = trim((string) $rawPhone);
             }
-            $rows[] = ['name' => trim($candidate['name']), 'phone' => $phone];
+            $name = CandidateService::cleanName($name);
+            $phone = CandidateService::normalizePhone($rawPhone);
+            $line = $i + 1;
+
+            if ($name === '') {
+                $errors["candidates.{$i}.name"] = __('candidate_line_name_missing', ['line' => $line]);
+            } elseif ($phone === null) {
+                $errors["candidates.{$i}.phone"] = $rawPhone === ''
+                    ? __('candidate_line_phone_missing', ['line' => $line, 'name' => $name])
+                    : __('candidate_line_phone_invalid', ['line' => $line, 'name' => $name, 'phone' => $rawPhone]);
+            } else {
+                $rows[] = ['name' => mb_substr($name, 0, 255), 'phone' => $phone];
+            }
         }
 
         if ($errors !== []) {
@@ -63,11 +91,11 @@ class MockStudentController extends Controller
             ->filter(fn ($row) => $candidates->repeatModules($mock, $row['phone']) !== [])
             ->pluck('name');
 
-        $response = back()->with('success', count($rows)." ta nomzod qo'shildi.");
+        $response = back()->with('success', __('candidates_added', ['count' => count($rows)]));
 
         return $repeats->isEmpty()
             ? $response
-            : $response->with('warning', 'Diqqat, bu modullarni avval topshirgan: '.$repeats->implode(', '));
+            : $response->with('warning', __('candidates_repeat_warning', ['names' => $repeats->implode(', ')]));
     }
 
     /**
@@ -113,9 +141,30 @@ class MockStudentController extends Controller
             ->orderBy('name')
             ->get();
 
-        abort_if($students->isEmpty(), 404, 'Nomzodlar topilmadi.');
+        abort_if($students->isEmpty(), 404, __('candidates_not_found'));
 
         return Pdf::render('pdf.code-cards', compact('mock', 'students'), 'Codes_'.$mock->id);
+    }
+
+    /**
+     * 80 mm receipt tickets for the Xprinter (browser print, one ticket per page so the driver cuts after each).
+     * ?ids=1,2,3 limits the selection; ids of other mocks are ignored.
+     */
+    public function codeTickets(Request $request, Mock $mock)
+    {
+        $this->authorize('manageStudents', $mock);
+
+        $ids = array_filter(array_map('intval', explode(',', (string) $request->query('ids', ''))));
+
+        $students = MockStudent::withoutEagerLoads()
+            ->where('mock_id', $mock->id)
+            ->when($ids !== [], fn ($q) => $q->whereIn('id', $ids))
+            ->orderBy('name')
+            ->get(['id', 'name', 'code']);
+
+        abort_if($students->isEmpty(), 404, __('candidates_not_found'));
+
+        return response()->view('print.code-tickets', compact('mock', 'students'));
     }
 
     /**
@@ -127,7 +176,7 @@ class MockStudentController extends Controller
 
         $mockStudent->delete();
 
-        return back()->with('success', "O'quvchi o'chirildi.");
+        return back()->with('success', __('candidate_deleted'));
     }
 
     /**
@@ -145,10 +194,10 @@ class MockStudentController extends Controller
 
         if (! $student) {
             if ($request->isMethod('get')) {
-                return redirect('/?error='.urlencode("Kiritilgan kod ({$code}) topilmadi!"));
+                return redirect('/?error='.urlencode(__('candidate_code_not_found', ['code' => $code])));
             }
             throw ValidationException::withMessages([
-                'code' => ["Kiritilgan kod ({$code}) topilmadi!"],
+                'code' => [__('candidate_code_not_found', ['code' => $code])],
             ]);
         }
 
@@ -156,15 +205,15 @@ class MockStudentController extends Controller
 
         if (! $mock || $mock->active != 1) {
             if ($request->isMethod('get')) {
-                return redirect('/?error='.urlencode('Ushbu Mock test hozirda faol emas!'));
+                return redirect('/?error='.urlencode(__('mock_inactive')));
             }
             throw ValidationException::withMessages([
-                'code' => ['Ushbu Mock test hozirda faol emas!'],
+                'code' => [__('mock_inactive')],
             ]);
         }
 
         if ($mock->require_desktop) {
-            $message = 'Ushbu Mock test faqat Mynine Desktop ilovasi orqali topshiriladi. Imtihon kompyuteridagi ilovaga kodingizni kiriting.';
+            $message = __('mock_desktop_only');
             if ($request->isMethod('get')) {
                 return redirect('/?error='.urlencode($message));
             }
@@ -178,20 +227,20 @@ class MockStudentController extends Controller
         if ($mock->started_at && $now->lt(Carbon::parse($mock->started_at))) {
             $formattedStart = Carbon::parse($mock->started_at)->format('d.m.Y H:i');
             if ($request->isMethod('get')) {
-                return redirect('/?error='.urlencode("Ushbu Mock test hali boshlanmagan! Boshlanish vaqti: {$formattedStart}"));
+                return redirect('/?error='.urlencode(__('mock_not_started', ['time' => $formattedStart])));
             }
             throw ValidationException::withMessages([
-                'code' => ["Ushbu Mock test hali boshlanmagan! Boshlanish vaqti: {$formattedStart}"],
+                'code' => [__('mock_not_started', ['time' => $formattedStart])],
             ]);
         }
 
         if ($mock->finished_at && $now->gt(Carbon::parse($mock->finished_at))) {
             $formattedFinish = Carbon::parse($mock->finished_at)->format('d.m.Y H:i');
             if ($request->isMethod('get')) {
-                return redirect('/?error='.urlencode("Ushbu Mock test vaqti tugagan! Yakunlangan vaqti: {$formattedFinish}"));
+                return redirect('/?error='.urlencode(__('mock_finished', ['time' => $formattedFinish])));
             }
             throw ValidationException::withMessages([
-                'code' => ["Ushbu Mock test vaqti tugagan! Yakunlangan vaqti: {$formattedFinish}"],
+                'code' => [__('mock_finished', ['time' => $formattedFinish])],
             ]);
         }
 
@@ -209,7 +258,7 @@ class MockStudentController extends Controller
         $attempt = $exam->findOrCreateMockAttempt($student, ['user_id' => Auth::check() ? Auth::id() : null]);
         if (! $attempt) {
             throw ValidationException::withMessages([
-                'code' => ['Ushbu Mock test hozirda faol emas!'],
+                'code' => [__('mock_inactive')],
             ]);
         }
 

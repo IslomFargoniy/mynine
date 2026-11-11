@@ -1,0 +1,72 @@
+name: laravel
+
+# Server (Laravel + React) checks. The Flutter desktop client has its own workflow (desktop-windows-build.yml).
+on:
+  push:
+    branches: [main]
+    paths-ignore:
+      - 'desktop/**'
+  pull_request:
+    branches: [main]
+    paths-ignore:
+      - 'desktop/**'
+
+concurrency:
+  group: laravel-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up PHP 8.3
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.3'
+          extensions: mbstring, intl, pdo_sqlite, sqlite3, gd, zip, bcmath, fileinfo
+          coverage: none
+
+      - name: Composer cache
+        id: composer-cache
+        run: echo "dir=$(composer config cache-files-dir)" >> "$GITHUB_OUTPUT"
+
+      - uses: actions/cache@v4
+        with:
+          path: ${{ steps.composer-cache.outputs.dir }}
+          key: composer-${{ runner.os }}-${{ hashFiles('composer.lock') }}
+          restore-keys: composer-${{ runner.os }}-
+
+      - name: Install PHP dependencies
+        run: composer install --no-interaction --prefer-dist --no-progress
+
+      - name: Prepare the environment
+        run: |
+          cp .env.example .env
+          php artisan key:generate
+
+      # phpunit.xml runs the suite on in-memory SQLite.
+      - name: Tests
+        run: php artisan test
+
+      - name: Code style (Pint)
+        run: vendor/bin/pint --test
+
+      - name: Set up Node 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+
+      - name: Install JS dependencies
+        run: npm ci
+
+      - name: Type check
+        run: npx tsc --noEmit
+
+      # Needs vendor/ (ziggy-js alias), so it runs after composer install.
+      - name: Build
+        run: npm run build

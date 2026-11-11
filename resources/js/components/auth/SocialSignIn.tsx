@@ -59,7 +59,7 @@ const SocialSignIn = () => {
 
             <div className="relative flex items-center gap-4">
                 <div className="h-px flex-1 bg-divider" />
-                <span className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">{t('login.or') || 'OR'}</span>
+                <span className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">{t('login.or')}</span>
                 <div className="h-px flex-1 bg-divider" />
             </div>
 

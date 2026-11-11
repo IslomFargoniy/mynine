@@ -10,11 +10,14 @@ const DailyStatsChart = lazy(() => import('@/components/dashboard/DailyStatsChar
 const HourlyAttemptsChart = lazy(() => import('@/components/dashboard/HourlyAttemptsChart'));
 const WeeklyAttemptsChart = lazy(() => import('@/components/dashboard/WeeklyAttemptsChart'));
 
-const ChartSkeleton = () => (
-    <div className="h-64 w-full animate-pulse glass-subtle rounded-[22px] flex items-center justify-center">
-        <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Loading chart...</span>
-    </div>
-);
+const ChartSkeleton = () => {
+    const { t } = useTranslation();
+    return (
+        <div className="h-64 w-full animate-pulse glass-subtle rounded-[22px] flex items-center justify-center">
+            <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">{t('dashboard_page.loading_chart')}</span>
+        </div>
+    );
+};
 import { 
     Trophy, 
     Target, 
@@ -98,7 +101,7 @@ export default function Dashboard() {
                             </p>
                         </div>
                         <Link 
-                            href="/all-test"
+                            href="/test-bank"
                             className="btn-glass-primary inline-flex items-center justify-center gap-2 px-6 py-3 rounded-full font-semibold hover:brightness-110 transition-all hover:scale-[1.02] active:scale-[0.98]"
                         >
                             <Zap className="size-5 fill-current" />
@@ -151,7 +154,7 @@ export default function Dashboard() {
                                     <Target className="size-6" />
                                 </div>
                                 <div>
-                                    <p className="text-sm font-medium text-muted-foreground">{t('reading_avg') || 'Reading Avg'}</p>
+                                    <p className="text-sm font-medium text-muted-foreground">{t('reading_avg')}</p>
                                     <h3 className="text-2xl font-bold">{readingAvg}</h3>
                                 </div>
                             </div>
@@ -166,7 +169,7 @@ export default function Dashboard() {
                                     <Target className="size-6" />
                                 </div>
                                 <div>
-                                    <p className="text-sm font-medium text-muted-foreground">{t('listening_avg') || 'Listening Avg'}</p>
+                                    <p className="text-sm font-medium text-muted-foreground">{t('listening_avg')}</p>
                                     <h3 className="text-2xl font-bold">{listeningAvg}</h3>
                                 </div>
                             </div>
@@ -225,7 +228,7 @@ export default function Dashboard() {
                                                     <div className="flex items-center gap-1 text-emerald-700 dark:text-emerald-300 font-bold">
                                                         <CheckCircle2 className="size-3" />
                                                         <span>
-                                                            {attempt.attempt_types?.reduce((sum, t) => sum + (t.is_correct_count || 0), 0)} pts
+                                                            {t('dashboard_page.pts', { count: attempt.attempt_types?.reduce((sum, type) => sum + (type.is_correct_count || 0), 0) ?? 0 })}
                                                         </span>
                                                     </div>
                                                 </div>
@@ -255,7 +258,7 @@ export default function Dashboard() {
                             <div className="glass rounded-[28px] p-6">
                                 <h3 className="text-lg font-bold mb-4 flex items-center gap-2">
                                     <TrendingUp className="size-5 text-brand" />
-                                    {t('performance_overview')} <span className="text-sm font-normal text-muted-foreground ml-1">{t('last_30_days') || "(last 30 days)"}</span>
+                                    {t('performance_overview')} <span className="text-sm font-normal text-muted-foreground ml-1">{t('last_30_days')}</span>
                                 </h3>
                                 <div className="w-full">
                                     <AttemptsChart attempts={user.attempts || []} />
@@ -267,7 +270,7 @@ export default function Dashboard() {
                             {(daily_users.length > 0 || daily_attempts.length > 0) && (
                                 <div className="glass rounded-[28px] p-6">
                                     <h3 className="text-lg font-bold mb-4 flex items-center gap-2">
-                                        <TrendingUp className="size-5 text-brand" /> {t('daily_activity') || 'Daily Activity'}
+                                        <TrendingUp className="size-5 text-brand" /> {t('daily_activity')}
                                     </h3>
                                     <DailyStatsChart dailyUsers={daily_users} dailyAttempts={daily_attempts} />
                                 </div>
@@ -277,13 +280,13 @@ export default function Dashboard() {
                             <div className="grid gap-6 grid-cols-1 lg:grid-cols-2">
                                 {/* Today Hourly Stats */}
                                 <div className="glass rounded-[28px] p-6">
-                                    <HourlyAttemptsChart title={t('todays_hourly_stats') || "Today's hourly stats"} data={today_hourly_attempts} />
+                                    <HourlyAttemptsChart title={t('todays_hourly_stats')} data={today_hourly_attempts} />
                                 </div>
 
                                 {/* All-time Hourly Stats */}
                                 {hourly_attempts.length > 0 && (
                                     <div className="glass rounded-[28px] p-6">
-                                        <HourlyAttemptsChart title={t('all_time_hourly_distribution') || 'All-time hourly distribution'} data={hourly_attempts} />
+                                        <HourlyAttemptsChart title={t('all_time_hourly_distribution')} data={hourly_attempts} />
                                     </div>
                                 )}
                             </div>
@@ -291,7 +294,7 @@ export default function Dashboard() {
                             {/* Weekly Stats */}
                             {weekly_attempts.length > 0 && (
                                 <div className="glass rounded-[28px] p-6">
-                                    <WeeklyAttemptsChart title={t('all_time_weekly_attempts_distribution') || 'All-time Weekly Attempts Distribution'} data={weekly_attempts} />
+                                    <WeeklyAttemptsChart title={t('all_time_weekly_attempts_distribution')} data={weekly_attempts} />
                                 </div>
                             )}
                         </div>

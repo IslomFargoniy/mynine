@@ -50,7 +50,7 @@ export default function QuestionOption({ option, index, question_type }: Questio
                 {Boolean(option.is_correct) && (
                     <span
                         className="inline-flex items-center justify-center p-1 rounded-full bg-emerald-500/12 dark:bg-emerald-400/15 text-emerald-800 dark:text-emerald-200 border border-emerald-500/25 shrink-0"
-                        title={t('is_correct') || "To'g'ri"}
+                        title={t('is_correct')}
                     >
                         <CheckCircle2 className="w-3.5 h-3.5" />
                     </span>
@@ -61,7 +61,7 @@ export default function QuestionOption({ option, index, question_type }: Questio
                         type="button"
                         onClick={() => setOpenEdit(true)}
                         className="p-1 rounded-full text-muted-foreground hover:text-brand hover:bg-indigo-500/12 transition-colors"
-                        title={t('edit') || "Tahrirlash"}
+                        title={t('edit')}
                     >
                         <Edit2 className="w-3 h-3" />
                     </button>
@@ -69,7 +69,7 @@ export default function QuestionOption({ option, index, question_type }: Questio
                         type="button"
                         onClick={() => setOpenDelete(true)}
                         className="p-1 rounded-full text-muted-foreground hover:text-rose-700 dark:hover:text-rose-300 hover:bg-rose-500/12 transition-colors"
-                        title={t('delete') || "O'chirish"}
+                        title={t('delete')}
                     >
                         <Trash2 className="w-3 h-3" />
                     </button>

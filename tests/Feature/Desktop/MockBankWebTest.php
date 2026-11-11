@@ -4,6 +4,7 @@ use App\Models\Attempt;
 use App\Models\Folder;
 use App\Models\Test as ExamTest;
 use App\Models\TestType;
+use App\Services\MockBankService;
 
 beforeEach(function () {
     $this->admin = makeUser('Admin');
@@ -14,7 +15,7 @@ test('mock bank tests are hidden from practice listings', function () {
     $practice = makeTestContent($this->admin, 'Reading', ['name' => 'Practice One']);
     $student = makeUser('Student');
 
-    $this->actingAs($student)->get(route('all-test.index'))->assertOk()
+    $this->actingAs($student)->get(route('test-bank.index'))->assertOk()
         ->assertInertia(fn ($page) => $page->where('folder.data', fn ($folders) => collect($folders)->pluck('tests')->flatten(1)->pluck('id')->all() === [$practice['test']->id]));
 
     $ids = collect($this->getJson(route('landing-page-tests'))->assertOk()->json('data'))->pluck('id')->all();
@@ -87,7 +88,7 @@ test('test.show without modules falls back to the folder, or to the Mock Bank fo
     $practice = ExamTest::create(['folder_id' => $folder->id, 'name' => 'Empty']);
     $mock = ExamTest::create(['folder_id' => null, 'name' => 'Bank', 'purpose' => 'mock']);
 
-    $this->actingAs($admin)->get(route('test.show', $practice))->assertRedirect(route('folder.show', ['folder' => $folder->id, 'search' => 'Empty']));
+    $this->actingAs($admin)->get(route('test.show', $practice))->assertRedirect(route('test-bank.index', ['folder_id' => $folder->id]));
     $this->actingAs($admin)->get(route('test.show', $mock))->assertRedirect(route('mock-bank.index'));
 });
 
@@ -105,10 +106,10 @@ test('a Listening or Reading module with fewer than 40 question numbers is not r
     $admin = makeUser('Admin');
     ['testType' => $module] = makeTestContent($admin, 'Reading', ['purpose' => 'mock', 'open' => 0]);
 
-    $issues = app(\App\Services\MockBankService::class)->moduleIssues($module->fresh());
+    $issues = app(MockBankService::class)->moduleIssues($module->fresh());
     expect(collect($issues)->first(fn ($i) => str_starts_with($i, 'question_count:')))->not->toBeNull();
 
     config(['desktop.questions_per_paper' => null]);
-    $issues = app(\App\Services\MockBankService::class)->moduleIssues($module->fresh());
+    $issues = app(MockBankService::class)->moduleIssues($module->fresh());
     expect(collect($issues)->first(fn ($i) => str_starts_with($i, 'question_count:')))->toBeNull();
 });

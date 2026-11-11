@@ -48,6 +48,11 @@ class AttemptAnswerController extends Controller
                     'success' => false,
                     'error' => 'The exam is paused. Please wait.',
                 ], 409),
+                'too_many_options' => response()->json([
+                    'success' => false,
+                    'reason' => 'too_many_options',
+                    'error' => __('too_many_options'),
+                ], 422),
                 default => response()->json([
                     'success' => false,
                     'error' => 'Time is up for this test type! You cannot submit answers. ⏰',
@@ -78,7 +83,7 @@ class AttemptAnswerController extends Controller
         $this->authorize('grade', $attempt);
 
         if (empty($attemptAnswer->answer_text) || mb_strlen($attemptAnswer->answer_text) < 10) {
-            return back()->with('error', 'Insho matni yetarli emas.');
+            return back()->with('error', __('essay_too_short'));
         }
 
         // A new AI band invalidates an earlier Admin confirmation of this Writing module,
@@ -90,8 +95,9 @@ class AttemptAnswerController extends Controller
                 ->update(['reviewed_at' => null, 'reviewed_by' => null]);
         }
 
-        EvaluateEssayJob::dispatch($attemptAnswer->id);
+        // Forced: the essay already has a band; the job still never overwrites a confirmed module.
+        EvaluateEssayJob::dispatch($attemptAnswer->id, true);
 
-        return back()->with('success', 'AI baholash jarayoni boshlandi! Tez orada natija yangilanadi.');
+        return back()->with('success', __('ai_evaluation_started'));
     }
 }

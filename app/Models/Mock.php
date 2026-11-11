@@ -116,4 +116,16 @@ class Mock extends Model
             ->values()
             ->all();
     }
+
+    /**
+     * Modules cannot be changed once a candidate of this mock has started a module.
+     */
+    public function modulesLocked(): bool
+    {
+        return AttemptType::query()
+            ->whereHas('attempt', fn ($q) => $q->where('mock_id', $this->id))
+            ->whereNotNull('started_at')
+            ->where('started_at', '<=', now())
+            ->exists();
+    }
 }

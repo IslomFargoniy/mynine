@@ -1,6 +1,9 @@
 <?php
 
-uses(\Illuminate\Foundation\Testing\RefreshDatabase::class);
+use Illuminate\Foundation\Testing\RefreshDatabase;
+use Spatie\Permission\Models\Role;
+
+uses(RefreshDatabase::class);
 
 test('registration screen can be rendered', function () {
     $response = $this->get('/register');
@@ -9,7 +12,7 @@ test('registration screen can be rendered', function () {
 });
 
 test('new users can register', function () {
-    \Spatie\Permission\Models\Role::firstOrCreate(['name' => 'Student']);
+    Role::firstOrCreate(['name' => 'Student']);
 
     $response = $this->post('/register', [
         'name' => 'Test User',

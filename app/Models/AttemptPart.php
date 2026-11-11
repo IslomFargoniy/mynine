@@ -2,12 +2,13 @@
 
 namespace App\Models;
 
+use Database\Factories\AttemptPartFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
 class AttemptPart extends Model
 {
-    /** @use HasFactory<\Database\Factories\AttemptPartFactory> */
+    /** @use HasFactory<AttemptPartFactory> */
     use HasFactory;
 
     protected $fillable = [

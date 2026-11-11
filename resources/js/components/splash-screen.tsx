@@ -1,7 +1,9 @@
 import { motion } from 'framer-motion';
 import { Loader2 } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 
 export default function SplashScreen() {
+    const { t } = useTranslation();
     return (
         <div className="fixed inset-0 flex flex-col items-center justify-center bg-background z-[9999]">
             <motion.div
@@ -23,7 +25,7 @@ export default function SplashScreen() {
                     >
                         <img
                             src="/images/logo/logo.png"
-                            alt="Logo"
+                            alt={t('common.logo')}
                             className="h-28 w-28 rounded-3xl object-contain drop-shadow-2xl"
                         />
                     </motion.div>
@@ -36,7 +38,7 @@ export default function SplashScreen() {
                     <div className="flex items-center gap-3">
                         <Loader2 className="h-5 w-5 animate-spin text-brand" />
                         <span className="text-sm font-semibold tracking-[0.2em] text-muted-foreground uppercase">
-                            Yuklanmoqda
+                            {t('splash.loading')}
                         </span>
                     </div>
                     
@@ -68,7 +70,7 @@ export default function SplashScreen() {
                 transition={{ delay: 1, duration: 1 }}
                 className="absolute bottom-10 text-[10px] font-medium text-muted-foreground uppercase tracking-[0.3em]"
             >
-                Powered by MyNine
+                {t('splash.powered_by')}
             </motion.div>
         </div>
     );

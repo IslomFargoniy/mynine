@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Sparkles, Award, FileText, RefreshCw } from 'lucide-react';
 import { router } from '@inertiajs/react';
 import { toast } from 'sonner';
+import { useTranslation } from 'react-i18next';
 
 interface AIEvaluationCardProps {
     rawNote?: string | null;
@@ -11,6 +12,7 @@ interface AIEvaluationCardProps {
 }
 
 export default function AIEvaluationCard({ rawNote, score, essayText, answerId }: AIEvaluationCardProps) {
+    const { t } = useTranslation();
     const [isReEvaluating, setIsReEvaluating] = useState(false);
     if (!rawNote && !answerId) return null;
 
@@ -20,11 +22,11 @@ export default function AIEvaluationCard({ rawNote, score, essayText, answerId }
         router.post(route('attempt-answer.re-evaluate-ai', answerId), {}, {
             preserveScroll: true,
             onSuccess: () => {
-                toast.success("AI qayta baholash jarayoni boshlandi!");
+                toast.success(t('ai_eval.re_evaluate_started'));
                 setIsReEvaluating(false);
             },
             onError: () => {
-                toast.error("Xatolik yuz berdi.");
+                toast.error(t('ai_eval.error'));
                 setIsReEvaluating(false);
             }
         });
@@ -45,7 +47,7 @@ export default function AIEvaluationCard({ rawNote, score, essayText, answerId }
 
     // Extract feedback body
     const feedbackMatch = rawNote ? rawNote.match(/#### Detailed Feedback:\s*([\s\S]*)/i) : null;
-    const feedbackText = feedbackMatch ? feedbackMatch[1].trim() : (rawNote || "AI baholash kutilmoqda...");
+    const feedbackText = feedbackMatch ? feedbackMatch[1].trim() : (rawNote || t('ai_eval.pending'));
 
     const wordCount = essayText ? essayText.trim().split(/\s+/).filter(Boolean).length : 0;
 
@@ -59,13 +61,13 @@ export default function AIEvaluationCard({ rawNote, score, essayText, answerId }
                     </div>
                     <div>
                         <h4 className="text-sm font-bold text-foreground flex items-center gap-2">
-                            AI Examiner Evaluation
+                            {t('ai_eval.title')}
                             <span className="px-2 py-0.5 rounded-full bg-indigo-500/12 text-brand text-[10px] font-bold">
-                                Automated IELTS
+                                {t('ai_eval.badge')}
                             </span>
                         </h4>
                         <p className="text-[11px] text-muted-foreground">
-                            {wordCount > 0 ? `Word Count: ${wordCount} words` : 'Essay Assessment'}
+                            {wordCount > 0 ? t('ai_eval.word_count', { count: wordCount }) : t('ai_eval.essay_assessment')}
                         </p>
                     </div>
                 </div>
@@ -77,17 +79,18 @@ export default function AIEvaluationCard({ rawNote, score, essayText, answerId }
                             onClick={handleReEvaluate}
                             disabled={isReEvaluating}
                             className="inline-flex items-center gap-1 px-3 py-1.5 rounded-full border border-indigo-500/25 bg-glass-subtle text-brand hover:bg-indigo-500/12 text-xs font-semibold transition-all cursor-pointer"
-                            title="Qayta baholash"
+                            title={t('ai_eval.re_evaluate')}
+                            aria-label={t('ai_eval.re_evaluate')}
                         >
                             <RefreshCw className={`w-3.5 h-3.5 ${isReEvaluating ? 'animate-spin' : ''}`} />
-                            <span className="hidden sm:inline">Qayta AI tekshiruv</span>
+                            <span className="hidden sm:inline">{t('ai_eval.re_evaluate')}</span>
                         </button>
                     )}
 
                     {score !== null && score !== undefined && (
                         <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full btn-glass-primary font-extrabold text-sm">
                             <Award className="w-4 h-4" />
-                            <span>Band {score}</span>
+                            <span>{t('ai_eval.band', { score })}</span>
                         </div>
                     )}
                 </div>
@@ -96,19 +99,19 @@ export default function AIEvaluationCard({ rawNote, score, essayText, answerId }
             {/* Individual Criteria Grid */}
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
                 <div className="glass-subtle p-3 rounded-[18px] text-center">
-                    <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">Task Response</p>
+                    <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">{t('ai_eval.task_response')}</p>
                     <p className="text-base font-extrabold text-brand mt-0.5">{taskResponse}</p>
                 </div>
                 <div className="glass-subtle p-3 rounded-[18px] text-center">
-                    <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">Coherence</p>
+                    <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">{t('ai_eval.coherence')}</p>
                     <p className="text-base font-extrabold text-brand mt-0.5">{coherence}</p>
                 </div>
                 <div className="glass-subtle p-3 rounded-[18px] text-center">
-                    <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">Lexical Resource</p>
+                    <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">{t('ai_eval.lexical')}</p>
                     <p className="text-base font-extrabold text-brand mt-0.5">{lexical}</p>
                 </div>
                 <div className="glass-subtle p-3 rounded-[18px] text-center">
-                    <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">Grammar</p>
+                    <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">{t('ai_eval.grammar')}</p>
                     <p className="text-base font-extrabold text-brand mt-0.5">{grammar}</p>
                 </div>
             </div>
@@ -117,7 +120,7 @@ export default function AIEvaluationCard({ rawNote, score, essayText, answerId }
             <div className="glass-subtle rounded-[18px] p-3.5 text-xs leading-relaxed text-foreground space-y-2">
                 <div className="flex items-center gap-1.5 font-bold text-foreground">
                     <FileText className="w-3.5 h-3.5 text-brand" />
-                    <span>Examiner Feedback & Suggestions:</span>
+                    <span>{t('ai_eval.feedback')}</span>
                 </div>
                 <p className="whitespace-pre-wrap text-foreground font-normal">
                     {feedbackText}

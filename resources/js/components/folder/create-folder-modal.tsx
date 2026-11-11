@@ -20,7 +20,7 @@ import {
 } from '@/components/ui/dialog';
 import { Plus } from 'lucide-react';
 
-export default function CreateFolderModal() {
+export default function CreateFolderModal({ onSuccess }: { onSuccess?: () => void } = {}) {
     const { t } = useTranslation();
     const [open, setOpen] = useState(false);
     const nameInput = useRef<HTMLInputElement>(null);
@@ -35,11 +35,13 @@ export default function CreateFolderModal() {
 
         post(route('folder.store'), {
             preserveScroll: true,
+            preserveState: true,
             onSuccess: () => {
                 reset();
                 clearErrors();
                 setOpen(false);
                 toast.success(t('created_successfully'));
+                onSuccess?.();
             },
             onError: (err) => {
                 nameInput.current?.focus();
@@ -52,9 +54,12 @@ export default function CreateFolderModal() {
     return (
         <Dialog open={open} onOpenChange={setOpen}>
             <DialogTrigger asChild>
-                <button className="inline-flex items-center gap-2 px-4 py-2.5 btn-glass-primary hover:brightness-110 active:scale-95 text-primary-foreground font-bold text-xs rounded-full transition-all cursor-pointer">
+                <button
+                    type="button"
+                    className="inline-flex h-9 shrink-0 items-center gap-2 px-4 btn-glass-primary hover:brightness-110 active:scale-95 text-primary-foreground font-bold text-xs rounded-full transition-all cursor-pointer"
+                >
                     <Plus className="w-4 h-4" />
-                    {t('create')} {t('folder')}
+                    {t('test_bank.create_folder')}
                 </button>
             </DialogTrigger>
 
@@ -76,7 +81,7 @@ export default function CreateFolderModal() {
                         <Input
                             id="name"
                             ref={nameInput}
-                            placeholder="Masalan: IELTS Reading Tests"
+                            placeholder={t('test_bank.folder_name_placeholder')}
                             value={data.name}
                             onChange={(e) => setData('name', e.target.value)}
                             required
@@ -90,7 +95,7 @@ export default function CreateFolderModal() {
                         </Label>
                         <Input
                             id="comment"
-                            placeholder="Papka haqida izoh (ixtiyoriy)"
+                            placeholder={t('test_bank.comment_placeholder')}
                             value={data.comment}
                             onChange={(e) => setData('comment', e.target.value)}
                         />

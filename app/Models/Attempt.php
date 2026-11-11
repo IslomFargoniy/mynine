@@ -74,6 +74,14 @@ class Attempt extends Model
         return $this->hasMany(AttemptViolation::class, 'attempt_id');
     }
 
+    /**
+     * Results (scores, answer keys, review) are shown once the attempt is finished, and to graders at any time.
+     */
+    public function resultsVisibleTo(?User\User $user): bool
+    {
+        return $this->finished_at !== null || ($user !== null && $user->can('grade', $this));
+    }
+
     public function isPaused(): bool
     {
         return $this->paused_at !== null;
@@ -172,59 +180,106 @@ class Attempt extends Model
 
     /**
      * Essay answers of this attempt that are long enough to be worth an AI evaluation.
+     *
+     * @param  int|array<int>|null  $typeId  only these module types
+     * @param  bool  $unscoredOnly  skip essays that already have a band
      */
-    public function essayAnswersForEvaluation(?int $typeId = null)
+    public function essayAnswersForEvaluation(int|array|null $typeId = null, bool $unscoredOnly = false)
     {
+        $typeIds = $typeId === null ? null : (array) $typeId;
+
         return AttemptAnswer::query()
-            ->whereHas('attempt_part', function ($query) use ($typeId) {
+            ->whereHas('attempt_part', function ($query) use ($typeIds) {
                 $query->where('attempt_id', $this->id);
-                if ($typeId) {
-                    $query->whereHas('part.test_type', fn ($q) => $q->where('type_id', $typeId));
+                if ($typeIds !== null) {
+                    $query->whereHas('part.test_type', fn ($q) => $q->whereIn('type_id', $typeIds));
                 }
             })
             ->whereHas('question.section.question_type', fn ($q) => $q->where('type', 'essay'))
             ->whereRaw('LENGTH(answer_text) > 10')
+            ->when($unscoredOnly, fn ($q) => $q->whereNull('score'))
             ->get();
     }
 
+    /**
+     * Finish the whole attempt: submit every open module, close the parts, score every module and queue
+     * the AI evaluation only for essays of modules this call submitted that have no band yet (modules
+     * submitted earlier already queued theirs). Safe against concurrent calls.
+     */
     public function finish()
     {
         if ($this->finished_at) {
             return $this;
         }
 
-        DB::beginTransaction();
-        try {
-            // Mark the attempt as finished
-            $this->finished_at = now();
-            $this->save();
+        $essayAnswers = DB::transaction(function () {
+            $locked = static::whereKey($this->id)->lockForUpdate()->first();
+            if (! $locked || $locked->finished_at !== null) {
+                $this->refresh();
 
-            // Mark all attempt parts as finished
-            foreach ($this->attempt_parts as $attempt_part) {
-                if (! $attempt_part->finished_at) {
-                    $attempt_part->finished_at = now();
-                    $attempt_part->save();
-                }
+                return collect();
             }
 
-            // Calculate and store is_correct_count for all attempt_types
-            foreach ($this->attempt_types as $attemptType) {
+            $submittedNow = [];
+            foreach (AttemptType::where('attempt_id', $this->id)->where('is_submitted', false)->get() as $attemptType) {
+                if ($attemptType->submit()) {
+                    $submittedNow[] = (int) $attemptType->type_id;
+                }
+            }
+            $submittedBefore = AttemptType::where('attempt_id', $this->id)
+                ->whereNotIn('type_id', $submittedNow ?: [0])
+                ->pluck('type_id')
+                ->map(fn ($id) => (int) $id)
+                ->all();
+
+            $this->finished_at = now();
+            $this->paused_at = null;
+            $this->save();
+
+            AttemptPart::where('attempt_id', $this->id)->whereNull('finished_at')->update(['finished_at' => now()]);
+
+            foreach (AttemptType::where('attempt_id', $this->id)->get() as $attemptType) {
                 $attemptType->recalculateIsCorrectCount();
             }
 
-            $essayAnswers = $this->essayAnswersForEvaluation();
+            $this->unsetRelation('attempt_types')->unsetRelation('attempt_parts');
 
-            DB::commit();
+            // Essays of modules submitted before this call were queued at that moment.
+            $essays = $this->essayAnswersForEvaluation(null, true);
+            $typeIds = $this->answerTypeIds($essays->pluck('id')->all());
 
-            // Dispatch only after the commit so workers never see half-written answers
-            foreach ($essayAnswers as $answer) {
-                EvaluateEssayJob::dispatch($answer->id);
-            }
-        } catch (\Exception $e) {
-            DB::rollBack();
-            throw $e;
+            return $essays
+                ->filter(fn (AttemptAnswer $answer) => ! in_array($typeIds[$answer->id] ?? null, $submittedBefore, true))
+                ->values();
+        });
+
+        // Dispatch only after the commit so workers never see half-written answers
+        foreach ($essayAnswers as $answer) {
+            EvaluateEssayJob::dispatch($answer->id);
         }
 
         return $this;
+    }
+
+    /**
+     * Module type id of each answer: [attempt_answer_id => type_id].
+     *
+     * @param  array<int>  $answerIds
+     * @return array<int, int>
+     */
+    private function answerTypeIds(array $answerIds): array
+    {
+        if ($answerIds === []) {
+            return [];
+        }
+
+        return DB::table('attempt_answers')
+            ->join('attempt_parts', 'attempt_parts.id', '=', 'attempt_answers.attempt_part_id')
+            ->join('parts', 'parts.id', '=', 'attempt_parts.part_id')
+            ->join('test_types', 'test_types.id', '=', 'parts.test_type_id')
+            ->whereIn('attempt_answers.id', $answerIds)
+            ->pluck('test_types.type_id', 'attempt_answers.id')
+            ->map(fn ($id) => (int) $id)
+            ->all();
     }
 }

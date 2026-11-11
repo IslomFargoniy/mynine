@@ -64,7 +64,7 @@ export default function SectionQuestion({
 
                     {question.answer_text && (
                         <div className="mt-1.5 inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-indigo-500/12 text-brand text-xs font-semibold border border-indigo-500/25">
-                            <span>Javob:</span>
+                            <span>{t('question_form.answer_label')}</span>
                             <span className="font-mono">{question.answer_text}</span>
                         </div>
                     )}
@@ -75,14 +75,14 @@ export default function SectionQuestion({
                     <button
                         onClick={() => setOpenUpdate(true)}
                         className="p-1.5 rounded-full hover:bg-indigo-500/12 text-brand transition-colors"
-                        title={t('edit') ?? 'Tahrirlash'}
+                        title={t('edit')}
                     >
                         <Edit className="w-4 h-4" />
                     </button>
                     <button
                         onClick={() => setOpenDelete(true)}
                         className="p-1.5 rounded-full hover:bg-rose-500/12 text-rose-700 dark:text-rose-300 transition-colors"
-                        title={t('delete') ?? "O'chirish"}
+                        title={t('delete')}
                     >
                         <TrashIcon className="w-4 h-4" />
                     </button>

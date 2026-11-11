@@ -23,11 +23,11 @@ export default function AppearanceToggleDropdown({ className = '', ...props }: H
     const getLabel = () => {
         switch (appearance) {
             case 'dark':
-                return t('dark') || 'Dark';
+                return t('dark');
             case 'light':
-                return t('light') || 'Light';
+                return t('light');
             default:
-                return t('system') || 'System';
+                return t('system');
         }
     };
 
@@ -55,7 +55,7 @@ export default function AppearanceToggleDropdown({ className = '', ...props }: H
                     >
                         <span className="flex items-center gap-2">
                             <Sun className="h-3.5 w-3.5 text-amber-500" />
-                            <span>Light</span>
+                            <span>{t('light')}</span>
                         </span>
                         {appearance === 'light' && <Check className="h-3.5 w-3.5 text-primary" />}
                     </DropdownMenuItem>
@@ -70,7 +70,7 @@ export default function AppearanceToggleDropdown({ className = '', ...props }: H
                     >
                         <span className="flex items-center gap-2">
                             <Moon className="h-3.5 w-3.5 text-brand " />
-                            <span>Dark</span>
+                            <span>{t('dark')}</span>
                         </span>
                         {appearance === 'dark' && <Check className="h-3.5 w-3.5 text-primary" />}
                     </DropdownMenuItem>
@@ -85,7 +85,7 @@ export default function AppearanceToggleDropdown({ className = '', ...props }: H
                     >
                         <span className="flex items-center gap-2">
                             <Monitor className="h-3.5 w-3.5 text-brand " />
-                            <span>System</span>
+                            <span>{t('system')}</span>
                         </span>
                         {appearance === 'system' && <Check className="h-3.5 w-3.5 text-primary" />}
                     </DropdownMenuItem>

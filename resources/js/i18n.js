@@ -1,6 +1,7 @@
 import i18n from 'i18next';
 import { initReactI18next } from 'react-i18next';
 import LanguageDetector from 'i18next-browser-languagedetector';
+import { router } from '@inertiajs/react';
 
 import en from '../lang/en.json';
 import uz from '../lang/uz.json';
@@ -31,5 +32,30 @@ i18n
             escapeValue: false
         }
     });
+
+/** The chosen language as one of uz/en/ru. */
+export const currentLocale = () => (i18n.resolvedLanguage || i18n.language || 'uz').split('-')[0];
+
+/**
+ * Keep server-rendered text (flash / validation messages, PDFs, Blade pages) in the same language:
+ * every Inertia request carries X-Locale (read by the SetLocale middleware), and a change of language,
+ * or a page that the server rendered in another language, is stored in the session via GET /lang/{locale}.
+ */
+const syncServerLocale = (lang) => {
+    if (typeof window === 'undefined') return;
+    document.documentElement.lang = lang;
+    fetch(`/lang/${lang}`, { headers: { Accept: 'application/json', 'X-Requested-With': 'XMLHttpRequest' }, credentials: 'same-origin' }).catch(() => {});
+};
+
+if (typeof window !== 'undefined') {
+    router.on('before', (event) => {
+        event.detail.visit.headers = { ...event.detail.visit.headers, 'X-Locale': currentLocale() };
+    });
+
+    i18n.on('languageChanged', () => syncServerLocale(currentLocale()));
+
+    const serverLang = (document.documentElement.lang || '').split('-')[0];
+    if (serverLang && serverLang !== currentLocale()) syncServerLocale(currentLocale());
+}
 
 export default i18n;

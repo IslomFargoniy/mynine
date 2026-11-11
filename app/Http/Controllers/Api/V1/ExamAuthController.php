@@ -5,7 +5,9 @@ namespace App\Http\Controllers\Api\V1;
 use App\Exceptions\ApiException;
 use App\Http\Controllers\Controller;
 use App\Models\Device;
+use App\Models\Mock;
 use App\Models\MockStudent;
+use App\Models\TestType;
 use App\Services\ExamService;
 use Carbon\Carbon;
 use Illuminate\Http\JsonResponse;
@@ -43,21 +45,31 @@ class ExamAuthController extends Controller
 
         if ($mock->started_at && now()->lt(Carbon::parse($mock->started_at))) {
             throw ApiException::unprocessable('mock_not_started', 'This mock exam has not started yet.', [
-                'starts_at' => Carbon::parse($mock->started_at)->toIso8601String(),
+                'starts_at' => ExamService::apiTime($mock->started_at),
             ]);
         }
 
-        if ($mock->finished_at && now()->gt(Carbon::parse($mock->finished_at))) {
-            throw ApiException::unprocessable('mock_finished', 'This mock exam has already finished.');
-        }
-
-        if ($student->attempt?->finished_at) {
+        $existing = $student->attempt;
+        if ($existing?->finished_at) {
             throw ApiException::conflict('attempt_finished', 'You have already completed this exam.');
         }
 
-        $expiresAt = $mock->finished_at
-            ? Carbon::parse($mock->finished_at)->addHour()
-            : now()->addHours((int) config('desktop.token_fallback_hours', 6));
+        // After the window only a candidate whose exam is still running (e.g. the PC died) may log in again.
+        if ($mock->finished_at && now()->gt(Carbon::parse($mock->finished_at)) && ! $existing) {
+            throw ApiException::unprocessable('mock_finished', 'This mock exam has already finished.');
+        }
+
+        // Another PC is still running this exam: only the invigilator may move it (monitor "Release PC").
+        if ($existing && $existing->device_id && (int) $existing->device_id !== (int) $device->id
+            && $existing->last_heartbeat_at !== null
+            && $existing->last_heartbeat_at->gt(now()->subSeconds((int) config('desktop.active_elsewhere_seconds', 90)))) {
+            throw ApiException::conflict(
+                'session_active_elsewhere',
+                'This exam is running on another PC. Ask the invigilator to release it.',
+            );
+        }
+
+        $expiresAt = $this->tokenExpiry($student, $mock);
 
         [$attempt, $token] = DB::transaction(function () use ($student, $device, $expiresAt) {
             $student->forceFill([
@@ -73,6 +85,9 @@ class ExamAuthController extends Controller
             $attempt->forceFill(['device_id' => $device->id])->save();
             $device->forceFill(['current_attempt_id' => $attempt->id, 'last_seen_at' => now()])->save();
 
+            // Any other PC that still points at this attempt loses it (an unlock is never delivered there).
+            Device::where('current_attempt_id', $attempt->id)->whereKeyNot($device->id)->update(['current_attempt_id' => null]);
+
             // One PC at a time: logging in elsewhere invalidates every previous exam token.
             $student->tokens()->delete();
             $token = $student->createToken('exam:device:'.$device->id, ['exam'], $expiresAt);
@@ -82,17 +97,35 @@ class ExamAuthController extends Controller
 
         return response()->json([
             'token' => $token->plainTextToken,
-            'expires_at' => $expiresAt->toIso8601String(),
+            'expires_at' => ExamService::apiTime($expiresAt),
             'candidate' => ['id' => $student->id, 'name' => $student->name, 'code' => $student->code],
             'mock' => [
                 'id' => $mock->id,
                 'name' => $mock->name,
-                'starts_at' => $mock->started_at ? Carbon::parse($mock->started_at)->toIso8601String() : null,
-                'ends_at' => $mock->finished_at ? Carbon::parse($mock->finished_at)->toIso8601String() : null,
+                'starts_at' => ExamService::apiTime($mock->started_at),
+                'ends_at' => ExamService::apiTime($mock->finished_at),
             ],
             'attempt_id' => $attempt->id,
-            'server_time' => now()->toIso8601String(),
+            'server_time' => ExamService::apiTime(),
         ]);
+    }
+
+    /**
+     * Token lifetime: max(mock end, now) + all module durations + 2 h. Extended by /exam/heartbeat.
+     */
+    private function tokenExpiry(MockStudent $student, Mock $mock): Carbon
+    {
+        $base = $mock->finished_at ? Carbon::parse($mock->finished_at)->max(now()) : now();
+
+        $durations = $mock->modules()->with(['testType.test', 'testType.type'])->get()
+            ->sum(fn ($module) => $module->testType ? $this->exam->moduleDurationSeconds($module->testType) : 0);
+
+        if ($durations === 0 && $mock->test_id) {
+            $durations = TestType::with(['test', 'type'])->where('test_id', $mock->test_id)->get()
+                ->sum(fn (TestType $tt) => $this->exam->moduleDurationSeconds($tt));
+        }
+
+        return $base->copy()->addSeconds((int) $durations)->addHours((int) config('desktop.token_sliding_hours', 2));
     }
 
     /**

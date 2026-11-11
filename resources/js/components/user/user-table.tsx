@@ -1,5 +1,8 @@
 import React, { useState } from 'react';
 import { PencilIcon, TrashIcon } from 'lucide-react';
+import { format } from 'date-fns';
+import { IconAction } from '@/components/ui/icon-action';
+import { Table, TableBody, TableCell, TableEmpty, TableHead, TableHeader, TableRow, TruncatedText } from '@/components/ui/table';
 import UpdateUserModal from '@/components/user/update-user-modal';
 import DeleteItemModal from '@/components/delete-item-modal';
 import { Link, useForm, usePage } from '@inertiajs/react';
@@ -57,71 +60,70 @@ const UserTable = ({ roles, searchData, ...user }: UserTableProps) => {
 
     return (
         <div>
-            {/* Table Container */}
-            <div className="glass-strong overflow-x-auto rounded-[22px]">
-                <table className="w-full text-xs text-left border-collapse">
-                    <thead className="bg-muted text-muted-foreground font-semibold uppercase text-xs tracking-wide border-b border-divider">
-                    <tr>
-                        <th className="px-4 py-3 font-bold">{t('n')}</th>
-                        <th className="px-4 py-3 font-bold">{t('name')}</th>
-                        <th className="px-4 py-3 font-bold">{t('username')}</th>
-                        <th className="px-4 py-3 font-bold">{t('telegram_id')}</th>
-                        <th className="px-4 py-3 font-bold">{t('phone')}</th>
-                        <th className="px-4 py-3 font-bold">{t('email')}</th>
-                        <th className="px-4 py-3 font-bold">{t('created_at')}</th>
-                        <th className="px-4 py-3 font-bold text-right">
-                            {/*<CreateUserModal />*/}
-                        </th>
-                    </tr>
-                    </thead>
-                    <tbody className="divide-y divide-divider">
-                    {user.data.map((item, index) => {
-                        const globalIndex = (user.current_page - 1) * user.per_page + index + 1;
-                        return (
-                            <tr key={item.id} className="border-b border-divider hover:bg-accent/60 transition-colors">
-                                <td className="px-4 py-3 font-semibold text-muted-foreground">#{globalIndex}</td>
-                                <td className="px-4 py-3 font-bold text-foreground">
-                                    <Link href={`/user/${item.id}`} className="hover:text-brand transition-colors">
-                                        {item.name}
-                                        <span className="ml-1.5 text-[11px] font-medium text-muted-foreground">
-                                            ( {item.roles?.map((role) => role.name).join(', ')} )
-                                        </span>
-                                    </Link>
-                                </td>
-                                <td className="px-4 py-3 text-foreground/80 font-medium">{item.username || '-'}</td>
-                                <td className="px-4 py-3 text-foreground/80 font-medium">{item.telegram_id || '-'}</td>
-                                <td className="px-4 py-3 text-foreground/80 font-medium">{item.phone || '-'}</td>
-                                <td className="px-4 py-3 text-foreground/80 font-medium">{item.email || '-'}</td>
-                                <td className="px-4 py-3 text-muted-foreground text-[11px]">
-                                    {new Date(item.created_at).toLocaleString('sv-SE').replace('T', ' ')}
-                                </td>
-                                <td className="px-4 py-3 text-right">
-                                    <div className="flex items-center justify-end gap-2">
-                                        <button
-                                            type="button"
-                                            onClick={() => handleUpdateClick(item)}
-                                            className="p-2 bg-indigo-500/12 text-brand hover:bg-primary hover:text-primary-foreground rounded-full font-semibold text-xs transition-all cursor-pointer active:scale-95"
-                                            title={t('edit')}
-                                        >
-                                            <PencilIcon className="w-3.5 h-3.5" />
-                                        </button>
-                                        {isAdmin && (
-                                            <button
-                                                type="button"
-                                                onClick={() => handleDeleteClick(item)}
-                                                className="p-2 bg-rose-500/12 text-rose-800 dark:bg-rose-400/15 dark:text-rose-200 hover:bg-destructive hover:text-white dark:hover:bg-destructive dark:hover:text-white rounded-full font-semibold text-xs transition-all cursor-pointer active:scale-95"
-                                                title={t('delete')}
-                                            >
-                                                <TrashIcon className="w-3.5 h-3.5" />
-                                            </button>
+            <div className="glass-strong overflow-hidden rounded-[22px]">
+                <Table>
+                    <TableHeader>
+                        <TableRow>
+                            <TableHead className="w-10 text-right">{t('n')}</TableHead>
+                            <TableHead>{t('name')}</TableHead>
+                            <TableHead>{t('phone')}</TableHead>
+                            <TableHead className="hidden lg:table-cell">{t('telegram_id')}</TableHead>
+                            <TableHead className="hidden lg:table-cell">{t('created_at')}</TableHead>
+                            <TableHead className="w-px">
+                                <span className="sr-only">{t('attempts_table.actions')}</span>
+                            </TableHead>
+                        </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                        {user.data.length === 0 && <TableEmpty colSpan={6}>{t('common.no_data')}</TableEmpty>}
+                        {user.data.map((item, index) => {
+                            const globalIndex = (user.current_page - 1) * user.per_page + index + 1;
+                            const roles = item.roles?.map((role) => role.name).join(', ');
+                            const created = item.created_at ? format(new Date(item.created_at), 'dd.MM.yy HH:mm') : '—';
+                            return (
+                                <TableRow key={item.id}>
+                                    <TableCell className="text-right font-mono text-muted-foreground tabular-nums max-md:hidden">{globalIndex}</TableCell>
+                                    <TableCell>
+                                        <div className="flex min-w-0 flex-wrap items-center gap-1.5">
+                                            <Link href={`/user/${item.id}`} className="min-w-0 font-bold text-foreground transition-colors hover:text-brand">
+                                                <TruncatedText className="max-w-[14rem]">{item.name}</TruncatedText>
+                                            </Link>
+                                            {roles && (
+                                                <span className="rounded-full border border-glass-edge bg-muted px-1.5 py-0.5 text-[10px] font-bold text-muted-foreground">
+                                                    {roles}
+                                                </span>
+                                            )}
+                                        </div>
+                                        {item.email && <TruncatedText className="max-w-[16rem] text-[11px] text-muted-foreground">{item.email}</TruncatedText>}
+                                    </TableCell>
+                                    <TableCell label={t('phone')} className="text-foreground/80">
+                                        <div className="font-medium whitespace-nowrap tabular-nums">{item.phone || '—'}</div>
+                                        {item.username && <TruncatedText className="max-w-[10rem] text-[11px] text-muted-foreground">@{item.username}</TruncatedText>}
+                                        {item.telegram_id && (
+                                            <div className="text-[11px] text-muted-foreground lg:hidden">
+                                                {t('telegram_id')}: {item.telegram_id}
+                                            </div>
                                         )}
-                                    </div>
-                                </td>
-                            </tr>
-                        );
-                    })}
-                    </tbody>
-                </table>
+                                    </TableCell>
+                                    <TableCell className="hidden font-mono text-[11px] text-foreground/80 lg:table-cell">{item.telegram_id || '—'}</TableCell>
+                                    <TableCell className="hidden text-[11px] whitespace-nowrap text-muted-foreground tabular-nums lg:table-cell">{created}</TableCell>
+                                    <TableCell className="text-right">
+                                        <div className="flex items-center justify-end gap-0.5">
+                                            <IconAction label={t('edit')} tone="brand" onClick={() => handleUpdateClick(item)}>
+                                                <PencilIcon />
+                                            </IconAction>
+                                            {isAdmin && (
+                                                <IconAction label={t('delete')} tone="danger" onClick={() => handleDeleteClick(item)}>
+                                                    <TrashIcon />
+                                                </IconAction>
+                                            )}
+                                        </div>
+                                    </TableCell>
+                                </TableRow>
+                            );
+                        })}
+                    </TableBody>
+                </Table>
             </div>
 
             {/* Modals */}
@@ -144,7 +146,7 @@ const UserTable = ({ roles, searchData, ...user }: UserTableProps) => {
             )}
 
                 {/* Pagination */}
-                <div className="mt-4 flex justify-between items-center text-sm text-foreground/80">
+                <div className="mt-4 flex flex-col items-center justify-between gap-3 text-sm text-foreground/80 sm:flex-row">
                     <div>
                         {t('showing', {
                             from: user.from,
@@ -152,7 +154,7 @@ const UserTable = ({ roles, searchData, ...user }: UserTableProps) => {
                             total: user.total
                         })}
                     </div>
-                    <div className="flex gap-1">
+                    <div className="flex flex-wrap justify-center gap-1">
                         {user.links.map((link, index) => (
                             <Link
                                 key={index}

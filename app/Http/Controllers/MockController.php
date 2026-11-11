@@ -9,6 +9,7 @@ use App\Models\Folder;
 use App\Models\Mock;
 use App\Models\Test;
 use App\Services\MockBankService;
+use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -104,13 +105,16 @@ class MockController extends Controller
     /**
      * Mock form: one ready Mock Bank module per type, auto pick, desktop and speaking settings.
      */
-    public function create(MockBankService $bank)
+    public function create(Request $request, MockBankService $bank)
     {
         $this->authorize('create', Mock::class);
 
+        // ?date=YYYY-MM-DD[ HH:MM] picks modules for that exam date (reuse rule), default now.
+        $date = $request->filled('date') ? rescue(fn () => Carbon::parse($request->query('date')), null, false) : null;
+
         return Inertia::render('mock/form', [
             'mock' => null,
-            ...$this->formProps($bank),
+            ...$this->formProps($bank, $date),
         ]);
     }
 
@@ -171,7 +175,7 @@ class MockController extends Controller
 
         return Inertia::render('mock/form', [
             'mock' => $mock,
-            ...$this->formProps($bank),
+            ...$this->formProps($bank, $mock->started_at ? Carbon::parse($mock->started_at) : null, $mock),
         ]);
     }
 
@@ -189,6 +193,9 @@ class MockController extends Controller
             if ($request->moduleIds() !== []) {
                 $bank->syncModules($mock, $request->moduleIds());
             }
+
+            // The exam date may have moved: last_used_at shows the latest exam date of each module.
+            $bank->refreshLastUsed($mock->modules()->pluck('test_type_id')->map(fn ($id) => (int) $id)->all());
         });
 
         return redirect()->route('mock.show', $mock)->with('success', __('success.mock_updated'));
@@ -197,10 +204,12 @@ class MockController extends Controller
     /**
      * @return array<string, mixed>
      */
-    private function formProps(MockBankService $bank): array
+    private function formProps(MockBankService $bank, ?Carbon $date = null, ?Mock $mock = null): array
     {
         $available = $bank->availableModules();
-        $uses = $bank->usageCounts($available->pluck('id')->all());
+        $ids = $available->pluck('id')->all();
+        $uses = $bank->usageCounts($ids);
+        $usage = $bank->usageDates($ids, $mock?->id);
 
         $modules = $available->map(fn ($tt) => [
             'id' => $tt->id,
@@ -209,14 +218,18 @@ class MockController extends Controller
             'test_id' => $tt->test_id,
             'test_name' => $tt->test?->name,
             'last_used_at' => $tt->last_used_at?->toIso8601String(),
-            'recently_used' => $bank->isRecentlyUsed($tt),
+            'recently_used' => $bank->isRecentlyUsed($tt, $date, $mock?->id, $usage),
+            // Exam dates of the other mocks using the module, so the form can re-check the reuse rule
+            // when the exam date changes (|date - used| < reuseDays → warning).
+            'used_on' => collect($usage[$tt->id] ?? [])->map(fn ($d) => $d->toIso8601String())->values(),
             'uses' => $uses[$tt->id] ?? 0,
         ])->values();
 
         return [
             'modules' => $modules,
-            'autoPick' => collect($bank->autoPick())->map(fn ($tt) => $tt?->id)->all(),
+            'autoPick' => collect($bank->autoPick($date, $mock?->id))->map(fn ($tt) => $tt?->id)->all(),
             'reuseDays' => $bank->reuseDays(),
+            'modulesLocked' => $mock?->modulesLocked() ?? false,
         ];
     }
 
@@ -238,7 +251,7 @@ class MockController extends Controller
                 $mock->delete();
             });
 
-            return redirect()->route('mock.index')->with('success', __('success.mock_deleted') ?? "Mock o'chirildi");
+            return redirect()->route('mock.index')->with('success', __('success.mock_deleted'));
         } catch (\Exception $e) {
             return redirect()->route('mock.index')->withErrors([
                 'error' => $e->getMessage(),

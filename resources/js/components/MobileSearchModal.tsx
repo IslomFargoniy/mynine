@@ -56,7 +56,7 @@ const MobileSearchModal = ({ data, setData, handleSubmit, roles, users, mocks, t
                         )}
                     >
                         <Filter className="h-4 w-4" />
-                        {t('filters') ?? 'Filters'}
+                        {t('filters')}
                         {hasActiveFilters && (
                             <span className="absolute -top-1 -right-1 flex h-2.5 w-2.5 rounded-full bg-primary border-2 border-background" />
                         )}
@@ -66,7 +66,7 @@ const MobileSearchModal = ({ data, setData, handleSubmit, roles, users, mocks, t
                     <SheetHeader className="mb-6">
                         <SheetTitle className="text-xl font-black uppercase tracking-tight text-center flex items-center justify-center gap-2">
                             <Filter className="h-5 w-5 text-brand" />
-                            {t('search_and_filters') ?? 'Search & Filters'}
+                            {t('search_and_filters')}
                         </SheetTitle>
                     </SheetHeader>
                     

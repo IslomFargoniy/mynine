@@ -6,6 +6,8 @@ import { Firm, User, UserFirm } from '@/types';
 import DeleteItemModal from '@/components/delete-item-modal';
 import { toast } from 'sonner';
 import CreateUserFirmModal from '@/components/user/create-user-firm-modal';
+import { IconAction } from '@/components/ui/icon-action';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow, TruncatedText } from '@/components/ui/table';
 
 
 type UserFirmTableProps = {
@@ -49,56 +51,42 @@ const UserFirmTable = ({ user, firms }: UserFirmTableProps) => {
 
             <h3 className={'capitalize text-center py-2'}>{t('user_firm')}</h3>
 
-            {/* Table */}
-            <div className="glass-strong overflow-x-auto rounded-[22px]">
-                <table className="border-collapse w-full text-sm text-left text-foreground">
-                    <thead className="bg-muted text-muted-foreground text-xs font-semibold uppercase tracking-wide">
-                    <tr>
-                        <td className="border border-divider px-4 py-2">{t('n')}</td>
-                        <td className="border border-divider px-4 py-2">{t('firm')}</td>
-                        <td className="border border-divider px-4 py-2">{t('user')}</td>
-                        <th className="border border-divider px-4 py-2">
-                            <CreateUserFirmModal user={user} firms={firms} />
-                        </th>
-                    </tr>
-                    </thead>
-                    <tbody>
-                    {user.user_firms?.map((item, index) => {
-                        return (
-                            <tr key={item.id} className="hover:bg-accent/60">
-                                <td className="border border-divider px-4 py-2">{index + 1}</td>
-                                <td className="border border-divider px-4 py-2">{item.firm?.name}</td>
-                                <td className="border border-divider px-4 py-2">{item.user?.name}</td>
-                                <td className="border border-divider px-4 py-2">
-
-                                    <div className="inline-flex">
-                                        <button
-                                            onClick={() => handleDeleteClick(item)}
-                                            className="bg-destructive px-3 py-2 text-sm font-medium text-white hover:brightness-110 focus:z-10 rounded-full"
-                                        >
-                                            <TrashIcon className="w-4 h-4" />
-                                        </button>
-                                    </div>
-
-                                </td>
-                            </tr>
-                        );
-                    })}
-                    </tbody>
-
-                    {/* Pass selected user to the DeleteUserModal */}
-                    {selectedUserFirm && openDelete && (
-                        <DeleteItemModal
-                            item={selectedUserFirm}
-                            open={openDelete}  // Assuming you have a separate state for openDelete
-                            setOpen={setOpenDelete}  // Or you can manage this in its own state
-                            onDelete={handleDelete} // Handle deletion
-                        />
-                    )}
-
-                </table>
-
+            <div className="glass-strong overflow-hidden rounded-[22px]">
+                <Table stacked={false}>
+                    <TableHeader>
+                        <TableRow>
+                            <TableHead className="w-10 text-right">{t('n')}</TableHead>
+                            <TableHead>{t('firm')}</TableHead>
+                            <TableHead>{t('user')}</TableHead>
+                            <TableHead className="w-px text-right">
+                                <CreateUserFirmModal user={user} firms={firms} />
+                            </TableHead>
+                        </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                        {user.user_firms?.map((item, index) => (
+                            <TableRow key={item.id}>
+                                <TableCell className="text-right text-muted-foreground tabular-nums">{index + 1}</TableCell>
+                                <TableCell>
+                                    <TruncatedText>{item.firm?.name}</TruncatedText>
+                                </TableCell>
+                                <TableCell>
+                                    <TruncatedText>{item.user?.name}</TruncatedText>
+                                </TableCell>
+                                <TableCell className="text-right">
+                                    <IconAction label={t('delete')} tone="danger" onClick={() => handleDeleteClick(item)}>
+                                        <TrashIcon />
+                                    </IconAction>
+                                </TableCell>
+                            </TableRow>
+                        ))}
+                    </TableBody>
+                </Table>
             </div>
+
+            {selectedUserFirm && openDelete && (
+                <DeleteItemModal item={selectedUserFirm} open={openDelete} setOpen={setOpenDelete} onDelete={handleDelete} />
+            )}
         </div>
     );
 };

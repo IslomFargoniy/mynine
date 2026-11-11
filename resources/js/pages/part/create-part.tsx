@@ -24,7 +24,7 @@ export default function CreatePart() {
     // };
 
     const test = testType?.test;
-    const testName = test?.name || t('test') || 'Test';
+    const testName = test?.name || t('test');
     const typeName = testType?.type?.name || 'Module';
 
     const breadcrumbs: BreadcrumbItem[] = [
@@ -38,7 +38,7 @@ export default function CreatePart() {
               ]
             : []),
         {
-            title: t('create_part') || 'Part yaratish',
+            title: t('create_part'),
             href: '#',
         },
     ];
@@ -83,11 +83,11 @@ export default function CreatePart() {
 
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
-            <Head title={`${t('create_part') || 'Part yaratish'} - ${testName}`} />
+            <Head title={`${t('create_part')} - ${testName}`} />
             <div className="flex h-full flex-1 flex-col gap-4 rounded-xl p-4 overflow-y-auto">
                 <div className="flex items-center justify-between pb-2 border-b border-divider">
                     <h1 className="text-base font-bold text-foreground">
-                        {t('create_part') || 'Part yaratish'}
+                        {t('create_part')}
                     </h1>
                 </div>
 

@@ -3,12 +3,13 @@
 namespace App\Models;
 
 use App\Models\User\User;
+use Database\Factories\FolderFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
 class Folder extends Model
 {
-    /** @use HasFactory<\Database\Factories\FolderFactory> */
+    /** @use HasFactory<FolderFactory> */
     use HasFactory;
 
     protected $fillable = [

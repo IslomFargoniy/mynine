@@ -7,6 +7,7 @@ use App\Models\Device;
 use App\Services\Desktop\ReleaseManifest;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Gate;
 use Illuminate\Validation\Rule;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -59,6 +60,7 @@ class DeviceController extends Controller
             'devices' => $devices,
             'latestVersion' => $latest,
             'nextNumber' => Device::nextFreeNumber(),
+            'centerPassword' => Gate::allows('manage-desktop-settings') ? SettingsController::centerPasswordStatus() : null,
             // Installer published in public/desktop (served as a static file by nginx).
             'installer' => $release ? [
                 'version' => $release['version'],
@@ -79,7 +81,7 @@ class DeviceController extends Controller
 
         $device->approve((int) $data['number']);
 
-        return back()->with('success', "\"{$device->name}\" tasdiqlandi (№{$device->number}).");
+        return back()->with('success', __('device_approved', ['name' => $device->name, 'number' => $device->number]));
     }
 
     public function block(Device $device): RedirectResponse
@@ -88,7 +90,7 @@ class DeviceController extends Controller
 
         $device->forceFill(['is_blocked' => true])->save();
 
-        return back()->with('success', "\"{$device->name}\" bloklandi.");
+        return back()->with('success', __('device_blocked', ['name' => $device->name]));
     }
 
     public function unblock(Device $device): RedirectResponse
@@ -97,7 +99,7 @@ class DeviceController extends Controller
 
         $device->forceFill(['is_blocked' => false])->save();
 
-        return back()->with('success', "\"{$device->name}\" blokdan chiqarildi.");
+        return back()->with('success', __('device_unblocked', ['name' => $device->name]));
     }
 
     public function update(Request $request, Device $device): RedirectResponse
@@ -110,7 +112,7 @@ class DeviceController extends Controller
         ]);
         $device->forceFill($data)->save();
 
-        return back()->with('success', 'Saqlandi.');
+        return back()->with('success', __('saved'));
     }
 
     /**
@@ -129,6 +131,6 @@ class DeviceController extends Controller
 
         $device->delete();
 
-        return back()->with('success', "Kompyuter o'chirildi.");
+        return back()->with('success', __('device_deleted'));
     }
 }

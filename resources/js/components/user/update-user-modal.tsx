@@ -167,7 +167,7 @@ export default function UpdateUserModal({ roles, user, open, setOpen }: UpdateUs
 
                     {isAdmin && (
                         <div>
-                            <Label htmlFor="create_test_limit">Test yaratish limiti</Label>
+                            <Label htmlFor="create_test_limit">{t('user_form.test_limit')}</Label>
                             <Input
                                 id="create_test_limit"
                                 type="number"

@@ -67,6 +67,6 @@ abstract class ExamApiController extends Controller
 
     protected function serverTime(): string
     {
-        return now()->toIso8601String();
+        return ExamService::apiTime();
     }
 }

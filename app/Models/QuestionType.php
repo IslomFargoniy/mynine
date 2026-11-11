@@ -2,12 +2,13 @@
 
 namespace App\Models;
 
+use Database\Factories\QuestionTypeFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
 class QuestionType extends Model
 {
-    /** @use HasFactory<\Database\Factories\QuestionTypeFactory> */
+    /** @use HasFactory<QuestionTypeFactory> */
     use HasFactory;
 
     protected $fillable = [

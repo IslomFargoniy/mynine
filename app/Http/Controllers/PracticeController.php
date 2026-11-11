@@ -42,6 +42,7 @@ class PracticeController extends Controller
 
         $this->exam->autoFinishExpiredTypes($attempt);
         $attempt->load('attempt_types');
+        $this->hideResults($attempt);
         $this->useMockModules($attempt);
 
         return Inertia::render('practice/index', [
@@ -58,7 +59,12 @@ class PracticeController extends Controller
 
         if (! $attempt->finished_at) {
             $this->authorize('participate', $attempt);
-            $attempt->finish();
+
+            if ($attempt->paused_at !== null) {
+                return back()->with('error', __('exam_paused'));
+            }
+
+            $this->exam->finishAttempt($attempt);
         }
 
         $isCandidate = session()->has('mock_student_id') || ! Auth::check();
@@ -98,14 +104,23 @@ class PracticeController extends Controller
             ->firstOrFail();
 
         if (! $attemptType->is_submitted) {
+            if ($attempt->paused_at !== null) {
+                return response()->json(['success' => false, 'error' => __('exam_paused')], 409);
+            }
+
             $this->exam->finishTypeWithEvaluation($attempt, $attemptType);
+        }
+
+        $fresh = $attemptType->fresh();
+        if (! $attempt->fresh()->resultsVisibleTo(Auth::user())) {
+            $fresh->hideResults();
         }
 
         return response()->json([
             'success' => true,
             'message' => 'Test type submitted successfully.',
-            'data' => $attemptType->fresh(),
-            'server_time' => now()->toIso8601String(),
+            'data' => $fresh,
+            'server_time' => ExamService::apiTime(),
         ]);
     }
 
@@ -119,13 +134,14 @@ class PracticeController extends Controller
             'attempt_types',
             'test' => fn ($q) => $q->with(['types' => fn ($q) => $q->whereHas('parts')]),
         ]);
+        $this->hideResults($attempt);
         $this->useMockModules($attempt);
 
         return response()->json([
             'data' => $attempt,
             'success' => true,
             'message' => 'Attempt retrieved successfully',
-            'server_time' => now()->toIso8601String(),
+            'server_time' => ExamService::apiTime(),
         ]);
     }
 
@@ -145,7 +161,7 @@ class PracticeController extends Controller
             'data' => $test_type,
             'success' => true,
             'message' => 'Test type retrieved successfully',
-            'server_time' => now()->toIso8601String(),
+            'server_time' => ExamService::apiTime(),
         ]);
     }
 
@@ -174,8 +190,18 @@ class PracticeController extends Controller
             'data' => $part,
             'success' => true,
             'message' => 'Part retrieved successfully',
-            'server_time' => now()->toIso8601String(),
+            'server_time' => ExamService::apiTime(),
         ]);
+    }
+
+    /**
+     * Scores of finished modules stay hidden while the exam is running (graders excepted).
+     */
+    private function hideResults(Attempt $attempt): void
+    {
+        if (! $attempt->resultsVisibleTo(Auth::user())) {
+            $attempt->attempt_types->each(fn (AttemptType $type) => $type->hideResults());
+        }
     }
 
     /**

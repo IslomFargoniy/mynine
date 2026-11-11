@@ -379,57 +379,24 @@
         }
     }
 
-    $listeningCorrect = 0;
-    $readingCorrect = 0;
-    
-    $listeningBand = 0.0;
-    $readingBand = 0.0;
-    $writingBand = 0.0;
-    $speakingBand = 0.0;
-    
-    $hasListening = false;
-    $hasReading = false;
-    $hasWriting = false;
-    $hasSpeaking = false;
+    // Same band rules as the result page and the reception sheet (MockResultService::attemptBands):
+    // Reading by the test variant, Writing = Admin-confirmed band or (T1 + 2*T2) / 3.
+    $bands = app(\App\Services\MockResultService::class)->attemptBands($attempt);
 
-    foreach($attempt->attempt_types as $type) {
-        $typeName = optional($type->type)->name;
-        if ($typeName === 'Listening') {
-            $listeningCorrect = $type->is_correct_count ?? 0;
-            $listeningBand = \App\Services\IeltsScoreConverter::convertListening($listeningCorrect);
-            $hasListening = true;
-        } elseif ($typeName === 'Reading') {
-            $readingCorrect = $type->is_correct_count ?? 0;
-            $readingBand = \App\Services\IeltsScoreConverter::convertReading($readingCorrect);
-            $hasReading = true;
-        } elseif ($typeName === 'Writing') {
-            $writingBand = number_format(((float)($type->is_correct_count ?? 0)) / 2, 1);
-            $hasWriting = true;
-        } elseif ($typeName === 'Speaking') {
-            $speakingBand = (float)($type->score ?? 0);
-            $hasSpeaking = true;
-        }
-    }
+    $hasListening = $bands['listening'] !== null;
+    $hasReading = $bands['reading'] !== null;
+    $hasWriting = $bands['writing'] !== null;
+    $hasSpeaking = $bands['speaking'] !== null;
 
-    // Calculate Overall Band Score
-    $scores = [];
-    if ($hasListening) $scores[] = $listeningBand;
-    if ($hasReading) $scores[] = $readingBand;
-    if ($hasWriting) $scores[] = (float)$writingBand;
-    if ($hasSpeaking) $scores[] = $speakingBand;
+    $listeningCorrect = $bands['listening_correct'] ?? 0;
+    $readingCorrect = $bands['reading_correct'] ?? 0;
 
-    $overallBand = 0.0;
-    if (count($scores) > 0) {
-        $avg = array_sum($scores) / count($scores);
-        $fraction = $avg - floor($avg);
-        if ($fraction < 0.25) {
-            $overallBand = floor($avg);
-        } elseif ($fraction < 0.75) {
-            $overallBand = floor($avg) + 0.5;
-        } else {
-            $overallBand = ceil($avg);
-        }
-    }
+    $listeningBand = $bands['listening'] ?? 0.0;
+    $readingBand = $bands['reading'] ?? 0.0;
+    $writingBand = $bands['writing'] ?? 0.0;
+    $speakingBand = $bands['speaking'] ?? 0.0;
+
+    $overallBand = $bands['overall'] ?? 0.0;
 
     // Determine CEFR Level
     $cefrLevel = 'B1 (Intermediate)';

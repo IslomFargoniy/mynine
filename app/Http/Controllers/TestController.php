@@ -65,12 +65,13 @@ class TestController extends Controller
 
                 if ($userTestsCount >= $user->create_test_limit) {
                     throw ValidationException::withMessages([
-                        'error' => [__('Sizning test yaratish limitingiz tugagan. Jami ruxsat: :limit ta', ['limit' => $user->create_test_limit])],
+                        'error' => [__('test_limit_reached', ['limit' => $user->create_test_limit])],
                     ]);
                 }
             }
 
             $data = $request->validated();
+            $data['variant'] = $data['variant'] ?? Test::VARIANT_ACADEMIC;
             if ($request->hasFile('audio_path')) {
                 $audioData = $this->audio->store($request->file('audio_path'));
                 $data['audio_path'] = $audioData['path'];
@@ -103,11 +104,11 @@ class TestController extends Controller
             return redirect()->route('test-type.show', $module->id);
         }
 
-        if ($test->folder_id) {
-            return redirect()->route('folder.show', ['folder' => $test->folder_id, 'search' => $test->name]);
+        if ($test->isMock() || ! $test->folder_id) {
+            return redirect()->route('mock-bank.index');
         }
 
-        return $test->isMock() ? redirect()->route('mock-bank.index') : redirect()->route('folder.index');
+        return redirect()->route('test-bank.index', ['folder_id' => $test->folder_id]);
     }
 
     public function update(UpdateTestRequest $request, Test $test)
@@ -116,6 +117,9 @@ class TestController extends Controller
 
         try {
             $data = $request->validated();
+            if (($data['variant'] ?? null) === null) {
+                unset($data['variant']);
+            }
             if ($request->hasFile('audio_path')) {
                 $audioData = $this->audio->store($request->file('audio_path'), $test->audio_path);
                 $data['audio_path'] = $audioData['path'];
@@ -150,15 +154,12 @@ class TestController extends Controller
             });
             $this->audio->delete($test->audio_path);
 
-            if ($folderId) {
-                return redirect()->route('folder.show', $folderId)->with('success', __('deleted_successfully'));
-            }
-
-            if ($test->isMock()) {
+            if ($test->isMock() || ! $folderId) {
                 return redirect()->route('mock-bank.index')->with('success', __('deleted_successfully'));
             }
 
-            return redirect()->route('all-test.index')->with('success', __('deleted_successfully'));
+            // Deleted from the Test Bank page: stay there.
+            return back()->with('success', __('deleted_successfully'));
         } catch (\Exception $e) {
             return back()->withErrors(['error' => $e->getMessage()]);
         }

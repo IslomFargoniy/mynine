@@ -2,12 +2,14 @@
 
 namespace App\Models;
 
+use App\Jobs\RescoreQuestionJob;
+use Database\Factories\OptionFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
 class Option extends Model
 {
-    /** @use HasFactory<\Database\Factories\OptionFactory> */
+    /** @use HasFactory<OptionFactory> */
     use HasFactory;
 
     protected $fillable = [
@@ -20,6 +22,16 @@ class Option extends Model
     protected $casts = [
         'is_correct' => 'boolean',
     ];
+
+    protected static function booted()
+    {
+        // Answer-key fix: re-score the submitted modules that answered this question.
+        static::updated(function (Option $option) {
+            if ($option->question_id && $option->wasChanged('is_correct')) {
+                RescoreQuestionJob::dispatch((int) $option->question_id)->afterCommit();
+            }
+        });
+    }
 
     public function section()
     {

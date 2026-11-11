@@ -113,7 +113,7 @@ const Header: React.FC = () => {
                         <button
                             onClick={() => setNavbarOpen(!navbarOpen)}
                             className="block rounded-full p-2 hover:bg-accent focus:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-                            aria-label="Toggle Menu"
+                            aria-label={t('common.toggle_menu')}
                         >
                             <div className="space-y-1.5">
                                 <span

@@ -2,12 +2,13 @@
 
 namespace App\Models;
 
+use Database\Factories\SectionFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
 class Section extends Model
 {
-    /** @use HasFactory<\Database\Factories\SectionFactory> */
+    /** @use HasFactory<SectionFactory> */
     use HasFactory;
 
     protected $fillable = [
@@ -49,7 +50,7 @@ class Section extends Model
         static::deleting(function ($section) {
             $section->questions->each->delete();
             $section->options->each->delete();
-            \App\Models\Image::where('section_id', $section->id)->delete();
+            Image::where('section_id', $section->id)->delete();
         });
     }
 }

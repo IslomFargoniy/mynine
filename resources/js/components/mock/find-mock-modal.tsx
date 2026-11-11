@@ -41,7 +41,7 @@ export default function FindMockModal() {
             preserveScroll: true,
             onSuccess: () => {
                 setOpen(false);
-                toast.success("Imtihon muvaffaqiyatli boshlanmoqda!");
+                toast.success(t('find_mock.started'));
             },
             onError: (err) => {
                 codeInput.current?.focus();
@@ -59,7 +59,7 @@ export default function FindMockModal() {
                     className="btn-glass-primary inline-flex items-center justify-center gap-2 hover:brightness-110 active:scale-95 px-5 py-2 font-bold text-xs rounded-full transition-all cursor-pointer"
                 >
                     <IoCreate className="h-4 w-4" />
-                    <span className="tracking-widest uppercase">{t('common.exam') || 'IMTIHON'}</span>
+                    <span className="tracking-widest uppercase">{t('common.exam')}</span>
                 </button>
             </DialogTrigger>
 
@@ -72,10 +72,10 @@ export default function FindMockModal() {
                         </div>
                         <div>
                             <DialogTitle className="text-lg font-extrabold text-foreground">
-                                Imtihonga Kirish (Mock Exam)
+                                {t('find_mock.title')}
                             </DialogTitle>
                             <p className="text-xs text-muted-foreground mt-0.5">
-                                Sizga berilgan imtihon kodini kiriting
+                                {t('find_mock.desc')}
                             </p>
                         </div>
                     </div>
@@ -84,12 +84,12 @@ export default function FindMockModal() {
                 <form onSubmit={submit} className="p-6 space-y-4">
                     <div className="space-y-2">
                         <Label htmlFor="code-input" className="text-xs font-bold text-foreground">
-                            Nomzod Kodingiz *
+                            {t('find_mock.code_label')}
                         </Label>
                         <Input
                             id="code-input"
                             ref={codeInput}
-                            placeholder="Masalan: TEST1-849201"
+                            placeholder={t('find_mock.code_placeholder')}
                             className="h-11 rounded-xl px-4 font-mono font-bold text-sm tracking-wider uppercase"
                             value={data.code}
                             onChange={(e) => setData('code', e.target.value.toUpperCase())}
@@ -115,7 +115,7 @@ export default function FindMockModal() {
                             disabled={processing}
                             className="font-bold text-xs rounded-full active:scale-95"
                         >
-                            Imtihonni Boshlash →
+                            {t('find_mock.submit')}
                         </Button>
                     </DialogFooter>
                 </form>

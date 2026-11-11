@@ -2,8 +2,9 @@
 
 namespace App\Http\Controllers;
 
+use App\Services\AudioUploadService;
 use Illuminate\Support\Facades\Storage;
-use Symfony\Component\HttpFoundation\BinaryFileResponse;
+use Symfony\Component\HttpFoundation\Response;
 
 class MediaController extends Controller
 {
@@ -12,17 +13,14 @@ class MediaController extends Controller
      * New uploads live on the private "local" disk; files uploaded before the
      * switch may still sit on the public disk, so both are checked.
      */
-    public function audio(string $filename): BinaryFileResponse
+    public function audio(string $filename, AudioUploadService $audio): Response
     {
         foreach (['local', 'public'] as $disk) {
             $relative = 'audio/'.$filename;
             if (Storage::disk($disk)->exists($relative)) {
                 $path = Storage::disk($disk)->path($relative);
 
-                return response()->file($path, [
-                    'Content-Type' => Storage::disk($disk)->mimeType($relative) ?: 'audio/mpeg',
-                    'Cache-Control' => 'private, max-age=86400',
-                ]);
+                return $audio->response($path, Storage::disk($disk)->mimeType($relative) ?: 'audio/mpeg');
             }
         }
 

@@ -111,6 +111,64 @@ class MockResultService
     }
 
     /**
+     * IELTS variant of the attempt's Reading module ("academic" or "general", from tests.variant).
+     */
+    public function readingVariant(Attempt $attempt): string
+    {
+        $reading = $attempt->moduleTestTypes()->first(fn ($testType) => $testType->type?->name === 'Reading');
+
+        return $reading?->test?->variant === 'general' ? 'general' : 'academic';
+    }
+
+    /**
+     * Bands of every module the attempt has a row for (null for modules it does not have) and the overall
+     * band of those. Same rules everywhere (result page, PDF, Telegram): Listening / Reading from the correct
+     * answers (Reading by the test variant), Writing = Admin-confirmed band or (T1 + 2*T2) / 3, Speaking =
+     * examiner band.
+     *
+     * @return array{listening: ?float, reading: ?float, writing: ?float, speaking: ?float, overall: ?float,
+     *               listening_correct: ?int, reading_correct: ?int, reading_variant: string, writing_confirmed: bool,
+     *               writing_pending: bool}
+     */
+    public function attemptBands(Attempt $attempt): array
+    {
+        $types = $attempt->relationLoaded('attempt_types') ? $attempt->attempt_types : $attempt->attempt_types()->get();
+        $variant = $this->readingVariant($attempt);
+
+        $result = [
+            'listening' => null, 'reading' => null, 'writing' => null, 'speaking' => null, 'overall' => null,
+            'listening_correct' => null, 'reading_correct' => null, 'reading_variant' => $variant,
+            'writing_confirmed' => false, 'writing_pending' => false,
+        ];
+
+        foreach ($types as $type) {
+            $name = $type->type?->name;
+            if ($name === 'Listening') {
+                $result['listening_correct'] = (int) $type->is_correct_count;
+                $result['listening'] = IeltsScoreConverter::convertListening($result['listening_correct']);
+            } elseif ($name === 'Reading') {
+                $result['reading_correct'] = (int) $type->is_correct_count;
+                $result['reading'] = IeltsScoreConverter::convertReadingFor($result['reading_correct'], $variant);
+            } elseif ($name === 'Writing') {
+                $type->setRelation('attempt', $attempt);
+                $result['writing'] = $this->writingBand($type);
+                $result['writing_confirmed'] = $type->reviewed_at !== null;
+                $result['writing_pending'] = $attempt->essayAnswersForEvaluation($type->type_id, true)->isNotEmpty();
+            } elseif ($name === 'Speaking' && $type->score !== null) {
+                $result['speaking'] = (float) $type->score;
+            }
+        }
+
+        $present = array_values(array_filter(
+            [$result['listening'], $result['reading'], $result['writing'], $result['speaking']],
+            fn ($band) => $band !== null,
+        ));
+        $result['overall'] = $present !== [] ? IeltsScoreConverter::calculateOverallBand($present) : null;
+
+        return $result;
+    }
+
+    /**
      * @return array{listening: ?float, reading: ?float, writing: ?float, speaking: ?float, overall: ?float, ready: bool, missing: array<string>, modules: array<string>}
      */
     public function result(MockStudent $student): array
@@ -143,7 +201,7 @@ class MockResultService
             if ($type && ($type->is_submitted || $finished)) {
                 $bands[$key] = $name === 'Listening'
                     ? IeltsScoreConverter::convertListening((int) $type->is_correct_count)
-                    : IeltsScoreConverter::convertReading((int) $type->is_correct_count);
+                    : IeltsScoreConverter::convertReadingFor((int) $type->is_correct_count, $this->readingVariant($attempt));
             } elseif (! $type && $finished) {
                 $bands[$key] = 0.0;
             } else {

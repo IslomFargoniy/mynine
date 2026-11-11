@@ -4,6 +4,7 @@ namespace App\Services;
 
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Storage;
+use Symfony\Component\HttpFoundation\Response;
 
 /**
  * Stores exam audio on the private disk and returns the route path the frontend should use.
@@ -80,5 +81,31 @@ class AudioUploadService
         }
 
         return null;
+    }
+
+    /**
+     * Response for a stored audio file. With config desktop.x_accel_audio, files on the private disk are
+     * handed to nginx (X-Accel-Redirect to the internal location, nginx answers Range requests itself);
+     * otherwise, and for legacy public-disk files, PHP streams the file (BinaryFileResponse supports Range).
+     *
+     * nginx: location /_protected_audio/ { internal; alias <storage/app/private>/audio/; }
+     */
+    public function response(string $absolutePath, ?string $contentType = null): Response
+    {
+        $headers = [
+            'Content-Type' => $contentType ?: (mime_content_type($absolutePath) ?: 'audio/mpeg'),
+            'Cache-Control' => 'private, max-age=86400',
+        ];
+
+        $privateRoot = rtrim(Storage::disk(self::DISK)->path(self::DIRECTORY), '/').'/';
+        if (config('desktop.x_accel_audio') && str_starts_with($absolutePath, $privateRoot)) {
+            $relative = substr($absolutePath, strlen($privateRoot));
+            $location = '/'.trim((string) config('desktop.x_accel_audio_location', '/_protected_audio/'), '/').'/';
+            $encoded = implode('/', array_map('rawurlencode', explode('/', $relative)));
+
+            return response('', 200, $headers + ['X-Accel-Redirect' => $location.$encoded]);
+        }
+
+        return response()->file($absolutePath, $headers);
     }
 }

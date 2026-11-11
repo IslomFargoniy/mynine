@@ -27,6 +27,38 @@ class CandidateService
     }
 
     /**
+     * Name without stray separators around it ("ali :" → "ali", "- Vali," → "Vali"), single spaces.
+     */
+    public static function cleanName(?string $name): string
+    {
+        $name = preg_replace('/\s+/u', ' ', (string) $name);
+
+        return trim((string) preg_replace('/^[\s;,:|.\-–—·]+|[\s;,:|.\-–—·]+$/u', '', (string) $name));
+    }
+
+    /**
+     * One bulk line → name + raw phone. Accepts "Name ; phone", "Name, phone", "Name : phone", "Name<TAB>phone",
+     * "Name - phone", "Name phone" and the phone first ("phone - Name"). Hyphens inside names stay.
+     *
+     * @return array{name: string, phone: ?string}
+     */
+    public static function parseLine(string $line): array
+    {
+        $line = trim(str_replace("\t", ' ; ', $line));
+        $phone = '(\+?\d[\d\s()\-]{7,}\d)';
+
+        if (preg_match('/^(.*?)(?:\s*[;,:|]\s*|\s+-\s+|\s+)'.$phone.'\s*[;,.]?$/u', $line, $m)) {
+            return ['name' => static::cleanName($m[1]), 'phone' => trim($m[2])];
+        }
+
+        if (preg_match('/^'.$phone.'(?:\s*[;,:|]\s*|\s+-\s+|\s+)(.+)$/u', $line, $m)) {
+            return ['name' => static::cleanName($m[2]), 'phone' => trim($m[1])];
+        }
+
+        return ['name' => static::cleanName($line), 'phone' => null];
+    }
+
+    /**
      * Modules of $mock that a candidate with this phone already sat in another mock.
      *
      * @return array<int, array{test_type_id: int, type: ?string, test: ?string, mock: ?string, date: ?string}>

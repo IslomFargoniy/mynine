@@ -39,6 +39,7 @@ use App\Http\Controllers\User\UserController;
 use App\Http\Controllers\WritingReviewController;
 use App\Http\Middleware\EnsureCandidateOrAuthenticated;
 use App\Http\Middleware\SetLocale;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -70,12 +71,15 @@ Route::match(['get', 'post'], '/mock-student/enter', [MockStudentController::cla
 // PDF is reachable with a signed URL (email / Telegram) or by anyone allowed to view the attempt.
 Route::get('attempt-pdf/{attempt}', [AttemptController::class, 'pdf'])->name('attempt.pdf');
 
-Route::get('/lang/{locale}', function (string $locale) {
+// Language switcher: remembers the choice for server-rendered text (see SetLocale). The SPA calls it with
+// fetch (Accept: application/json → 204); a plain link goes back to the previous page.
+Route::get('/lang/{locale}', function (Request $request, string $locale) {
     abort_unless(in_array($locale, SetLocale::SUPPORTED, true), 400);
     session(['locale' => $locale]);
+    app()->setLocale($locale);
 
-    return back();
-});
+    return $request->expectsJson() ? response()->noContent() : back();
+})->name('lang.switch');
 
 /*
 |--------------------------------------------------------------------------
@@ -86,7 +90,13 @@ Route::get('/lang/{locale}', function (string $locale) {
 Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('dashboard', [HomeController::class, 'index'])->name('dashboard');
 
-    Route::resource('all-test', AllTestController::class)->only(['index', 'show']);
+    // Test Bank (practice tests by folder). Old URLs redirect here.
+    Route::get('test-bank', [AllTestController::class, 'index'])->name('test-bank.index');
+    Route::get('all-test', fn (Request $request) => redirect()->route('test-bank.index', $request->query()))->name('all-test.index');
+    Route::get('folder', fn (Request $request) => redirect()->route('test-bank.index', $request->query()))->name('folder.index');
+    Route::get('folder/{folder}', fn (int $folder) => redirect()->route('test-bank.index', ['folder_id' => $folder]))
+        ->whereNumber('folder')
+        ->name('folder.show');
     Route::resource('attempt', AttemptController::class)->only(['index', 'store', 'show', 'destroy']);
 
     /*
@@ -94,7 +104,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     */
     Route::middleware('role:Admin')->group(function () {
         Route::resource('user', UserController::class);
-        Route::resource('folder', FolderController::class);
+        Route::resource('folder', FolderController::class)->only(['store', 'update', 'destroy']);
 
         Route::resource('test', TestController::class)->except(['update']);
         Route::post('/test/{test}/update', [TestController::class, 'update'])->name('test.update');
@@ -154,6 +164,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::post('/mock-student', [MockStudentController::class, 'store'])->name('mock-student.store');
         Route::post('/mock-student/check-repeats', [MockStudentController::class, 'checkRepeats'])->name('mock-student.check-repeats');
         Route::get('/mock/{mock}/code-cards', [MockStudentController::class, 'codeCards'])->name('mock.code-cards');
+        Route::get('/mock/{mock}/code-tickets', [MockStudentController::class, 'codeTickets'])->name('mock.code-tickets');
 
         Route::get('/reception', [ReceptionController::class, 'index'])->name('reception.index');
         Route::post('/reception/candidates/{mockStudent}/check-in', [ReceptionController::class, 'checkIn'])->name('reception.check-in');
@@ -207,6 +218,9 @@ Route::middleware(['auth', 'verified'])->prefix('monitor/attempts/{attempt}')->n
     Route::post('unlock', [MonitorController::class, 'unlock'])
         ->middleware('role:Admin|Reception')
         ->name('unlock');
+    Route::post('release-device', [MonitorController::class, 'releaseDevice'])
+        ->middleware('role:Admin|Reception')
+        ->name('release-device');
 });
 
 require __DIR__.'/settings.php';

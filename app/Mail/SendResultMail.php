@@ -25,7 +25,9 @@ class SendResultMail extends Mailable
     public function build()
     {
         return $this->subject('Your Test Results')
-            ->markdown('emails.results')
+            // HTML view + plain-text part (emails.results_plain); the HTML is not a markdown mail.
+            ->view('emails.results')
+            ->text('emails.results_plain')
             ->with([
                 'user' => $this->user,
                 'result' => $this->result,

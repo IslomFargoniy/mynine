@@ -1,9 +1,6 @@
 {
     ",": ",",
     "00:00:00": "00:00:00",
-    "A reset link will be sent if the account exists": {
-        "": "A reset link will be sent if the account exists."
-    },
     "Answer": "Answer",
     "Attempt Details": "Attempt Details",
     "Attempt Report": "Attempt Report",
@@ -64,7 +61,7 @@
     "attendance": "Attendance",
     "attendanceStatus": "Attendance Status",
     "attention": "Attention!",
-    "audio_path": "Audio path",
+    "audio_path": "Audio file",
     "auth": {
         "failed": "These credentials do not match our records.",
         "password": "The provided password is incorrect.",
@@ -106,7 +103,19 @@
         "code": "Code",
         "exam": "Exam",
         "processing": "Processing...",
-        "search": "Search"
+        "search": "Search",
+        "more_actions": "More actions",
+        "no_data": "No data",
+        "logo": "Logo",
+        "navigation_menu": "Navigation menu",
+        "close": "Close",
+        "more": "More",
+        "breadcrumb": "Breadcrumb",
+        "main_menu": "Main menu",
+        "toggle_menu": "Toggle menu",
+        "toggle_sidebar": "Toggle sidebar",
+        "sidebar": "Sidebar",
+        "sidebar_mobile": "Displays the mobile sidebar."
     },
     "common_worked_hours": "Common worked hours",
     "completedTests": "Completed Tests",
@@ -298,7 +307,7 @@
     "ielts_practice_test": "IELTS Practice Test",
     "image": "Image",
     "import": "Import",
-    "import_failed": "Import failed",
+    "import_failed": "Import failed: :message",
     "imported_successfully": "Imported successfully!",
     "in_progress": "In Progress",
     "incorrect_options": "Incorrect options",
@@ -397,8 +406,8 @@
         "create_title": "Creating",
         "create_user_desc": "Enter user details.",
         "create_user_title": "Create New User",
-        "delete_confirmation": "Are you sure?",
-        "delete_title": "Deleting",
+        "delete_confirmation": "Are you sure you want to delete this? This action cannot be undone.",
+        "delete_title": "Confirm deletion",
         "update_description": "Update the details",
         "update_folder_desc": "Update folder details.",
         "update_folder_title": "Edit Folder",
@@ -412,7 +421,9 @@
         "update_test_title": "Edit Test",
         "update_title": "Updating",
         "update_user_desc": "Update user details.",
-        "update_user_title": "Edit User"
+        "update_user_title": "Edit User",
+        "create_question_title": "Add a new question",
+        "update_question_title": "Edit question"
     },
     "month": "Month",
     "n": "N",
@@ -571,7 +582,8 @@
         "salary_report": "Salary report",
         "telegram": "Telegram",
         "user": "User",
-        "worker": "Worker"
+        "worker": "Worker",
+        "test_bank": "Test Bank"
     },
     "smart_paste": "Smart Paste",
     "smart_paste_desc": "Paste options here (one per line). Mark correct option with asterisk (*) at the end.",
@@ -641,7 +653,7 @@
     "view_all": "View All",
     "view_result": "View Result",
     "wbr": " ",
-    "webhook_url": "Webhook url",
+    "webhook_url": "Webhook URL",
     "weekdays": "Weekdays",
     "weekly_progress": "Weekly Progress",
     "welcome_back": "Welcome back",
@@ -833,10 +845,11 @@
             },
             "move": {
                 "title": "Move \"{{name}}\" to practice",
-                "description": "Practice tests are listed by folder. Choose the folder this test moves into; it becomes open for everyone and leaves the Mock Bank.",
+                "description": "Practice tests are listed by folder in the Test Bank. Choose the folder this test moves into; it becomes open for everyone and leaves the Mock Bank.",
                 "choose": "Choose a folder",
-                "no_folders": "Create a folder first (Folders page).",
-                "submit": "Move to practice"
+                "no_folders": "Create a folder first in the Test Bank.",
+                "submit": "Move to practice",
+                "open_test_bank": "Open Test Bank"
             }
         },
         "mock_form": {
@@ -857,13 +870,14 @@
             "recent_warning": "Used within the last {{days}} days",
             "no_ready_modules": "No ready modules of this type in the Mock Bank",
             "speaking_starts": "Speaking starts",
-            "slot_minutes": "Speaking slot (minutes)"
+            "slot_minutes": "Speaking slot (minutes)",
+            "modules_locked": "A candidate has already started this mock: the modules can no longer be changed."
         },
         "candidates": {
             "trigger": "Candidates ({{count}})",
             "title": "Candidates",
             "total": "{{count}} candidates",
-            "add_label": "Add candidates: one per line, \"Name; phone\"",
+            "add_label": "Add candidates: one per line, \"Name; phone\" (separator ; , : tab or -)",
             "placeholder": "Anvar Karimov; 90 123 45 67\nMalika Aliyeva; +998 93 765 43 21",
             "import": "Import Excel/CSV",
             "import_empty": "No rows found in the file",
@@ -881,7 +895,11 @@
             "attendance": "Attendance",
             "attended": "Arrived",
             "waiting": "Waiting",
-            "delete_confirm": "Delete this candidate?"
+            "delete_confirm": "Delete this candidate?",
+            "print_ticket": "Print code ticket (80 mm)",
+            "print_receipt": "Receipt (80 mm)",
+            "print_a4": "A4 PDF",
+            "print_options": "Print options"
         },
         "reception": {
             "description": "Today's candidates: check-in, code cards, result sheets and delivery. Refreshes every 10 seconds.",
@@ -904,7 +922,8 @@
                 "writing": "Writing",
                 "writing_review": "Writing confirmation",
                 "speaking": "Speaking"
-            }
+            },
+            "select_all": "Select all"
         },
         "monitor": {
             "summary": "{{active}} in progress, {{online}} online, {{total}} total",
@@ -924,7 +943,10 @@
             "force_submit": "Force submit",
             "force_submit_confirm": "Finish the exam of {{name}} now?",
             "unlock": "Unlock PC",
-            "unlock_confirm": "Unlock the PC of {{name}}?"
+            "unlock_confirm": "Unlock the PC of {{name}}?",
+            "release_device": "Release PC",
+            "release_device_hint": "Unbind the exam from this PC so the candidate can continue on another PC.",
+            "release_device_confirm": "Release the PC of {{name}}? The exam on that PC stops and the candidate logs in again on another PC."
         },
         "violation": {
             "focus_lost": "Focus lost",
@@ -1011,11 +1033,270 @@
             "new_password": "New password",
             "confirm_password": "Repeat password",
             "hint": "At least 6 characters. PCs also keep it for offline checks.",
-            "uses": "Staff use the center password for three things: registering a new exam PC (first install of the app), leaving the locked exam screen, and opening the app's hidden admin menu."
+            "uses": "Staff use the center password for three things: registering a new exam PC (first install of the app), leaving the locked exam screen, and opening the app's hidden admin menu.",
+            "chip_set": "Center password: set",
+            "chip_missing": "Center password: not set"
         }
     },
     "Upload a Listening, Reading or Writing file.": "Upload a Listening, Reading or Writing file.",
     "An import of this test is still running.": "An import of this test is still running.",
     "Import started. It takes a few minutes; the status is shown on the test card.": "Import started. It takes a few minutes; the status is shown on the test card.",
-    "Listening audio saved.": "Listening audio saved."
+    "Listening audio saved.": "Listening audio saved.",
+    "test_bank": {
+        "title": "Test Bank",
+        "create_folder": "New folder",
+        "add_test": "Add test",
+        "edit_folder": "Edit folder",
+        "delete_folder": "Delete folder",
+        "edit_test": "Edit test",
+        "delete_test": "Delete test",
+        "activate": "Make active",
+        "deactivate": "Make inactive",
+        "make_open": "Open for students",
+        "make_closed": "Close for students",
+        "more_actions": "More actions",
+        "empty_folder": "No tests in this folder yet.",
+        "hidden_hint": "Hidden from students",
+        "module_editor": "Open the {{module}} editor",
+        "test_name_placeholder": "e.g. Cambridge 18 Test 1",
+        "folder_name_placeholder": "e.g. IELTS Reading Tests",
+        "comment_placeholder": "Comment (optional)",
+        "open_label": "Open test",
+        "open_state": "Open"
+    },
+    "folder_has_attempts": "Some tests in this folder already have attempts, so the folder cannot be deleted.",
+    "center_password_saved": "Center password saved. PCs receive the new password on their next connection.",
+    "candidates_count_invalid": "Add between 1 and 500 candidates at a time.",
+    "candidate_line_name_missing": "Line :line: the name is missing.",
+    "candidate_line_phone_missing": "Line :line (:name): the phone number is missing. A phone is required (+998XXXXXXXXX).",
+    "candidate_line_phone_invalid": "Line :line (:name): invalid phone number \":phone\" (+998XXXXXXXXX).",
+    "candidates_added": ":count candidates added.",
+    "candidates_repeat_warning": "Note: these candidates already sat these modules: :names",
+    "candidates_not_found": "No candidates found.",
+    "candidate_deleted": "Candidate deleted.",
+    "code_tickets_title": "Code tickets",
+    "attempts_table": {
+        "candidate": "Candidate",
+        "actions": "Actions",
+        "empty": "No attempts yet."
+    },
+    "mock_show": {
+        "overall": "Overall",
+        "grading": "Grading",
+        "attended": "Attended",
+        "waiting": "Waiting",
+        "back": "Back to mocks",
+        "export_results": "Export results to Excel",
+        "export": "Export to Excel",
+        "stats": {
+            "total": "Candidates",
+            "attended": "Attended",
+            "waiting": "Waiting",
+            "attempts": "Attempts"
+        },
+        "tabs": {
+            "students": "Candidates and results ({{count}})",
+            "attempts": "Exam attempts ({{count}})"
+        },
+        "students_title": "Candidates and exam codes",
+        "students_empty": "No candidates assigned yet.",
+        "students_empty_hint": "Use the \"Candidates\" button to add new candidates.",
+        "candidate": "Candidate",
+        "attendance": "Attendance",
+        "not_started": "Not started",
+        "attempts_title": "Exam attempts",
+        "attempts_empty": "Nobody has taken the exam yet.",
+        "attempts_empty_hint": "Results appear here once candidates finish the exam.",
+        "status_date": "Status / date",
+        "attempt_n": "Attempt #{{id}}"
+    },
+    "attempt_result": {
+        "title": "Attempt #{{id}} results",
+        "kicker": "IELTS practice test result",
+        "tab_switches": "{{count}} tab switches",
+        "clean": "No violations",
+        "overall": "Overall band",
+        "not_taken": "Not taken",
+        "correct_of": "{{count}}/40 correct",
+        "graded": "Graded",
+        "pending": "Awaiting grading",
+        "correct": "Correct",
+        "wrong": "Wrong",
+        "partial": "Partly correct",
+        "no_answer": "No answer",
+        "no_answers": "No answers recorded for this module.",
+        "other_questions": "Other questions",
+        "result": "Result",
+        "task": "Task {{n}}",
+        "cefr": {
+            "c2": "Proficient / Mastery",
+            "c1": "Advanced / Fluent",
+            "b2": "Upper-Intermediate",
+            "b1": "Intermediate",
+            "a2": "Basic user"
+        },
+        "hidden_until_finished": "Results will be available after the exam is finished."
+    },
+    "auth_pages": {
+        "reset_title": "Reset password",
+        "reset_desc": "Please enter your new password below",
+        "email": "Email",
+        "password": "Password",
+        "confirm_password": "Confirm password",
+        "forgot_title": "Forgot password",
+        "forgot_desc": "Enter your email to receive a password reset link",
+        "email_address": "Email address",
+        "send_reset_link": "Email password reset link",
+        "return_to": "Or, return to",
+        "log_in": "log in",
+        "confirm_title": "Confirm your password",
+        "confirm_desc": "This is a secure area of the application. Please confirm your password before continuing.",
+        "verify_title": "Verify email",
+        "verify_desc": "Please verify your email address by clicking on the link we just emailed to you.",
+        "verify_head": "Email verification",
+        "verify_sent": "A new verification link has been sent to the email address you provided during registration.",
+        "resend": "Resend verification email",
+        "log_out": "Log out",
+        "copyright": "© {{year}} Mynine Academy. All rights reserved."
+    },
+    "social": {
+        "sign_up_google": "Sign up with Google",
+        "sign_up_github": "Sign up with GitHub"
+    },
+    "splash": {
+        "loading": "Loading",
+        "powered_by": "Powered by MyNine"
+    },
+    "question_form": {
+        "options_added": "{{count}} options added",
+        "enter_details": "Enter the details of the {{type}} question.",
+        "prompt_placeholder": "e.g. What is the main idea of paragraph A?",
+        "prompt_placeholder_short": "Enter the question text",
+        "correct_text": "Correct answer text *",
+        "correct_text_placeholder": "e.g. climate change",
+        "correct_text_hint": "The student's answer is checked against this text (case-insensitive).",
+        "correct_letter": "Correct matching letter *",
+        "mark_correct": "Mark the correct option *",
+        "options": "Answer options",
+        "hide": "Hide",
+        "smart_paste": "Smart paste",
+        "smart_paste_hint": "Paste one option per line (put * after the correct one):",
+        "parse_options": "Parse and add options",
+        "edit_desc": "Edit the question text and all of its options in one place.",
+        "paste_placeholder": "A) Option 1\nB) Option 2*\nC) Option 3\nD) Option 4",
+        "answer_label": "Answer:"
+    },
+    "options_form": {
+        "variants_count": "{{count}} options",
+        "description": "Enter and edit all extra distractor options for drag & drop in one place.",
+        "move_up": "Move up",
+        "move_down": "Move down",
+        "bulk_hint": "Write each option on its own line or paste them:",
+        "lines_count": "{{count}} lines",
+        "tip": "💡 Tip: one wrong word/phrase per line. Prefixes like A), 1.) are removed automatically."
+    },
+    "section_form": {
+        "from_placeholder": "e.g. A",
+        "to_placeholder": "e.g. F"
+    },
+    "part_form": {
+        "name_placeholder": "e.g. Reading Passage 1",
+        "comment_placeholder": "Notes / comment (optional)",
+        "passage": "Passage text"
+    },
+    "user_form": {
+        "test_limit": "Test creation limit"
+    },
+    "find_mock": {
+        "started": "The exam is starting!",
+        "title": "Enter the exam (Mock)",
+        "desc": "Enter the exam code you were given",
+        "code_label": "Your candidate code *",
+        "code_placeholder": "e.g. TEST1-849201",
+        "submit": "Start the exam →"
+    },
+    "dashboard_page": {
+        "loading_chart": "Loading chart...",
+        "pts": "{{count}} pts"
+    },
+    "home": {
+        "course_image": "Test cover",
+        "free": "Free",
+        "steps": "{{count}} modules",
+        "students": "{{count}} students",
+        "ai_evaluation_alt": "AI evaluation",
+        "success_alt": "IELTS success"
+    },
+    "page_titles": {
+        "attempts": "Attempts",
+        "mocks": "Mocks",
+        "users": "Users"
+    },
+    "ai_eval": {
+        "title": "AI examiner evaluation",
+        "badge": "Automated IELTS",
+        "word_count": "Word count: {{count}}",
+        "essay_assessment": "Essay assessment",
+        "re_evaluate": "Re-check with AI",
+        "re_evaluate_started": "AI re-evaluation has started.",
+        "error": "Something went wrong.",
+        "pending": "Waiting for the AI evaluation...",
+        "band": "Band {{score}}",
+        "task_response": "Task Response",
+        "coherence": "Coherence",
+        "lexical": "Lexical Resource",
+        "grammar": "Grammar",
+        "feedback": "Examiner feedback and suggestions:"
+    },
+    "scheduled": "Not started yet",
+    "expired": "Finished",
+    "essay_too_short": "The essay text is too short.",
+    "ai_evaluation_started": "AI evaluation has started. The result will update shortly.",
+    "bank_test_not_ready": "The test is not ready: every module needs parts and answer keys, Listening needs audio, and Writing needs 2 tasks plus the Task 1 image.",
+    "status_updated": "Status updated.",
+    "test_already_practice": "The test is already in the Test Bank.",
+    "test_moved_to_practice": "The test was moved to the Test Bank.",
+    "result_not_ready": "The result is not ready yet.",
+    "result_delivered": "Marked as delivered.",
+    "results_not_ready_selected": "Results of the selected candidates are not ready yet.",
+    "speaking_start_missing": "Set the Speaking start time in the mock settings first.",
+    "speaking_slot_saved": "Speaking time saved.",
+    "mock_modules_missing": "The mock has no modules or test.",
+    "speaking_score_saved": "Speaking band saved: :band",
+    "writing_confirmed": "Writing result confirmed.",
+    "device_approved": "\":name\" approved (№:number).",
+    "device_blocked": "\":name\" blocked.",
+    "device_unblocked": "\":name\" unblocked.",
+    "saved": "Saved.",
+    "device_deleted": "PC deleted.",
+    "exam_already_finished": "The exam has already finished.",
+    "extra_time_added": ":minutes minutes added.",
+    "no_running_module": "No module is running right now.",
+    "exam_paused": "Exam paused.",
+    "exam_resumed": "Exam resumed.",
+    "exam_force_submitted": "Exam submitted by force.",
+    "unlock_requested": "Unlock request sent to the PC.",
+    "candidate_code_not_found": "Code (:code) not found!",
+    "mock_inactive": "This mock is not active right now!",
+    "mock_desktop_only": "This mock is taken only in the Mynine Desktop app. Enter your code in the app on the exam PC.",
+    "mock_not_started": "This mock has not started yet! Start time: :time",
+    "mock_finished": "This mock is over! It ended at: :time",
+    "mock_other_test": "The mock belongs to another test!",
+    "cannot_delete_self": "You cannot delete your own account.",
+    "import_input_required": "Please paste text or upload a file!",
+    "import_nothing_parsed": "No questions or sections could be extracted from the text.",
+    "module_not_ready": "The module is not ready in the Mock Bank.",
+    "one_module_per_type": "Choose only one module of each type.",
+    "test_limit_reached": "Your test creation limit is used up. Allowed in total: :limit",
+    "A reset link will be sent if the account exists.": "A reset link will be sent if the account exists.",
+    "too_many_options": "You selected more options than this question allows.",
+    "device_released": "The PC was released. The candidate can log in on another PC.",
+    "device_release_finished": "The exam is already finished.",
+    "mock_modules_locked": "A candidate has already started this mock, so its modules can no longer be changed.",
+    "test_variant": {
+        "label": "IELTS variant",
+        "academic": "Academic",
+        "general": "General Training",
+        "hint": "General Training Reading uses its own band table."
+    }
 }

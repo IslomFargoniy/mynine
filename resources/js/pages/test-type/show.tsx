@@ -22,7 +22,7 @@ export default function TestTypeShow() {
 
     const test = testType.test;
     const type = testType.type;
-    const testName = test?.name || t('test') || 'Test';
+    const testName = test?.name || t('test');
     const typeName = type?.name || 'Module';
 
     const breadcrumbs: BreadcrumbItem[] = [
@@ -101,7 +101,7 @@ export default function TestTypeShow() {
                         className="shrink-0 flex items-center gap-1.5 px-3 py-1.5 bg-indigo-500/12 text-brand rounded-full hover:bg-primary hover:text-primary-foreground transition-all font-semibold text-xs border border-indigo-500/25 hover:border-ring active:scale-95 cursor-pointer"
                     >
                         <Plus className="w-3.5 h-3.5" />
-                        {t('add_part') ?? 'Add Part'}
+                        {t('add_part')}
                     </button>
                 </div>
 
@@ -132,7 +132,7 @@ export default function TestTypeShow() {
                                             />
                                         ) : (
                                             <div className="flex flex-col items-center justify-center h-full text-muted-foreground gap-2">
-                                                <p className="text-sm">{t('no_passage') ?? 'No passage text yet.'}</p>
+                                                <p className="text-sm">{t('no_passage')}</p>
                                                 <button
                                                     type="button"
                                                     onClick={() => setOpenEditPartModal(true)}
@@ -176,7 +176,7 @@ export default function TestTypeShow() {
                                     <div className="flex flex-col items-center justify-center h-48 text-muted-foreground gap-2">
                                         <Plus className="w-10 h-10 opacity-20" />
                                         <p className="text-sm text-center">
-                                            {t('no_sections') ?? 'No sections yet. Add a section below.'}
+                                            {t('no_sections')}
                                         </p>
                                     </div>
                                 ) : (

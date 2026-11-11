@@ -1,5 +1,9 @@
 # Desktop API v1 — contract
 
+> **v1.1:** see ["v1.1 changes"](#v11-changes-server-implemented-desktop-client-must-follow) at the end — it overrides the
+> sections below where they differ (timestamps with ms, per-item answer results, `seq`, `deferred`, late sync,
+> 426 on login only, token lifetime and 401 codes, `session_active_elsewhere`).
+
 Base URL: `https://mynine.uz/api/v1` (dev: `http://127.0.0.1:8000/api/v1`). JSON only.
 Every request from the app sends:
 
@@ -14,7 +18,8 @@ Errors: `{ "message": "...", "code": "<machine_code>" }` with HTTP status. Codes
 `unauthenticated` 401, `device_blocked` 403, `client_outdated` 426 (body also has `min_version`),
 `invalid_password` 422, `setup_password_missing` 409, `device_not_approved` 403,
 `invalid_code` 422, `mock_not_active` 422, `mock_not_started` 422 (+`starts_at`), `mock_finished` 422,
-`attempt_finished` 409, `paused` 409, `module_locked` 409, `module_time_over` 409, `validation_failed` 422.
+`attempt_finished` 409, `paused` 409, `module_locked` 409, `module_time_over` 409, `validation_failed` 422,
+v1.1: `session_revoked` 401, `session_expired` 401, `session_active_elsewhere` 409.
 
 Server rejects exam requests whose `X-Mynine-Client` version is lower than `min_version` of `desktop/version.json` with 426.
 All timestamps are ISO-8601 with offset (server timezone). Every exam response includes `server_time`.
@@ -331,3 +336,99 @@ The center password (setting key `desktop_exit_password`) is set in Desktop sett
   (center password + optional PC name). After registering it shows "Waiting for administrator approval" (PC name + short
   machine id) and retries `GET /device/config` every 30 s; once approved it opens the code screen, which shows the PC
   number ("PC 7"). The hidden admin menu's "Re-register" asks for the center password again.
+
+---
+
+## v1.1 changes (server implemented; desktop client must follow)
+
+All changes are additive or relax earlier errors; a v1.0 client keeps working except where noted.
+
+**a) Timestamps.** Every timestamp in the API (`server_time`, `started_at`, `finished_at`, `expires_at`, `starts_at`,
+`ends_at`) is `Y-m-d\TH:i:s.vP`, e.g. `2026-11-12T09:14:03.120+05:00` (milliseconds + offset, server timezone).
+Module timers are whole seconds (`.000`). The client should send `changed_at` with milliseconds in the same format.
+
+**b) `POST /exam/answers` — per-item validation.** The batch is a 422 `validation_failed` only when the envelope is
+malformed: `answers` missing / not an array / empty / more than 200 items, an item that is not an object, or an item
+without a string `client_uuid` (≤ 64 chars). Every other problem rejects only that item:
+
+| `reason` | when |
+|---|---|
+| `invalid` | `part_id` / `question_id` not integers, `text` not a string or longer than 20 000 chars, `option_ids` not an array of integers, `changed_at` missing / not a date, `seq` not an integer ≥ 0 |
+| `too_many_options` | more than 50 `option_ids`, or a `multiple_response` ("choose TWO") question with more selected options than the key has correct options (the web exam room refuses the same with 422 `reason: too_many_options`) |
+| `invalid_question` | part not in a started module of this attempt, or question not in that part (unchanged) |
+| `module_submitted`, `module_time_over` | unchanged (see e) for the offline exception) |
+
+**c) Ordering — `seq`.** Optional per-item integer `seq` ≥ 0: a monotonic counter **per question per attempt**
+kept by the client (persist it with the queue; never reset it during an attempt). Stored in `attempt_answers.client_seq`.
+Last-write-wins: when both the stored answer and the item have a `seq`, the higher `seq` wins (equal → the later
+request wins); otherwise `changed_at` decides (ms precision, equal → later request wins). A losing item is `stale`.
+
+**d) Pause.** Items with `changed_at` ≥ the pause time are **not** final any more:
+`{ "status": "deferred", "reason": "paused" }`. The client keeps them in its queue and re-sends them (same
+`client_uuid`, same `seq`/`changed_at`) after `/exam/heartbeat` reports `paused: false`. Because resume moves the module
+end forward by the pause length, the re-sent items are accepted as long as the module is still open. Items changed
+before the pause are still accepted during the pause. (`rejected/paused` no longer occurs on the desktop API.)
+Result statuses: `saved | duplicate | stale | rejected` are final (drop from the queue), `deferred` is not.
+
+**e) Offline across the module end (late sync).** After a module ended (`finished_at` + 30 s grace) an item is still
+accepted when all of these hold:
+1. its `changed_at` ≤ the module's `finished_at`;
+2. the PC was offline at the end — its last exam heartbeat before reconnecting is older than `finished_at`. The server
+   records this per module (`attempt_types.offline_at_end`) before the first heartbeat after the grace moves
+   `last_heartbeat_at`, so heartbeating first after a reconnect is fine;
+3. the server time is ≤ `finished_at` + `desktop.offline_late_sync_minutes` (env `DESKTOP_OFFLINE_LATE_SYNC_MINUTES`, default 120).
+
+Such items answer `{ "status": "saved", "late": true }`, the answer is marked `attempt_answers.late_synced = true`
+(for review) and the module score is recalculated (a late essay is (re-)evaluated unless the Admin already confirmed
+Writing). This also works when the module or the whole attempt is already submitted (auto-finish, force submit,
+`attempts:close-old`): the batch is refused with 409 `attempt_finished` only when no module of the finished attempt
+qualifies for late sync any more. Items changed after `finished_at` stay `rejected` / `module_time_over` or
+`module_submitted`. A module's `finished_at` is never moved to the submit time when its time had already run out.
+
+**f) Version gate.** 426 `client_outdated` is returned by `POST /exam/login` only. Requests with a valid exam token
+are never 426 (an outdated client finishes the running exam and updates afterwards). `/device/*` was never gated.
+
+**g) Exam token lifetime.** `expires_at` = max(mock `finished_at`, now) + sum of the durations of the mock's modules
++ 2 h (`desktop.token_sliding_hours`). Sliding: every `POST /exam/heartbeat` of an unfinished attempt extends the
+token to at least now + 2 h. 401 responses on exam endpoints carry a specific `code`:
+
+| code | meaning | client action |
+|---|---|---|
+| `session_revoked` | the token was deleted (login on another PC, `/exam/submit`, PC released by the invigilator) or the attempt is bound to another PC | stop the exam UI, keep unsent answers, show "This exam continues on another PC — ask the invigilator", back to the code screen |
+| `session_expired` | the token ran out | back to the code screen; logging in again with the code continues the attempt |
+| `unauthenticated` | no / malformed token | back to the code screen |
+
+**h) Login on another PC.** `POST /exam/login` answers 409 `session_active_elsewhere` ("This exam is running on another
+PC. Ask the invigilator to release it.") when the attempt is bound to a different PC that sent an exam heartbeat within
+the last 90 s (`desktop.active_elsewhere_seconds`). Otherwise the login moves the attempt to this PC: the old PC's token
+is revoked (`session_revoked`) and every other device's `current_attempt_id` for this attempt is cleared (a pending
+remote unlock is never delivered to the wrong PC). Admin and Reception can release a PC from the live monitor:
+`POST /monitor/attempts/{attempt}/release-device` (web, session auth; JSON `{ok, message, attempt}` for fetch requests)
+clears `attempts.device_id`, the devices' `current_attempt_id` and the candidate's exam tokens.
+
+**i) Login after the mock window.** After the mock's `finished_at`, login is still allowed for a candidate who has an
+unfinished attempt (the PC died); only candidates without an attempt get 422 `mock_finished`. A finished attempt
+answers 409 `attempt_finished` (checked first).
+
+**j) Images.** `prefetch.images` still lists every `<img src>` as an absolute URL, including external hosts.
+Contract: the client sends `X-Device-Token` / `Authorization` **only** to the API origin (`https://mynine.uz`);
+images on any other origin must be fetched anonymously (no auth headers, no cookies). A failed image download must not
+block the exam (show the alt text / an empty box).
+
+**Audio delivery.** Unchanged for the client (`GET /exam/audio/...` with `Range`). With `DESKTOP_X_ACCEL_AUDIO=true`
+the server answers with `X-Accel-Redirect` and nginx streams the file (206 for Range requests). nginx include
+(FastPanel: `/etc/nginx/fastpanel2-sites/mynine_uz_usr/mynine.uz.includes`):
+
+```nginx
+location /_protected_audio/ {
+    internal;
+    alias /var/www/mynine_uz_usr/data/www/mynine.uz/storage/app/private/audio/;
+}
+```
+
+(`storage/app/private` = root of the `local` disk, `audio/` = `AudioUploadService::DIRECTORY`; the location prefix is
+`DESKTOP_X_ACCEL_AUDIO_LOCATION`, default `/_protected_audio/`.) Reload nginx before enabling the env flag; legacy files
+still on the public disk are streamed by PHP. The web exam room's `/media/audio/{file}` uses the same mechanism.
+
+**New storage:** `attempt_answers.client_seq` (unsigned bigint, nullable), `attempt_answers.late_synced` (bool, default
+false), `attempt_types.offline_at_end` (bool, nullable) — migration `2026_11_11_000002_add_v11_sync_columns`.

@@ -90,7 +90,7 @@ class SpeakingController extends Controller
         ]);
 
         if (! $mock->speaking_starts_at) {
-            return back()->with('error', 'Avval mock sozlamalarida Speaking boshlanish vaqtini kiriting.');
+            return back()->with('error', __('speaking_start_missing'));
         }
 
         $students = MockStudent::query()->with('attempt')->where('mock_id', $mock->id)->get();
@@ -126,7 +126,7 @@ class SpeakingController extends Controller
 
         $mockStudent->forceFill(['speaking_at' => $data['speaking_at'] ?? null])->save();
 
-        return back()->with('success', 'Speaking vaqti saqlandi.');
+        return back()->with('success', __('speaking_slot_saved'));
     }
 
     /**
@@ -144,7 +144,7 @@ class SpeakingController extends Controller
 
         $attempt = $this->exam->findOrCreateMockAttempt($mockStudent);
         if (! $attempt) {
-            return back()->with('error', 'Mockda modul yoki test belgilanmagan.');
+            return back()->with('error', __('mock_modules_missing'));
         }
 
         $band = self::band(array_map(fn ($key) => (float) $data[$key], array_keys(self::CRITERIA)));
@@ -155,7 +155,7 @@ class SpeakingController extends Controller
 
         $this->exam->storeManualScore($attempt, $this->speakingTypeId(), $band, $comment);
 
-        return back()->with('success', "Speaking bali saqlandi: {$band}");
+        return back()->with('success', __('speaking_score_saved', ['band' => $band]));
     }
 
     /**

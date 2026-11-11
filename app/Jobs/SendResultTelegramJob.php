@@ -4,6 +4,7 @@ namespace App\Jobs;
 
 use App\Models\Attempt;
 use App\Models\User\User;
+use App\Services\AttemptPdfRenderer;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
@@ -16,6 +17,13 @@ use Telegram\Bot\FileUpload\InputFile;
 class SendResultTelegramJob implements ShouldQueue
 {
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
+
+    public int $tries = 3;
+
+    public array $backoff = [30, 120, 600];
+
+    /** The attempt or user was deleted meanwhile: drop the job instead of failing it. */
+    public bool $deleteWhenMissingModels = true;
 
     protected $user;
 
@@ -30,40 +38,13 @@ class SendResultTelegramJob implements ShouldQueue
     public function handle()
     {
         try {
-            if (! $this->user->telegram_id) {
+            if (! $this->user?->telegram_id || ! config('services.telegram.mynine_bot_token')) {
                 return;
             }
 
             $telegram = new Api(config('services.telegram.mynine_bot_token'));
 
-            // Generate PDF internally instead of via URL
-            $attempt = $this->attempt->load([
-                'test',
-                'user',
-                'mock',
-                'attempt_types' => function ($query) {
-                    $query->whereHas('type', function ($q) {});
-                },
-            ]);
-
-            $attempt->attempt_types->each(function ($attemptType) {
-                $attemptType->append('attempt_parts');
-            });
-
-            $options = [
-                'isPhpEnabled' => false,
-                'isRemoteEnabled' => true,
-                'isHtml5ParserEnabled' => true,
-                'isFontSubsettingEnabled' => true,
-                'isUnicodeEnabled' => true,
-                'defaultFont' => 'DejaVu Sans',
-            ];
-
-            $dompdf = new \Dompdf\Dompdf($options);
-            $dompdf->loadHtml(view('pdf.attempt', compact('attempt'))->render());
-            $dompdf->setPaper('A4');
-            $dompdf->render();
-            $pdfContent = $dompdf->output();
+            $pdfContent = app(AttemptPdfRenderer::class)->render($this->attempt);
 
             // Wrap the content in InputFile
             $document = InputFile::createFromContents($pdfContent, "TestResult_{$this->attempt->id}.pdf");

@@ -98,12 +98,12 @@ class MockBankController extends Controller
         ]);
 
         if ($data['status'] === Test::BANK_READY && ! $this->bank->testReadiness($test)['ready']) {
-            return back()->with('error', "Test tayyor emas: har bir modulda partlar, javob kalitlari, (Listening uchun) audio va (Writing uchun) 2 ta topshiriq hamda Task 1 rasmi bo'lishi kerak.");
+            return back()->with('error', __('bank_test_not_ready'));
         }
 
         $test->forceFill(['bank_status' => $data['status']])->save();
 
-        return back()->with('success', 'Holat yangilandi.');
+        return back()->with('success', __('status_updated'));
     }
 
     /**
@@ -115,7 +115,7 @@ class MockBankController extends Controller
         $this->authorize('manageBank', Test::class);
         if (! $test->isMock()) {
             // Already a practice test (e.g. a double click): nothing to do.
-            return back()->with('success', 'Test allaqachon amaliyot (practice) testlarida.');
+            return back()->with('success', __('test_already_practice'));
         }
 
         $data = $request->validate([
@@ -124,7 +124,7 @@ class MockBankController extends Controller
 
         $test->forceFill(['purpose' => Test::PURPOSE_PRACTICE, 'open' => 1, 'folder_id' => $data['folder_id']])->save();
 
-        return back()->with('success', "Test amaliyot (practice) testlariga o'tkazildi.");
+        return back()->with('success', __('test_moved_to_practice'));
     }
 
     /**

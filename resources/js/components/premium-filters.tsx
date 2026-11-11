@@ -69,7 +69,7 @@ const PremiumFilters = ({ handleSubmit, setData, data, roles, users, mocks, test
                             type="text"
                             value={data.search || ''}
                             onChange={(e) => setData('search', e.target.value)}
-                            placeholder={t('search_placeholder') ?? 'Search...'}
+                            placeholder={t('search_placeholder')}
                             className="pl-9 pr-8 h-9 rounded-full border-none shadow-none focus:ring-0 bg-transparent text-xs font-medium"
                         />
                         {data.search && (
@@ -357,7 +357,7 @@ const PremiumFilters = ({ handleSubmit, setData, data, roles, users, mocks, test
 
                         <div className="space-y-1.5">
                             <label className="text-[9px] font-black uppercase tracking-widest text-muted-foreground flex items-center gap-1.5 ml-1">
-                                <ListOrdered className="h-3 w-3" /> {t('per_page') ?? 'Per Page'}
+                                <ListOrdered className="h-3 w-3" /> {t('per_page')}
                             </label>
                             <Select value={String(data.per_page || '10')} onValueChange={(val) => setData('per_page', val)}>
                                 <SelectTrigger className="h-10 rounded-xl bg-glass-subtle font-bold text-xs">
