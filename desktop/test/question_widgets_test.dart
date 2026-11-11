@@ -20,6 +20,10 @@ Future<Harness> _toModule(WidgetTester tester, {bool reading = false}) async {
     if (reading) {
       await h.exam.confirmFinishModule();
       await waitFor(() => h.exam.currentModule?.isReading ?? false);
+      // The next module waits for Start (rules screen), then its timer runs.
+      expect(h.exam.stage, ExamStage.rules);
+      h.exam.acceptRules();
+      await waitFor(() => h.exam.stage == ExamStage.exam);
     }
   });
   return h;

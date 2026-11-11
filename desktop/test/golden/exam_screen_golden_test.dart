@@ -60,6 +60,10 @@ Future<Harness> _readingExam(WidgetTester tester) async {
     await waitFor(() => exam.stage == ExamStage.exam);
     await exam.confirmFinishModule();
     await waitFor(() => exam.currentModule?.isReading ?? false);
+    // The next module waits for Start (rules screen), then its timer runs.
+    expect(exam.stage, ExamStage.rules);
+    exam.acceptRules();
+    await waitFor(() => exam.stage == ExamStage.exam);
     final tfOptions = exam.currentPart!.sections.first.questions.first.options;
     exam.setAnswer(partId: 201, questionId: 8001, optionIds: [tfOptions[1].id]);
     exam.setAnswer(partId: 201, questionId: 8005, text: 'wrought');

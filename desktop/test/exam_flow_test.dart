@@ -47,6 +47,8 @@ void main() {
     await exam.login('demo1234');
     expect(exam.stage, ExamStage.rules);
     expect(exam.modules.map((m) => m.type), ['listening', 'reading', 'writing']);
+    // Audio downloads silently in the background after the code is accepted.
+    await waitFor(() => exam.audioReady);
     expect(exam.cached!.audioFiles['test-9'], isNotNull);
     expect(File(exam.cached!.audioFiles['test-9']!).existsSync(), isTrue);
 
@@ -64,6 +66,14 @@ void main() {
     expect(exam.answerFor(7001).text, 'Smith');
     await exam.confirmFinishModule();
     await waitFor(() => exam.currentModule?.isReading ?? false);
+    // The next module waits for Start (rules screen), then its timer runs.
+    expect(exam.stage, ExamStage.rules);
+    await Future<void>.delayed(const Duration(milliseconds: 300));
+    expect(exam.stage, ExamStage.rules);
+    expect(exam.currentModule!.isNotStarted, isTrue, reason: 'Reading must not start by itself');
+    exam.acceptRules();
+    await waitFor(() => exam.stage == ExamStage.exam);
+    expect(exam.currentModule!.isInProgress, isTrue);
     expect(h.api.savedAnswers[7001]!.text, 'Smith');
     expect(h.api.savedAnswers[7007]!.optionIds, isNotEmpty);
     expect(exam.stage, ExamStage.exam);
@@ -75,6 +85,10 @@ void main() {
     expect(exam.currentPartId, 202);
     await exam.confirmFinishModule();
     await waitFor(() => exam.currentModule?.isWriting ?? false);
+    // The next module waits for Start (rules screen), then its timer runs.
+    expect(exam.stage, ExamStage.rules);
+    exam.acceptRules();
+    await waitFor(() => exam.stage == ExamStage.exam);
 
     exam.setAnswer(partId: 301, questionId: 9001, text: 'An essay about museums.', debounce: true);
     await exam.confirmFinishModule();

@@ -336,29 +336,88 @@ class ExamController extends ChangeNotifier {
       _prefetchProgress = 0;
       _prefetchLabel = 'Preparing your exam…';
     });
-    final cached = await examRepo.prefetch(
-      _token!,
-      _attemptId!,
-      onProgress: (v, label) => _set(() {
-        _prefetchProgress = v;
-        _prefetchLabel = label;
-      }),
-    );
+    // Only the questions (one JSON request) are awaited here; audio and
+    // images download in the background while the candidate reads the rules.
+    final cached = await examRepo.fetchExam(_token!, _attemptId!);
     await _open(cached, cached.payload.modules);
+    _startAssetDownload();
     await _enterFirstStage();
+  }
+
+  // ---- Background download of audio / images ---------------------------------------------
+
+  Future<void>? _assetsJob;
+
+  /// True once every audio file of the exam is on this computer.
+  bool get audioReady {
+    final c = _cached;
+    return c != null && ExamRepository.audioComplete(c);
+  }
+
+  /// Starts (once) the silent background download; retries until it is done
+  /// or the session ends.
+  void _startAssetDownload() {
+    final c = _cached;
+    final attempt = _attemptId;
+    final token = _token;
+    if (c == null || attempt == null || token == null || _assetsJob != null) return;
+    if (ExamRepository.audioComplete(c) && c.imageFiles.length >= c.payload.images.length) return;
+    _assetsJob = () async {
+      var wait = const Duration(seconds: 3);
+      while (_attemptId == attempt && _token == token) {
+        try {
+          final done = await examRepo.downloadAssets(token, attempt, _cached ?? c);
+          if (_attemptId == attempt) {
+            _cached = done;
+            notifyListeners();
+          }
+          return;
+        } catch (e) {
+          debugPrint('Background download failed, retrying in $wait: $e');
+          await Future<void>.delayed(wait);
+          if (wait < const Duration(seconds: 30)) wait *= 2;
+        }
+      }
+    }()
+        .whenComplete(() => _assetsJob = null);
+  }
+
+  /// Listening cannot start without its recording: if the background download
+  /// is not finished yet, wait for it (shown as a short "preparing" screen).
+  Future<bool> _waitForAudio(ExamModule m) async {
+    if (!m.isListening || audioReady) return true;
+    final attempt = _attemptId;
+    _set(() {
+      _stage = ExamStage.transition;
+      _transitionMessage = 'Preparing the ${m.title} audio…\nPlease wait a moment.';
+    });
+    while (!audioReady) {
+      if (_attemptId != attempt || _stage == ExamStage.blocked) return false;
+      _startAssetDownload();
+      await Future<void>.delayed(const Duration(milliseconds: 500));
+    }
+    return true;
   }
 
   /// Opens the stage for the current module. When every module is already
   /// submitted (e.g. the app stopped between the last module and the final
   /// submit) the final submit is sent now.
   Future<void> _enterFirstStage() async {
+    _startAssetDownload();
     final m = currentModule;
     if (m == null) {
       await _finalSubmit();
       return;
     }
-    // Resuming a module that is already running: straight back in.
-    _stage = m.isInProgress ? ExamStage.exam : ExamStage.rules;
+    // Resuming a module that is already running: straight back in (a
+    // Listening module first needs its audio on this computer).
+    if (m.isInProgress) {
+      if (!await _waitForAudio(m)) return;
+      _transitionMessage = null;
+      _stage = ExamStage.exam;
+    } else {
+      _stage = ExamStage.rules;
+    }
     notifyListeners();
   }
 
@@ -577,6 +636,7 @@ class ExamController extends ChangeNotifier {
       return;
     }
     if (m.isNotStarted || m.finishedAt == null) {
+      if (!await _waitForAudio(m)) return;
       _set(() {
         _stage = ExamStage.transition;
         _transitionMessage = 'Starting ${m.title}…';
@@ -892,7 +952,17 @@ class ExamController extends ChangeNotifier {
       await _finalSubmit();
       return;
     }
-    await _enterModule();
+    final next = _modules[_moduleIndex];
+    if (next.isInProgress) {
+      await _enterModule();
+      return;
+    }
+    // The next module (Reading, Writing) does not start by itself: its
+    // timer starts when the candidate presses Start on the module screen.
+    _currentPartId = next.parts.firstOrNull?.id;
+    _activeQuestionId = null;
+    _transitionMessage = null;
+    _set(() => _stage = ExamStage.rules);
   }
 
   /// Final submit: only after the answer queue is empty, or after a 5 minute

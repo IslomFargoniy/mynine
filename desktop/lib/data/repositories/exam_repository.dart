@@ -63,7 +63,40 @@ class ExamRepository {
     PrefetchProgress? onProgress,
   }) async {
     onProgress?.call(0, 'Downloading exam…');
+    final cached = await fetchExam(token, attemptId);
+    return downloadAssets(token, attemptId, cached, onProgress: onProgress);
+  }
+
+  /// Step 1 (fast, a JSON request): questions and module list. Saved at once
+  /// with the files already on disk from an earlier run, so a restart can
+  /// resume while the audio is still downloading.
+  Future<CachedExam> fetchExam(String token, int attemptId) async {
     final payload = await api.prefetch(token);
+    final previous = await loadCached(attemptId);
+    final cached = CachedExam(
+      payload: payload,
+      audioFiles: {
+        for (final e in (previous?.audioFiles ?? const <String, String>{}).entries)
+          if (File(e.value).existsSync()) e.key: e.value,
+      },
+      imageFiles: previous?.imageFiles ?? const {},
+    );
+    await saveCached(attemptId, cached);
+    return cached;
+  }
+
+  /// True when every audio file of [cached] is on disk.
+  static bool audioComplete(CachedExam cached) => cached.payload.audio
+      .every((a) => cached.audioFiles[a.key] != null && File(cached.audioFiles[a.key]!).existsSync());
+
+  /// Step 2 (slow, in the background): audio (hash-checked) and images.
+  Future<CachedExam> downloadAssets(
+    String token,
+    int attemptId,
+    CachedExam cached, {
+    PrefetchProgress? onProgress,
+  }) async {
+    final payload = cached.payload;
     final dir = paths.examDir(attemptId);
     final audioDir = Directory(p.join(dir.path, 'audio'));
     final imageDir = Directory(p.join(dir.path, 'images'));
@@ -109,10 +142,10 @@ class ExamRepository {
       }
     }
 
-    final cached = CachedExam(payload: payload, audioFiles: audioFiles, imageFiles: imageFiles);
-    await db.putCache(cacheKey(attemptId), jsonEncode(cached.toJson()));
+    final done = CachedExam(payload: payload, audioFiles: audioFiles, imageFiles: imageFiles);
+    await db.putCache(cacheKey(attemptId), jsonEncode(done.toJson()));
     onProgress?.call(1, 'Ready');
-    return cached;
+    return done;
   }
 
   Future<CachedExam?> loadCached(int attemptId) async {

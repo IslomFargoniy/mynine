@@ -105,7 +105,7 @@ class _RulesScreenState extends ConsumerState<RulesScreen> {
                     alignment: Alignment.centerRight,
                     child: BlackButton(
                       key: const Key('rules-accept'),
-                      label: current != null && current.isInProgress ? 'Continue' : 'Start',
+                      label: current == null ? 'Start' : current.isInProgress ? 'Continue' : 'Start ${current.title}',
                       onTap: _gate.canStart ? _start : null,
                     ),
                   ),

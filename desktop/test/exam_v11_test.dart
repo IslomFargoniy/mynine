@@ -264,8 +264,16 @@ void main() {
       final exam = h.exam;
       await exam.confirmFinishModule();
       await waitFor(() => exam.currentModule?.isReading ?? false);
+      // The next module waits for Start (rules screen), then its timer runs.
+      expect(exam.stage, ExamStage.rules);
+      exam.acceptRules();
+      await waitFor(() => exam.stage == ExamStage.exam);
       await exam.confirmFinishModule();
       await waitFor(() => exam.currentModule?.isWriting ?? false);
+      // The next module waits for Start (rules screen), then its timer runs.
+      expect(exam.stage, ExamStage.rules);
+      exam.acceptRules();
+      await waitFor(() => exam.stage == ExamStage.exam);
       exam.setAnswer(partId: 301, questionId: 9001, text: 'Essay');
       await exam.flushPending();
       await waitFor(() => h.api.savedAnswers.containsKey(9001));

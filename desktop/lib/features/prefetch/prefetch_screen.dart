@@ -35,7 +35,7 @@ class PrefetchScreen extends ConsumerWidget {
                 ),
               ),
               const SizedBox(height: 10),
-              Text('${exam.prefetchLabel}  ${(exam.prefetchProgress * 100).round()}%',
+              Text(exam.prefetchProgress <= 0 ? exam.prefetchLabel : '${exam.prefetchLabel}  ${(exam.prefetchProgress * 100).round()}%',
                   style: inter(12, weight: FontWeight.w600, color: TW.gray600)),
             ],
           ),

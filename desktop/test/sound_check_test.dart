@@ -14,6 +14,7 @@ void main() {
     await tester.runAsync(() async {
       h = await Harness.create();
       await h.exam.login('DEMO1');
+      await waitFor(() => h.exam.audioReady);
       h.exam.acceptRules();
     });
     tester.view.physicalSize = const Size(1366, 900);
