@@ -206,7 +206,11 @@ class _SoundCheckScreenState extends ConsumerState<SoundCheckScreen> {
                   Text(_error!, style: inter(12, color: TW.red600)),
                 ],
                 const SizedBox(height: 20),
-                InkWell(
+                // Ink paints on the nearest Material: without this one it lands on the
+                // Scaffold, underneath the white card, and the button is invisible.
+                Material(
+                  type: MaterialType.transparency,
+                  child: InkWell(
                   key: const Key('sound-ok'),
                   onTap: () {
                     _player?.stop();
@@ -223,9 +227,13 @@ class _SoundCheckScreenState extends ConsumerState<SoundCheckScreen> {
                     child: Row(mainAxisAlignment: MainAxisAlignment.center, children: [
                       const Icon(LucideIcons.circleCheck, size: 20, color: Colors.white),
                       const SizedBox(width: 8),
-                      Text('Sound is good, Start Test', style: inter(14, weight: FontWeight.w700, color: Colors.white)),
+                      Flexible(
+                        child: Text('Sound is good, Start Test',
+                            overflow: TextOverflow.ellipsis, style: inter(14, weight: FontWeight.w700, color: Colors.white)),
+                      ),
                     ]),
                   ),
+                ),
                 ),
               ]),
             ),
