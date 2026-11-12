@@ -39,6 +39,7 @@ use App\Http\Controllers\User\UserController;
 use App\Http\Controllers\WritingReviewController;
 use App\Http\Middleware\EnsureCandidateOrAuthenticated;
 use App\Http\Middleware\SetLocale;
+use App\Http\Middleware\VerifyTelegramWebhook;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
@@ -60,8 +61,8 @@ Route::get('/{page}', [SeoPageController::class, 'show'])
 Route::get('landing-page-tests', [LandingPageController::class, 'tests'])->name('landing-page-tests');
 
 Route::post('/webapp-login', [TelegramAuthController::class, 'login']);
-Route::any('/bot/webhook', [TelegramController::class, 'handle']);
-Route::any('/bot/MynineUzBot/webhook', [MynineUzBotController::class, 'handle']);
+Route::post('/bot/webhook', [TelegramController::class, 'handle'])->middleware(VerifyTelegramWebhook::class);
+Route::post('/bot/MynineUzBot/webhook', [MynineUzBotController::class, 'handle'])->middleware(VerifyTelegramWebhook::class);
 
 // Candidate code entry (brute-force protected)
 Route::match(['get', 'post'], '/mock-student/enter', [MockStudentController::class, 'enter'])

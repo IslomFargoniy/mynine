@@ -8,6 +8,7 @@ use App\Models\User\User;
 use App\Services\IeltsScoreConverter;
 use App\Services\MockResultService;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\Facades\URL;
 use Telegram\Bot\Api;
 use Telegram\Bot\Keyboard\Keyboard;
@@ -58,7 +59,9 @@ class MynineUzBotService
 
         if ($command === '/result' || $command === '/natija') {
             if (! empty($params)) {
-                $this->sendCandidateResult($chatId, $params);
+                if (! $this->codeLookupThrottled($chatId)) {
+                    $this->sendCandidateResult($chatId, $params);
+                }
             } else {
                 $this->sendSafeMessage(
                     $chatId,
@@ -74,6 +77,9 @@ class MynineUzBotService
         // 2. Check if the text matches a Candidate Code directly (e.g. TEST1-849201, MS123456)
         $cleanCandidateCode = strtoupper(preg_replace('/[^a-zA-Z0-9-]/', '', $text));
         if (! empty($cleanCandidateCode) && strlen($cleanCandidateCode) >= 4 && strlen($cleanCandidateCode) <= 25) {
+            if ($this->codeLookupThrottled($chatId)) {
+                return;
+            }
             $student = MockStudent::where('code', $cleanCandidateCode)
                 ->orWhereRaw("REPLACE(code, '-', '') = ?", [str_replace('-', '', $cleanCandidateCode)])
                 ->first();
@@ -92,6 +98,23 @@ class MynineUzBotService
     /**
      * Look up candidate code and send detailed exam result
      */
+    /**
+     * Candidate codes are only 6 digits: at most 5 lookups per chat per 10 minutes, so nobody can walk
+     * the code space through the bot.
+     */
+    private function codeLookupThrottled(int|string $chatId): bool
+    {
+        $key = 'tg-code-lookup:'.$chatId;
+        if (RateLimiter::tooManyAttempts($key, 5)) {
+            $this->sendMessage($chatId, "Juda ko'p urinish. Iltimos, 10 daqiqadan keyin qayta urinib ko'ring.");
+
+            return true;
+        }
+        RateLimiter::hit($key, 600);
+
+        return false;
+    }
+
     public function sendCandidateResult(int|string $chatId, string $rawCode): void
     {
         $code = strtoupper(trim($rawCode));
@@ -195,7 +218,7 @@ class MynineUzBotService
             ->row([
                 Keyboard::inlineButton([
                     'text' => '📄 Rasmiy TRF Sertifikat (PDF)',
-                    'url' => url(URL::signedRoute('attempt.pdf', ['attempt' => $attempt->id], null, false)),
+                    'url' => url(URL::temporarySignedRoute('attempt.pdf', now()->addDays(30), ['attempt' => $attempt->id], false)),
                 ]),
             ]);
 

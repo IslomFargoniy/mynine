@@ -46,7 +46,7 @@ class TelegramLoginController extends Controller
             return false;
         }
 
-        if (! isset($data['auth_date']) || abs(time() - (int) $data['auth_date']) > 86400) {
+        if (! isset($data['auth_date']) || abs(time() - (int) $data['auth_date']) > 900) {
             return false;
         }
 
