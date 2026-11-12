@@ -10,6 +10,7 @@ use App\Models\Mock;
 use App\Models\MockStudent;
 use App\Models\TestType;
 use App\Services\ExamService;
+use App\Support\CurrentCenter;
 use Carbon\Carbon;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -18,7 +19,10 @@ use Illuminate\Support\Facades\DB;
 
 class ExamAuthController extends Controller
 {
-    public function __construct(private readonly ExamService $exam) {}
+    public function __construct(
+        private readonly ExamService $exam,
+        private readonly CurrentCenter $center,
+    ) {}
 
     /**
      * POST /exam/login — candidate code → exam token bound to this PC.
@@ -34,14 +38,16 @@ class ExamAuthController extends Controller
         $device->ensureApproved();
         $code = strtoupper(trim($data['code']));
 
+        // Candidates of other centers are invisible here (the device's center scopes the query), and the
+        // explicit owner check below backs that up: a code of another center is simply "not found".
         $student = MockStudent::with('mock')->where('code', $code)->first();
-        if (! $student) {
+        $mock = $student?->mock;
+        if (! $student || ! $mock || ! $device->owner_id || (int) $mock->owner_id !== (int) $device->owner_id) {
             throw ApiException::unprocessable('invalid_code', 'This code was not found.');
         }
 
-        $mock = $student->mock;
-        if (! $mock) {
-            throw ApiException::unprocessable('mock_not_active', 'This mock exam is not active.');
+        if ($this->center->isSuspended((int) $device->owner_id)) {
+            throw new ApiException(403, 'center_suspended', 'This center is suspended. Contact the center administrator.');
         }
 
         $existing = $student->attempt;

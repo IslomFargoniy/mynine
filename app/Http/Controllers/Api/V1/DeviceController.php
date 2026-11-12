@@ -4,10 +4,11 @@ namespace App\Http\Controllers\Api\V1;
 
 use App\Exceptions\ApiException;
 use App\Http\Controllers\Controller;
-use App\Http\Controllers\Desktop\SettingsController;
+use App\Models\CenterSetting;
 use App\Models\Device;
-use App\Models\Setting;
+use App\Models\Scopes\CenterScope;
 use App\Services\ExamService;
+use App\Support\CurrentCenter;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
@@ -15,37 +16,61 @@ use Symfony\Component\HttpFoundation\BinaryFileResponse;
 
 class DeviceController extends Controller
 {
-    public function __construct(private readonly ExamService $exam) {}
+    public function __construct(
+        private readonly ExamService $exam,
+        private readonly CurrentCenter $center,
+    ) {}
 
     /**
      * POST /device/register — create the PC or rotate its token (same machine_id).
-     * Only someone who knows the center-wide desktop password can register a PC.
+     * Only someone who knows the center password can register a PC. `center_code` picks the center; without
+     * it (clients before multi-center) the PC registers to the Mynine center.
      */
     public function register(Request $request): JsonResponse
     {
         $data = $request->validate([
             'machine_id' => ['required', 'string', 'max:191'],
+            'center_code' => ['nullable', 'string', 'max:32'],
             'password' => ['nullable', 'string', 'max:255'],
             'name' => ['nullable', 'string', 'max:100'],
             'os_version' => ['nullable', 'string', 'max:191'],
             'app_version' => ['nullable', 'string', 'max:40'],
         ]);
 
-        if (Setting::get(Setting::DESKTOP_EXIT_PASSWORD) === null) {
+        $settings = filled($data['center_code'] ?? null)
+            ? CenterSetting::findByCode($data['center_code'])
+            : $this->center->settings($this->center->mynineId());
+
+        if (! $settings) {
+            throw ApiException::unprocessable('invalid_center_code', 'Unknown center code.');
+        }
+
+        if (! $settings->hasExitPassword()) {
             throw ApiException::conflict('setup_password_missing', 'The center password is not set yet. Set the center password in Desktop settings first.');
         }
 
-        if (! Setting::checkExitPassword((string) ($data['password'] ?? ''))) {
+        if (! $settings->checkExitPassword((string) ($data['password'] ?? ''))) {
             throw ApiException::unprocessable('invalid_password', 'Wrong center password.');
         }
 
-        $device = Device::firstOrNew(['machine_id' => $data['machine_id']]);
+        if ($settings->isSuspended()) {
+            throw new ApiException(403, 'center_suspended', 'This center is suspended. Contact the platform administrator.');
+        }
+
+        // machine_id is unique across centers: a PC moving to another center keeps its row.
+        $device = Device::withoutGlobalScope(CenterScope::class)->firstOrNew(['machine_id' => $data['machine_id']]);
 
         if ($device->exists && $device->is_blocked) {
             throw new ApiException(403, 'device_blocked', 'This PC is blocked. Contact the administrator.');
         }
 
         $name = trim((string) ($data['name'] ?? ''));
+
+        if ($device->exists && (int) $device->owner_id !== (int) $settings->owner_id) {
+            // Moved to another center: its number and running exam belonged to the old one.
+            $device->forceFill(['number' => null, 'current_attempt_id' => null]);
+        }
+        $device->forceFill(['owner_id' => $settings->owner_id]);
 
         $plainToken = $device->rotateToken();
         // A new token means a new holder: whoever re-registers must be approved again,
@@ -68,7 +93,8 @@ class DeviceController extends Controller
             'number' => null,
             'approved' => false,
             // Lets a not-yet-approved (or later blocked) PC still verify the center password offline.
-            'exit_password_offline' => Setting::get(Setting::DESKTOP_EXIT_PASSWORD_OFFLINE),
+            'exit_password_offline' => $settings->exit_password_offline,
+            'center' => $this->centerInfo($settings),
         ]);
     }
 
@@ -104,7 +130,7 @@ class DeviceController extends Controller
             'password' => ['required', 'string', 'max:255'],
         ]);
 
-        if (! Setting::checkExitPassword($data['password'])) {
+        if (! $this->settingsOf($this->device($request))?->checkExitPassword($data['password'])) {
             return response()->json(['ok' => false, 'message' => 'Wrong password.', 'code' => 'invalid_password'], 422);
         }
 
@@ -118,16 +144,20 @@ class DeviceController extends Controller
     {
         $device = $this->device($request);
         $device->ensureApproved();
+        $settings = $this->settingsOf($device);
+        $bg = $settings?->backgroundInfo();
 
         return response()->json($device->publicInfo() + [
-            'exit_password_offline' => Setting::get(Setting::DESKTOP_EXIT_PASSWORD_OFFLINE),
+            'exit_password_offline' => $settings?->exit_password_offline,
             'banned_processes' => array_values(config('desktop.banned_processes', [])),
             'heartbeat_seconds' => (int) config('desktop.heartbeat_seconds', 20),
             'violation_batch_seconds' => (int) config('desktop.violation_batch_seconds', 10),
             'server_time' => ExamService::apiTime(),
             // Code-screen background picture (null: the plain default).
-            'background_url' => ($bg = SettingsController::background()) ? route('api.v1.device.background') : null,
+            'background_url' => $bg ? route('api.v1.device.background') : null,
             'background_sha256' => $bg['sha256'] ?? null,
+            // The PC's center (name and logo for the code screen).
+            'center' => $settings ? $this->centerInfo($settings) : null,
         ]);
     }
 
@@ -136,8 +166,7 @@ class DeviceController extends Controller
      */
     public function background(Request $request): BinaryFileResponse
     {
-        $this->device($request);
-        $bg = SettingsController::background() ?? throw ApiException::notFound('No background picture is set.');
+        $bg = $this->settingsOf($this->device($request))?->backgroundInfo() ?? throw ApiException::notFound('No background picture is set.');
 
         return response()->file(Storage::disk('local')->path($bg['path']));
     }
@@ -145,5 +174,23 @@ class DeviceController extends Controller
     private function device(Request $request): Device
     {
         return $request->attributes->get('device');
+    }
+
+    private function settingsOf(Device $device): ?CenterSetting
+    {
+        return $device->owner_id ? $this->center->settings((int) $device->owner_id) : null;
+    }
+
+    /**
+     * @return array{code: string, name: string, logo_url: ?string, suspended: bool}
+     */
+    private function centerInfo(CenterSetting $settings): array
+    {
+        return [
+            'code' => $settings->code,
+            'name' => $settings->name,
+            'logo_url' => $settings->logoUrl(),
+            'suspended' => $settings->isSuspended(),
+        ];
     }
 }
