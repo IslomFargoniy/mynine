@@ -5,6 +5,11 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\Hash;
 
+/**
+ * Legacy global key/value settings. The desktop settings that used to live here (center password, background)
+ * are per center since multi-center tenancy: see CenterSetting. The rows are kept (the backfill copied them to
+ * the Mynine center) but no longer read.
+ */
 class Setting extends Model
 {
     public const DESKTOP_EXIT_PASSWORD = 'desktop_exit_password';

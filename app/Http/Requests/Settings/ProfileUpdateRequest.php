@@ -3,6 +3,7 @@
 namespace App\Http\Requests\Settings;
 
 use App\Models\User\User;
+use App\Rules\UniquePhone;
 use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
@@ -18,7 +19,7 @@ class ProfileUpdateRequest extends FormRequest
     {
         return [
             'name' => ['required', 'string', 'max:255'],
-            'phone' => ['nullable', 'string', 'digits_between:9,12'],
+            'phone' => ['nullable', 'string', 'digits_between:9,12', Rule::unique(User::class, 'phone')->ignore($this->user()->id), new UniquePhone($this->user()->id)],
             'username' => [
                 'nullable',
                 'string',

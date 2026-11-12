@@ -5,21 +5,22 @@ namespace App\Http\Controllers;
 use App\Models\Folder;
 use App\Support\DayRange;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Gate;
 use Inertia\Inertia;
 
 /**
  * Test Bank: practice tests grouped by folder.
  *
- * Students and Reception see active folders with active + open practice tests (and only modules
- * that have content). Admins see every folder and every practice test (inactive / closed ones are
+ * Students, Reception and center Admins see active folders with active + open practice tests (and only
+ * modules that have content). The platform owner (SuperAdmin) sees every folder and every practice test (inactive / closed ones are
  * marked in the UI) and manage folders and tests on the same page. Mock Bank tests never appear.
  */
 class AllTestController extends Controller
 {
     public function index(Request $request)
     {
-        $isAdmin = Auth::user()->hasRole('Admin');
+        // Practice content is managed by the platform owner (SuperAdmin); everyone else browses it.
+        $isAdmin = Gate::allows('manage-content');
         $per_page = $request->per_page === 'all' ? 100 : max(1, min((int) ($request->per_page ?? 10), 100));
 
         $folder = Folder::with([

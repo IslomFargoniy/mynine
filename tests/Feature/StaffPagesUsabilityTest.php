@@ -94,7 +94,7 @@ test('test and folder filter dropdowns list the newest first and keep the filter
 
 test('user and test bank date filters include the "to" day', function () {
     $this->travelTo(now()->setTime(14, 0));
-    $admin = makeUser('Admin');
+    $admin = makeUser('SuperAdmin');
     $student = makeUser('Student');
     $folder = Folder::create(['name' => 'Today folder', 'user_id' => $admin->id, 'active' => 1]);
     $date = now()->toDateString();

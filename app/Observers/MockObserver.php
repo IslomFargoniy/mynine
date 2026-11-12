@@ -35,13 +35,8 @@ class MockObserver
 
         $authUser = Auth::user();
 
-        // Agar tizim/seeder yoki admin bo'lsa -> ruxsat
-        if (! $authUser || $authUser->hasRole('Admin')) {
-            return;
-        }
-
-        // Admin bo'lmasa faqat o'z yozuvini o'chirishga ruxsat
-        if ($authUser->id !== $mock->user_id) {
+        // System / seeder: allowed; web requests: the policy (center of the record).
+        if ($authUser && ! $authUser->can('delete', $mock)) {
             throw new \Exception('You are not allowed to access this page');
         }
     }

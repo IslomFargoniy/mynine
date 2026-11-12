@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Models\Concerns\SanitizesContentHtml;
 use Database\Factories\PartFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -11,6 +12,13 @@ class Part extends Model
 {
     /** @use HasFactory<PartFactory> */
     use HasFactory;
+
+    use SanitizesContentHtml;
+
+    protected function sanitizesHtmlAlways(): bool
+    {
+        return true;
+    }
 
     protected $fillable = [
         'test_type_id',

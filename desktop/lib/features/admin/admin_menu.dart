@@ -8,7 +8,7 @@ import '../exam/exam_controller.dart';
 import '../../app/theme.dart';
 import '../../core/api/api_exception.dart';
 import '../../data/repositories/device_repository.dart' show ExitPasswordCheck;
-import '../setup/setup_views.dart' show setupErrorMessage;
+import '../setup/setup_views.dart' show centerCodeError, centerCodeFormatters, setupErrorMessage;
 import '../updater/update_dialog.dart';
 
 /// Asks for the center password (verified online, or offline against
@@ -123,6 +123,7 @@ class _AdminMenuDialogState extends ConsumerState<_AdminMenuDialog> {
   late final TextEditingController _name;
   late final TextEditingController _url;
   final _centerPassword = TextEditingController();
+  late final TextEditingController _centerCode;
   String? _message;
   bool _saving = false;
 
@@ -131,6 +132,8 @@ class _AdminMenuDialogState extends ConsumerState<_AdminMenuDialog> {
     super.initState();
     _name = TextEditingController(text: ref.read(deviceRepositoryProvider).pcName);
     _url = TextEditingController(text: ref.read(kioskControllerProvider).serverUrl.value);
+    final device = ref.read(deviceRepositoryProvider);
+    _centerCode = TextEditingController(text: device.lastCenterCode ?? device.center?.code ?? '');
   }
 
   @override
@@ -138,6 +141,7 @@ class _AdminMenuDialogState extends ConsumerState<_AdminMenuDialog> {
     _name.dispose();
     _url.dispose();
     _centerPassword.dispose();
+    _centerCode.dispose();
     super.dispose();
   }
 
@@ -183,6 +187,16 @@ class _AdminMenuDialogState extends ConsumerState<_AdminMenuDialog> {
             const Text('Re-register this PC', style: TextStyle(fontWeight: FontWeight.w700)),
             const SizedBox(height: 4),
             Row(children: [
+              SizedBox(
+                width: 120,
+                child: TextField(
+                  key: const Key('admin-center-code'),
+                  controller: _centerCode,
+                  inputFormatters: centerCodeFormatters,
+                  decoration: const InputDecoration(labelText: 'Center code *', hintText: 'e.g. MYNINE'),
+                ),
+              ),
+              const SizedBox(width: 8),
               Expanded(
                 child: TextField(
                   key: const Key('admin-pc-name'),
@@ -206,6 +220,11 @@ class _AdminMenuDialogState extends ConsumerState<_AdminMenuDialog> {
                 onPressed: _saving
                     ? null
                     : () {
+                        final codeError = centerCodeError(_centerCode.text);
+                        if (codeError != null) {
+                          setState(() => _message = codeError);
+                          return;
+                        }
                         if (_centerPassword.text.isEmpty) {
                           setState(() => _message = 'Enter the center password to re-register.');
                           return;
@@ -213,7 +232,11 @@ class _AdminMenuDialogState extends ConsumerState<_AdminMenuDialog> {
                         final password = _centerPassword.text;
                         _centerPassword.clear();
                         _run(
-                          () => kiosk.registerDevice(password: password, name: _name.text),
+                          () => kiosk.registerDevice(
+                            centerCode: _centerCode.text,
+                            password: password,
+                            name: _name.text,
+                          ),
                           'Device registered. An Admin must approve this PC again (its number is kept).',
                         );
                       },

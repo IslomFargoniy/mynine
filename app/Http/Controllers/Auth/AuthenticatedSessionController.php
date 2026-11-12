@@ -33,7 +33,7 @@ class AuthenticatedSessionController extends Controller
 
         $request->session()->regenerate();
 
-        $home = $request->user()->hasRole('Reception') && ! $request->user()->hasRole('Admin')
+        $home = $request->user()->isReception()
             ? route('reception.index', absolute: false)
             : route('dashboard', absolute: false);
 

@@ -2,10 +2,13 @@
 
 namespace App\Models;
 
+use App\Models\Concerns\BelongsToCenterThroughMock;
 use Illuminate\Database\Eloquent\Model;
 
 class MockModule extends Model
 {
+    use BelongsToCenterThroughMock;
+
     protected $fillable = [
         'mock_id',
         'type_id',

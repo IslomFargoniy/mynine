@@ -364,7 +364,7 @@ test('missing answers and broken numbering are reported as warnings, not failure
     app(MockTestImporter::class)->import($module, $result['parts'], false);
 
     // Unanswered gaps stay as empty gaps and the readiness check lists them.
-    expect(Section::whereHas('question_type', fn ($q) => $q->where('type', 'complete_section'))->first()->textarea)->toContain('Susansmith@ {}');
+    expect(html_entity_decode(Section::whereHas('question_type', fn ($q) => $q->where('type', 'complete_section'))->first()->textarea))->toContain('Susansmith@ {}');
     expect(app(MockBankService::class)->moduleIssues($module->fresh()))->toContain('missing_answer_keys:8');
 });
 

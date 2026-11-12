@@ -74,14 +74,7 @@ class MockController extends Controller
             });
         }
 
-        if (Auth::user()->hasRole('Admin')) {
-            // Admin can see everything
-        } else {
-            // Students see active mocks
-            $mock->where(function ($q) {
-                $q->where('active', 1);
-            });
-        }
+        // Mock::query() lists only the current center's mocks (CenterScope).
 
         $mock = $mock->select('id', 'test_id', 'user_id', 'name', 'comment', 'active', 'require_desktop', 'started_at', 'finished_at', 'created_at')
             ->orderBy('id', 'desc')
@@ -94,17 +87,12 @@ class MockController extends Controller
         $tests_query = Test::query()->select('id', 'name', 'folder_id')->with('folder:id,name')->orderByDesc('id');
         $folders_query = Folder::select('id', 'name')->orderByDesc('id');
 
-        if (! Auth::user()->hasRole('Admin')) {
-            $tests_query->where('active', 1)->where('open', 1);
-            $folders_query->where('active', 1);
-        }
-
         return Inertia::render('mock/index', [
             'mock' => $mock,
             'tests' => FilterOptions::keep($tests_query, $request->integer('test_id')),
             'users' => [],
             'folders' => FilterOptions::keep($folders_query, $request->integer('folder_id')),
-            'isAdmin' => Auth::user()->hasRole('Admin'),
+            'isAdmin' => Auth::user()->isCenterAdmin(),
             'filters' => $request->only(['search', 'user_id', 'test_id', 'folder_id', 'from', 'to', 'per_page']),
         ]);
     }
@@ -167,7 +155,7 @@ class MockController extends Controller
 
         return Inertia::render('mock/show', [
             'mock' => $mock,
-            'isAdmin' => Auth::user()->hasRole('Admin'),
+            'isAdmin' => Auth::user()->isCenterAdmin(),
         ]);
     }
 
@@ -243,13 +231,19 @@ class MockController extends Controller
     /**
      * Remove the specified resource from storage.
      */
-    public function destroy(Mock $mock)
+    public function destroy(Request $request, Mock $mock)
     {
         $this->authorize('delete', $mock);
 
         // A candidate is still writing (or resuming) this mock: deleting it would break their exam.
         if ($mock->hasUnfinishedAttempt()) {
             return back()->with('error', __('mock_has_running_attempt'));
+        }
+
+        // Candidates of this mock sat a written module: the results (and the billing) stay; only the platform
+        // owner may delete it. Its attempts keep their center (attempts.owner_id) and billing rows remain.
+        if (! $request->user()->isSuperAdmin() && $mock->hasBilledCandidates()) {
+            return back()->with('error', __('mock_has_exam_results'));
         }
 
         try {

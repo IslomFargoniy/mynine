@@ -16,6 +16,9 @@
         .meta b { color: #0f172a; }
         .hint { margin-top: 6pt; font-size: 8px; color: #64748b; }
         .page-break { page-break-after: always; }
+        .center-logo { max-height: 22pt; max-width: 110pt; vertical-align: middle; margin-right: 4pt; }
+        .center-name { font-size: 10px; font-weight: bold; color: #1e293b; vertical-align: middle; }
+        .powered { margin-top: 3pt; font-size: 7px; color: #94a3b8; }
     </style>
 </head>
 <body>
@@ -25,14 +28,28 @@
             <tr>
                 @foreach ($row as $student)
                     <td class="card">
-                        <div class="brand">Mynine Mock Exam</div>
+                        @if ($branding)
+                            <div>
+                                @if ($logo = $branding->logoDataUri())
+                                    <img class="center-logo" src="{{ $logo }}" alt="">
+                                @endif
+                                <span class="center-name">{{ $branding->name }}</span>
+                            </div>
+                        @else
+                            <div class="brand">Mynine Mock Exam</div>
+                        @endif
                         <div class="mock">{{ $mock->name }} &middot; {{ $mock->started_at ? \Carbon\Carbon::parse($mock->started_at)->format('d.m.Y H:i') : '' }}</div>
                         <div class="name">{{ $student->name }}</div>
                         <div class="code">{{ $student->code }}</div>
                         <div class="meta">
                             Speaking: <b>{{ $student->speaking_at ? $student->speaking_at->format('d.m.Y H:i') : '—' }}</b>
                         </div>
-                        <div class="hint">Enter this code on the Mynine exam computer. Keep the card until you receive your result.</div>
+                        @if ($branding)
+                            <div class="hint">Enter this code on the exam computer. Keep the card until you receive your result.</div>
+                            <div class="powered">Powered by Mynine</div>
+                        @else
+                            <div class="hint">Enter this code on the Mynine exam computer. Keep the card until you receive your result.</div>
+                        @endif
                     </td>
                 @endforeach
                 @if ($row->count() < 2)

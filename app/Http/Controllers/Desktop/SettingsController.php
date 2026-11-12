@@ -3,7 +3,8 @@
 namespace App\Http\Controllers\Desktop;
 
 use App\Http\Controllers\Controller;
-use App\Models\Setting;
+use App\Models\CenterSetting;
+use App\Support\CurrentCenter;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Gate;
@@ -12,11 +13,14 @@ use Illuminate\Support\Str;
 use Symfony\Component\HttpFoundation\Response;
 
 /**
- * Desktop settings (Admin), shown as the "Center password" dialog of the Exam PCs page: the center password of the exam app (registering a PC, leaving the
- * locked exam screen, the app's admin menu). Stored under the setting key desktop_exit_password.
+ * Desktop settings of the current center (its Admin), shown as dialogs on the Exam PCs and Center settings
+ * pages: the center password of the exam app (registering a PC, leaving the locked exam screen, the app's
+ * admin menu) and the code-screen background. Stored per center in center_settings.
  */
 class SettingsController extends Controller
 {
+    public function __construct(private readonly CurrentCenter $current) {}
+
     /**
      * The settings live in a dialog on the Exam PCs page; ?settings=1 opens it.
      */
@@ -28,39 +32,22 @@ class SettingsController extends Controller
     }
 
     /**
-     * Whether the center password is set and when it last changed (for the Exam PCs page).
+     * Whether the center password is set and when it last changed.
      *
      * @return array{set: bool, updatedAt: ?string}
      */
-    public static function centerPasswordStatus(): array
+    public static function centerPasswordStatus(?CenterSetting $settings): array
     {
-        $row = Setting::query()->find(Setting::DESKTOP_EXIT_PASSWORD);
-
         return [
-            'set' => $row !== null && $row->value !== null,
-            'updatedAt' => $row?->updated_at?->toIso8601String(),
+            'set' => (bool) $settings?->hasExitPassword(),
+            'updatedAt' => $settings?->exit_password_updated_at?->toIso8601String(),
         ];
-    }
-
-    /**
-     * The exam app's background picture (code screen), or null.
-     *
-     * @return array{path: string, sha256: string, updatedAt: ?string}|null
-     */
-    public static function background(): ?array
-    {
-        $row = Setting::query()->find(Setting::DESKTOP_BACKGROUND);
-        $data = $row?->value ? json_decode($row->value, true) : null;
-        if (! is_array($data) || empty($data['path']) || ! Storage::disk('local')->exists($data['path'])) {
-            return null;
-        }
-
-        return ['path' => $data['path'], 'sha256' => (string) ($data['sha256'] ?? ''), 'updatedAt' => $row->updated_at?->toIso8601String()];
     }
 
     public function updateBackground(Request $request): RedirectResponse
     {
         Gate::authorize('manage-desktop-settings');
+        $settings = $this->settings();
 
         $request->validate([
             'image' => ['required', 'file', 'mimes:jpg,jpeg,png,webp', 'max:8192'],
@@ -68,10 +55,11 @@ class SettingsController extends Controller
 
         $file = $request->file('image');
         $sha = hash_file('sha256', $file->getRealPath());
-        $path = $file->storeAs('desktop', 'background-'.Str::substr($sha, 0, 12).'.'.$file->extension(), 'local');
+        // Per-center file name: two centers uploading the same picture must not share (and delete) one file.
+        $path = $file->storeAs('desktop', 'background-'.$settings->owner_id.'-'.Str::substr($sha, 0, 12).'.'.$file->extension(), 'local');
 
-        $old = self::background();
-        Setting::set(Setting::DESKTOP_BACKGROUND, json_encode(['path' => $path, 'sha256' => $sha]));
+        $old = $settings->backgroundInfo();
+        $settings->setBackground($path, $sha);
         if ($old && $old['path'] !== $path) {
             Storage::disk('local')->delete($old['path']);
         }
@@ -82,11 +70,12 @@ class SettingsController extends Controller
     public function destroyBackground(): RedirectResponse
     {
         Gate::authorize('manage-desktop-settings');
+        $settings = $this->settings();
 
-        if ($old = self::background()) {
+        if ($old = $settings->backgroundInfo()) {
             Storage::disk('local')->delete($old['path']);
         }
-        Setting::set(Setting::DESKTOP_BACKGROUND, null);
+        $settings->setBackground(null, null);
 
         return back()->with('success', __('desktop_background_removed'));
     }
@@ -95,7 +84,7 @@ class SettingsController extends Controller
     public function showBackground(): Response
     {
         Gate::authorize('manage-desktop-settings');
-        $bg = self::background() ?? abort(404);
+        $bg = $this->settings()->backgroundInfo() ?? abort(404);
 
         return response()->file(Storage::disk('local')->path($bg['path']), ['Cache-Control' => 'private, no-cache']);
     }
@@ -103,13 +92,19 @@ class SettingsController extends Controller
     public function updateExitPassword(Request $request): RedirectResponse
     {
         Gate::authorize('manage-desktop-settings');
+        $settings = $this->settings();
 
         $data = $request->validate([
             'password' => ['required', 'string', 'min:6', 'max:64', 'confirmed'],
         ]);
 
-        Setting::setExitPassword($data['password']);
+        $settings->setExitPassword($data['password']);
 
         return back()->with('success', __('center_password_saved'));
+    }
+
+    private function settings(): CenterSetting
+    {
+        return $this->current->settings() ?? abort(404);
     }
 }

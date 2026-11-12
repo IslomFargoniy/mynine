@@ -32,7 +32,7 @@ use Inertia\Testing\AssertableInertia;
  */
 function practiceAttempt(string $typeName = 'Listening'): array
 {
-    $admin = makeUser('Admin');
+    $admin = makeUser('SuperAdmin');
     $student = makeUser('Student');
     ['test' => $test, 'testType' => $testType, 'part' => $part] = makeTestContent($admin, $typeName);
 
@@ -169,7 +169,7 @@ test('the exam room never exposes module scores while the attempt is running', f
 
 test('a module submitted twice queues its essays once and finishing the attempt does not queue them again', function () {
     Bus::fake([EvaluateEssayJob::class]);
-    $admin = makeUser('Admin');
+    $admin = makeUser('SuperAdmin');
     $student = makeUser('Student');
     ['test' => $test, 'testType' => $testType, 'part' => $part] = makeTestContent($admin, 'Writing');
     $essay = makeSection($part, 'essay', 'Write');
@@ -262,7 +262,7 @@ test('slashes between digits are part of the answer; between words they separate
 // 6. Writing band
 
 test('the writing band is (T1 + 2*T2) / 3 on the attempt page and the PDF, and a confirmed band wins', function () {
-    $admin = makeUser('Admin');
+    $admin = makeUser('SuperAdmin');
     $student = makeUser('Student');
     ['test' => $test, 'testType' => $testType, 'part' => $part] = makeTestContent($admin, 'Writing');
     $part2 = Part::create(['test_type_id' => $testType->id, 'name' => 'Task 2', 'minute' => 40]);

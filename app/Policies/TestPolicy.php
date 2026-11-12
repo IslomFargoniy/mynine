@@ -30,7 +30,7 @@ class TestPolicy
      */
     public function manageBank(User $user): bool
     {
-        return $user->hasRole('Admin');
+        return $user->isCenterAdmin();
     }
 
     public function update(User $user, Test $test): bool
@@ -52,6 +52,6 @@ class TestPolicy
             return true;
         }
 
-        return (int) $test->active === 1 && (int) $test->open === 1;
+        return ! $test->isMock() && (int) $test->active === 1 && (int) $test->open === 1;
     }
 }

@@ -23,7 +23,8 @@ class UserObserver
         $authUser = Auth::user();
 
         if ($authUser && $authUser->id != $user->id) {
-            if (! $authUser->hasRole('Admin') && $authUser->telegram_id !== $user->ref_telegram_id) {
+            $isReferrer = $authUser->telegram_id !== null && $authUser->telegram_id === $user->ref_telegram_id;
+            if (! $authUser->can('update', $user) && ! $isReferrer) {
                 throw new \Exception('You are not allowed to access this page');
             }
         }
@@ -36,12 +37,17 @@ class UserObserver
     {
         $authUser = Auth::user();
 
-        // Agar tizim/seeder yoki admin bo'lsa -> ruxsat
-        if (! $authUser || $authUser->hasRole('Admin')) {
+        // Centers (Admin users) are never deleted, by anyone.
+        if ($user->isCenterAdmin()) {
+            throw new \Exception('A center admin cannot be deleted.');
+        }
+
+        // System / seeder or the platform owner: allowed
+        if (! $authUser || $authUser->isSuperAdmin()) {
             return;
         }
 
-        // Admin bo'lmasa faqat o'z yozuvini yoki o'ziga biriktirilgan talabani o'chirishga ruxsat
+        // Otherwise only one's own record or a student assigned to oneself
         if ($authUser->id !== $user->user_id && $authUser->id !== $user->id) {
             throw new \Exception('You are not allowed to access this page');
         }

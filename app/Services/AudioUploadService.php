@@ -4,6 +4,7 @@ namespace App\Services;
 
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Str;
 use Symfony\Component\HttpFoundation\Response;
 
 /**
@@ -20,10 +21,9 @@ class AudioUploadService
      */
     public function store(UploadedFile $file, ?string $oldPath = null): array
     {
-        $originalName = pathinfo($file->getClientOriginalName(), PATHINFO_FILENAME);
-        $originalName = preg_replace('/[^A-Za-z0-9_-]/', '_', $originalName) ?: 'audio';
-        $extension = strtolower($file->getClientOriginalExtension() ?: 'mp3');
-        $fileName = time().'_'.$originalName.'.'.$extension;
+        // Random, unguessable name (the original name and upload time are not exposed or enumerable).
+        $extension = strtolower(preg_replace('/[^A-Za-z0-9]/', '', $file->getClientOriginalExtension()) ?: 'mp3');
+        $fileName = Str::random(32).'.'.$extension;
 
         $relative = $file->storeAs(self::DIRECTORY, $fileName, self::DISK);
 

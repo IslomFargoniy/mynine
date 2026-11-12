@@ -2,6 +2,7 @@
 
 namespace Database\Seeders;
 
+use App\Models\CenterSetting;
 use App\Models\User\User;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\Hash;
@@ -28,7 +29,12 @@ class UserSeeder extends Seeder
                 $user
             );
 
-            $new_user->assignRole('Admin');
+            // Development: the seeded admin is the platform owner and the Admin of the Mynine center.
+            $new_user->assignRole(['Admin', 'SuperAdmin']);
+            CenterSetting::firstOrCreate(
+                ['owner_id' => $new_user->id],
+                ['name' => 'Mynine', 'code' => CenterSetting::MYNINE_CODE, 'status' => CenterSetting::STATUS_ACTIVE],
+            );
         }
     }
 }

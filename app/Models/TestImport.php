@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Models\Concerns\BelongsToCenter;
 use App\Models\User\User;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -16,6 +17,8 @@ use Illuminate\Support\Facades\DB;
  */
 class TestImport extends Model
 {
+    use BelongsToCenter;
+
     public const QUEUED = 'queued';
 
     public const RUNNING = 'running';
@@ -24,7 +27,7 @@ class TestImport extends Model
 
     public const FAILED = 'failed';
 
-    protected $fillable = ['test_id', 'user_id', 'status', 'replace', 'files', 'modules', 'finished_at'];
+    protected $fillable = ['owner_id', 'test_id', 'user_id', 'status', 'replace', 'files', 'modules', 'finished_at'];
 
     protected $casts = [
         'replace' => 'boolean',
@@ -32,6 +35,11 @@ class TestImport extends Model
         'modules' => 'array',
         'finished_at' => 'datetime',
     ];
+
+    protected function fallbackCenterId(): ?int
+    {
+        return $this->test_id ? Test::withoutGlobalScopes()->whereKey($this->test_id)->value('owner_id') : null;
+    }
 
     public function test(): BelongsTo
     {
@@ -52,7 +60,7 @@ class TestImport extends Model
     public static function updateModule(int $id, string $module, array $changes): ?self
     {
         return DB::transaction(function () use ($id, $module, $changes) {
-            $import = self::query()->lockForUpdate()->find($id);
+            $import = self::query()->withoutGlobalScopes()->lockForUpdate()->find($id);
             if (! $import) {
                 return null;
             }

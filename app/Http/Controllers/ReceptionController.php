@@ -6,6 +6,7 @@ use App\Models\Mock;
 use App\Models\MockStudent;
 use App\Services\CandidateService;
 use App\Services\MockResultService;
+use App\Support\CenterBranding;
 use App\Support\Pdf;
 use Carbon\Carbon;
 use Illuminate\Http\RedirectResponse;
@@ -85,7 +86,7 @@ class ReceptionController extends Controller
             ]),
             'candidates' => $this->rows($students),
             'filters' => ['mock_id' => $showAll ? 'all' : $mockId, 'search' => $search],
-            'canDelete' => $request->user()->hasRole('Admin'),
+            'canDelete' => $request->user()->isCenterAdmin(),
         ]);
     }
 
@@ -127,6 +128,7 @@ class ReceptionController extends Controller
         $ids = array_filter(array_map('intval', explode(',', (string) $request->query('ids', ''))));
         abort_if($ids === [], 422, 'Nomzod tanlanmagan.');
 
+        // Scoped to the current center: ids of other centers' candidates are silently skipped.
         $students = MockStudent::query()
             ->with(['mock' => fn ($q) => $q->withoutEagerLoads(), 'attempt.attempt_types.type'])
             ->whereIn('id', $ids)
@@ -134,6 +136,7 @@ class ReceptionController extends Controller
             ->get();
 
         $sheets = [];
+        $brandings = [];
         foreach ($students as $student) {
             $this->authorize('operate', $student->mock);
             $result = $this->results->result($student);
@@ -141,7 +144,13 @@ class ReceptionController extends Controller
                 continue;
             }
 
+            $ownerId = (int) ($student->mock?->owner_id ?? 0);
+            if (! array_key_exists($ownerId, $brandings)) {
+                $brandings[$ownerId] = CenterBranding::forCenter($ownerId ?: null);
+            }
+
             $sheets[] = [
+                'branding' => $brandings[$ownerId],
                 'name' => $student->name,
                 'code' => $student->code,
                 'mock' => $student->mock?->name,

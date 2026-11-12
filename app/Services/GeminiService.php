@@ -4,6 +4,7 @@ namespace App\Services;
 
 use App\Services\Import\AiOutputTruncatedException;
 use App\Services\Import\AiRateLimitException;
+use App\Support\AiUsage;
 use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Http\Client\PendingRequest;
 use Illuminate\Http\Client\RequestException;
@@ -230,6 +231,7 @@ EOT;
         }
 
         $this->guard($response);
+        $this->recordUsage($response);
 
         if ($blocked = $response->json('promptFeedback.blockReason')) {
             throw new RuntimeException("Gemini refused the document ({$blocked}).");
@@ -259,6 +261,21 @@ EOT;
         }
 
         return $decoded;
+    }
+
+    /**
+     * Token counts of a (billed) generateContent response -> ai_usage_logs. Thinking tokens are billed as output.
+     */
+    private function recordUsage(Response $response): void
+    {
+        $usage = (array) $response->json('usageMetadata');
+
+        app(AiUsage::class)->record(
+            'gemini',
+            (string) ($response->json('modelVersion') ?: $this->model()),
+            (int) ($usage['promptTokenCount'] ?? 0),
+            (int) ($usage['candidatesTokenCount'] ?? 0) + (int) ($usage['thoughtsTokenCount'] ?? 0),
+        );
     }
 
     /**

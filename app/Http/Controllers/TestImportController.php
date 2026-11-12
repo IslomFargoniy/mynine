@@ -2,12 +2,14 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\AiUsageLog;
 use App\Models\Option;
 use App\Models\Part;
 use App\Models\Question;
 use App\Models\QuestionType;
 use App\Models\Section;
 use App\Services\OpenAIService;
+use App\Support\AiUsage;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
@@ -57,7 +59,12 @@ class TestImportController extends Controller
         }
 
         try {
-            $parsedData = $this->openAIService->parseTestDocument($text);
+            // Text / Word import into a part: logged as "other", for the center that owns the test.
+            $parsedData = app(AiUsage::class)->during([
+                'owner_id' => $part->test_type?->test?->owner_id,
+                'user_id' => $request->user()?->id,
+                'purpose' => AiUsageLog::PURPOSE_OTHER,
+            ], fn () => $this->openAIService->parseTestDocument($text));
 
             if (isset($parsedData['error'])) {
                 throw new \Exception($parsedData['error']);

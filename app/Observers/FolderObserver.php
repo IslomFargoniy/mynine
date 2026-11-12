@@ -35,12 +35,8 @@ class FolderObserver
 
         $authUser = Auth::user();
 
-        // Agar tizim/seeder yoki admin bo'lsa -> ruxsat
-        if (! $authUser || $authUser->hasRole('Admin')) {
-            return;
-        }
-
-        if ($authUser->id !== $folder->user_id) {
+        // System / seeder: allowed; web requests: the policy (center of the record).
+        if ($authUser && ! $authUser->can('delete', $folder)) {
             throw new \Exception('You are not allowed to access this page');
         }
     }

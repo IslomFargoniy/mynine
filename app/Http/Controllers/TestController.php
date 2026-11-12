@@ -37,10 +37,6 @@ class TestController extends Controller
             });
         }
 
-        if (! Auth::user()->hasRole('Admin')) {
-            $test->whereHas('folder', fn ($query) => $query->where('user_id', Auth::id()));
-        }
-
         return Inertia::render('test/index', [
             'test' => $test->paginate($per_page),
         ]);
@@ -57,7 +53,7 @@ class TestController extends Controller
 
         try {
             $user = Auth::user();
-            if (! $user->hasRole('Admin')) {
+            if (! $user->isCenterAdmin()) {
                 $userTestsCount = DB::table('tests')
                     ->join('folders', 'tests.folder_id', '=', 'folders.id')
                     ->where('folders.user_id', $user->id)

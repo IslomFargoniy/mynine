@@ -67,6 +67,21 @@ class FakeMynineApi implements MynineApi {
   /// demo is not stuck on the waiting screen). Tests leave it off.
   bool autoApprove = false;
 
+  /// Center codes the fake server knows (`MYNINE` is also what an empty code means).
+  Set<String> centerCodes = {'MYNINE', 'DEMO'};
+
+  /// The PC's center as sent in config / registration (null: older server).
+  CenterInfo? center = const CenterInfo(code: 'MYNINE', name: 'Mynine');
+
+  /// Simulates a suspended center: register / login answer 403 `center_suspended`.
+  bool centerSuspended = false;
+
+  /// Bytes served for `fake://logo…` URLs.
+  Uint8List? logoBytes;
+
+  /// `center_code` of the last `registerDevice` call.
+  String? lastCenterCode;
+
   /// Number of `registerDevice` calls that reached the server.
   int registrations = 0;
 
@@ -226,12 +241,18 @@ class FakeMynineApi implements MynineApi {
   @override
   Future<DeviceRegistration> registerDevice({
     required String machineId,
+    String? centerCode,
     required String password,
     String? name,
     required String osVersion,
     required String appVersion,
   }) async {
     await _io('registerDevice');
+    lastCenterCode = centerCode;
+    final code = (centerCode ?? '').trim().toUpperCase();
+    if (code.isNotEmpty && !centerCodes.contains(code)) {
+      throw ApiException(code: ApiErrorCode.invalidCenterCode, statusCode: 422, message: 'Unknown center code.');
+    }
     if (centerPasswordMissing) {
       throw ApiException(
         code: ApiErrorCode.setupPasswordMissing,
@@ -241,6 +262,9 @@ class FakeMynineApi implements MynineApi {
     }
     if (password != exitPassword) {
       throw ApiException(code: ApiErrorCode.invalidPassword, statusCode: 422, message: 'Wrong center password.');
+    }
+    if (centerSuspended) {
+      throw ApiException(code: ApiErrorCode.centerSuspended, statusCode: 403, message: 'This center is suspended.');
     }
     registrations++;
     final clean = name?.trim() ?? '';
@@ -259,6 +283,7 @@ class FakeMynineApi implements MynineApi {
       number: approved ? number : null,
       approved: approved,
       exitPasswordOffline: registerReturnsOfflineHash ? offlineHash : null,
+      center: _center(),
     );
   }
 
@@ -315,8 +340,11 @@ class FakeMynineApi implements MynineApi {
       approved: true,
       backgroundUrl: backgroundBytes == null ? null : 'fake://background',
       backgroundSha256: backgroundBytes == null ? null : sha256.convert(backgroundBytes!).toString(),
+      center: _center(),
     );
   }
+
+  CenterInfo? _center() => center?.copyWith(suspended: center!.suspended || centerSuspended);
 
   // ---- Exam auth -------------------------------------------------------------
 
@@ -324,6 +352,9 @@ class FakeMynineApi implements MynineApi {
   Future<LoginResponse> login(String code) async {
     await _io('login');
     _requireApproved();
+    if (centerSuspended) {
+      throw ApiException(code: ApiErrorCode.centerSuspended, statusCode: 403, message: 'This center is suspended.');
+    }
     final c = code.trim().toUpperCase();
     if (!c.startsWith('DEMO')) {
       throw ApiException(
@@ -645,6 +676,9 @@ class FakeMynineApi implements MynineApi {
   }
 
   @override
+  bool isApiUrl(String url) => url.startsWith('fake://');
+
+  @override
   Future<File> download(
     String url,
     File target, {
@@ -660,6 +694,8 @@ class FakeMynineApi implements MynineApi {
     }
     final bytes = url == 'fake://background'
         ? backgroundBytes!
+        : url.startsWith('fake://logo')
+        ? logoBytes!
         : url.startsWith('fake://audio')
             ? _audio()
             : _installer();

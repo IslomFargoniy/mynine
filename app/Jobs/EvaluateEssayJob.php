@@ -2,9 +2,11 @@
 
 namespace App\Jobs;
 
+use App\Models\AiUsageLog;
 use App\Models\AttemptAnswer;
 use App\Models\AttemptType;
 use App\Services\OpenAIService;
+use App\Support\AiUsage;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
@@ -85,7 +87,10 @@ class EvaluateEssayJob implements ShouldQueue
             }
 
             $openAIService = app(OpenAIService::class);
-            $resultJson = $openAIService->evaluateEssay($task, $question, $essay);
+            $resultJson = app(AiUsage::class)->during(
+                $this->usageContext($answer),
+                fn () => $openAIService->evaluateEssay($task, $question, $essay),
+            );
 
             $data = json_decode((string) $resultJson, true);
             $band = is_array($data) ? self::normalizeBand($data['overall'] ?? null) : null;
@@ -143,6 +148,23 @@ class EvaluateEssayJob implements ShouldQueue
             $answer->review_note_ai = "Baholashda xatolik yuz berdi (3 marta urinishdan so'ng). Iltimos, qayta baholashni so'rang.";
             $answer->save();
         }
+    }
+
+    /**
+     * Usage log context: the center of the mock (practice answers: null = Mynine practice).
+     *
+     * @return array<string, mixed>
+     */
+    private function usageContext(AttemptAnswer $answer): array
+    {
+        $attempt = $answer->attempt_part?->attempt()->withoutGlobalScopes()->first();
+
+        return [
+            'owner_id' => $attempt?->centerId(),
+            'user_id' => $attempt?->user_id,
+            'purpose' => AiUsageLog::PURPOSE_WRITING_EVAL,
+            'attempt_answer_id' => $answer->id,
+        ];
     }
 
     private function moduleReviewed(?AttemptAnswer $answer): bool

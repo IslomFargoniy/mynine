@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Desktop;
 use App\Http\Controllers\Controller;
 use App\Models\Device;
 use App\Services\Desktop\ReleaseManifest;
+use App\Support\CurrentCenter;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Gate;
@@ -13,13 +14,18 @@ use Inertia\Inertia;
 use Inertia\Response;
 
 /**
- * Exam PCs (Admin): approve, block/unblock, rename, delete.
+ * Exam PCs of the current center (its Admin): approve, block/unblock, rename, delete.
+ * Device::query() and route model binding are limited to the current center (CenterScope).
  */
 class DeviceController extends Controller
 {
+    public function __construct(private readonly CurrentCenter $center) {}
+
     public function index(ReleaseManifest $manifest): Response
     {
         $this->authorize('viewAny', Device::class);
+        $settings = $this->center->settings();
+        $canManage = Gate::allows('manage-desktop-settings');
 
         $online = (int) config('desktop.online_seconds', 60);
         $latest = $manifest->latestVersion();
@@ -60,11 +66,12 @@ class DeviceController extends Controller
             'devices' => $devices,
             'latestVersion' => $latest,
             'nextNumber' => Device::nextFreeNumber(),
-            'centerPassword' => Gate::allows('manage-desktop-settings') ? SettingsController::centerPasswordStatus() : null,
-            'canManageSettings' => Gate::allows('manage-desktop-settings'),
-            'background' => Gate::allows('manage-desktop-settings') && ($bg = SettingsController::background())
+            'centerPassword' => $canManage ? SettingsController::centerPasswordStatus($settings) : null,
+            'canManageSettings' => $canManage,
+            'background' => $canManage && ($bg = $settings?->backgroundInfo())
                 ? ['sha256' => $bg['sha256'], 'updatedAt' => $bg['updatedAt']]
                 : null,
+            'centerCode' => $settings?->code,
             // Installer published in public/desktop (served as a static file by nginx).
             'installer' => $release ? [
                 'version' => $release['version'],
@@ -125,13 +132,16 @@ class DeviceController extends Controller
     }
 
     /**
-     * Exam-room number: 1..999, unique among all PCs (approved or not).
+     * Exam-room number: 1..999, unique among the center's PCs (approved or not).
      *
      * @return array<int, mixed>
      */
     private function numberRules(Device $device): array
     {
-        return ['required', 'integer', 'between:1,'.Device::MAX_NUMBER, Rule::unique('devices', 'number')->ignore($device->id)];
+        return [
+            'required', 'integer', 'between:1,'.Device::MAX_NUMBER,
+            Rule::unique('devices', 'number')->where('owner_id', $device->owner_id)->ignore($device->id),
+        ];
     }
 
     public function destroy(Device $device): RedirectResponse

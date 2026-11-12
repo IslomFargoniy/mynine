@@ -3,7 +3,28 @@ import type { Config } from 'ziggy-js';
 
 export interface Auth {
     user: User;
-    roles: Role[];
+    /** What the user may do (server-computed; a center = its Admin user). */
+    access?: Access | null;
+    /** The center the staff user works for right now (SuperAdmin: the one chosen on the Centers page). */
+    center?: CenterSummary | null;
+}
+
+export interface Access {
+    superAdmin: boolean;
+    centerAdmin: boolean;
+    reception: boolean;
+    manageContent: boolean;
+}
+
+export interface CenterSummary {
+    id: number;
+    name: string;
+    code: string;
+    logo_url: string | null;
+    status: 'active' | 'suspended';
+    contract_until: string | null;
+    suspended: boolean;
+    is_mynine: boolean;
 }
 
 export interface Role {

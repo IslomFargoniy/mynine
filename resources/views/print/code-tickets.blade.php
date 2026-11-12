@@ -2,7 +2,9 @@
     Candidate code tickets for an 80 mm thermal receipt printer (Xprinter), laid out like a shop receipt:
     header (center, mock, date), the code large, the candidate's name and a short instruction. Black only,
     one ticket per page (the driver cuts after each page). The page has an explicit size — Chrome ignores
-    "size: 80mm auto" and falls back to A4. Opens the print dialog on load and closes / goes back after printing.
+    "size: 80mm auto" and falls back to A4. A partner center's ticket shows its logo (grayscale) and name on top and
+    "Powered by Mynine" at the bottom ($branding from CenterBranding; null for the Mynine center).
+    Opens the print dialog on load and closes / goes back after printing.
 --}}
 @php
     // Monospace bold glyphs advance ~0.6em; keep a small safety margin inside the 66 mm text area.
@@ -37,6 +39,7 @@
             break-after: page;
         }
         .ticket:last-child { page-break-after: auto; break-after: auto; }
+        .center-logo { display: block; max-width: 40mm; max-height: 12mm; margin: 0 auto 1mm; filter: grayscale(1) contrast(1.4); }
         .brand { font-size: 4.2mm; font-weight: 900; letter-spacing: 0.6mm; text-transform: uppercase; }
         .sub { font-size: 3mm; margin-top: 0.8mm; }
         .rule { width: 100%; border-top: 0.4mm dashed #000; margin: 2.5mm 0; }
@@ -54,7 +57,14 @@
 <body>
     @foreach ($students as $student)
         <div class="ticket" data-id="{{ $student->id }}">
-            <div class="brand">Mynine · IELTS</div>
+            @if ($branding)
+                @if ($logo = $branding->logoUrl())
+                    <img class="center-logo" src="{{ $logo }}" alt="">
+                @endif
+                <div class="brand">{{ $branding->name }}</div>
+            @else
+                <div class="brand">Mynine · IELTS</div>
+            @endif
             <div class="sub">{{ $mock->name }}@if ($examDate) · {{ $examDate }}@endif</div>
             <div class="rule"></div>
             <div class="label">{{ __('ticket_code_label') }}</div>
@@ -62,7 +72,7 @@
             <div class="name">{{ $student->name }}</div>
             <div class="rule"></div>
             <div class="note">{{ __('ticket_note') }}</div>
-            <div class="foot">mynine.uz · {{ now()->format('d.m.Y H:i') }}</div>
+            <div class="foot">{{ $branding ? 'Powered by Mynine' : 'mynine.uz' }} · {{ now()->format('d.m.Y H:i') }}</div>
         </div>
     @endforeach
 

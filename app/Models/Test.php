@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Models\Concerns\BelongsToCenter;
 use Database\Factories\TestFactory;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -9,7 +10,7 @@ use Illuminate\Database\Eloquent\Model;
 
 class Test extends Model
 {
-    use HasFactory;
+    use BelongsToCenter, HasFactory;
 
     public const PURPOSE_PRACTICE = 'practice';
 
@@ -45,6 +46,18 @@ class Test extends Model
         'bank_status' => self::BANK_DRAFT,
         'variant' => self::VARIANT_ACADEMIC,
     ];
+
+    /**
+     * Practice tests are the platform's (Mynine's) public content and visible to everyone; Mock Bank tests
+     * belong to one center.
+     */
+    public function applyCenterScope(Builder $builder, int $centerId): void
+    {
+        $builder->where(fn (Builder $q) => $q
+            ->where($this->qualifyColumn('purpose'), '!=', self::PURPOSE_MOCK)
+            ->orWhereNull($this->qualifyColumn('purpose'))
+            ->orWhere($this->qualifyColumn('owner_id'), $centerId));
+    }
 
     /**
      * Tests solvable on the website (never Mock Bank tests).

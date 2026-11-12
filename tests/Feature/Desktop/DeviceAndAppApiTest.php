@@ -1,7 +1,6 @@
 <?php
 
 use App\Models\Device;
-use App\Models\Setting;
 use App\Services\Desktop\ReleaseManifest;
 
 test('device registration stores only the token hash and re-registering rotates it', function () {
@@ -32,6 +31,7 @@ test('device registration stores only the token hash and re-registering rotates 
 });
 
 test('registration requires the center password', function () {
+    defaultCenter();
     $body = ['machine_id' => 'GUID-P', 'name' => 'PC-P'];
 
     // No desktop password configured yet → the PC cannot be set up at all.
@@ -226,8 +226,9 @@ test('the old release API endpoints are gone', function () {
 });
 
 test('the center password command also answers to desktop:center-password', function () {
+    defaultCenter();
     $this->artisan('desktop:center-password', ['password' => 'center-12'])->assertSuccessful();
-    expect(Setting::checkExitPassword('center-12'))->toBeTrue();
+    expect(centerSettings()->checkExitPassword('center-12'))->toBeTrue();
 
     $this->artisan('desktop:exit-password', ['password' => 'short'])->assertFailed();
 });

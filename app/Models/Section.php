@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Models\Concerns\SanitizesContentHtml;
 use Database\Factories\SectionFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -10,6 +11,13 @@ class Section extends Model
 {
     /** @use HasFactory<SectionFactory> */
     use HasFactory;
+
+    use SanitizesContentHtml;
+
+    protected function sanitizesHtmlAlways(): bool
+    {
+        return true;
+    }
 
     protected $fillable = [
         'part_id',

@@ -14,13 +14,15 @@ use App\Services\Import\MockTestPdfParser;
 use App\Services\MockBankService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Gate;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\ValidationException;
 use Inertia\Inertia;
 use Inertia\Response;
 
 /**
- * Mock Bank (Admin): tests with purpose=mock, listed per module with readiness and reuse info.
+ * Mock Bank (the center's Admin): the center's tests with purpose=mock (Test::query() and {test} are limited
+ * to the current center's Mock Bank tests by CenterScope), listed per module with readiness and reuse info.
  */
 class MockBankController extends Controller
 {
@@ -83,7 +85,9 @@ class MockBankController extends Controller
 
         return Inertia::render('mock-bank/index', [
             'tests' => $rows,
-            'folders' => Folder::query()->select('id', 'name')->orderBy('name')->get(),
+            // Moving a test to the public practice Test Bank is the platform owner's decision.
+            'folders' => Gate::allows('manage-content') ? Folder::query()->select('id', 'name')->orderBy('name')->get() : [],
+            'canMoveToPractice' => Gate::allows('manage-content'),
             'reuseDays' => $this->bank->reuseDays(),
             'filters' => ['status' => $status, 'search' => $search],
         ]);
@@ -93,6 +97,7 @@ class MockBankController extends Controller
     {
         $this->authorize('manageBank', Test::class);
         abort_unless($test->isMock(), 404);
+        $this->authorize('update', $test);
 
         $data = $request->validate([
             'status' => ['required', Rule::in([Test::BANK_DRAFT, Test::BANK_READY, Test::BANK_ARCHIVED])],
@@ -114,6 +119,7 @@ class MockBankController extends Controller
     public function toPractice(Request $request, Test $test): RedirectResponse
     {
         $this->authorize('manageBank', Test::class);
+        Gate::authorize('manage-content');
         if (! $test->isMock()) {
             // Already a practice test (e.g. a double click): nothing to do.
             return back()->with('success', __('test_already_practice'));
@@ -140,6 +146,7 @@ class MockBankController extends Controller
     {
         $this->authorize('manageBank', Test::class);
         abort_unless($test->isMock(), 404);
+        $this->authorize('update', $test);
 
         $document = ['nullable', 'file', 'mimes:pdf,docx,txt', 'max:20480'];
         $data = $request->validate([
@@ -183,6 +190,7 @@ class MockBankController extends Controller
         }
 
         $import = TestImport::create([
+            'owner_id' => $test->owner_id,
             'test_id' => $test->id,
             'user_id' => $request->user()->id,
             'status' => TestImport::QUEUED,

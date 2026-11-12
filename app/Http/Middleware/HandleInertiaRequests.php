@@ -2,6 +2,8 @@
 
 namespace App\Http\Middleware;
 
+use App\Models\User\User;
+use App\Support\CurrentCenter;
 use Illuminate\Foundation\Inspiring;
 use Illuminate\Http\Request;
 use Inertia\Middleware;
@@ -45,6 +47,11 @@ class HandleInertiaRequests extends Middleware
             'quote' => ['message' => trim($message), 'author' => trim($author)],
             'auth' => [
                 'user' => $request->user(),
+                'access' => fn () => $this->access($request->user()),
+                // The center the staff user works for (the SuperAdmin: the one chosen on the Centers page).
+                'center' => fn () => $request->user() instanceof User && $request->user()->isStaff()
+                    ? app(CurrentCenter::class)->settings($request->user()->centerId())?->summary()
+                    : null,
             ],
             'ziggy' => fn (): array => [
                 ...(new Ziggy)->toArray(),
@@ -57,6 +64,23 @@ class HandleInertiaRequests extends Middleware
                 'warning' => $request->session()->get('warning'),
                 'info' => $request->session()->get('info'),
             ],
+        ];
+    }
+
+    /**
+     * @return array{superAdmin: bool, centerAdmin: bool, reception: bool, manageContent: bool}|null
+     */
+    private function access(?User $user): ?array
+    {
+        if (! $user) {
+            return null;
+        }
+
+        return [
+            'superAdmin' => $user->isSuperAdmin(),
+            'centerAdmin' => $user->isCenterAdmin(),
+            'reception' => $user->isReception(),
+            'manageContent' => $user->can('manage-content'),
         ];
     }
 }

@@ -25,6 +25,8 @@ abstract final class SettingsKeys {
   static const deviceApproved = 'device_approved';
   static const serverUrl = 'server_url';
   static const deviceConfig = 'device_config_json';
+  /// Last center code entered on the Setup screen / admin menu (prefilled).
+  static const centerCode = 'center_code';
 }
 
 class SecureSettingsStore implements SettingsStore {

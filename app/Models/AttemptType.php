@@ -37,6 +37,22 @@ class AttemptType extends Model
         'type',
     ];
 
+    protected static function booted(): void
+    {
+        // Billing: the first written module a mock candidate starts records them once, immutably.
+        static::created(function (AttemptType $attemptType) {
+            $typeName = Type::query()->whereKey($attemptType->type_id)->value('name');
+            if (! in_array($typeName, Attempt::DESKTOP_MODULE_ORDER, true)) {
+                return;
+            }
+
+            $attempt = Attempt::withoutGlobalScopes()->withoutEagerLoads()->find($attemptType->attempt_id);
+            if ($attempt) {
+                CenterBillableCandidate::record($attempt);
+            }
+        });
+    }
+
     public function attempt()
     {
         return $this->belongsTo(Attempt::class, 'attempt_id');

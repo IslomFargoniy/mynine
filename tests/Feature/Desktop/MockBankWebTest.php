@@ -73,7 +73,7 @@ test('tests default to practice purpose and draft bank status', function () {
 });
 
 test('test.show opens the content editor of the first module, Listening first', function () {
-    $admin = makeUser('Admin');
+    $admin = makeUser('SuperAdmin');
     ['test' => $test, 'testType' => $reading] = makeTestContent($admin);
 
     $this->actingAs($admin)->get(route('test.show', $test))->assertRedirect(route('test-type.show', $reading->id));
@@ -83,7 +83,7 @@ test('test.show opens the content editor of the first module, Listening first', 
 });
 
 test('test.show without modules falls back to the folder, or to the Mock Bank for folderless tests', function () {
-    $admin = makeUser('Admin');
+    $admin = makeUser('SuperAdmin');
     $folder = Folder::create(['name' => 'F', 'user_id' => $admin->id, 'active' => 1]);
     $practice = ExamTest::create(['folder_id' => $folder->id, 'name' => 'Empty']);
     $mock = ExamTest::create(['folder_id' => null, 'name' => 'Bank', 'purpose' => 'mock']);
@@ -93,7 +93,7 @@ test('test.show without modules falls back to the folder, or to the Mock Bank fo
 });
 
 test('moving a test to practice twice does not fail', function () {
-    $admin = makeUser('Admin');
+    $admin = makeUser('SuperAdmin');
     ['test' => $test] = makeTestContent($admin, 'Reading', ['purpose' => 'mock', 'open' => 0]);
 
     $this->actingAs($admin)->post(route('mock-bank.to-practice', $test), ['folder_id' => $test->folder_id])->assertSessionHas('success');

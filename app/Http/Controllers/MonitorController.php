@@ -69,13 +69,15 @@ class MonitorController extends Controller
             'mock' => $mock?->only(['id', 'name', 'started_at', 'finished_at', 'require_desktop']),
             'attempts' => $mock ? $this->attemptRows($mock) : [],
             'serverTime' => now()->toIso8601String(),
-            'canControl' => $request->user()->hasRole('Admin'),
+            'canControl' => $request->user()->isCenterAdmin(),
             'violationTypes' => AttemptViolation::TYPES,
         ]);
     }
 
     public function extraTime(Request $request, Attempt $attempt): JsonResponse|RedirectResponse
     {
+        $this->authorizeAttempt('examine', $attempt);
+
         $data = $request->validate([
             'minutes' => ['required', 'integer', 'min:1', 'max:120'],
         ]);
@@ -93,6 +95,8 @@ class MonitorController extends Controller
 
     public function pause(Request $request, Attempt $attempt): JsonResponse|RedirectResponse
     {
+        $this->authorizeAttempt('examine', $attempt);
+
         if ($attempt->finished_at !== null) {
             return $this->respond($request, $attempt, false, __('exam_already_finished'));
         }
@@ -104,6 +108,8 @@ class MonitorController extends Controller
 
     public function resume(Request $request, Attempt $attempt): JsonResponse|RedirectResponse
     {
+        $this->authorizeAttempt('examine', $attempt);
+
         $this->exam->resume($attempt);
 
         return $this->respond($request, $attempt, true, __('exam_resumed'));
@@ -111,6 +117,8 @@ class MonitorController extends Controller
 
     public function forceSubmit(Request $request, Attempt $attempt): JsonResponse|RedirectResponse
     {
+        $this->authorizeAttempt('examine', $attempt);
+
         $this->exam->forceSubmit($attempt);
 
         return $this->respond($request, $attempt, true, __('exam_force_submitted'));
@@ -118,6 +126,8 @@ class MonitorController extends Controller
 
     public function unlock(Request $request, Attempt $attempt): JsonResponse|RedirectResponse
     {
+        $this->authorizeAttempt('operate', $attempt);
+
         $attempt->forceFill(['unlock_requested_at' => now()])->save();
 
         return $this->respond($request, $attempt, true, __('unlock_requested'));
@@ -129,6 +139,8 @@ class MonitorController extends Controller
      */
     public function releaseDevice(Request $request, Attempt $attempt): JsonResponse|RedirectResponse
     {
+        $this->authorizeAttempt('operate', $attempt);
+
         if ($attempt->finished_at !== null) {
             return $this->respond($request, $attempt, false, __('device_release_finished'));
         }
@@ -144,6 +156,17 @@ class MonitorController extends Controller
         });
 
         return $this->respond($request, $attempt, true, __('device_released'));
+    }
+
+    /**
+     * Monitor actions work on mock attempts of the current center only ({attempt} is already limited to the
+     * current center by the Attempt scope; the policy checks the mock's center again).
+     */
+    private function authorizeAttempt(string $ability, Attempt $attempt): void
+    {
+        $mock = $attempt->mock_id ? Mock::withoutEagerLoads()->find($attempt->mock_id) : null;
+        abort_unless($mock, 404);
+        $this->authorize($ability, $mock);
     }
 
     private function respond(Request $request, Attempt $attempt, bool $ok, string $message): JsonResponse|RedirectResponse

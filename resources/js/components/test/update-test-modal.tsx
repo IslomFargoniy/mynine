@@ -50,7 +50,8 @@ export default function UpdateTestModal({ test, open, setOpen, onSuccess }: Upda
     });
 
     const { auth } = usePage().props as unknown as { auth?: Auth };
-    const isAdmin = auth?.user?.roles?.some(role => role.name === 'Admin');
+    // The "open" flag publishes a practice test on the website: platform owner only (Mock Bank tests are never open).
+    const isAdmin = !!auth?.access?.manageContent;
 
     const submit: FormEventHandler = (e) => {
         e.preventDefault();

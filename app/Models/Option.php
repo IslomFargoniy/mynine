@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Jobs\RescoreQuestionJob;
+use App\Models\Concerns\SanitizesContentHtml;
 use Database\Factories\OptionFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -11,6 +12,8 @@ class Option extends Model
 {
     /** @use HasFactory<OptionFactory> */
     use HasFactory;
+
+    use SanitizesContentHtml;
 
     protected $fillable = [
         'section_id',

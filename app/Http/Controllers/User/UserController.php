@@ -49,23 +49,9 @@ class UserController extends Controller
             $user->whereBetween('created_at', $range);
         }
 
-        if (Auth::user()->hasRole('Admin')) {
-            // Admin sees all excluding self
-        } else {
-            // Students shouldn't even be here, but just in case:
-            $user->where('id', Auth::id());
-        }
-
         if ($request->role) {
             $user->whereHas('roles', function ($query) use ($request) {
                 $query->where('name', $request->role);
-            });
-        }
-
-        if (! Auth::user()->hasRole('Admin')) {
-            $user->where(function ($query) {
-                $query->where('user_id', '=', Auth::id())
-                    ->orWhere('ref_telegram_id', '=', Auth::user()->telegram_id);
             });
         }
 
@@ -73,8 +59,8 @@ class UserController extends Controller
 
         return Inertia::render('user/index', [
             'user' => $user,
-            'roles' => Role::all(),
-            'isAdmin' => Auth::user()->hasRole('Admin'),
+            'roles' => Role::query()->whereIn('name', ['Student', 'Reception'])->get(),
+            'isAdmin' => true,
             'filters' => $request->only(['search', 'role', 'from', 'to', 'per_page']),
         ]);
     }
@@ -123,9 +109,7 @@ class UserController extends Controller
      */
     public function show($id)
     {
-        if (! Auth::user()->hasRole('Admin')) {
-            return back()->with('error', __('error.unauthorized_access'));
-        }
+        $this->authorize('viewAny', User::class);
 
         $user = clone User::query()
             ->with([
@@ -176,6 +160,13 @@ class UserController extends Controller
      */
     public function update(UpdateUserRequest $request, User $user)
     {
+        $this->authorize('viewAny', User::class);
+
+        // Center Admins are managed on the Centers page (Replace admin keeps the audit trail).
+        if ($user->isCenterAdmin() && (int) $user->id !== (int) Auth::id()) {
+            throw ValidationException::withMessages(['error' => [__('user_is_center_admin')]]);
+        }
+
         try {
 
             $validated = $request->validated();
@@ -188,10 +179,11 @@ class UserController extends Controller
 
             $user->update($validated);
 
-            if (Auth::user()->hasRole('Admin')) {
-                if (isset($validated['role'])) {
-                    $user->syncRoles($validated['role']);
-                }
+            // Roles given here: Student or Reception (of the Mynine center). Admin / SuperAdmin come from the
+            // Centers page only.
+            if (isset($validated['role']) && in_array($validated['role'], ['Student', 'Reception'], true) && ! $user->isCenterAdmin()) {
+                $user->syncRoles($validated['role']);
+                $user->forceFill(['owner_id' => $validated['role'] === 'Reception' ? Auth::user()->centerId() : null])->saveQuietly();
             }
 
             return back()->with('success', __('updated_successfully'));
@@ -208,6 +200,13 @@ class UserController extends Controller
      */
     public function destroy(User $user)
     {
+        $this->authorize('viewAny', User::class);
+
+        // Centers (Admin users) are never deleted: suspend them on the Centers page.
+        if ($user->isCenterAdmin()) {
+            return redirect()->route('user.index')->withErrors(['error' => __('user_is_center_admin')]);
+        }
+
         if ($user->id === Auth::id()) {
             return redirect()->route('user.index')->withErrors([
                 'error' => __('cannot_delete_self'),

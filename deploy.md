@@ -81,6 +81,16 @@ php artisan audio:privatize             # fayllarni ko'chiradi, DB dagi yo'llarn
 ```
 Buyruq fayllarni `rename` bilan ko'chiradi (xotiraga yuklamaydi), qayta ishga tushirish xavfsiz.
 
+### Test matnlarini tozalash (XSS, bir martalik)
+2026-11 dan boshlab part/section/question/option HTML saqlanayotganda allow-list bilan tozalanadi. Undan oldin
+saqlangan matnlar uchun (avval bazadan backup oling; buyruqni o'ylab ishga tushiring, avtomatik emas):
+```bash
+php artisan content:sanitize --dry-run  # qaysi jadvalda nechta yozuv o'zgarishini ko'rsatadi
+php artisan content:sanitize            # o'zgargan yozuvlarni yozadi (timestamps/eventlar ishlamaydi)
+```
+Qayta ishga tushirish xavfsiz (natija o'zgarmaydi). `<script>`, `on*=` atributlari, `javascript:` havolalar,
+`position`/`url()` kabi CSS olib tashlanadi; `{javob}` bo'shliqlar, jadvallar, rasmlar saqlanadi.
+
 ### Telegram webhook (birinchi marta yoki token o'zgarganda)
 ```bash
 curl -s "https://api.telegram.org/bot<MynineUzBot_TOKEN>/setWebhook?url=https://<domen>/bot/MynineUzBot/webhook"

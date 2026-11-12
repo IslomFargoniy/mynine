@@ -3,11 +3,15 @@
 namespace App\Models;
 
 use App\Jobs\EvaluateEssayJob;
+use App\Models\Scopes\CenterScope;
+use App\Support\CurrentCenter;
 use Carbon\Carbon;
 use Database\Factories\AttemptsFactory;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 
 class Attempt extends Model
@@ -44,6 +48,59 @@ class Attempt extends Model
 
     /** @var array<int>|null|false false = not resolved yet */
     private array|null|false $cachedModuleTestTypeIds = false;
+
+    /**
+     * Mock attempts belong to their mock's center (attempts.owner_id, kept if the mock is deleted later).
+     * Attempts without a center (practice on the website) belong to the platform (Mynine); other centers only
+     * see their own user's practice attempts.
+     */
+    protected static function booted(): void
+    {
+        static::addGlobalScope(new CenterScope);
+
+        static::saving(function (Attempt $attempt) {
+            if ($attempt->mock_id && ($attempt->isDirty('mock_id') || ! $attempt->owner_id)) {
+                $owner = Mock::withoutGlobalScope(CenterScope::class)->withoutEagerLoads()->whereKey($attempt->mock_id)->value('owner_id');
+                if ($owner !== null) {
+                    $attempt->owner_id = (int) $owner;
+                }
+            }
+        });
+    }
+
+    public function applyCenterScope(Builder $builder, int $centerId): void
+    {
+        $isMynine = app(CurrentCenter::class)->isMynine($centerId);
+
+        $builder->where(fn (Builder $q) => $q
+            ->where($this->qualifyColumn('owner_id'), $centerId)
+            // Rows written without the model (owner_id not filled yet): through the mock.
+            ->orWhere(fn (Builder $w) => $w
+                ->whereNull($this->qualifyColumn('owner_id'))
+                ->whereIn($this->qualifyColumn('mock_id'), Mock::centerMockIds($centerId)))
+            ->orWhere(fn (Builder $w) => $w
+                ->whereNull($this->qualifyColumn('owner_id'))
+                ->whereNull($this->qualifyColumn('mock_id'))
+                ->when(! $isMynine, fn (Builder $u) => $u->where($this->qualifyColumn('user_id'), Auth::id() ?? 0))));
+    }
+
+    /**
+     * Center (Admin user id) of a mock attempt, also after its mock was deleted; null for practice attempts.
+     */
+    public function centerId(): ?int
+    {
+        if ($this->owner_id) {
+            return (int) $this->owner_id;
+        }
+
+        if (! $this->mock_id) {
+            return null;
+        }
+
+        $owner = Mock::withoutGlobalScope(CenterScope::class)->withoutEagerLoads()->whereKey($this->mock_id)->value('owner_id');
+
+        return $owner !== null ? (int) $owner : null;
+    }
 
     public function mockStudent()
     {

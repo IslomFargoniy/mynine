@@ -24,13 +24,23 @@
         .overall-value { font-size: 46px; font-weight: bold; margin-top: 4pt; }
         .footer { margin-top: 40pt; font-size: 9px; color: #94a3b8; text-align: center; }
         .page-break { page-break-after: always; }
+        .center-logo { max-height: 44pt; max-width: 200pt; margin-bottom: 4pt; }
+        .center-name { font-size: 24px; font-weight: bold; color: #1e1b4b; letter-spacing: 1pt; }
+        .powered { margin-top: 4pt; font-size: 8px; color: #94a3b8; }
     </style>
 </head>
 <body>
 @foreach ($sheets as $sheet)
     <div class="sheet">
         <div class="center">
-            <div class="brand">Mynine</div>
+            @if ($branding = $sheet['branding'] ?? null)
+                @if ($logo = $branding->logoDataUri())
+                    <img class="center-logo" src="{{ $logo }}" alt="">
+                @endif
+                <div class="center-name">{{ $branding->name }}</div>
+            @else
+                <div class="brand">Mynine</div>
+            @endif
             <div class="subtitle">IELTS Mock Exam Result</div>
         </div>
 
@@ -61,7 +71,12 @@
             <div class="overall-value">{{ number_format($sheet['overall'], 1) }}</div>
         </div>
 
-        <div class="footer">mynine.uz &middot; This is a mock exam result and not an official IELTS Test Report Form.</div>
+        @if ($sheet['branding'] ?? null)
+            <div class="footer">{{ $sheet['branding']->name }} &middot; This is a mock exam result and not an official IELTS Test Report Form.</div>
+            <div class="footer powered" style="margin-top: 4pt;">Powered by Mynine</div>
+        @else
+            <div class="footer">mynine.uz &middot; This is a mock exam result and not an official IELTS Test Report Form.</div>
+        @endif
     </div>
     @if (! $loop->last)
         <div class="page-break"></div>

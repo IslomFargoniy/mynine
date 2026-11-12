@@ -6,6 +6,8 @@ use App\Models\Mock;
 use App\Models\MockStudent;
 use App\Services\CandidateService;
 use App\Services\ExamService;
+use App\Support\CenterBranding;
+use App\Support\CurrentCenter;
 use App\Support\Pdf;
 use Carbon\Carbon;
 use Illuminate\Http\JsonResponse;
@@ -144,7 +146,9 @@ class MockStudentController extends Controller
 
         abort_if($students->isEmpty(), 404, __('candidates_not_found'));
 
-        return Pdf::render('pdf.code-cards', compact('mock', 'students'), 'Codes_'.$mock->id);
+        $branding = CenterBranding::forCenter($mock->owner_id ? (int) $mock->owner_id : null);
+
+        return Pdf::render('pdf.code-cards', compact('mock', 'students', 'branding'), 'Codes_'.$mock->id);
     }
 
     /**
@@ -165,19 +169,26 @@ class MockStudentController extends Controller
 
         abort_if($students->isEmpty(), 404, __('candidates_not_found'));
 
-        return response()->view('print.code-tickets', compact('mock', 'students'));
+        $branding = CenterBranding::forCenter($mock->owner_id ? (int) $mock->owner_id : null);
+
+        return response()->view('print.code-tickets', compact('mock', 'students', 'branding'));
     }
 
     /**
      * Delete candidate (Admin)
      */
-    public function destroy(MockStudent $mockStudent)
+    public function destroy(Request $request, MockStudent $mockStudent)
     {
         $this->authorize('deleteStudents', $mockStudent->mock);
 
         $attempt = $mockStudent->attempt;
         if ($attempt && $attempt->finished_at === null) {
             return back()->with('error', __('candidate_has_running_attempt'));
+        }
+
+        // A candidate who sat a written module is billed and has results: only the platform owner may delete.
+        if (! $request->user()->isSuperAdmin() && $mockStudent->isBilled()) {
+            return back()->with('error', __('candidate_has_exam_results'));
         }
 
         DB::transaction(function () use ($mockStudent) {
@@ -220,6 +231,14 @@ class MockStudentController extends Controller
             throw ValidationException::withMessages([
                 'code' => [__('mock_inactive')],
             ]);
+        }
+
+        if ($mock->owner_id && app(CurrentCenter::class)->isSuspended((int) $mock->owner_id)) {
+            $message = __('center_suspended_exam');
+            if ($request->isMethod('get')) {
+                return redirect('/?error='.urlencode($message));
+            }
+            throw ValidationException::withMessages(['code' => [$message]]);
         }
 
         if ($mock->require_desktop) {

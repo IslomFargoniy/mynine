@@ -48,9 +48,8 @@ const BANDS = Array.from({ length: 19 }, (_, i) => i * 0.5);
 
 function stripHtml(html: string | null): string {
     if (!html) return '';
-    const div = document.createElement('div');
-    div.innerHTML = html;
-    return div.textContent ?? '';
+    // DOMParser documents are inert (no image loads / event handlers), unlike a detached <div>.
+    return new DOMParser().parseFromString(html, 'text/html').body.textContent ?? '';
 }
 
 function ReviewCard({ item }: { item: ReviewItem }) {

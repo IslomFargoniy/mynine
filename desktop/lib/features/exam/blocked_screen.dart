@@ -48,12 +48,15 @@ class _BlockedScreenState extends ConsumerState<BlockedScreen> {
               if (!device.isRegistered) {
                 return SetupView(
                   initialName: device.pcName,
-                  onRegister: (password, name) =>
-                      ref.read(kioskControllerProvider).registerDevice(password: password, name: name),
+                  initialCenterCode: device.lastCenterCode,
+                  onRegister: (centerCode, password, name) => ref
+                      .read(kioskControllerProvider)
+                      .registerDevice(centerCode: centerCode, password: password, name: name),
                 );
               }
               if (device.isApprovalPending) {
                 return PendingApprovalView(
+                  centerName: device.centerName,
                   pcName: device.pcName,
                   machineIdShort: device.machineIdShort,
                   onCheckNow: () => ref.read(kioskControllerProvider).checkApprovalNow(),
