@@ -1442,6 +1442,8 @@
         "code": "Center code",
         "code_hint": "Entered on the exam PCs when they are registered. Set by the platform administrator.",
         "contract": "Contract until",
+        "code_mynine_fixed": "The Mynine center's code is fixed: MYNINE.",
+        "contract_hint": "Leave empty for no end date.",
         "logo_upload": "Upload logo",
         "logo_remove": "Remove logo",
         "logo_remove_confirm": "Remove the logo?",

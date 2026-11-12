@@ -11,6 +11,7 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Validation\Rule;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -40,12 +41,35 @@ class CenterSettingsController extends Controller
         Gate::authorize('manage-center-settings');
         $settings = $this->settings();
 
+        // The code and the contract date are the SuperAdmin's (also editable on the Centers page); a center's own
+        // Admin only changes the name and the logo.
+        $superAdmin = Gate::allows('manage-centers');
+        if ($superAdmin && $request->has('code')) {
+            $request->merge(['code' => CenterSetting::normalizeCode($request->input('code'))]);
+        }
+
         $data = $request->validate([
             'name' => ['required', 'string', 'max:255'],
             'logo' => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'max:2048'],
-        ]);
+        ] + ($superAdmin ? [
+            'code' => ['sometimes', 'required', 'string', 'regex:'.CenterSetting::CODE_PATTERN, Rule::unique('center_settings', 'code')->ignore($settings->id)],
+            'contract_until' => ['sometimes', 'nullable', 'date_format:Y-m-d'],
+        ] : []), [], ['code' => __('center_code')]);
 
+        if (isset($data['code']) && $settings->isMynine() && $data['code'] !== CenterSetting::MYNINE_CODE) {
+            return back()->with('error', __('center_mynine_code_fixed'));
+        }
+
+        $before = $settings->only(['name', 'code', 'contract_until']);
         $settings->forceFill(['name' => $data['name']]);
+        if ($superAdmin) {
+            if (isset($data['code'])) {
+                $settings->code = $data['code'];
+            }
+            if (array_key_exists('contract_until', $data)) {
+                $settings->contract_until = $data['contract_until'];
+            }
+        }
 
         if ($request->hasFile('logo')) {
             $old = $settings->logo_path;
@@ -56,7 +80,7 @@ class CenterSettingsController extends Controller
         }
 
         $settings->save();
-        CenterAuditLog::record('settings_updated', (int) $settings->owner_id);
+        CenterAuditLog::record('settings_updated', (int) $settings->owner_id, ['meta' => ['before' => $before, 'after' => $settings->only(['name', 'code', 'contract_until'])]]);
 
         return back()->with('success', __('center_settings_saved'));
     }

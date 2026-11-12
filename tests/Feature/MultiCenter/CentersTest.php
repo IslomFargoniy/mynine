@@ -551,3 +551,21 @@ test('owner_id is filled from the current center on create', function () {
 
     expect($test->owner_id)->toBe($center->id)->and($import->owner_id)->toBe($center->id);
 });
+
+test('the SuperAdmin edits the code and contract date on Center settings; MYNINE keeps its code', function () {
+    $super = makeSuperAdmin();
+
+    $this->actingAs($super)->post(route('center.settings.update'), ['name' => 'Mynine', 'code' => 'MYNINE', 'contract_until' => '2027-12-31'])
+        ->assertSessionHas('success');
+    expect(centerSettings($super)->fresh()->contract_until->toDateString())->toBe('2027-12-31');
+
+    $this->actingAs($super)->post(route('center.settings.update'), ['name' => 'Mynine', 'code' => 'OTHER'])->assertSessionHas('error');
+    expect(centerSettings($super)->fresh()->code)->toBe('MYNINE');
+
+    $partner = makeCenter('BETA');
+    $this->actingAs($super)->post(route('centers.switch', $partner))->assertRedirect();
+    $this->actingAs($super)->post(route('center.settings.update'), ['name' => 'Beta', 'code' => 'gamma', 'contract_until' => ''])
+        ->assertSessionHas('success');
+    $settings = centerSettings($partner)->fresh();
+    expect($settings->code)->toBe('GAMMA')->and($settings->contract_until)->toBeNull();
+});

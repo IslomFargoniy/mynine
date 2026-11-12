@@ -1442,6 +1442,8 @@
         "code": "Markaz kodi",
         "code_hint": "Imtihon kompyuterlarini ro'yxatdan o'tkazishda kiritiladi. Platforma administratori belgilaydi.",
         "contract": "Shartnoma muddati",
+        "code_mynine_fixed": "Mynine markazining kodi o'zgarmaydi: MYNINE.",
+        "contract_hint": "Muddatsiz bo'lsa bo'sh qoldiring.",
         "logo_upload": "Logotip yuklash",
         "logo_remove": "Logotipni o'chirish",
         "logo_remove_confirm": "Logotip o'chirilsinmi?",
