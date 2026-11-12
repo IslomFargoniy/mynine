@@ -40,7 +40,20 @@ mock-exam + desktop-client work on branch `feat/desktop-mock-system`. The API co
 | Remote unlock of a desktop PC | ✓ | ✓ | — |
 | Confirm Writing, enter Speaking band, assign speaking slots | ✓ | — | — |
 | Print result sheet, mark "delivered" | ✓ | ✓ | — |
-| Users, devices, settings | ✓ | — | — |
+| Devices, center settings, Reception staff (own center) | ✓ | — | — |
+
+**Multi-center (2026-11).** Every Admin is a center; Admin and Reception act only on their own center's mocks,
+candidates, attempts, Mock Bank tests and PCs (Reception: the center of `users.owner_id`). The **SuperAdmin** (platform
+owner, Admin of the Mynine center) also manages centers (Centers page: create, suspend, replace admin, switch the active
+center), practice tests, folders and the website's users, and passes every check. Practice tests, students, blog and the
+public site stay the Mynine center's. A suspended center (status or ended contract) is read-only for its staff, and its
+PCs cannot start exams (`center_suspended`).
+
+Implementation: `App\Support\CurrentCenter` resolves the request's center (user, SuperAdmin session switch, or the
+desktop device); the `CenterScope` global scope (`BelongsToCenter`, `BelongsToCenterThroughMock`, `Attempt`,
+`Test` for Mock Bank tests) limits every query and route-model binding to it, and policies (`ChecksCenter`) check the
+record's center again. `owner_id` lives on `mocks`, `devices`, `tests`, `test_imports` and `users` (Reception staff);
+`mock_students`, `mock_modules` and `attempts` belong to their mock's center. Per-center settings: `center_settings`.
 
 ## Data model changes
 

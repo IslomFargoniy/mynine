@@ -20,6 +20,7 @@ Errors: `{ "message": "...", "code": "<machine_code>" }` with HTTP status. Codes
 `invalid_code` 422, `mock_not_active` 422, `mock_not_started` 422 (+`starts_at`), `mock_finished` 422,
 `attempt_finished` 409, `paused` 409, `module_locked` 409, `module_time_over` 409, `validation_failed` 422,
 v1.1: `session_revoked` 401, `session_expired` 401, `session_active_elsewhere` 409.
+Multi-center (2026-11): `invalid_center_code` 422, `center_suspended` 403 — see "Multi-center" below.
 
 Server rejects exam requests whose `X-Mynine-Client` version is lower than `min_version` of `desktop/version.json` with 426.
 All timestamps are ISO-8601 with offset (server timezone). Every exam response includes `server_time`.
@@ -69,14 +70,16 @@ copy (if it does not have one yet); without it no automatic rollback is possible
 Desktop settings / `php artisan desktop:center-password`, alias of `desktop:exit-password`), so only center staff
 can add a PC. The same center password unlocks the exam screen and opens the app's admin menu.
 
-Body: `{ "machine_id": "<stable GUID from Windows MachineGuid>", "password": "<center password>", "name": "PC-07", "os_version": "Windows 11 23H2", "app_version": "1.0.0" }`
-(`name` optional — default `PC-<last 4 characters of machine_id>`, an existing PC keeps its name).
-Response 200: `{ "device_id": 7, "device_token": "<plain token, shown once>", "name": "PC-07", "number": null, "approved": false, "exit_password_offline": "pbkdf2_sha256$120000$<salt_b64>$<hash_b64>" }`.
+Body: `{ "machine_id": "<stable GUID from Windows MachineGuid>", "center_code": "ACME", "password": "<center password>", "name": "PC-07", "os_version": "Windows 11 23H2", "app_version": "1.0.0" }`
+(`name` optional — default `PC-<last 4 characters of machine_id>`, an existing PC keeps its name; `center_code` optional,
+see "Multi-center": without it the PC registers to the Mynine center).
+Response 200: `{ "device_id": 7, "device_token": "<plain token, shown once>", "name": "PC-07", "number": null, "approved": false, "exit_password_offline": "pbkdf2_sha256$120000$<salt_b64>$<hash_b64>", "center": { "code": "ACME", "name": "Acme Learning", "logo_url": "https://…/storage/centers/logos/….png", "suspended": false } }`.
 - `exit_password_offline` (same value as in `/device/config`): the app stores it right after registering, so a PC that is
   not approved yet (403 `device_not_approved` on `/device/config`) or is blocked later can still verify the center
   password offline (exit / admin menu).
 - Missing / wrong `password` → 422 `invalid_password`.
-- No center password configured on the server → 409 `setup_password_missing` ("… Set the center password in Desktop settings first.").
+- No center password configured for the center → 409 `setup_password_missing` ("… Set the center password in Desktop settings first.").
+- Unknown `center_code` → 422 `invalid_center_code`. Suspended center (after a correct password) → 403 `center_suspended`.
 - Re-registering the same `machine_id` rotates the token and drops the approval (the exam-room number is kept, the admin
   confirms it again). Blocked devices → 403 `device_blocked`.
 - `number` is the exam-room number ("PC 7") the admin gives when approving; it is `null` until the PC is approved.
@@ -100,8 +103,10 @@ Header `X-Device-Token`. Response:
   "exit_password_offline": "pbkdf2_sha256$120000$<salt_b64>$<hash_b64>",
   "banned_processes": ["anydesk.exe","teamviewer.exe","discord.exe","obs64.exe","telegram.exe","chrome.exe","msedge.exe","firefox.exe","zoom.exe","skype.exe"],
   "heartbeat_seconds": 20, "violation_batch_seconds": 10, "server_time": "…",
-  "background_url": "https://mynine.uz/api/v1/device/background", "background_sha256": "…" }
+  "background_url": "https://mynine.uz/api/v1/device/background", "background_sha256": "…",
+  "center": { "code": "ACME", "name": "Acme Learning", "logo_url": null, "suspended": false } }
 ```
+Everything here (center password, background, `center`) is the PC's own center's.
 `background_url` / `background_sha256` are null when no background picture is set (Admin: Exam PCs → Background).
 An idle PC re-reads the config every minute and keeps the picture on disk (verified by SHA-256).
 403 `device_not_approved` until the PC is approved (see "Device approval"). `banned_processes` comes from
@@ -115,7 +120,9 @@ blocks "Start" on the rules screen while any is running.
 
 ### POST /exam/login
 Header `X-Device-Token`. Body: `{ "code": "849201" }` (six digits since 2026-11; older codes still accepted, trimmed). Throttle 10/min per device.
-Checks: code exists, attempt not finished (409 `attempt_finished`), mock active, inside window (`started_at`/`finished_at`).
+Checks: code exists **in a mock of the PC's center** (a code of another center is 422 `invalid_code`, exactly like an
+unknown code), the center is not suspended (403 `center_suspended`), attempt not finished (409 `attempt_finished`), mock
+active, inside window (`started_at`/`finished_at`).
 A candidate who already has an unfinished attempt that was opened on a PC (or has a started Listening / Reading / Writing
 module) **resumes**: the active / not-started / finished checks are skipped (see v1.1 §i). An attempt that only holds an
 early Speaking band (no PC yet) is not a resume. Marks `attended`, `checked_in_at` (if empty), creates the attempt if missing (modules from `mock_modules`), binds `attempts.device_id`, revokes previous exam tokens of this candidate (only one PC at a time).
@@ -464,3 +471,29 @@ still on the public disk are streamed by PHP. The web exam room's `/media/audio/
 
 **New storage:** `attempt_answers.client_seq` (unsigned bigint, nullable), `attempt_answers.late_synced` (bool, default
 false), `attempt_types.offline_at_end` (bool, nullable) — migration `2026_11_11_000002_add_v11_sync_columns`.
+
+---
+
+## Multi-center (server, 2026-11)
+
+The platform is rented to several learning centers. **A center is its Admin user**; mocks, candidates, attempts, Mock
+Bank tests and exam PCs belong to one center (`owner_id` = the Admin's user id). The existing data belongs to the
+**Mynine** center (code `MYNINE`).
+
+- **Center code**: short, unique, uppercase `A-Z0-9`, 3–12 characters (Admin: Center settings, read-only there; set by
+  the platform owner on the Centers page). The app asks for it together with the center password when registering a PC
+  and sends it as `center_code` (case-insensitive) on `POST /device/register`.
+- **Backward compatible**: a client that sends no `center_code` registers to the Mynine center, and only the Mynine
+  center's password is accepted — exactly the old behaviour.
+- A PC belongs to the center it registered with. Re-registering with another center's code moves it there (number and
+  current attempt are cleared, approval is required again). PC numbers are unique per center.
+- `GET /device/config`, `/device/background`, `/device/unlock` and the offline hash use the PC's center's settings;
+  `config.center` = `{ code, name, logo_url, suspended }` (logo for the code screen; `logo_url` may be null).
+- `POST /exam/login` only finds candidates of the PC's center: any other code is 422 `invalid_code` (other centers are
+  never revealed). Candidate codes stay six digits and unique across all centers. Exam tokens only work through a PC
+  of the candidate's center.
+- **Suspended center** (suspended by the platform owner, or `contract_until` has passed): `POST /exam/login` and
+  `POST /device/register` answer **403 `center_suspended`** ("This center is suspended…"). The app shows the message on
+  the code / registration screen; it is not retried automatically. An exam that is already running is not interrupted.
+  The center's staff can still sign in to the web panel read-only (view and print results).
+
