@@ -82,9 +82,9 @@ class _SoundCheckScreenState extends ConsumerState<SoundCheckScreen> {
             // Header: bg-gradient-to-r from-blue-600 to-indigo-600 p-6 text-center
             Container(
               padding: const EdgeInsets.all(24),
-              decoration: const BoxDecoration(
-                gradient: LinearGradient(colors: [WebTokens.gradientFrom, WebTokens.gradientTo]),
-              ),
+              // Solid colour, not a gradient: some exam PCs' GPU drivers draw gradients as nothing, which left
+              // the white title on a white card (same for the Start button below).
+              color: WebTokens.gradientFrom,
               child: Column(children: [
                 Container(
                   width: 56,
@@ -201,7 +201,7 @@ class _SoundCheckScreenState extends ConsumerState<SoundCheckScreen> {
                   child: Ink(
                     padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 16),
                     decoration: BoxDecoration(
-                      gradient: const LinearGradient(colors: [WebTokens.gradientFrom, WebTokens.gradientTo]),
+                      color: WebTokens.gradientFrom,
                       borderRadius: BorderRadius.circular(12),
                       boxShadow: const [BoxShadow(color: Color(0x402B7FFF), blurRadius: 15, offset: Offset(0, 10))],
                     ),

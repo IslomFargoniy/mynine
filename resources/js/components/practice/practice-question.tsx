@@ -266,7 +266,7 @@ export default function PracticeQuestion({
     };
 
     return (
-        <div id={`question-${question.id}`} key={question.id} className={`mb-4 select-none ${section.question_type.type === 'matching' ? 'py-1' : 'py-1.5'}`}>
+        <div id={`question-${question.id}`} key={question.id} className={`mb-4 ${section.question_type.type === 'matching' ? 'py-1' : 'py-1.5'}`}>
             <div className="flex items-start gap-2.5">
                 <span
                     onClick={toggleFlag}

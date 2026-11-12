@@ -664,34 +664,38 @@ mark.ielts-highlight-span:hover * {
 
 /* Standalone gap-fill input class (used outside .ielts-passage containers) */
 .ielts-gap-input {
+    /* IELTS computer-delivered style: a square-cornered box, blue frame while typing. */
     display: inline-block !important;
-    vertical-align: baseline !important;
+    vertical-align: middle !important;
     white-space: nowrap !important;
     width: 10em;
-    border: none !important;
-    border-bottom: 2px solid #000 !important;
+    border: 1px solid #000 !important;
     border-radius: 0 !important;
-    background: transparent !important;
+    background: #fff !important;
     outline: none !important;
-    padding: 2px 4px !important;
-    margin: 0 4px !important;
+    padding: 1px 6px !important;
+    margin: 1px 4px !important;
     font-size: inherit !important;
     font-family: inherit !important;
-    color: inherit !important;
+    color: #000 !important;
     line-height: 1.4 !important;
     box-shadow: none !important;
 }
 
 .ielts-gap-input:focus {
-    border-bottom-color: #2563eb !important;
+    border-color: #2563eb !important;
+    box-shadow: 0 0 0 1px #2563eb !important;
 }
 
 .dark .ielts-gap-input {
-    border-bottom-color: var(--color-primary) !important;
+    border-color: var(--color-primary) !important;
+    background: transparent !important;
+    color: inherit !important;
 }
 
 .dark .ielts-gap-input:focus {
-    border-bottom-color: oklch(0.8 0.18 260) !important;
+    border-color: oklch(0.8 0.18 260) !important;
+    box-shadow: 0 0 0 1px oklch(0.8 0.18 260) !important;
 }
 
 /* ===== Hide Scrollbar Utility ===== */

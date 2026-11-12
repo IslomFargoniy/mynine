@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:io';
 
+import 'package:flutter/gestures.dart' show DragStartBehavior;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -32,14 +33,16 @@ class ExamShell extends ConsumerStatefulWidget {
 
 class _ExamShellState extends ConsumerState<ExamShell> {
   final Map<int, GlobalKey> _questionKeys = {};
-  double _split = WebTokens.splitDefault;
-  bool _dividerHover = false;
+  /// Passage width share. A notifier (not setState) so dragging the divider rebuilds only the split row,
+  /// never the passage and question widgets themselves (that made the drag lag on the exam PCs).
+  final _split = ValueNotifier<double>(WebTokens.splitDefault);
   bool _notesOpen = false;
   HighlightStore? _store;
 
   @override
   void dispose() {
     _store?.dispose();
+    _split.dispose();
     super.dispose();
   }
 
@@ -186,6 +189,7 @@ class _ExamShellState extends ConsumerState<ExamShell> {
       palette: palette,
       keys: _questionKeys,
       images: (src) => _resolveImage(exam, src),
+      store: _storeFor(exam),
     );
     final column = Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
       for (final s in part.sections) SectionView(key: ValueKey('s-${s.id}'), section: s, ctx: ctx),
@@ -222,52 +226,61 @@ class _ExamShellState extends ConsumerState<ExamShell> {
       onToggleNotes: () => setState(() => _notesOpen = !_notesOpen),
       imageResolver: (src) => _resolveImage(exam, src),
     );
+    // Built once per shell build; the split row below reuses these same instances while dragging, so Flutter
+    // only re-lays them out at the new width instead of rebuilding every text block and question.
+    final passage = RepaintBoundary(child: left);
+    final questions = RepaintBoundary(child: _questionsPane(exam, part, palette, constrained: !module.isWriting));
+    final paneBorder = BoxDecoration(
+      color: palette.background,
+      border: Border(
+        right: BorderSide(
+          color: palette.standard ? WebTokens.paneLeftBorder : palette.text,
+          width: WebTokens.paneLeftBorderWidth,
+        ),
+      ),
+    );
     return LayoutBuilder(builder: (context, c) {
       final available = c.maxWidth - WebTokens.dividerWidth;
-      final leftWidth = available * _split;
-      return Row(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
-        Container(
-          width: leftWidth,
-          decoration: BoxDecoration(
-            color: palette.background,
-            border: Border(
-              right: BorderSide(
-                color: palette.standard ? WebTokens.paneLeftBorder : palette.text,
-                width: WebTokens.paneLeftBorderWidth,
-              ),
+      return ValueListenableBuilder<double>(
+        valueListenable: _split,
+        builder: (context, split, _) {
+          final leftWidth = available * split;
+          return Row(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
+            Container(width: leftWidth, decoration: paneBorder, child: passage),
+            _Divider(
+              onDrag: (dx) => _split.value =
+                  ((available * _split.value + dx) / available).clamp(WebTokens.splitMin, WebTokens.splitMax),
             ),
-          ),
-          child: left,
-        ),
-        _Divider(
-          hover: _dividerHover,
-          onHover: (v) => setState(() => _dividerHover = v),
-          onDrag: (dx) => setState(() {
-            _split = ((leftWidth + dx) / available).clamp(WebTokens.splitMin, WebTokens.splitMax);
-          }),
-        ),
-        Expanded(child: _questionsPane(exam, part, palette, constrained: !module.isWriting)),
-      ]);
+            Expanded(child: questions),
+          ]);
+        },
+      );
     });
   }
 }
 
 /// Resizable divider: `w-2.5 bg-gray-300 hover:bg-blue-600 cursor-col-resize`
 /// with a white handle showing "⟷".
-class _Divider extends StatelessWidget {
-  const _Divider({required this.hover, required this.onHover, required this.onDrag});
-  final bool hover;
-  final ValueChanged<bool> onHover;
+class _Divider extends StatefulWidget {
+  const _Divider({required this.onDrag});
   final ValueChanged<double> onDrag;
+
+  @override
+  State<_Divider> createState() => _DividerState();
+}
+
+class _DividerState extends State<_Divider> {
+  bool hover = false;
 
   @override
   Widget build(BuildContext context) => MouseRegion(
         cursor: SystemMouseCursors.resizeColumn,
-        onEnter: (_) => onHover(true),
-        onExit: (_) => onHover(false),
+        onEnter: (_) => setState(() => hover = true),
+        onExit: (_) => setState(() => hover = false),
         child: GestureDetector(
           behavior: HitTestBehavior.opaque,
-          onHorizontalDragUpdate: (d) => onDrag(d.delta.dx),
+          dragStartBehavior: DragStartBehavior.down,
+          onHorizontalDragUpdate: (d) => widget.onDrag(d.delta.dx),
           child: Container(
             key: const Key('split-divider'),
             width: WebTokens.dividerWidth,
@@ -974,7 +987,8 @@ class ExamFooter extends StatelessWidget {
             child: SingleChildScrollView(
               scrollDirection: Axis.horizontal,
               child: Padding(
-                padding: const EdgeInsets.symmetric(vertical: 6),
+                // Right inset: the flag star sits 4px outside the last number and the scroll view clips at its edge.
+                padding: const EdgeInsets.fromLTRB(0, 6, 8, 6),
                 child: Row(children: [
                   for (final (i, q) in p.allQuestions.indexed) ...[
                     if (i > 0) const SizedBox(width: 8), // gap-2

@@ -83,7 +83,8 @@ class LockdownMonitor {
       _multiMonitorReported = false;
     }
     await closeBannedProcesses();
-    await lockdown.clearClipboard();
+    // The clipboard is cleared once when the exam starts (nothing comes in from outside); it is not cleared on
+    // every scan any more, so Ctrl+C / Ctrl+V between the passage, questions and answers work.
   }
 
   /// Finds running banned apps, closes them and reports each one

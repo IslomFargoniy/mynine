@@ -9,6 +9,7 @@ import '../../data/repositories/answer_queue.dart' show kMaxAnswerChars;
 import '../exam/exam_controller.dart';
 import '../passage/html_document.dart';
 import '../passage/html_view.dart';
+import '../passage/passage_pane.dart' show HighlightStore, SelectableHtml, questionDocId;
 import 'range.dart';
 
 // Widgets in this file reproduce resources/js/components/practice/
@@ -24,6 +25,7 @@ class QuestionContext {
     required this.palette,
     required this.keys,
     this.images,
+    this.store,
   });
 
   final ExamController exam;
@@ -33,6 +35,9 @@ class QuestionContext {
   /// Question id → key, used by the number bar to scroll to a question.
   final Map<int, GlobalKey> keys;
   final ImageResolver? images;
+
+  /// Highlights + notes (null: plain text, e.g. in tests or the review screen).
+  final HighlightStore? store;
 
   GlobalKey keyFor(int questionId) => keys.putIfAbsent(questionId, GlobalKey.new);
 
@@ -61,17 +66,41 @@ class QuestionContext {
   TextStyle get questionStyle =>
       inter(WebTokens.questionFontSize, color: palette.text, height: WebTokens.questionLineHeight);
 
-  HtmlView html(String html, TextStyle style, {RegExp? blanks, BlankBuilder? blankBuilder, bool inline = false}) =>
-      HtmlView(
-        document: parseHtmlCached(html, blankPattern: blanks),
+  /// [docId]: highlight document of this text ([questionDocId]); with a [store] the text gets the
+  /// Highlight / Note toolbar like the passage.
+  Widget html(String html, TextStyle style,
+      {RegExp? blanks, BlankBuilder? blankBuilder, bool inline = false, int? docId}) {
+    final doc = parseHtmlCached(html, blankPattern: blanks);
+    final headerColor = palette.standard ? WebTokens.tableHeaderBg : null;
+    final borderColor = palette.standard ? WebTokens.tableBorder : palette.text;
+    final s = store;
+    if (s != null && docId != null) {
+      return SelectableHtml(
+        store: s,
+        docId: docId,
+        notePartId: part.id,
+        document: doc,
         style: style,
-        imageResolver: images,
+        highlightColor: palette.highlight,
+        noteColor: palette.note,
         blankBuilder: blankBuilder,
+        imageResolver: images,
         inlineParagraphs: inline,
-        blockSpacing: 6, // prose-p:my-1.5
-        tableHeaderColor: palette.standard ? WebTokens.tableHeaderBg : null,
-        tableBorderColor: palette.standard ? WebTokens.tableBorder : palette.text,
+        tableHeaderColor: headerColor,
+        tableBorderColor: borderColor,
       );
+    }
+    return HtmlView(
+      document: doc,
+      style: style,
+      imageResolver: images,
+      blankBuilder: blankBuilder,
+      inlineParagraphs: inline,
+      blockSpacing: 6, // prose-p:my-1.5
+      tableHeaderColor: headerColor,
+      tableBorderColor: borderColor,
+    );
+  }
 }
 
 /// Badge label (question.tsx: numbers joined with '-', e.g. "15-16").
@@ -136,6 +165,7 @@ class SectionView extends StatelessWidget {
     return ctx.html(
       section.html,
       inter(16, color: ctx.palette.text, height: WebTokens.sectionInstructionLineHeight),
+      docId: questionDocId(sectionId: section.id),
     );
   }
 }
@@ -214,6 +244,7 @@ class QuestionView extends StatelessWidget {
       textStyle,
       blanks: HtmlDocument.emptyBlankPattern,
       inline: true,
+      docId: questionDocId(questionId: question.id),
       blankBuilder: (_, blank) => GapInput(
         key: ValueKey('gap-${question.id}-${blank.index}'),
         initial: ctx.answer(question.id).text ?? '',
@@ -466,11 +497,16 @@ class _GapInputState extends State<GapInput> {
           style: inter(widget.fontSize, color: p.inputText, height: 1.4),
           decoration: InputDecoration(
             isDense: true,
-            contentPadding: const EdgeInsets.fromLTRB(4, 2, 4, 2),
-            border: UnderlineInputBorder(borderSide: BorderSide(color: line, width: 2)),
-            enabledBorder: UnderlineInputBorder(borderSide: BorderSide(color: line, width: 2)),
-            disabledBorder: UnderlineInputBorder(borderSide: BorderSide(color: line.withValues(alpha: 0.5), width: 2)),
-            focusedBorder: UnderlineInputBorder(
+            // IELTS computer-delivered style: a square-cornered box (app.css .ielts-gap-input).
+            contentPadding: const EdgeInsets.fromLTRB(6, 3, 6, 3),
+            filled: p.standard,
+            fillColor: TW.white,
+            border: OutlineInputBorder(borderRadius: BorderRadius.zero, borderSide: BorderSide(color: line)),
+            enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.zero, borderSide: BorderSide(color: line)),
+            disabledBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.zero, borderSide: BorderSide(color: line.withValues(alpha: 0.5))),
+            focusedBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.zero,
               borderSide: BorderSide(color: p.standard ? WebTokens.gapFocus : p.text, width: 2),
             ),
           ),
@@ -495,6 +531,7 @@ class CompleteSectionView extends StatelessWidget {
       ctx.proseStyle,
       blanks: HtmlDocument.sectionBlankPattern,
       inline: true,
+      docId: questionDocId(sectionId: section.id),
       blankBuilder: (context, blank) {
         if (blank.index >= section.questions.length) return const SizedBox.shrink();
         final q = section.questions[blank.index];
@@ -578,6 +615,7 @@ class _DragDropSectionViewState extends State<DragDropSectionView> {
         ctx.proseStyle,
         blanks: HtmlDocument.sectionBlankPattern,
         inline: true,
+        docId: questionDocId(sectionId: section.id),
         blankBuilder: (context, blank) {
           if (blank.index >= section.questions.length) return const SizedBox.shrink();
           final q = section.questions[blank.index];
@@ -959,10 +997,6 @@ class _EssayQuestionState extends State<EssayQuestion> {
     final target = _target;
     final met = words >= target;
     final percent = ((words / target) * 100).round().clamp(0, 100);
-    final chars = _c.text.length;
-    final paragraphs =
-        _c.text.trim().isEmpty ? 0 : _c.text.trim().split(RegExp(r'\n+')).where((s) => s.isNotEmpty).length;
-    final readMin = (words / 130).ceil() < 1 ? 1 : (words / 130).ceil();
     final barColor = met ? TW.emerald500 : (percent > 60 ? TW.blue500 : TW.amber500);
 
     return Padding(
@@ -979,7 +1013,7 @@ class _EssayQuestionState extends State<EssayQuestion> {
             ),
           ),
           const SizedBox(width: 10),
-          Expanded(child: ctx.html(q.html, ctx.questionStyle)),
+          Expanded(child: ctx.html(q.html, ctx.questionStyle, docId: questionDocId(questionId: q.id))),
         ]),
         const SizedBox(height: 16), // mt-4
         Container(
@@ -990,32 +1024,13 @@ class _EssayQuestionState extends State<EssayQuestion> {
             borderRadius: BorderRadius.circular(8),
           ),
           child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
-            Wrap(
-              alignment: WrapAlignment.spaceBetween,
-              crossAxisAlignment: WrapCrossAlignment.center,
-              runSpacing: 8,
-              children: [
-                Row(mainAxisSize: MainAxisSize.min, children: [
-                  Text('WRITING PROGRESS:',
-                      style: inter(12, weight: FontWeight.w700, color: TW.gray700, letterSpacing: 0.3)),
-                  const SizedBox(width: 8),
-                  Text('$words / $target words',
-                      key: const Key('word-count'), style: mono(14, weight: FontWeight.w800, color: TW.gray900)),
-                ]),
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 2),
-                  decoration: BoxDecoration(
-                    color: met ? TW.emerald100 : TW.amber100,
-                    border: Border.all(color: met ? TW.emerald300 : TW.amber300),
-                    borderRadius: BorderRadius.circular(999),
-                  ),
-                  child: Text(
-                    met ? 'Minimum target reached ✅' : 'Needed ${target - words} words',
-                    style: inter(12, weight: FontWeight.w700, color: met ? TW.emerald800 : TW.amber800),
-                  ),
-                ),
-              ],
-            ),
+            // Only the word count: characters, paragraphs, reading time and "Needed N words" were noise.
+            Row(children: [
+              Text('WRITING PROGRESS:', style: inter(12, weight: FontWeight.w700, color: TW.gray700, letterSpacing: 0.3)),
+              const SizedBox(width: 8),
+              Text('$words / $target words',
+                  key: const Key('word-count'), style: mono(14, weight: FontWeight.w800, color: TW.gray900)),
+            ]),
             const SizedBox(height: 8),
             ClipRRect(
               borderRadius: BorderRadius.circular(999),
@@ -1026,17 +1041,6 @@ class _EssayQuestionState extends State<EssayQuestion> {
                   FractionallySizedBox(widthFactor: percent / 100, child: Container(color: barColor)),
                 ]),
               ),
-            ),
-            const SizedBox(height: 12),
-            Text.rich(
-              TextSpan(style: inter(11, color: TW.gray500), children: [
-                const TextSpan(text: 'Characters: '),
-                TextSpan(text: '$chars', style: const TextStyle(fontWeight: FontWeight.w700)),
-                const TextSpan(text: '   •   Paragraphs: '),
-                TextSpan(text: '$paragraphs', style: const TextStyle(fontWeight: FontWeight.w700)),
-                const TextSpan(text: '   •   Est. reading time: '),
-                TextSpan(text: '$readMin min', style: const TextStyle(fontWeight: FontWeight.w700)),
-              ]),
             ),
           ]),
         ),

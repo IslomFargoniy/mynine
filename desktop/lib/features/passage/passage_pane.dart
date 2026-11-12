@@ -59,7 +59,9 @@ class HighlightStore extends ChangeNotifier {
     await load(partId);
   }
 
-  Future<void> addNote(int partId, int start, int end, String quote, String note) async {
+  /// [docId]: the highlighted document when it is not the passage itself (a question / section text in the
+  /// questions pane, see [questionDocId]); the note is listed under [partId] either way.
+  Future<void> addNote(int partId, int start, int end, String quote, String note, {int? docId}) async {
     final id = DateTime.now().microsecondsSinceEpoch.toString();
     await db.into(db.candidateNotes).insert(CandidateNotesCompanion.insert(
           id: id,
@@ -68,15 +70,24 @@ class HighlightStore extends ChangeNotifier {
           quote: quote,
           note: note,
         ));
-    await addHighlight(partId, start, end, noteId: id);
+    await addHighlight(docId ?? partId, start, end, noteId: id);
+    if (docId != null) await load(partId);
   }
 
   Future<void> deleteNote(int partId, String noteId) async {
     await (db.delete(db.candidateNotes)..where((t) => t.id.equals(noteId))).go();
     await (db.delete(db.highlights)..where((t) => t.noteId.equals(noteId))).go();
-    await load(partId);
+    // The note's mark may sit in a question text (another doc id): reload every loaded document.
+    for (final id in {partId, ..._highlights.keys}) {
+      await load(id);
+    }
   }
 }
+
+/// Highlight document id of a question / section text in the questions pane. Negative, so it never meets a
+/// real part id in the same `highlights` table (no schema change).
+int questionDocId({int? sectionId, int? questionId}) =>
+    sectionId != null ? -(sectionId * 2 + 1) : -(questionId! * 2 + 2);
 
 /// practice-part.tsx: part title, "Candidate Notes (n)" button, passage with
 /// the Inspera floating toolbar (Note|Clear / Highlight) and the note dialog.
@@ -496,7 +507,7 @@ class NotesDrawer extends StatelessWidget {
                           const SizedBox(height: 4),
                           Text.rich(
                             TextSpan(style: inter(12, color: TW.gray400), children: [
-                              const TextSpan(text: 'Select any text in the reading passage and click '),
+                              const TextSpan(text: 'Select any text and click '),
                               TextSpan(text: '"Note"', style: inter(12, weight: FontWeight.w700, color: TW.gray700)),
                               const TextSpan(text: ' to save your notes.'),
                             ]),
@@ -558,6 +569,169 @@ class NotesDrawer extends StatelessWidget {
             ),
           ]);
         },
+      ),
+    );
+  }
+}
+
+
+/// An [HtmlView] in the questions pane with the passage's Highlight / Note / Clear toolbar (Listening and
+/// Writing questions too). Marks are stored under [docId]; notes under [notePartId] (the drawer lists them).
+/// Text blocks that contain answer boxes stay plain (not selectable).
+class SelectableHtml extends StatefulWidget {
+  const SelectableHtml({
+    super.key,
+    required this.store,
+    required this.docId,
+    required this.notePartId,
+    required this.document,
+    required this.style,
+    required this.highlightColor,
+    required this.noteColor,
+    this.blankBuilder,
+    this.imageResolver,
+    this.inlineParagraphs = false,
+    this.blockSpacing = 6,
+    this.tableHeaderColor,
+    this.tableBorderColor = WebTokens.tableBorder,
+  });
+
+  final HighlightStore store;
+  final int docId;
+  final int notePartId;
+  final HtmlDocument document;
+  final TextStyle style;
+  final Color highlightColor;
+  final Color noteColor;
+  final BlankBuilder? blankBuilder;
+  final ImageResolver? imageResolver;
+  final bool inlineParagraphs;
+  final double blockSpacing;
+  final Color? tableHeaderColor;
+  final Color tableBorderColor;
+
+  @override
+  State<SelectableHtml> createState() => _SelectableHtmlState();
+}
+
+class _SelectableHtmlState extends State<SelectableHtml> {
+  final _viewKey = GlobalKey<HtmlViewState>();
+  final _toolbar = OverlayPortalController();
+  HtmlSelection? _selection;
+  Offset _at = Offset.zero;
+
+  @override
+  void initState() {
+    super.initState();
+    unawaited(widget.store.load(widget.docId));
+    if (widget.store.notes(widget.notePartId).isEmpty) unawaited(widget.store.load(widget.notePartId));
+  }
+
+  @override
+  void didUpdateWidget(covariant SelectableHtml old) {
+    super.didUpdateWidget(old);
+    if (old.docId != widget.docId) unawaited(widget.store.load(widget.docId));
+  }
+
+  List<HighlightRange> get _ranges => [
+        for (final h in widget.store.highlights(widget.docId))
+          HighlightRange(h.startOffset, h.endOffset, isNote: h.kind == 'note', id: h.id),
+      ];
+
+  void _onSelection(HtmlSelection? s) {
+    _selection = (s == null || s.isCollapsed) ? null : s;
+    if (_selection == null && _toolbar.isShowing) _toolbar.hide();
+  }
+
+  void _onPointerUp(PointerUpEvent e) {
+    final at = e.position;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      if (_selection == null) {
+        _toolbar.hide();
+      } else {
+        setState(() => _at = at);
+        _toolbar.show();
+      }
+    });
+  }
+
+  void _dismiss() {
+    _viewKey.currentState?.clearSelection();
+    _selection = null;
+    _toolbar.hide();
+  }
+
+  Future<void> _highlight() async {
+    final s = _selection;
+    if (s == null) return;
+    await widget.store.addHighlight(widget.docId, s.start, s.end);
+    _dismiss();
+  }
+
+  Future<void> _clear() async {
+    final s = _selection;
+    if (s == null) return;
+    await widget.store.clearRange(widget.docId, s.start, s.end);
+    _dismiss();
+  }
+
+  Future<void> _note() async {
+    final s = _selection;
+    if (s == null) return;
+    _toolbar.hide();
+    final text = await showDialog<String>(
+      context: context,
+      barrierColor: const Color(0x66000000),
+      builder: (_) => _NoteDialog(quote: s.text.trim()),
+    );
+    if (text != null) {
+      await widget.store.addNote(widget.notePartId, s.start, s.end, s.text.trim(), text.trim(), docId: widget.docId);
+    }
+    _dismiss();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return OverlayPortal(
+      controller: _toolbar,
+      overlayChildBuilder: (context) {
+        final s = _selection;
+        return Positioned(
+          left: (_at.dx - 45).clamp(10.0, double.infinity),
+          top: (_at.dy - 52).clamp(10.0, double.infinity),
+          child: TapRegion(
+            onTapOutside: (_) => _toolbar.hide(),
+            child: HighlightToolbar(
+              highlighted: s != null && _ranges.any((r) => r.overlaps(s.start, s.end)),
+              onHighlight: _highlight,
+              onNote: _note,
+              onClear: _clear,
+            ),
+          ),
+        );
+      },
+      child: Listener(
+        onPointerUp: _onPointerUp,
+        child: ListenableBuilder(
+          listenable: widget.store,
+          builder: (context, _) => HtmlView(
+            key: _viewKey,
+            document: widget.document,
+            style: widget.style,
+            selectable: true,
+            highlights: _ranges,
+            highlightColor: widget.highlightColor,
+            noteColor: widget.noteColor,
+            onSelectionChanged: _onSelection,
+            blankBuilder: widget.blankBuilder,
+            imageResolver: widget.imageResolver,
+            inlineParagraphs: widget.inlineParagraphs,
+            blockSpacing: widget.blockSpacing,
+            tableHeaderColor: widget.tableHeaderColor,
+            tableBorderColor: widget.tableBorderColor,
+          ),
+        ),
       ),
     );
   }
