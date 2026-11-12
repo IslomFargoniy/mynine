@@ -1,6 +1,5 @@
 import React, { useState } from 'react';
 import { PencilIcon, TrashIcon } from 'lucide-react';
-import { format } from 'date-fns';
 import { IconAction } from '@/components/ui/icon-action';
 import { Table, TableBody, TableCell, TableEmpty, TableHead, TableHeader, TableRow, TruncatedText } from '@/components/ui/table';
 import UpdateUserModal from '@/components/user/update-user-modal';
@@ -9,6 +8,7 @@ import { Link, useForm, usePage } from '@inertiajs/react';
 import { useTranslation } from 'react-i18next';
 import { User, type UserPaginate, SearchData, Role, Auth } from '@/types';
 import { toast } from 'sonner';
+import { formatServerTime } from '@/lib/server-time';
 
 
 interface UserTableProps extends UserPaginate {
@@ -79,7 +79,7 @@ const UserTable = ({ roles, searchData, ...user }: UserTableProps) => {
                         {user.data.map((item, index) => {
                             const globalIndex = (user.current_page - 1) * user.per_page + index + 1;
                             const roles = item.roles?.map((role) => role.name).join(', ');
-                            const created = item.created_at ? format(new Date(item.created_at), 'dd.MM.yy HH:mm') : '—';
+                            const created = formatServerTime(item.created_at, 'dd.MM.yy HH:mm');
                             return (
                                 <TableRow key={item.id}>
                                     <TableCell className="text-right font-mono text-muted-foreground tabular-nums max-md:hidden">{globalIndex}</TableCell>

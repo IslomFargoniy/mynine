@@ -2,6 +2,7 @@ import React from 'react';
 import Chart from 'react-apexcharts';
 import { StatItem } from '@/types';
 import { useIsDark } from '@/hooks/use-is-dark';
+import { serverWallClock } from '@/lib/server-time';
 
 interface Props {
     dailyUsers: StatItem[];
@@ -19,7 +20,7 @@ export default function DailyStatsChart({ dailyUsers, dailyAttempts }: Props) {
     ])).sort();
 
     const labels = allDates.map(date => 
-        new Date(date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
+        (serverWallClock(date) ?? new Date()).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
     );
 
     const newUsersData = allDates.map(date => {

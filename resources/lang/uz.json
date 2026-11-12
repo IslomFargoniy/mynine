@@ -1330,5 +1330,6 @@
     "device_has_running_exam": "\":name\" kompyuterida hozir imtihon ketmoqda. Avval monitorda uni yakunlang yoki kompyuterni bo'shating.",
     "attempt_not_finished": "Bu urinish hali tugamagan. Avval uni yakunlang.",
     "writing_not_submitted": "Writing moduli hali topshirilmagan.",
-    "writing_ai_pending": "Insho hali AI bahosini kutmoqda. Kuting yoki bandni qo'lda kiriting."
+    "writing_ai_pending": "Insho hali AI bahosini kutmoqda. Kuting yoki bandni qo'lda kiriting.",
+    "exam_date": "Imtihon sanasi"
 }

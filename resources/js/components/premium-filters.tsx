@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Search, Filter, X, Calendar, ListOrdered, ShieldCheck, User as UserIcon, BookOpen, Layers, Folder as FolderIcon } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { format } from 'date-fns';
+import { serverWallClock } from '@/lib/server-time';
 import DatePicker from 'react-datepicker';
 import "react-datepicker/dist/react-datepicker.css";
 import { Button } from '@/components/ui/button';
@@ -27,9 +28,11 @@ interface PremiumFiltersProps {
     folders?: Folder[];
     forceExpand?: boolean;
     isAdmin?: boolean;
+    /** What the from/to dates filter on (e.g. "Exam date"); defaults to the generic date range label. */
+    dateLabel?: string;
 }
 
-const PremiumFilters = ({ handleSubmit, setData, data, roles, users, mocks, tests, folders, forceExpand = false, isAdmin = false }: PremiumFiltersProps) => {
+const PremiumFilters = ({ handleSubmit, setData, data, roles, users, mocks, tests, folders, forceExpand = false, isAdmin = false, dateLabel }: PremiumFiltersProps) => {
     const { t } = useTranslation();
     const [isExpanded, setIsExpanded] = useState(forceExpand);
 
@@ -183,17 +186,18 @@ const PremiumFilters = ({ handleSubmit, setData, data, roles, users, mocks, test
                             </Select>
 
                             {/* Ultra Compact Date Pickers */}
-                            <div className="flex items-center gap-1 bg-glass-subtle border border-glass-edge rounded-full px-3 h-8">
+                            <div className="flex items-center gap-1 bg-glass-subtle border border-glass-edge rounded-full px-3 h-8" title={dateLabel ?? t('date_range')}>
                                 <Calendar className="h-3 w-3 text-brand shrink-0" />
+                                {dateLabel && <span className="shrink-0 text-[10px] font-bold text-muted-foreground">{dateLabel}</span>}
                                 <DatePicker
-                                    selected={data.from ? new Date(data.from) : null}
+                                    selected={serverWallClock(data.from)}
                                     onChange={(date) => setData('from', date ? format(date, 'yyyy-MM-dd') : '')}
                                     placeholderText={t('from')}
                                     className="w-[65px] bg-transparent border-none p-0 text-[10px] font-bold focus:ring-0 h-full"
                                 />
                                 <span className="text-muted-foreground mx-0.5">-</span>
                                 <DatePicker
-                                    selected={data.to ? new Date(data.to) : null}
+                                    selected={serverWallClock(data.to)}
                                     onChange={(date) => setData('to', date ? format(date, 'yyyy-MM-dd') : '')}
                                     placeholderText={t('to')}
                                     className="w-[65px] bg-transparent border-none p-0 text-[10px] font-bold focus:ring-0 h-full"
@@ -337,17 +341,17 @@ const PremiumFilters = ({ handleSubmit, setData, data, roles, users, mocks, test
 
                         <div className="space-y-1.5">
                             <label className="text-[9px] font-black uppercase tracking-widest text-muted-foreground flex items-center gap-1.5 ml-1">
-                                <Calendar className="h-3 w-3" /> {t('date_range')}
+                                <Calendar className="h-3 w-3" /> {dateLabel ?? t('date_range')}
                             </label>
                             <div className="flex items-center gap-2">
                                 <DatePicker
-                                    selected={data.from ? new Date(data.from) : null}
+                                    selected={serverWallClock(data.from)}
                                     onChange={(date) => setData('from', date ? format(date, 'yyyy-MM-dd') : '')}
                                     placeholderText={t('from')}
                                     className="flex-1 h-10 rounded-xl border border-input bg-glass-subtle px-3 text-foreground text-xs font-bold"
                                 />
                                 <DatePicker
-                                    selected={data.to ? new Date(data.to) : null}
+                                    selected={serverWallClock(data.to)}
                                     onChange={(date) => setData('to', date ? format(date, 'yyyy-MM-dd') : '')}
                                     placeholderText={t('to')}
                                     className="flex-1 h-10 rounded-xl border border-input bg-glass-subtle px-3 text-foreground text-xs font-bold"

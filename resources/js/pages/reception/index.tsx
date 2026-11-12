@@ -52,7 +52,8 @@ interface PageProps {
     date: string;
     mocks: ReceptionMock[];
     candidates: CandidateRow[];
-    filters: { mock_id: number | null; search: string };
+    /** 'all' = every mock of the day; null with several mocks = none running or upcoming (server picks otherwise). */
+    filters: { mock_id: number | 'all' | null; search: string };
     canDelete: boolean;
     [key: string]: unknown;
 }
@@ -118,8 +119,8 @@ export default function ReceptionIndex() {
 
                 <Panel className="flex flex-col gap-3 lg:flex-row lg:items-center">
                     <input type="date" className={`${inputClass} lg:w-44`} value={date} onChange={(e) => visit({ date: e.target.value, mock_id: undefined })} />
-                    <select className={`${selectClass} lg:w-72`} value={filters.mock_id ?? ''} onChange={(e) => visit({ mock_id: e.target.value || undefined })}>
-                        <option value="">{t('exam_admin.reception.all_mocks', { count: mocks.length })}</option>
+                    <select className={`${selectClass} lg:w-72`} value={filters.mock_id ?? 'all'} onChange={(e) => visit({ mock_id: e.target.value })}>
+                        <option value="all">{t('exam_admin.reception.all_mocks', { count: mocks.length })}</option>
                         {mocks.map((m) => (
                             <option key={m.id} value={m.id}>
                                 {m.name} · {fmtDateTime(m.started_at, 'HH:mm')} ({m.students_count})
@@ -228,7 +229,7 @@ export default function ReceptionIndex() {
                                             <TableCell className="max-md:pl-6">
                                                 <TruncatedText className="max-w-[14rem] font-bold text-foreground">{c.name}</TruncatedText>
                                                 <div className="font-mono text-[11px] text-muted-foreground">{c.phone ?? '—'}</div>
-                                                {!filters.mock_id && mocks.length > 1 && <TruncatedText className="max-w-[14rem] text-[10px] text-brand">{c.mock_name}</TruncatedText>}
+                                                {(!filters.mock_id || filters.mock_id === 'all') && mocks.length > 1 && <TruncatedText className="max-w-[14rem] text-[10px] text-brand">{c.mock_name}</TruncatedText>}
                                                 {c.repeats.length > 0 && (
                                                     <div
                                                         className="mt-0.5 flex items-center gap-1 text-[10px] font-bold text-amber-700 dark:text-amber-300"

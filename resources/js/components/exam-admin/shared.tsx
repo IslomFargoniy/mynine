@@ -1,8 +1,8 @@
 import { cn } from '@/lib/utils';
 import { router } from '@inertiajs/react';
-import { format } from 'date-fns';
 import { type ReactNode, useEffect, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
+import { formatServerTime } from '@/lib/server-time';
 
 export const MODULE_TYPES = ['Listening', 'Reading', 'Writing'] as const;
 
@@ -14,9 +14,8 @@ export const moduleColor: Record<string, string> = {
 };
 
 export function fmtDateTime(value?: string | null, pattern = 'dd.MM.yyyy HH:mm'): string {
-    if (!value) return '—';
-    const date = new Date(value);
-    return Number.isNaN(date.getTime()) ? '—' : format(date, pattern);
+    // Center (Asia/Tashkent) time whatever the browser's time zone.
+    return formatServerTime(value, pattern);
 }
 
 export function fmtBand(value?: number | null): string {

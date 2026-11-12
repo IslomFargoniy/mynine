@@ -24,9 +24,10 @@ interface MobileSearchModalProps {
     tests?: Test[];
     folders?: Folder[];
     isAdmin?: boolean;
+    dateLabel?: string;
 }
 
-const MobileSearchModal = ({ data, setData, handleSubmit, roles, users, mocks, tests, folders, isAdmin = false }: MobileSearchModalProps) => {
+const MobileSearchModal = ({ data, setData, handleSubmit, roles, users, mocks, tests, folders, isAdmin = false, dateLabel }: MobileSearchModalProps) => {
     const [isOpen, setIsOpen] = useState(false);
     const { t } = useTranslation();
 
@@ -73,6 +74,7 @@ const MobileSearchModal = ({ data, setData, handleSubmit, roles, users, mocks, t
                     <div className="space-y-6 pb-12">
                         <div className="p-1">
                             <PremiumFilters 
+                                dateLabel={dateLabel}
                                 data={data} 
                                 setData={setData} 
                                 handleSubmit={(e) => {

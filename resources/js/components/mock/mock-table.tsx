@@ -4,11 +4,11 @@ import MockStudentManager from '@/components/mock/mock-student-manager';
 
 import { Mock, type MockPaginate, SearchData, Test } from '@/types';
 import { Link, useForm } from '@inertiajs/react';
-import { format } from 'date-fns';
 import { CheckCircle, Clock, MinusCircle, Monitor, PencilIcon, Plus, TrashIcon } from 'lucide-react';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { toast } from 'sonner';
+import { formatServerTime } from '@/lib/server-time';
 
 interface MockTableProps extends MockPaginate {
     searchData: SearchData;
@@ -151,13 +151,13 @@ const MockTable = ({ tests: _tests, searchData, ...mock }: MockTableProps) => {
                                 <div className="flex justify-between text-[11px]">
                                     <span className="text-muted-foreground">{t('started_at')}</span>
                                     <span className="font-mono font-medium text-foreground">
-                                        {format(new Date(item.started_at), 'MMM dd, HH:mm')}
+                                        {formatServerTime(item.started_at, 'MMM dd, HH:mm')}
                                     </span>
                                 </div>
                                 <div className="flex justify-between text-[11px]">
                                     <span className="text-muted-foreground">{t('finished_at')}</span>
                                     <span className="font-mono font-medium text-foreground">
-                                        {format(new Date(item.finished_at), 'MMM dd, HH:mm')}
+                                        {formatServerTime(item.finished_at, 'MMM dd, HH:mm')}
                                     </span>
                                 </div>
                             </div>

@@ -54,10 +54,8 @@ class MonitorController extends Controller
             // Opened from an older mock's page: keep it in the dropdown so the selection matches the list.
             $mocks->push(Mock::withoutEagerLoads()->withCount('attempts')->find($mock->id, $columns));
         }
-        // Default: the mock candidates are writing right now, then a running mock, then the latest one.
-        $mock ??= $mocks->first(fn (Mock $m) => $m->running_count > 0)
-            ?? $mocks->first(fn (Mock $m) => $m->status === 'active')
-            ?? $mocks->first();
+        // Default: the mock candidates are writing right now, then today's / an open / the latest mock.
+        $mock ??= $mocks->first(fn (Mock $m) => $m->running_count > 0) ?? Mock::pickDefault($mocks);
 
         return Inertia::render('monitor/index', [
             'mocks' => $mocks->map(fn (Mock $m) => [

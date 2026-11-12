@@ -51,7 +51,7 @@ class SpeakingController extends Controller
             // Opened from an older mock's page: keep it in the dropdown so the selection matches the list.
             $mocks->push($mock);
         }
-        $mock ??= $mocks->first(fn (Mock $m) => $m->status === 'active') ?? $mocks->first();
+        $mock ??= Mock::pickDefault($mocks);
 
         $candidates = $mock
             ? MockStudent::query()

@@ -6,7 +6,7 @@ import AppLayout from '@/layouts/app-layout';
 import { calculateOverallBand } from '@/lib/ielts-score-converter';
 import { type BreadcrumbItem } from '@/types';
 import { Head, router, usePage } from '@inertiajs/react';
-import { format } from 'date-fns';
+import { toServerInput } from '@/lib/server-time';
 import { CalendarClock, CheckCircle2, Mic, Save, Wand2 } from 'lucide-react';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -34,16 +34,8 @@ interface PageProps {
 
 const BANDS = Array.from({ length: 19 }, (_, i) => i * 0.5);
 
-/**
- * Slot as server (Asia/Tashkent) wall-clock time: the ISO value carries the server offset ("…T09:00:00+05:00"),
- * and the saved value is read as server time, so a browser in another time zone must not shift it.
- */
-function toLocalInput(value: string | null): string {
-    if (!value) return '';
-    if (/^\d{4}-\d{2}-\d{2}[T ]\d{2}:\d{2}/.test(value)) return value.slice(0, 16).replace(' ', 'T');
-    const date = new Date(value);
-    return Number.isNaN(date.getTime()) ? '' : format(date, "yyyy-MM-dd'T'HH:mm");
-}
+/** Slot in center (Tashkent) time; the saved "yyyy-MM-dd HH:mm" value is read by the server as Tashkent time. */
+const toLocalInput = (value: string | null) => toServerInput(value);
 
 function SlotEditor({ candidate }: { candidate: SpeakingCandidate }) {
     const { t } = useTranslation();

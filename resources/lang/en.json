@@ -1330,5 +1330,6 @@
     "device_has_running_exam": "An exam is running on \":name\" right now. Finish it or release the PC in the monitor first.",
     "attempt_not_finished": "This attempt is not finished yet. Finish it first.",
     "writing_not_submitted": "The Writing module is not submitted yet.",
-    "writing_ai_pending": "An essay is still waiting for its AI band. Wait, or enter the band manually."
+    "writing_ai_pending": "An essay is still waiting for its AI band. Wait, or enter the band manually.",
+    "exam_date": "Exam date"
 }

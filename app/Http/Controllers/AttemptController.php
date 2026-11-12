@@ -10,8 +10,9 @@ use App\Models\Test;
 use App\Services\AttemptPdfRenderer;
 use App\Services\ExamService;
 use App\Services\MockResultService;
+use App\Support\DayRange;
+use App\Support\FilterOptions;
 use Carbon\Carbon;
-use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -44,12 +45,11 @@ class AttemptController extends Controller
             });
         }
 
-        // Date-only bounds: the "to" day is included.
-        if ($request->from && $request->to) {
-            $range = MockController::dayRange($request->from, $request->to);
-            if ($range) {
-                $data->whereBetween('created_at', $range);
-            }
+        // Exam date: the mock's started_at, or the attempt's own date for practice attempts; "to" day included.
+        if ($range = DayRange::from($request->from, $request->to)) {
+            $data->where(fn ($q) => $q
+                ->whereHas('mock', fn ($m) => $m->withoutEagerLoads()->whereBetween('started_at', $range))
+                ->orWhere(fn ($w) => $w->whereNull('mock_id')->whereBetween('created_at', $range)));
         }
 
         if ($request->user_id) {
@@ -103,10 +103,10 @@ class AttemptController extends Controller
         });
 
         // Filter dropdown options for search
-        // Newest mocks first (today's mock must be in the filter list), plus the one being filtered on.
+        // Newest first (today's mock must be in the list); the filtered item stays in its dropdown.
         $mocks_query = Mock::withoutEagerLoads()->select('id', 'name')->orderByDesc('id');
-        $tests_query = Test::select('id', 'name');
-        $folders_query = Folder::select('id', 'name');
+        $tests_query = Test::select('id', 'name')->orderByDesc('id');
+        $folders_query = Folder::select('id', 'name')->orderByDesc('id');
 
         if (! Auth::user()->hasRole('Admin')) {
             $mocks_query->where('active', 1);
@@ -117,11 +117,9 @@ class AttemptController extends Controller
         return Inertia::render('attempt/index', [
             'attempt' => $data,
             'users' => [],
-            'mocks' => Auth::user()->hasRole('Admin')
-                ? $this->withSelected($mocks_query->limit(50)->get(), $request->integer('mock_id'))
-                : $mocks_query->limit(50)->get(),
-            'tests' => $tests_query->limit(50)->get(),
-            'folders' => $folders_query->limit(50)->get(),
+            'mocks' => FilterOptions::keep($mocks_query, $request->integer('mock_id')),
+            'tests' => FilterOptions::keep($tests_query, $request->integer('test_id')),
+            'folders' => FilterOptions::keep($folders_query, $request->integer('folder_id')),
             'isAdmin' => Auth::user()->hasRole('Admin'),
             'filters' => $request->only(['search', 'user_id', 'mock_id', 'test_id', 'folder_id', 'from', 'to', 'per_page']),
         ]);
@@ -266,20 +264,5 @@ class AttemptController extends Controller
                 'error' => $e->getMessage(),
             ]);
         }
-    }
-
-    /**
-     * Keeps the filtered mock in the dropdown even when it is older than the listed ones.
-     *
-     * @param  Collection<int, Mock>  $mocks
-     * @return Collection<int, Mock>
-     */
-    private function withSelected(Collection $mocks, int $mockId): Collection
-    {
-        if ($mockId && ! $mocks->contains('id', $mockId) && ($mock = Mock::withoutEagerLoads()->find($mockId, ['id', 'name']))) {
-            $mocks->push($mock);
-        }
-
-        return $mocks;
     }
 }

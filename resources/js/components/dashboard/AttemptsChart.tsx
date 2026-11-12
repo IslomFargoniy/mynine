@@ -1,6 +1,7 @@
 import { useIsDark } from '@/hooks/use-is-dark';
 import Chart from 'react-apexcharts';
 import { Attempt } from '@/types';
+import { serverWallClock } from '@/lib/server-time';
 
 
 export default function AttemptsChart({ attempts }: { attempts: Attempt[] }) {
@@ -10,7 +11,7 @@ export default function AttemptsChart({ attempts }: { attempts: Attempt[] }) {
     if (!attempts || attempts.length === 0) return null;
 
     const labels = attempts.map(a => 
-        new Date(a.finished_at!).toLocaleDateString('en-US', {
+        (serverWallClock(a.finished_at!) ?? new Date()).toLocaleDateString('en-US', {
             month: 'short',
             day: 'numeric'
         })

@@ -7,6 +7,7 @@ use Carbon\Carbon;
 use Database\Factories\MockFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Collection;
 
 class Mock extends Model
 {
@@ -57,6 +58,38 @@ class Mock extends Model
         }
 
         return 'active';
+    }
+
+    /**
+     * Default mock of the staff pages (Speaking, Monitor): today's mock (started today, scheduled or running;
+     * the running one, else the earliest), else a currently open mock, else the first one (lists are latest first).
+     *
+     * @param  Collection<int, Mock>  $mocks
+     */
+    public static function pickDefault(Collection $mocks): ?self
+    {
+        $today = $mocks
+            ->filter(fn (Mock $m) => $m->started_at && Carbon::parse($m->started_at)->isToday() && in_array($m->status, ['scheduled', 'active'], true))
+            ->sortBy(fn (Mock $m) => Carbon::parse($m->started_at)->getTimestamp());
+
+        return $today->first(fn (Mock $m) => $m->status === 'active')
+            ?? $today->first()
+            ?? $mocks->first(fn (Mock $m) => $m->status === 'active')
+            ?? $mocks->first();
+    }
+
+    /**
+     * Reception's mock when a day has several: the one running now, else the day's earliest upcoming one.
+     *
+     * @param  Collection<int, Mock>  $mocks  the day's mocks, earliest first
+     */
+    public static function pickRunningOrNext(Collection $mocks): ?self
+    {
+        $now = now();
+
+        return $mocks->first(fn (Mock $m) => $m->status === 'active')
+            ?? $mocks->first(fn (Mock $m) => $now->between(Carbon::parse($m->started_at), Carbon::parse($m->finished_at)))
+            ?? $mocks->first(fn (Mock $m) => Carbon::parse($m->started_at)->gt($now));
     }
 
     public function test()

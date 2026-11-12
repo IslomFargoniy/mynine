@@ -12,6 +12,7 @@ import {
 import { Attempt } from '@/types';
 import { useTranslation } from 'react-i18next';
 import { useIsDark } from '@/hooks/use-is-dark';
+import { serverWallClock } from '@/lib/server-time';
 
 ChartJS.register(CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend);
 
@@ -27,7 +28,7 @@ export default function AttemptsChart({ attempts }: { attempts: Attempt[] }) {
 
     // Extract labels (attempt dates)
     const labels = attempts.map(a =>
-        new Date(a.finished_at).toLocaleDateString('en-US', {
+        (serverWallClock(a.finished_at) ?? new Date()).toLocaleDateString('en-US', {
             month: 'short',
             day: 'numeric'
         })

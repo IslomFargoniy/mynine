@@ -51,6 +51,7 @@ export default function Mock() {
                 {/* Search and Per-Page Selection */}
                 <div className="flex justify-end items-center mb-2">
                     <MobileSearchModal
+                        dateLabel={t('exam_date')}
                         data={data}
                         setData={setData}
                         handleSubmit={handleSubmit}
@@ -61,6 +62,7 @@ export default function Mock() {
                     />
                     <div className="hidden lg:block w-full">
                         <PremiumFilters
+                            dateLabel={t('exam_date')}
                             data={data}
                             setData={setData}
                             handleSubmit={handleSubmit}

@@ -7,7 +7,6 @@ import { Users, CheckCircle2, Clock, Activity, FileText, ArrowLeft, FileSpreadsh
 import { IconAction } from '@/components/ui/icon-action';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow, TruncatedText } from '@/components/ui/table';
 import { ModuleBadge } from '@/components/exam-admin/shared';
-import { format } from 'date-fns';
 import { toast } from 'sonner';
 
 import MockStudentManager from '@/components/mock/mock-student-manager';
@@ -15,6 +14,7 @@ import DeleteItemModal from '@/components/delete-item-modal';
 import { Button } from '@/components/ui/button';
 import { exportAttemptsToExcel } from '@/lib/excel-export';
 import { extractAttemptScores } from '@/lib/ielts-score-converter';
+import { formatServerTime } from '@/lib/server-time';
 
 type Scores = ReturnType<typeof extractAttemptScores>;
 
@@ -404,7 +404,7 @@ export default function MockShow() {
                                                         {isFinished ? <CheckCircle2 className="h-3 w-3" /> : <Clock className="h-3 w-3" />}
                                                         {isFinished ? t('finished') : t('in_progress')}
                                                     </span>
-                                                    {when && <span className="font-mono text-[10px] text-muted-foreground">{format(new Date(when), 'dd.MM HH:mm')}</span>}
+                                                    {when && <span className="font-mono text-[10px] text-muted-foreground">{formatServerTime(when, 'dd.MM HH:mm')}</span>}
                                                 </div>
                                             );
 

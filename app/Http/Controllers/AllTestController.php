@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Folder;
+use App\Support\DayRange;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Inertia\Inertia;
@@ -54,8 +55,9 @@ class AllTestController extends Controller
             });
         }
 
-        if ($request->from && $request->to) {
-            $folder->whereBetween('created_at', [$request->from, $request->to]);
+        // "to" day included.
+        if ($range = DayRange::from($request->from, $request->to)) {
+            $folder->whereBetween('created_at', $range);
         }
 
         if ($request->folder_id) {

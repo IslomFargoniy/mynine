@@ -10,6 +10,8 @@ use App\Models\Mock;
 use App\Models\MockStudent;
 use App\Models\Test;
 use App\Services\MockBankService;
+use App\Support\DayRange;
+use App\Support\FilterOptions;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -49,12 +51,9 @@ class MockController extends Controller
             });
         }
 
-        // Date-only bounds: the "to" day is included (whereBetween with '2026-11-12' would stop at 00:00).
-        if ($request->from && $request->to) {
-            $range = self::dayRange($request->from, $request->to);
-            if ($range) {
-                $mock->whereBetween('created_at', $range);
-            }
+        // Exam date (started_at), "to" day included.
+        if ($range = DayRange::from($request->from, $request->to)) {
+            $mock->whereBetween('started_at', $range);
         }
 
         if ($request->user_id) {
@@ -91,8 +90,9 @@ class MockController extends Controller
             ->withQueryString();
 
         // Filter tests and folders based on role for search dropdowns
-        $tests_query = Test::query()->select('id', 'name', 'folder_id')->with('folder:id,name');
-        $folders_query = Folder::select('id', 'name');
+        // Newest first; the filtered test/folder stays in its dropdown (FilterOptions::keep).
+        $tests_query = Test::query()->select('id', 'name', 'folder_id')->with('folder:id,name')->orderByDesc('id');
+        $folders_query = Folder::select('id', 'name')->orderByDesc('id');
 
         if (! Auth::user()->hasRole('Admin')) {
             $tests_query->where('active', 1)->where('open', 1);
@@ -101,26 +101,12 @@ class MockController extends Controller
 
         return Inertia::render('mock/index', [
             'mock' => $mock,
-            'tests' => $tests_query->limit(50)->get(),
+            'tests' => FilterOptions::keep($tests_query, $request->integer('test_id')),
             'users' => [],
-            'folders' => $folders_query->limit(50)->get(),
+            'folders' => FilterOptions::keep($folders_query, $request->integer('folder_id')),
             'isAdmin' => Auth::user()->hasRole('Admin'),
             'filters' => $request->only(['search', 'user_id', 'test_id', 'folder_id', 'from', 'to', 'per_page']),
         ]);
-    }
-
-    /**
-     * Inclusive [start of "from" day, end of "to" day] for date filters, or null when a date is invalid.
-     *
-     * @return array{0: Carbon, 1: Carbon}|null
-     */
-    public static function dayRange(mixed $from, mixed $to): ?array
-    {
-        try {
-            return [Carbon::parse((string) $from)->startOfDay(), Carbon::parse((string) $to)->endOfDay()];
-        } catch (\Throwable) {
-            return null;
-        }
     }
 
     /**

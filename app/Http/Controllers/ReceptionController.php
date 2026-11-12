@@ -31,7 +31,9 @@ class ReceptionController extends Controller
 
         $date = $this->parseDate($request->query('date'));
         $search = trim((string) $request->query('search', ''));
-        $mockId = $request->integer('mock_id') ?: null;
+        // mock_id=all lists every mock of the day; no mock_id = automatic choice below.
+        $showAll = $request->query('mock_id') === 'all';
+        $mockId = $showAll ? null : ($request->integer('mock_id') ?: null);
 
         $mocks = Mock::query()
             ->withoutEagerLoads()
@@ -47,6 +49,10 @@ class ReceptionController extends Controller
         // A mock_id of another day (stale link, date changed) is dropped: all of the day's mocks are listed.
         if ($mockId && ! $mocks->contains('id', $mockId)) {
             $mockId = null;
+        }
+        // Several mocks that day and none chosen: the running one, else the next one, so "Add candidates" has a target.
+        if (! $mockId && ! $showAll && $mocks->count() > 1) {
+            $mockId = Mock::pickRunningOrNext($mocks)?->id;
         }
         $mockIds = $mockId ? [$mockId] : $mocks->pluck('id')->all();
 
@@ -78,7 +84,7 @@ class ReceptionController extends Controller
                 'students_count' => $m->students_count,
             ]),
             'candidates' => $this->rows($students),
-            'filters' => ['mock_id' => $mockId, 'search' => $search],
+            'filters' => ['mock_id' => $showAll ? 'all' : $mockId, 'search' => $search],
             'canDelete' => $request->user()->hasRole('Admin'),
         ]);
     }

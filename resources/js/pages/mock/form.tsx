@@ -6,6 +6,7 @@ import { Label } from '@/components/ui/label';
 import AppLayout from '@/layouts/app-layout';
 import { type BreadcrumbItem, type Mock } from '@/types';
 import { Head, Link, useForm, usePage } from '@inertiajs/react';
+import { formatServerTime, serverInstant, serverNow } from '@/lib/server-time';
 import { format } from 'date-fns';
 import { AlertTriangle, ArrowLeft, GraduationCap, Monitor, Wand2 } from 'lucide-react';
 import { FormEventHandler, useMemo } from 'react';
@@ -38,15 +39,14 @@ interface FormProps {
 
 type ModuleKey = 'Listening' | 'Reading' | 'Writing';
 
+/** Server value → "yyyy-MM-dd HH:mm" in center (Tashkent) time; the server reads it back as Tashkent time. */
 function toInput(value?: string | null): string {
-    if (!value) return '';
-    const date = new Date(value.replace(' ', 'T'));
-    return Number.isNaN(date.getTime()) ? '' : format(date, 'yyyy-MM-dd HH:mm');
+    return formatServerTime(value, 'yyyy-MM-dd HH:mm', '');
 }
 
 /** New mock: starts now (next 5 minutes), ends the same evening (at least 4 hours later). */
 function defaultTimes(): { start: string; end: string } {
-    const start = new Date();
+    const start = serverNow();
     start.setSeconds(0, 0);
     start.setMinutes(Math.ceil(start.getMinutes() / 5) * 5);
     const end = new Date(start);
@@ -121,7 +121,7 @@ export default function MockForm() {
 
     // Reuse rule against the chosen exam date (both directions); the server value is for "now".
     const isRecent = (m: BankModule): boolean => {
-        const target = new Date(String(data.started_at ?? '').replace(' ', 'T')).getTime();
+        const target = serverInstant(data.started_at);
         if (!m.used_on || Number.isNaN(target)) return m.recently_used;
         return m.used_on.some((d) => Math.abs(new Date(d).getTime() - target) < reuseDays * 86400000);
     };
@@ -129,7 +129,7 @@ export default function MockForm() {
     // Same rule as MockBankService::autoPick, for the exam date chosen in the form (the server's pick is
     // for the date the form was opened with): least recently used module outside the reuse window.
     const suggested = useMemo(() => {
-        const target = new Date(String(data.started_at ?? '').replace(' ', 'T')).getTime();
+        const target = serverInstant(data.started_at);
         if (Number.isNaN(target)) return autoPick;
         const lastUse = (m: BankModule) => Math.max(0, ...(m.used_on ?? []).map((d) => new Date(d).getTime()));
         const picks: Record<string, number | null> = {};

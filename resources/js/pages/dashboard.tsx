@@ -1,3 +1,4 @@
+import { formatServerTime } from '@/lib/server-time';
 import AppLayout from '@/layouts/app-layout';
 import { type BreadcrumbItem, User, Attempt, StatItem, HourlyStatItem, WeeklyStatItem } from '@/types';
 import { Head, usePage, Link } from '@inertiajs/react';
@@ -211,12 +212,7 @@ export default function Dashboard() {
                                                         {attempt.test?.name || attempt.name}
                                                     </p>
                                                     <p className="text-xs text-muted-foreground mt-0.5">
-                                                        {new Date(attempt.finished_at!).toLocaleDateString(undefined, { 
-                                                            month: 'short', 
-                                                            day: 'numeric',
-                                                            hour: '2-digit',
-                                                            minute: '2-digit'
-                                                        })}
+                                                        {formatServerTime(attempt.finished_at, 'MMM d, HH:mm')}
                                                     </p>
                                                 </div>
                                             </div>

@@ -1,7 +1,7 @@
 import * as XLSX from 'xlsx';
 import { saveAs } from 'file-saver';
 import { Attempt } from '@/types';
-import { format } from 'date-fns';
+import { formatServerTime } from '@/lib/server-time';
 
 export const exportAttemptsToExcel = (attempts: Attempt[], fileName: string = 'Attempts_Export') => {
     // 1. Prepare the data for Excel - Flattening nested structures
@@ -14,8 +14,8 @@ export const exportAttemptsToExcel = (attempts: Attempt[], fileName: string = 'A
             'Test/Mock': item?.mock?.name || item?.test?.folder?.name || '---',
             'Specific Test': item?.test?.name || '---',
             'Status': item.finished_at ? 'Finished' : 'In Progress',
-            'Started At': item.started_at ? format(new Date(item.started_at), 'yyyy-MM-dd HH:mm:ss') : '---',
-            'Finished At': item.finished_at ? format(new Date(item.finished_at), 'yyyy-MM-dd HH:mm:ss') : '---',
+            'Started At': formatServerTime(item.started_at, 'yyyy-MM-dd HH:mm:ss', '---'),
+            'Finished At': formatServerTime(item.finished_at, 'yyyy-MM-dd HH:mm:ss', '---'),
         };
 
         // Add scores from attempt_types
@@ -45,5 +45,5 @@ export const exportAttemptsToExcel = (attempts: Attempt[], fileName: string = 'A
 
     // 5. Save the file
     const data = new Blob([excelBuffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet;charset=UTF-8' });
-    saveAs(data, `${fileName}_${format(new Date(), 'yyyy-MM-dd')}.xlsx`);
+    saveAs(data, `${fileName}_${formatServerTime(new Date(), 'yyyy-MM-dd')}.xlsx`);
 };

@@ -7,9 +7,9 @@ import { Link, useForm, usePage } from '@inertiajs/react';
 import { useTranslation } from 'react-i18next';
 import { Auth, Attempt, type AttemptPaginate, SearchData } from '@/types';
 import { toast } from 'sonner';
-import { format } from 'date-fns';
 import { Button } from '@/components/ui/button';
 import { exportAttemptsToExcel } from '@/lib/excel-export';
+import { formatServerTime } from '@/lib/server-time';
 
 interface AttemptTableProps extends AttemptPaginate {
     searchData: SearchData;
@@ -54,7 +54,7 @@ const AttemptTable = ({ searchData, hidePagination, ...attempt }: AttemptTablePr
         });
     };
 
-    const fmt = (value?: string | null) => (value ? format(new Date(value), 'dd.MM HH:mm') : '—');
+    const fmt = (value?: string | null) => formatServerTime(value, 'dd.MM HH:mm');
 
     const statusBadge = (finished: boolean) =>
         finished ? (

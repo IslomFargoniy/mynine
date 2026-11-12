@@ -7,6 +7,7 @@ use App\Http\Requests\StoreUserRequest;
 use App\Http\Requests\UpdateUserRequest;
 use App\Models\Attempt;
 use App\Models\User\User;
+use App\Support\DayRange;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -43,8 +44,9 @@ class UserController extends Controller
             });
         }
 
-        if ($request->from && $request->to) {
-            $user->whereBetween('created_at', [$request->from, $request->to]);
+        // "to" day included.
+        if ($range = DayRange::from($request->from, $request->to)) {
+            $user->whereBetween('created_at', $range);
         }
 
         if (Auth::user()->hasRole('Admin')) {
