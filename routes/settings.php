@@ -11,6 +11,8 @@ Route::middleware('auth')->group(function () {
     Route::get('settings/profile', [ProfileController::class, 'edit'])->name('profile.edit');
     Route::patch('settings/profile', [ProfileController::class, 'update'])->name('profile.update');
     Route::delete('settings/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
+    // "Connect Telegram": Telegram login widget data → telegram_id of the current user.
+    Route::post('settings/profile/telegram', [ProfileController::class, 'connectTelegram'])->name('profile.telegram.connect');
 
     Route::get('settings/password', [PasswordController::class, 'edit'])->name('password.edit');
     Route::put('settings/password', [PasswordController::class, 'update'])->name('password.update');

@@ -15,6 +15,7 @@ import { Link } from '@inertiajs/react';
 import {
     Activity,
     BarChart3,
+    Building2,
     ClipboardList,
     ConciergeBell,
     GithubIcon as Github,
@@ -25,9 +26,12 @@ import {
     Monitor,
     PenLine,
     Send,
+    Settings2,
+    UserCog,
     Users
 } from 'lucide-react';
 import AppLogo from './app-logo';
+import { CenterBadge } from './center-badge';
 import { usePage } from '@inertiajs/react';
 import { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -53,9 +57,11 @@ export function AppSidebar() {
 
     const { auth } = usePage().props as unknown as { auth?: Auth };
 
-    const roles = auth?.user?.roles?.map((role) => role.name) ?? [];
-    const isAdmin = roles.includes('Admin');
-    const isReception = !isAdmin && roles.includes('Reception');
+    const access = auth?.access;
+    const isAdmin = !!access?.centerAdmin;
+    const isReception = !!access?.reception;
+    const isSuperAdmin = !!access?.superAdmin;
+    const manageContent = !!access?.manageContent;
 
     const groups = useMemo((): { label?: string; items: NavItem[] }[] => {
         if (isReception) {
@@ -72,7 +78,8 @@ export function AppSidebar() {
 
         const platform: NavItem[] = [
             { title: t('sidebar.dashboard'), href: '/dashboard', icon: LayoutDashboard },
-            ...(isAdmin ? [{ title: t('sidebar.user'), href: '/user', icon: Users }] : []),
+            // The website's users (students) are the platform's: SuperAdmin only.
+            ...(manageContent ? [{ title: t('sidebar.user'), href: '/user', icon: Users }] : []),
             { title: t('sidebar.test_bank'), href: '/test-bank', icon: ClipboardList },
             { title: t('sidebar.my_result'), href: '/attempt', icon: BarChart3 },
         ];
@@ -100,9 +107,17 @@ export function AppSidebar() {
                     { title: t('exam_admin.nav.devices'), href: '/desktop/devices', icon: Monitor },
                 ],
             },
+            {
+                label: t('exam_admin.nav.group_center'),
+                items: [
+                    { title: t('exam_admin.nav.staff'), href: '/staff', icon: UserCog },
+                    { title: t('exam_admin.nav.center_settings'), href: '/center/settings', icon: Settings2 },
+                    ...(isSuperAdmin ? [{ title: t('exam_admin.nav.centers'), href: '/centers', icon: Building2 }] : []),
+                ],
+            },
         ];
         // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [isAdmin, isReception, i18n.language]);
+    }, [isAdmin, isReception, isSuperAdmin, manageContent, i18n.language]);
 
     return (
         <Sidebar 
@@ -120,6 +135,8 @@ export function AppSidebar() {
                     </SidebarMenuItem>
                 </SidebarMenu>
             </SidebarHeader>
+
+            {auth?.center && <CenterBadge center={auth.center} superAdmin={isSuperAdmin} />}
 
             <SidebarContent data-sidebar-scroll className="gap-3 py-2 [scrollbar-gutter:stable] [scrollbar-width:thin] group-data-[collapsible=icon]:[scrollbar-gutter:auto]">
                 {groups.map((group, index) => (

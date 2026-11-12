@@ -59,6 +59,8 @@ interface BankTestRow {
 interface PageProps {
     tests: BankTestRow[];
     folders: { id: number; name: string }[];
+    /** Moving a test to the public practice Test Bank: platform owner only. */
+    canMoveToPractice: boolean;
     reuseDays: number;
     filters: { status?: string | null; search?: string };
     [key: string]: unknown;
@@ -373,7 +375,7 @@ function MoveToPracticeDialog({ test, folders }: { test: BankTestRow; folders: P
 }
 
 export default function MockBankIndex() {
-    const { tests, folders, reuseDays, filters } = usePage<PageProps>().props;
+    const { tests, folders, canMoveToPractice, reuseDays, filters } = usePage<PageProps>().props;
     const { t } = useTranslation();
     const [search, setSearch] = useState(filters.search ?? '');
 
@@ -488,7 +490,7 @@ export default function MockBankIndex() {
                                                 {t('exam_admin.bank.archive')}
                                             </Button>
                                         )}
-                                        <MoveToPracticeDialog test={test} folders={folders} />
+                                        {canMoveToPractice && <MoveToPracticeDialog test={test} folders={folders} />}
                                     </div>
                                 </div>
 

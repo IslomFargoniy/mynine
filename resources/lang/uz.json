@@ -492,7 +492,10 @@
         "saved": "Saqlandi",
         "title": "Profil sozlamalari",
         "unverified_email": "Email manzilingiz tasdiqlanmagan.",
-        "verification_link_sent": "Email manzilingizga yangi tasdiqlash havolasi yuborildi."
+        "verification_link_sent": "Email manzilingizga yangi tasdiqlash havolasi yuborildi.",
+        "telegram_title": "Telegram",
+        "telegram_description": "Telegram orqali kirish uchun Telegram hisobingizni ulang.",
+        "telegram_connected": "Telegram ulangan"
     },
     "question": "Savol",
     "question_prompt": "Savol Matni / Prompt",
@@ -749,7 +752,11 @@
             "speaking": "Speaking",
             "writing_review": "Writing tekshiruvi",
             "devices": "Imtihon kompyuterlari",
-            "settings": "Desktop sozlamalari"
+            "settings": "Desktop sozlamalari",
+            "group_center": "Markaz",
+            "staff": "Xodimlar",
+            "center_settings": "Markaz sozlamalari",
+            "centers": "Markazlar"
         },
         "common": {
             "actions": "Amallar",
@@ -1331,5 +1338,132 @@
     "attempt_not_finished": "Bu urinish hali tugamagan. Avval uni yakunlang.",
     "writing_not_submitted": "Writing moduli hali topshirilmagan.",
     "writing_ai_pending": "Insho hali AI bahosini kutmoqda. Kuting yoki bandni qo'lda kiriting.",
-    "exam_date": "Imtihon sanasi"
+    "exam_date": "Imtihon sanasi",
+    "center_suspended": "Bu markaz to'xtatilgan: tizim faqat ko'rish rejimida (natijalarni ko'rish va chop etish mumkin). Platforma administratoriga murojaat qiling.",
+    "center_suspended_exam": "Bu markaz to'xtatilgan. Imtihonni boshlab bo'lmaydi.",
+    "account_suspended": "Hisobingiz to'xtatilgan. Markazingiz administratoriga murojaat qiling.",
+    "center_code": "markaz kodi",
+    "center_created": "Markaz yaratildi.",
+    "center_updated": "Markaz saqlandi.",
+    "center_mynine_code_fixed": "Mynine markazining kodini o'zgartirib bo'lmaydi.",
+    "center_mynine_cannot_suspend": "Mynine markazini to'xtatib bo'lmaydi.",
+    "center_suspended_saved": "Markaz to'xtatildi.",
+    "center_activated_saved": "Markaz faollashtirildi.",
+    "center_replace_superadmin": "Platforma egasining hisobini almashtirib bo'lmaydi.",
+    "center_admin_replaced": "Markaz administratori endi :email. Avvalgi barcha kirish usullari va sessiyalar bekor qilindi.",
+    "center_switched": "Endi :name markazi sifatida ishlayapsiz.",
+    "center_settings_saved": "Markaz sozlamalari saqlandi.",
+    "center_logo_removed": "Logotip o'chirildi.",
+    "staff_created": "Qabulxona xodimi yaratildi.",
+    "staff_updated": "Xodim saqlandi.",
+    "staff_suspended": "Xodim to'xtatildi va tizimdan chiqarildi.",
+    "staff_activated": "Xodim faollashtirildi.",
+    "user_is_center_admin": "Bu foydalanuvchi markaz administratori: uni Markazlar sahifasida boshqaring.",
+    "telegram_already_linked": "Bu Telegram hisobi boshqa foydalanuvchiga ulangan. Ulanmadi.",
+    "telegram_connected": "Telegram ulandi. Endi Telegram orqali kirishingiz mumkin.",
+    "staff_cannot_delete_account": "Xodim va markaz hisoblarini o'chirib bo'lmaydi.",
+    "centers": {
+        "description": "{{count}} ta markaz. Markaz — bu uning administrator hisobi; markazlar o'chirilmaydi, faqat to'xtatiladi.",
+        "create": "Yangi markaz",
+        "empty": "Hozircha markazlar yo'q.",
+        "edit": "Tahrirlash",
+        "switch": "Shu markaz sifatida ishlash",
+        "suspend": "To'xtatish",
+        "activate": "Faollashtirish",
+        "suspend_confirm": "\"{{name}}\" to'xtatilsinmi? Xodimlari faqat natijalarni ko'rishi va chop etishi mumkin, kompyuterlarda imtihon boshlanmaydi.",
+        "activate_confirm": "\"{{name}}\" faollashtirilsinmi?",
+        "contract_until": "Shartnoma {{date}} gacha",
+        "no_contract": "Muddatsiz",
+        "counts": "{{mocks}} mock · {{candidates}} nomzod · {{attempts}} urinish · {{devices}} kompyuter · {{staff}} xodim",
+        "columns": {
+            "center": "Markaz",
+            "admin": "Administrator",
+            "counts": "Foydalanish"
+        },
+        "status": {
+            "active": "Faol",
+            "suspended": "To'xtatilgan",
+            "expired": "Shartnoma tugagan"
+        },
+        "badge": {
+            "active": "faol",
+            "read_only": "Faqat ko'rish"
+        },
+        "form": {
+            "create_title": "Yangi markaz",
+            "edit_title": "{{name}} — tahrirlash",
+            "description": "Markaz yaratilganda uning administrator hisobi ham yaratiladi. Administrator shu email bilan kiradi (Google yoki parol).",
+            "name": "Markaz nomi",
+            "code": "Markaz kodi",
+            "code_hint": "3-12 ta A-Z harf va raqam. Imtihon kompyuterlari shu kod bilan ro'yxatdan o'tadi.",
+            "admin_name": "Administrator ismi",
+            "email": "Administrator emaili",
+            "password": "Parol (ixtiyoriy)",
+            "password_hint": "Parolsiz administrator Google orqali kiradi yoki parolni email orqali tiklaydi.",
+            "contract_until": "Shartnoma muddati"
+        },
+        "replace": {
+            "action": "Administratorni almashtirish",
+            "title": "{{name}} administratorini almashtirish",
+            "description": "Hozirgi administrator: {{email}}. Hisob (va markazning barcha ma'lumotlari) yangi shaxsga o'tadi.",
+            "email": "Yangi administrator emaili",
+            "name": "Yangi administrator ismi (ixtiyoriy)",
+            "effect_logins": "Google, GitHub va Telegram ulanishlari, telefon va parol o'chiriladi.",
+            "effect_sessions": "Hisobning barcha ochiq sessiyalari tugatiladi.",
+            "effect_data": "Mocklar, natijalar, kompyuterlar va xodimlar markazda qoladi.",
+            "submit": "Almashtirish",
+            "confirm": "\"{{name}}\" administrator hisobi {{email}} ga berilsinmi? Hozirgi administrator darhol kirish huquqini yo'qotadi."
+        },
+        "audit": {
+            "title": "So'nggi o'zgarishlar",
+            "actions": {
+                "backfill": "Ma'lumotlar Mynine markaziga o'tkazildi",
+                "center_created": "Markaz yaratildi",
+                "center_updated": "Markaz tahrirlandi",
+                "center_suspended": "Markaz to'xtatildi",
+                "center_activated": "Markaz faollashtirildi",
+                "admin_replaced": "Administrator almashtirildi",
+                "settings_updated": "Sozlamalar o'zgartirildi"
+            }
+        }
+    },
+    "center_settings": {
+        "description": "Markazingiz nomi va logotipi (imtihon kompyuterlarida ko'rsatiladi), kodi va imtihon dasturi sozlamalari.",
+        "suspended": "Markazingiz to'xtatilgan: natijalarni ko'rish va chop etish mumkin, lekin hech narsani o'zgartirib bo'lmaydi. Platforma administratoriga murojaat qiling.",
+        "name": "Markaz nomi",
+        "code": "Markaz kodi",
+        "code_hint": "Imtihon kompyuterlarini ro'yxatdan o'tkazishda kiritiladi. Platforma administratori belgilaydi.",
+        "contract": "Shartnoma muddati",
+        "logo_upload": "Logotip yuklash",
+        "logo_remove": "Logotipni o'chirish",
+        "logo_remove_confirm": "Logotip o'chirilsinmi?",
+        "desktop_title": "Imtihon dasturi",
+        "desktop_hint": "Imtihon kompyuterini ro'yxatdan o'tkazish uchun dasturda {{code}} markaz kodi va markaz parolini kiriting."
+    },
+    "staff": {
+        "description": "{{center}} qabulxona xodimlari: ular qabulxona va jonli monitorda ishlaydi.",
+        "create": "Yangi qabulxona xodimi",
+        "empty": "Hozircha qabulxona xodimlari yo'q.",
+        "edit": "Tahrirlash",
+        "suspend": "To'xtatish",
+        "activate": "Faollashtirish",
+        "suspend_confirm": "{{name}} to'xtatilsinmi? U tizimdan chiqariladi va kira olmaydi.",
+        "suspended": "To'xtatilgan",
+        "active": "Faol",
+        "columns": {
+            "name": "Ism",
+            "login": "Kirish"
+        },
+        "form": {
+            "create_title": "Yangi qabulxona xodimi",
+            "edit_title": "{{name}} — tahrirlash",
+            "description": "Qabulxona xodimlari faqat markazingiz mocklari va nomzodlarini ko'radi.",
+            "name": "Ism",
+            "email": "Email",
+            "phone": "Telefon",
+            "password": "Parol",
+            "login_hint": "Xodim email yoki telefon va shu parol bilan kiradi (kamida 8 ta belgi).",
+            "password_keep": "Joriy parolni saqlash uchun parolni bo'sh qoldiring."
+        }
+    }
 }

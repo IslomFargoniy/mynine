@@ -4,18 +4,19 @@ namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
 use App\Models\User\User;
+use App\Services\Telegram\TelegramLoginVerifier;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
 class TelegramLoginController extends Controller
 {
-    public function handle(Request $request)
+    public function handle(Request $request, TelegramLoginVerifier $verifier)
     {
         // Telegram sends user info via POST
         $data = $request->all();
 
         // Validate Telegram login
-        if (! $this->isTelegramDataValid($data)) {
+        if (! $verifier->verifyWidget($data)) {
             return redirect()->route('home')->with('error', __('error.invalid_telegram_login'));
         }
 
@@ -37,33 +38,5 @@ class TelegramLoginController extends Controller
         Auth::login($user);
 
         return redirect()->route('dashboard');
-    }
-
-    private function isTelegramDataValid(array $data): bool
-    {
-        $botToken = config('services.telegram.mynine_bot_token');
-        if (empty($botToken) || ! isset($data['hash'])) {
-            return false;
-        }
-
-        if (! isset($data['auth_date']) || abs(time() - (int) $data['auth_date']) > 86400) {
-            return false;
-        }
-
-        $checkHash = $data['hash'];
-        unset($data['hash']);
-
-        $dataCheckArr = [];
-        foreach ($data as $key => $value) {
-            $dataCheckArr[] = $key.'='.$value;
-        }
-
-        sort($dataCheckArr);
-        $dataCheckString = implode("\n", $dataCheckArr);
-
-        $secretKey = hash('sha256', $botToken, true);
-        $hash = hash_hmac('sha256', $dataCheckString, $secretKey);
-
-        return hash_equals($hash, $checkHash);
     }
 }

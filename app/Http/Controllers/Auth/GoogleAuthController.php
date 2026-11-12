@@ -25,8 +25,18 @@ class GoogleAuthController extends Controller
                 throw new \RuntimeException('Google account has no email');
             }
 
-            $user = User::where('google_id', $googleUser->getId())->first()
-                ?? User::where('email', $email)->first();
+            $byGoogle = User::where('google_id', $googleUser->getId())->first();
+            $byEmail = User::where('email', $email)->first();
+
+            // A center account handed to a new person (Centers → Replace admin) has the new email and no
+            // google_id: the person signing in with that email gets it, even if their Google account was linked
+            // to another (student) account before; that link moves to the center account.
+            if ($byEmail && $byEmail->isStaff() && $byGoogle && (int) $byGoogle->id !== (int) $byEmail->id) {
+                $byGoogle->forceFill(['google_id' => null])->saveQuietly();
+                $byGoogle = null;
+            }
+
+            $user = $byGoogle ?? $byEmail;
 
             if (! $user) {
                 $user = User::create([

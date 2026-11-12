@@ -492,7 +492,10 @@
         "saved": "Saved",
         "title": "Profile settings",
         "unverified_email": "Your email address is unverified.",
-        "verification_link_sent": "A new verification link has been sent to your email address."
+        "verification_link_sent": "A new verification link has been sent to your email address.",
+        "telegram_title": "Telegram",
+        "telegram_description": "Connect your Telegram account to sign in with Telegram.",
+        "telegram_connected": "Telegram is connected"
     },
     "question": "Question",
     "question_prompt": "Question Prompt / Text",
@@ -749,7 +752,11 @@
             "speaking": "Speaking",
             "writing_review": "Writing review",
             "devices": "Exam PCs",
-            "settings": "Desktop settings"
+            "settings": "Desktop settings",
+            "group_center": "Center",
+            "staff": "Staff",
+            "center_settings": "Center settings",
+            "centers": "Centers"
         },
         "common": {
             "actions": "Actions",
@@ -1331,5 +1338,132 @@
     "attempt_not_finished": "This attempt is not finished yet. Finish it first.",
     "writing_not_submitted": "The Writing module is not submitted yet.",
     "writing_ai_pending": "An essay is still waiting for its AI band. Wait, or enter the band manually.",
-    "exam_date": "Exam date"
+    "exam_date": "Exam date",
+    "center_suspended": "This center is suspended: the system is read-only (you can view and print results). Contact the platform administrator.",
+    "center_suspended_exam": "This center is suspended. The exam cannot be started.",
+    "account_suspended": "Your account is suspended. Contact your center's administrator.",
+    "center_code": "center code",
+    "center_created": "Center created.",
+    "center_updated": "Center saved.",
+    "center_mynine_code_fixed": "The Mynine center's code cannot be changed.",
+    "center_mynine_cannot_suspend": "The Mynine center cannot be suspended.",
+    "center_suspended_saved": "Center suspended.",
+    "center_activated_saved": "Center activated.",
+    "center_replace_superadmin": "The platform owner's account cannot be replaced.",
+    "center_admin_replaced": "The center's admin is now :email. All previous logins and sessions were ended.",
+    "center_switched": "You are now working as :name.",
+    "center_settings_saved": "Center settings saved.",
+    "center_logo_removed": "Logo removed.",
+    "staff_created": "Reception user created.",
+    "staff_updated": "Staff member saved.",
+    "staff_suspended": "Staff member suspended and signed out.",
+    "staff_activated": "Staff member activated.",
+    "user_is_center_admin": "This user is a center admin: manage them on the Centers page.",
+    "telegram_already_linked": "This Telegram account is already linked to another user. It was not connected.",
+    "telegram_connected": "Telegram connected. You can now sign in with Telegram.",
+    "staff_cannot_delete_account": "Staff and center accounts cannot be deleted.",
+    "centers": {
+        "description": "{{count}} centers. A center is its Admin account; centers are suspended, never deleted.",
+        "create": "New center",
+        "empty": "No centers yet.",
+        "edit": "Edit",
+        "switch": "Work as this center",
+        "suspend": "Suspend",
+        "activate": "Activate",
+        "suspend_confirm": "Suspend \"{{name}}\"? Its staff can only view and print results, and exam PCs cannot start exams.",
+        "activate_confirm": "Activate \"{{name}}\"?",
+        "contract_until": "Contract until {{date}}",
+        "no_contract": "No end date",
+        "counts": "{{mocks}} mocks · {{candidates}} candidates · {{attempts}} attempts · {{devices}} PCs · {{staff}} staff",
+        "columns": {
+            "center": "Center",
+            "admin": "Admin",
+            "counts": "Usage"
+        },
+        "status": {
+            "active": "Active",
+            "suspended": "Suspended",
+            "expired": "Contract ended"
+        },
+        "badge": {
+            "active": "active",
+            "read_only": "Read-only"
+        },
+        "form": {
+            "create_title": "New center",
+            "edit_title": "Edit {{name}}",
+            "description": "Creating a center creates its Admin account. The Admin signs in with this email (Google or password).",
+            "name": "Center name",
+            "code": "Center code",
+            "code_hint": "3-12 letters A-Z and digits. Exam PCs register with this code.",
+            "admin_name": "Admin's name",
+            "email": "Admin's email",
+            "password": "Password (optional)",
+            "password_hint": "Without a password the Admin signs in with Google or resets the password by email.",
+            "contract_until": "Contract until"
+        },
+        "replace": {
+            "action": "Replace admin",
+            "title": "Replace the admin of {{name}}",
+            "description": "Current admin: {{email}}. The account (and all the center's data) goes to the new person.",
+            "email": "New admin's email",
+            "name": "New admin's name (optional)",
+            "effect_logins": "Google, GitHub and Telegram links, phone and password are cleared.",
+            "effect_sessions": "Every open session of the account ends.",
+            "effect_data": "Mocks, results, PCs and staff stay with the center.",
+            "submit": "Replace admin",
+            "confirm": "Give the admin account of \"{{name}}\" to {{email}}? The current admin loses access immediately."
+        },
+        "audit": {
+            "title": "Recent changes",
+            "actions": {
+                "backfill": "Data moved to the Mynine center",
+                "center_created": "Center created",
+                "center_updated": "Center edited",
+                "center_suspended": "Center suspended",
+                "center_activated": "Center activated",
+                "admin_replaced": "Admin replaced",
+                "settings_updated": "Settings changed"
+            }
+        }
+    },
+    "center_settings": {
+        "description": "Your center's name and logo (shown on the exam PCs), its code, and the exam app's settings.",
+        "suspended": "Your center is suspended: you can view and print results, but not change anything. Contact the platform administrator.",
+        "name": "Center name",
+        "code": "Center code",
+        "code_hint": "Entered on the exam PCs when they are registered. Set by the platform administrator.",
+        "contract": "Contract until",
+        "logo_upload": "Upload logo",
+        "logo_remove": "Remove logo",
+        "logo_remove_confirm": "Remove the logo?",
+        "desktop_title": "Exam app",
+        "desktop_hint": "To register an exam PC, enter the center code {{code}} and the center password in the app."
+    },
+    "staff": {
+        "description": "Reception users of {{center}}: they work at the reception desk and the live monitor.",
+        "create": "New reception user",
+        "empty": "No reception users yet.",
+        "edit": "Edit",
+        "suspend": "Suspend",
+        "activate": "Activate",
+        "suspend_confirm": "Suspend {{name}}? They are signed out and cannot log in.",
+        "suspended": "Suspended",
+        "active": "Active",
+        "columns": {
+            "name": "Name",
+            "login": "Login"
+        },
+        "form": {
+            "create_title": "New reception user",
+            "edit_title": "Edit {{name}}",
+            "description": "Reception users see only your center's mocks and candidates.",
+            "name": "Name",
+            "email": "Email",
+            "phone": "Phone",
+            "password": "Password",
+            "login_hint": "They sign in with the email or phone and this password (at least 8 characters).",
+            "password_keep": "Leave the password empty to keep the current one."
+        }
+    }
 }

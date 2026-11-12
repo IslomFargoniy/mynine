@@ -6,6 +6,7 @@ import { useTranslation } from 'react-i18next';
 
 import HeadingSmall from '@/components/heading-small';
 import InputError from '@/components/input-error';
+import { TelegramConnect } from '@/components/settings/telegram-connect';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -27,7 +28,7 @@ type ProfileForm = {
 };
 
 export default function Profile() {
-    const { auth } = usePage<SharedData>().props;
+    const { auth, telegramConnected, telegramBot } = usePage<SharedData & { telegramConnected?: boolean; telegramBot?: string }>().props;
 
     const { data, setData, patch, errors, processing, recentlySuccessful } = useForm<Required<ProfileForm>>({
         name: auth.user.name,
@@ -152,6 +153,8 @@ export default function Profile() {
                             </Transition>
                         </div>
                     </form>
+
+                    <TelegramConnect connected={!!telegramConnected} bot={telegramBot ?? 'MynineUzBot'} />
                 </div>
             </SettingsLayout>
         </AppLayout>

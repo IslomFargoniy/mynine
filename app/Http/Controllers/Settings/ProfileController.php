@@ -4,6 +4,8 @@ namespace App\Http\Controllers\Settings;
 
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Settings\ProfileUpdateRequest;
+use App\Models\User\User;
+use App\Services\Telegram\TelegramLoginVerifier;
 use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -21,6 +23,8 @@ class ProfileController extends Controller
         return Inertia::render('settings/profile', [
             'mustVerifyEmail' => $request->user() instanceof MustVerifyEmail,
             'status' => $request->session()->get('status'),
+            'telegramConnected' => $request->user()->telegram_id !== null,
+            'telegramBot' => config('services.telegram.mynine_bot_username'),
         ]);
     }
 
@@ -41,6 +45,33 @@ class ProfileController extends Controller
     }
 
     /**
+     * "Connect Telegram": the Telegram Login Widget's signed data sets telegram_id of the current user, so they
+     * can sign in with Telegram afterwards. A Telegram account already linked to another user is refused (no
+     * merging of accounts).
+     */
+    public function connectTelegram(Request $request, TelegramLoginVerifier $verifier): RedirectResponse
+    {
+        $data = $request->only(['id', 'first_name', 'last_name', 'username', 'photo_url', 'auth_date', 'hash']);
+        $data = array_filter($data, fn ($value) => $value !== null);
+
+        if (! isset($data['id']) || ! $verifier->verifyWidget($data)) {
+            return back()->with('error', __('error.invalid_telegram_login'));
+        }
+
+        $user = $request->user();
+        $telegramId = (string) $data['id'];
+
+        $owner = User::query()->where('telegram_id', $telegramId)->first();
+        if ($owner && (int) $owner->id !== (int) $user->id) {
+            return back()->with('error', __('telegram_already_linked'));
+        }
+
+        $user->forceFill(['telegram_id' => $telegramId])->saveQuietly();
+
+        return back()->with('success', __('telegram_connected'));
+    }
+
+    /**
      * Delete the user's account.
      */
     public function destroy(Request $request): RedirectResponse
@@ -50,6 +81,10 @@ class ProfileController extends Controller
         ]);
 
         $user = $request->user();
+
+        if ($user->isStaff()) {
+            return back()->with('error', __('staff_cannot_delete_account'));
+        }
 
         Auth::logout();
 

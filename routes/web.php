@@ -10,6 +10,9 @@ use App\Http\Controllers\Auth\GoogleAuthController;
 use App\Http\Controllers\Auth\TelegramAuthController;
 use App\Http\Controllers\Auth\TelegramLoginController;
 use App\Http\Controllers\BlogController;
+use App\Http\Controllers\Center\CenterController;
+use App\Http\Controllers\Center\CenterSettingsController;
+use App\Http\Controllers\Center\StaffController;
 use App\Http\Controllers\Desktop\DeviceController as DesktopDeviceController;
 use App\Http\Controllers\Desktop\SettingsController as DesktopSettingsController;
 use App\Http\Controllers\FolderController;
@@ -100,9 +103,34 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::resource('attempt', AttemptController::class)->only(['index', 'store', 'show', 'destroy']);
 
     /*
-    | Content management and grading: admins only.
+    | Centers (SuperAdmin): create / edit / suspend centers, replace a center's Admin, switch the active center.
     */
-    Route::middleware('role:Admin')->group(function () {
+    Route::middleware('role:SuperAdmin')->prefix('centers')->name('centers.')->group(function () {
+        Route::get('/', [CenterController::class, 'index'])->name('index');
+        Route::post('/', [CenterController::class, 'store'])->name('store');
+        Route::patch('{center}', [CenterController::class, 'update'])->whereNumber('center')->name('update');
+        Route::post('{center}/status', [CenterController::class, 'status'])->whereNumber('center')->name('status');
+        Route::post('{center}/replace-admin', [CenterController::class, 'replaceAdmin'])->whereNumber('center')->name('replace-admin');
+        Route::post('{center}/switch', [CenterController::class, 'switch'])->whereNumber('center')->name('switch');
+    });
+
+    /*
+    | Content management and grading: the center's Admin (every list and record is limited to the
+    | current center: App\Support\CurrentCenter + policies). Suspended centers are read-only.
+    */
+    Route::middleware(['role:Admin|SuperAdmin', 'center.active'])->group(function () {
+        // Center settings (name, logo; the center password and background are under desktop/settings).
+        Route::get('/center/settings', [CenterSettingsController::class, 'edit'])->name('center.settings');
+        Route::post('/center/settings', [CenterSettingsController::class, 'update'])->name('center.settings.update');
+        Route::delete('/center/logo', [CenterSettingsController::class, 'destroyLogo'])->name('center.logo.destroy');
+
+        // Reception staff of the center
+        Route::get('/staff', [StaffController::class, 'index'])->name('staff.index');
+        Route::post('/staff', [StaffController::class, 'store'])->name('staff.store');
+        Route::patch('/staff/{staff}', [StaffController::class, 'update'])->whereNumber('staff')->name('staff.update');
+        Route::post('/staff/{staff}/suspend', [StaffController::class, 'suspend'])->whereNumber('staff')->name('staff.suspend');
+        Route::post('/staff/{staff}/activate', [StaffController::class, 'activate'])->whereNumber('staff')->name('staff.activate');
+
         Route::resource('user', UserController::class);
         Route::resource('folder', FolderController::class)->only(['store', 'update', 'destroy']);
 
@@ -163,7 +191,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     /*
     | Mock exam day: Admin + Reception (docs/desktop/ARCHITECTURE.md role matrix).
     */
-    Route::middleware('role:Admin|Reception')->group(function () {
+    Route::middleware(['role:Admin|Reception|SuperAdmin', 'center.active'])->group(function () {
         Route::post('/mock-student', [MockStudentController::class, 'store'])->name('mock-student.store');
         Route::post('/mock-student/check-repeats', [MockStudentController::class, 'checkRepeats'])->name('mock-student.check-repeats');
         Route::get('/mock/{mock}/code-cards', [MockStudentController::class, 'codeCards'])->name('mock.code-cards');
@@ -210,8 +238,8 @@ Route::middleware([EnsureCandidateOrAuthenticated::class])->group(function () {
 |--------------------------------------------------------------------------
 */
 
-Route::middleware(['auth', 'verified'])->prefix('monitor/attempts/{attempt}')->name('monitor.')->group(function () {
-    Route::middleware('role:Admin')->group(function () {
+Route::middleware(['auth', 'verified', 'center.active'])->prefix('monitor/attempts/{attempt}')->name('monitor.')->group(function () {
+    Route::middleware('role:Admin|SuperAdmin')->group(function () {
         Route::post('extra-time', [MonitorController::class, 'extraTime'])->name('extra-time');
         Route::post('pause', [MonitorController::class, 'pause'])->name('pause');
         Route::post('resume', [MonitorController::class, 'resume'])->name('resume');
@@ -219,10 +247,10 @@ Route::middleware(['auth', 'verified'])->prefix('monitor/attempts/{attempt}')->n
     });
 
     Route::post('unlock', [MonitorController::class, 'unlock'])
-        ->middleware('role:Admin|Reception')
+        ->middleware('role:Admin|Reception|SuperAdmin')
         ->name('unlock');
     Route::post('release-device', [MonitorController::class, 'releaseDevice'])
-        ->middleware('role:Admin|Reception')
+        ->middleware('role:Admin|Reception|SuperAdmin')
         ->name('release-device');
 });
 
