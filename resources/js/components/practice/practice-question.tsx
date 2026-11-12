@@ -271,7 +271,7 @@ export default function PracticeQuestion({
                 <span
                     onClick={toggleFlag}
                     className={`flex items-center justify-center min-w-[24px] h-6 px-1.5 border ${
-                        isFlagged ? 'border-orange-500 bg-orange-50 text-orange-600 font-bold' : 'border-[#2563eb] bg-white text-[#2563eb] font-bold'
+                        isFlagged ? 'border-orange-500 bg-orange-50 text-orange-600 font-bold' : 'border-black bg-white text-black font-bold dark:border-white dark:bg-gray-800 dark:text-white'
                     } text-xs rounded-[2px] cursor-pointer shadow-2xs select-none relative mt-0.5`}
                     title={t('flag_for_review')}
                 >

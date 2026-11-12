@@ -795,7 +795,7 @@ export default function Practice() {
             {selectedPart && (
                 <div className="fixed bottom-0 right-0 flex items-center h-[52px] z-50">
                     <button
-                        className="w-11 h-full bg-gray-600 hover:bg-gray-500 disabled:opacity-40 disabled:cursor-not-allowed text-white flex items-center justify-center font-bold text-base transition-colors border-r border-gray-700 cursor-pointer"
+                        className="w-11 h-full bg-black hover:bg-gray-800 disabled:bg-gray-500 disabled:opacity-35 disabled:cursor-not-allowed text-white flex items-center justify-center font-bold text-base transition-colors border-r border-gray-700 cursor-pointer"
                         disabled={!testType || !selectedPart || (testType.parts?.findIndex(p => p.id === selectedPart.id) ?? -1) <= 0}
                         onClick={() => {
                             if (!testType || !selectedPart) return;
@@ -807,7 +807,7 @@ export default function Practice() {
                         ◄
                     </button>
                     <button
-                        className="w-11 h-full bg-black hover:bg-gray-800 disabled:opacity-40 disabled:cursor-not-allowed text-white flex items-center justify-center font-bold text-base transition-colors cursor-pointer"
+                        className="w-11 h-full bg-black hover:bg-gray-800 disabled:bg-gray-500 disabled:opacity-35 disabled:cursor-not-allowed text-white flex items-center justify-center font-bold text-base transition-colors cursor-pointer"
                         disabled={!testType || !selectedPart || (testType.parts?.findIndex(p => p.id === selectedPart.id) ?? -1) >= (testType.parts?.length ?? 0) - 1}
                         onClick={() => {
                             if (!testType || !selectedPart) return;

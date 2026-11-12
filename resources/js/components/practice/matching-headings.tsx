@@ -119,7 +119,7 @@ export default function MatchingHeadings({
                                     className={`flex items-center justify-center min-w-[24px] h-6 px-1.5 border ${
                                         isFlagged
                                             ? 'border-orange-500 bg-orange-50 text-orange-600 font-bold'
-                                            : 'border-[#2563eb] bg-white dark:bg-gray-800 text-[#2563eb] font-bold'
+                                            : 'border-black bg-white text-black font-bold dark:border-white dark:bg-gray-800 dark:text-white'
                                     } text-xs rounded-[2px] ${toggleFlag ? 'cursor-pointer' : ''} shadow-2xs select-none relative shrink-0`}
                                 >
                                     {qNumber}

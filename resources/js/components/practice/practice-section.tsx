@@ -213,7 +213,7 @@ export default function PracticeSection({
                     isOver ? 'bg-blue-100 dark:bg-blue-900/40 border-blue-400' : 'border-gray-400 dark:border-gray-600'
                 }`}
             >
-                <span className="text-blue-600 font-semibold">{number}.</span>
+                <span className="font-bold text-black dark:text-white">{number}.</span>
                 <span className="truncate max-w-[10rem]">{displayText || '_____'}</span>
                 {displayText && (
                     <button
@@ -257,7 +257,7 @@ export default function PracticeSection({
                                             );
                                         return (
                                             <span key={question.id} className="inline-block whitespace-nowrap align-middle">
-                                                <span className="text-blue-600 font-semibold mr-1">{number}.</span>
+                                                <span className="mr-1 font-bold text-black dark:text-white">{number}.</span>
                                                 <input
                                                     type="text"
                                                     className="ielts-gap-input"

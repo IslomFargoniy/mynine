@@ -195,13 +195,13 @@ class NumberBadge extends StatelessWidget {
               alignment: Alignment.center,
               decoration: BoxDecoration(
                 color: flagged ? WebTokens.flagBg : TW.white,
-                border: Border.all(color: flagged ? WebTokens.flagBorder : WebTokens.badgeBlue),
+                border: Border.all(color: flagged ? WebTokens.flagBorder : TW.black),
                 borderRadius: WebTokens.r2,
                 boxShadow: const [BoxShadow(color: Color(0x0D000000), blurRadius: 1)],
               ),
               child: Text(label,
                   style: inter(12,
-                      weight: FontWeight.w700, color: flagged ? WebTokens.flagText : WebTokens.badgeBlue)),
+                      weight: FontWeight.w700, color: flagged ? WebTokens.flagText : TW.black)),
             ),
             if (flagged)
               Positioned(
@@ -567,7 +567,7 @@ class _BlankNumber extends StatelessWidget {
         child: Text(
           '${q.number}.${flagged ? '★' : ''}',
           style: inter(16,
-              weight: FontWeight.w600, color: flagged ? WebTokens.numberFlag : ctx.c(WebTokens.gapNumber)),
+              weight: FontWeight.w700, color: flagged ? WebTokens.numberFlag : ctx.c(WebTokens.gapNumber)),
         ),
       ),
     );
@@ -637,7 +637,7 @@ class _DragDropSectionViewState extends State<DragDropSectionView> {
                     constraints: const BoxConstraints(minWidth: 120),
                     padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                     child: Row(mainAxisSize: MainAxisSize.min, children: [
-                      Text('${q.number}.', style: inter(14, weight: FontWeight.w600, color: ctx.c(TW.blue600))),
+                      Text('${q.number}.', style: inter(14, weight: FontWeight.w700, color: ctx.c(WebTokens.gapNumber))),
                       const SizedBox(width: 8),
                       ConstrainedBox(
                         constraints: const BoxConstraints(maxWidth: 160),

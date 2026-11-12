@@ -178,7 +178,7 @@ abstract final class WebTokens {
   static const gapWidthEm = 10.0;
 
   /// complete_section number `text-blue-600 font-semibold mr-1`.
-  static const gapNumber = TW.blue600;
+  static const gapNumber = TW.black;
 
   /// drag chips `rounded-md border-[2px] border-blue-500 bg-white px-3 py-1 text-sm shadow-sm`;
   /// drop `min-w-[120px] rounded-md border border-dashed border-gray-400 px-2 py-1 mx-1`,

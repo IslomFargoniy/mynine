@@ -1134,13 +1134,15 @@ class _Arrow extends StatelessWidget {
           cursor: enabled ? SystemMouseCursors.click : SystemMouseCursors.forbidden,
           child: GestureDetector(
             onTap: enabled ? onTap : null,
+            // Active arrows are solid black; a disabled one is plainly grey (a dimmed grey "Previous" looked
+            // disabled even when it worked).
             child: Opacity(
-              opacity: enabled ? 1 : 0.4,
+              opacity: enabled ? 1 : 0.35,
               child: Container(
                 width: WebTokens.arrowWidth,
                 alignment: Alignment.center,
                 decoration: BoxDecoration(
-                  color: color,
+                  color: enabled ? TW.black : TW.gray500,
                   border: border ? const Border(right: BorderSide(color: TW.gray700)) : null,
                 ),
                 child: Text(glyph, style: inter(16, weight: FontWeight.w700, color: Colors.white)),
