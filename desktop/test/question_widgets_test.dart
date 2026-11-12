@@ -67,19 +67,25 @@ void main() {
     expect(buildRange(null, 'A'), isEmpty);
   });
 
-  testWidgets('matching: click a heading, then a slot', (tester) async {
+  testWidgets('matching: each question picks its heading from a select', (tester) async {
     final h = await _toModule(tester, reading: true);
     final part = h.exam.currentPart!;
     final section = part.sections.firstWhere((s) => s.questionType == QuestionType.matching);
     await _pumpSection(tester, h, part, section);
     expect(find.text('LIST OF HEADINGS'), findsOneWidget);
     const heading = 'ii A rapid and safe building process';
-    await tester.tap(find.byKey(const Key('heading-$heading')));
-    await tester.pump();
-    expect(find.text('Click here to place heading'), findsNWidgets(3));
-    await tester.tap(find.byKey(const Key('slot-8008')));
-    await tester.pump();
+    await tester.tap(find.byKey(const Key('select-8008')));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text(heading).last);
+    await tester.pumpAndSettle();
     expect(h.exam.answerFor(8008).text, heading);
+
+    // "–" clears the answer.
+    await tester.tap(find.byKey(const Key('select-8008')));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('–').last);
+    await tester.pumpAndSettle();
+    expect(h.exam.answerFor(8008).isAnswered, isFalse);
     await _done(tester, h);
   });
 

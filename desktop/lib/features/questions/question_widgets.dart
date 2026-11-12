@@ -692,16 +692,15 @@ class _DragDropSectionViewState extends State<DragDropSectionView> {
 
 /// Dashed border box (CSS `border-dashed`).
 class _DashedBox extends StatelessWidget {
-  const _DashedBox({required this.child, required this.color, this.fill, this.radius = 6, this.width = 1});
+  const _DashedBox({required this.child, required this.color, this.fill, this.radius = 6});
   final Widget child;
   final Color color;
   final Color? fill;
   final double radius;
-  final double width;
 
   @override
   Widget build(BuildContext context) => CustomPaint(
-        painter: _DashPainter(color, fill, radius, width),
+        painter: _DashPainter(color, fill, radius, 1),
         child: child,
       );
 }
@@ -749,124 +748,55 @@ class MatchingView extends StatefulWidget {
 }
 
 class _MatchingViewState extends State<MatchingView> {
-  String? _selected;
+  /// Headings with their own text (i … x) are listed above the questions; a bare letter range (A–H) is not.
+  bool get _hasTexts => widget.section.options.isNotEmpty;
 
-  List<String> get _headings => widget.section.options.isNotEmpty
+  List<String> get _headings => _hasTexts
       ? widget.section.options.map((o) => htmlToPlainText(o.html)).toList()
       : buildRange(widget.section.fromOption, widget.section.toOption);
-
-  void _place(int questionId, String value) {
-    if (widget.ctx.locked) return;
-    widget.ctx.setText(questionId, value, debounce: false);
-    setState(() => _selected = null);
-  }
 
   @override
   Widget build(BuildContext context) {
     final ctx = widget.ctx;
-    final used = {
-      for (final q in widget.section.questions)
-        if (ctx.answer(q.id).text != null) ctx.answer(q.id).text!,
-    };
+    final headings = _headings;
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 16), // my-4
       child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
-        Container(
-          padding: const EdgeInsets.all(16),
-          decoration: BoxDecoration(
-            color: ctx.palette.standard ? TW.gray50 : ctx.palette.panel,
-            border: Border.all(color: ctx.c(TW.gray300), width: 2),
-            borderRadius: BorderRadius.circular(8),
+        if (_hasTexts) ...[
+          Container(
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: ctx.palette.standard ? TW.gray50 : ctx.palette.panel,
+              border: Border.all(color: ctx.c(TW.gray300), width: 2),
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
+              Text('LIST OF HEADINGS',
+                  style: inter(14, weight: FontWeight.w700, color: ctx.c(TW.gray800), letterSpacing: 0.7)),
+              const SizedBox(height: 10),
+              for (final h in headings)
+                Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 3),
+                  child: Text(h, style: inter(14, color: ctx.c(TW.gray900), height: 1.4)),
+                ),
+            ]),
           ),
-          child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
-            Row(children: [
-              Expanded(
-                child: Text('LIST OF HEADINGS',
-                    style: inter(14, weight: FontWeight.w700, color: ctx.c(TW.gray800), letterSpacing: 0.7)),
-              ),
-              Text('(drag heading or click to place)', style: inter(12, color: ctx.c(TW.gray500))),
-            ]),
-            const SizedBox(height: 12),
-            Wrap(spacing: 10, runSpacing: 10, children: [
-              for (final h in _headings) _heading(h, used.contains(h)),
-            ]),
-          ]),
-        ),
-        const SizedBox(height: 24), // space-y-6
+          const SizedBox(height: 24),
+        ],
         for (final (i, q) in widget.section.questions.indexed) ...[
-          if (i > 0) const SizedBox(height: 16), // space-y-4
-          _slot(q),
+          if (i > 0) const SizedBox(height: 12),
+          _row(q, headings),
         ],
       ]),
     );
   }
 
-  Widget _heading(String h, bool isUsed) {
+  Widget _row(QuestionPayload q, List<String> headings) {
     final ctx = widget.ctx;
-    final selected = _selected == h;
-    final Color bg;
-    final Color border;
-    final Color fg;
-    if (isUsed) {
-      bg = TW.gray200;
-      border = TW.gray300;
-      fg = TW.gray400;
-    } else if (selected) {
-      bg = TW.blue600;
-      border = TW.blue700;
-      fg = TW.white;
-    } else {
-      bg = TW.white;
-      border = TW.gray300;
-      fg = TW.gray900;
-    }
-    final box = Container(
-      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8), // px-3.5 py-2
-      decoration: BoxDecoration(
-        color: bg,
-        border: Border.all(color: border),
-        borderRadius: BorderRadius.circular(6),
-        boxShadow: [
-          if (selected) const BoxShadow(color: TW.blue400, spreadRadius: 2),
-          const BoxShadow(color: Color(0x0D000000), blurRadius: 1),
-        ],
-      ),
-      child: Row(mainAxisSize: MainAxisSize.min, children: [
-        if (!isUsed) ...[
-          Icon(LucideIcons.gripVertical, size: 16, color: selected ? TW.white : TW.gray400),
-          const SizedBox(width: 8),
-        ],
-        Text(h,
-            style: inter(14,
-                weight: FontWeight.w500,
-                color: fg,
-                decoration: isUsed ? TextDecoration.lineThrough : null)),
-      ]),
-    );
-    if (isUsed) return Opacity(opacity: 0.6, child: box);
-    if (ctx.locked) return Opacity(opacity: 0.5, child: box);
-    return Draggable<String>(
-      data: h,
-      feedback: Material(color: Colors.transparent, child: box),
-      childWhenDragging: Opacity(opacity: 0.4, child: box),
-      child: MouseRegion(
-        cursor: SystemMouseCursors.grab,
-        child: GestureDetector(
-          key: Key('heading-$h'),
-          onTap: () => setState(() => _selected = selected ? null : h),
-          child: box,
-        ),
-      ),
-    );
-  }
-
-  Widget _slot(QuestionPayload q) {
-    final ctx = widget.ctx;
-    final value = ctx.answer(q.id).text;
     final title = htmlToPlainText(q.html);
     return Container(
       key: ctx.keyFor(q.id),
-      padding: const EdgeInsets.all(14), // p-3.5
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
       decoration: BoxDecoration(
         color: ctx.palette.standard ? TW.white : ctx.palette.background,
         border: Border.all(color: ctx.c(TW.gray200)),
@@ -884,66 +814,79 @@ class _MatchingViewState extends State<MatchingView> {
               style: inter(14, weight: FontWeight.w600, color: ctx.c(TW.gray800), height: 1.375)),
         ),
         const SizedBox(width: 12),
-        DragTarget<String>(
-          onWillAcceptWithDetails: (_) => !ctx.locked,
-          onAcceptWithDetails: (d) => _place(q.id, d.data),
-          builder: (context, candidates, _) {
-            final Color borderColor;
-            final Color fill;
-            if (value != null) {
-              borderColor = TW.blue500;
-              fill = const Color(0x80EFF6FF); // blue-50/50
-            } else if (_selected != null || candidates.isNotEmpty) {
-              borderColor = TW.blue400;
-              fill = const Color(0x33EFF6FF); // blue-50/20
-            } else {
-              borderColor = TW.gray300;
-              fill = const Color(0x80F9FAFB); // gray-50/50
-            }
-            return GestureDetector(
-              key: Key('slot-${q.id}'),
-              onTap: _selected != null ? () => _place(q.id, _selected!) : null,
-              child: _DashedBox(
-                color: ctx.palette.standard ? borderColor : ctx.palette.text,
-                fill: ctx.palette.standard ? fill : null,
-                width: 2,
-                child: Container(
-                  width: WebTokens.matchingSlotWidth,
-                  constraints: const BoxConstraints(minHeight: 44),
-                  padding: const EdgeInsets.all(8),
-                  alignment: Alignment.centerLeft,
-                  child: value == null
-                      ? Text(_selected != null ? 'Click here to place heading' : 'Drop heading here',
-                          style: inter(12, weight: FontWeight.w500, color: ctx.c(TW.gray400), style: FontStyle.italic))
-                      : Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                          decoration: BoxDecoration(
-                            color: TW.white,
-                            border: Border.all(color: TW.blue300),
-                            borderRadius: BorderRadius.circular(4),
-                          ),
-                          child: Row(children: [
-                            Expanded(
-                              child: Text(value,
-                                  overflow: TextOverflow.ellipsis,
-                                  style: inter(14, weight: FontWeight.w600, color: TW.blue900)),
-                            ),
-                            if (!ctx.locked)
-                              GestureDetector(
-                                onTap: () => ctx.setText(q.id, '', debounce: false),
-                                child: const Padding(
-                                  padding: EdgeInsets.only(left: 8),
-                                  child: Icon(LucideIcons.x, size: 16, color: TW.red500),
-                                ),
-                              ),
-                          ]),
-                        ),
-                ),
-              ),
-            );
-          },
+        AnswerSelect(
+          key: Key('select-${q.id}'),
+          value: ctx.answer(q.id).text,
+          options: headings,
+          // Letters fit a narrow box; heading texts need the room.
+          width: _hasTexts ? WebTokens.matchingSlotWidth : 96,
+          palette: ctx.palette,
+          enabled: !ctx.locked,
+          onChanged: (v) => ctx.setText(q.id, v, debounce: false),
         ),
       ]),
+    );
+  }
+}
+
+/// IELTS-style answer select: a square black box with the choice and an arrow; "–" clears it.
+class AnswerSelect extends StatelessWidget {
+  const AnswerSelect({
+    super.key,
+    required this.value,
+    required this.options,
+    required this.width,
+    required this.palette,
+    required this.enabled,
+    required this.onChanged,
+  });
+
+  final String? value;
+  final List<String> options;
+  final double width;
+  final ExamPalette palette;
+  final bool enabled;
+  final ValueChanged<String> onChanged;
+
+  @override
+  Widget build(BuildContext context) {
+    final v = (value == null || value!.isEmpty) ? null : value;
+    // An answer saved from an older list still shows (the dropdown needs it among the items).
+    final items = [...options, if (v != null && !options.contains(v)) v];
+    final text = palette.standard ? TW.black : palette.text;
+    return Container(
+      width: width,
+      height: 34,
+      padding: const EdgeInsets.only(left: 8, right: 4),
+      decoration: BoxDecoration(
+        color: palette.standard ? TW.white : palette.background,
+        border: Border.all(color: palette.standard ? TW.black : palette.text),
+      ),
+      child: DropdownButtonHideUnderline(
+        child: DropdownButton<String>(
+          value: v,
+          isExpanded: true,
+          isDense: true,
+          hint: Text('', style: inter(14, color: text)),
+          icon: Icon(LucideIcons.chevronDown, size: 16, color: text),
+          dropdownColor: palette.standard ? TW.white : palette.background,
+          borderRadius: BorderRadius.zero,
+          style: inter(14, weight: FontWeight.w600, color: text),
+          onChanged: enabled ? (s) => onChanged(s ?? '') : null,
+          selectedItemBuilder: (context) => [
+            Text('', style: inter(14, color: text)),
+            for (final o in items) Text(o, overflow: TextOverflow.ellipsis, style: inter(14, weight: FontWeight.w600, color: text)),
+          ],
+          items: [
+            DropdownMenuItem<String>(value: '', child: Text('–', style: inter(14, color: TW.gray500))),
+            for (final o in items)
+              DropdownMenuItem<String>(
+                value: o,
+                child: Text(o, overflow: TextOverflow.ellipsis, style: inter(14, color: text)),
+              ),
+          ],
+        ),
+      ),
     );
   }
 }
