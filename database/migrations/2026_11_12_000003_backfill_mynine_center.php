@@ -110,10 +110,11 @@ return new class extends Migration
         $roleId = fn (string $name) => DB::table('roles')->where('name', $name)->where('guard_name', $guard)->value('id');
         $userModel = DB::table('model_has_roles')->value('model_type') ?? 'App\\Models\\User\\User';
 
-        $log = DB::table('center_audit_logs')->where('action', 'backfill')->orderByDesc('id')->first();
-        $demoted = $log ? (array) (json_decode((string) $log->meta, true)['demoted_admin_ids'] ?? []) : [];
+        // Every run of up() logged the Admins it demoted (a re-run logs an empty list).
+        $logs = DB::table('center_audit_logs')->where('action', 'backfill')->get(['id', 'meta']);
+        $demoted = $logs->flatMap(fn ($log) => (array) (json_decode((string) $log->meta, true)['demoted_admin_ids'] ?? []))->unique()->values()->all();
 
-        DB::transaction(function () use ($demoted, $roleId, $userModel, $log) {
+        DB::transaction(function () use ($demoted, $roleId, $userModel, $logs) {
             if ($roleId('Admin')) {
                 foreach ($demoted as $userId) {
                     DB::table('model_has_roles')->insertOrIgnore(['role_id' => $roleId('Admin'), 'model_type' => $userModel, 'model_id' => $userId]);
@@ -130,9 +131,7 @@ return new class extends Migration
             }
 
             // The owner_id columns are dropped by the previous migration's down(); center_settings with it.
-            if ($log) {
-                DB::table('center_audit_logs')->where('id', $log->id)->delete();
-            }
+            DB::table('center_audit_logs')->whereIn('id', $logs->pluck('id'))->delete();
         });
 
         $this->forgetPermissionCache();

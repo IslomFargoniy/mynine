@@ -90,7 +90,8 @@ Route::get('/lang/{locale}', function (Request $request, string $locale) {
 |--------------------------------------------------------------------------
 */
 
-Route::middleware(['auth', 'verified'])->group(function () {
+// center.active: staff of a suspended center may only read (GET) — see EnsureCenterIsActive.
+Route::middleware(['auth', 'verified', 'center.active'])->group(function () {
     Route::get('dashboard', [HomeController::class, 'index'])->name('dashboard');
 
     // Test Bank (practice tests by folder). Old URLs redirect here.
@@ -118,7 +119,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     | Content management and grading: the center's Admin (every list and record is limited to the
     | current center: App\Support\CurrentCenter + policies). Suspended centers are read-only.
     */
-    Route::middleware(['role:Admin|SuperAdmin', 'center.active'])->group(function () {
+    Route::middleware('role:Admin|SuperAdmin')->group(function () {
         // Center settings (name, logo; the center password and background are under desktop/settings).
         Route::get('/center/settings', [CenterSettingsController::class, 'edit'])->name('center.settings');
         Route::post('/center/settings', [CenterSettingsController::class, 'update'])->name('center.settings.update');
@@ -191,7 +192,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     /*
     | Mock exam day: Admin + Reception (docs/desktop/ARCHITECTURE.md role matrix).
     */
-    Route::middleware(['role:Admin|Reception|SuperAdmin', 'center.active'])->group(function () {
+    Route::middleware('role:Admin|Reception|SuperAdmin')->group(function () {
         Route::post('/mock-student', [MockStudentController::class, 'store'])->name('mock-student.store');
         Route::post('/mock-student/check-repeats', [MockStudentController::class, 'checkRepeats'])->name('mock-student.check-repeats');
         Route::get('/mock/{mock}/code-cards', [MockStudentController::class, 'codeCards'])->name('mock.code-cards');

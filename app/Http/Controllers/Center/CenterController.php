@@ -189,7 +189,7 @@ class CenterController extends Controller
         DB::transaction(function () use ($center, $data, $oldEmail, $newEmail) {
             $center->forceFill([
                 'email' => $newEmail,
-                'name' => $data['name'] ?: $center->name,
+                'name' => ($data['name'] ?? null) ?: $center->name,
                 'email_verified_at' => now(),
                 'google_id' => null,
                 'github_id' => null,
