@@ -956,7 +956,11 @@ class _EssayQuestionState extends State<EssayQuestion> {
             ),
           ),
           const SizedBox(width: 10),
-          Expanded(child: ctx.html(q.html, ctx.questionStyle, docId: questionDocId(questionId: q.id))),
+          // The task is already in the left pane (part text): do not print it twice.
+          if (htmlToPlainText(ctx.part.html).trim().isEmpty)
+            Expanded(child: ctx.html(q.html, ctx.questionStyle, docId: questionDocId(questionId: q.id)))
+          else
+            const Spacer(),
         ]),
         const SizedBox(height: 16), // mt-4
         Container(

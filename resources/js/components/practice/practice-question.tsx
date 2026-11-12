@@ -18,6 +18,8 @@ interface SectionUpdateProps {
     setSelectedPart: React.Dispatch<React.SetStateAction<Part | null>>;
     isFlagged: boolean;
     toggleFlag: () => void;
+    /** Writing: the task is already in the left pane, so the question text is not repeated here. */
+    hideText?: boolean;
 }
 
 export default function PracticeQuestion({
@@ -27,7 +29,8 @@ export default function PracticeQuestion({
                                              section,
                                              setSelectedPart,
                                              isFlagged,
-                                             toggleFlag
+                                             toggleFlag,
+                                             hideText = false
                                          }: SectionUpdateProps) {
     const { t } = useTranslation();
 
@@ -286,9 +289,11 @@ export default function PracticeQuestion({
                         <span className="absolute -top-1.5 -right-1.5 w-3 h-3 bg-orange-500 rounded-full flex items-center justify-center text-[7px] text-white">★</span>
                     )}
                 </span>
-                <div className="flex-1 font-normal text-sm leading-relaxed text-black font-sans">
-                    {renderWithBlanks(question.textarea)}
-                </div>
+                {!hideText && (
+                    <div className="flex-1 font-normal text-sm leading-relaxed text-black font-sans">
+                        {renderWithBlanks(question.textarea)}
+                    </div>
+                )}
             </div>
 
 
