@@ -129,7 +129,8 @@ class SectionView extends StatelessWidget {
       case QuestionType.dragAndDrop:
         children.add(DragDropSectionView(section: section, ctx: ctx));
       case QuestionType.essay:
-        children.add(_instructions());
+        // Writing: the task (text + picture) is already in the left pane; print it here only when that is empty.
+        if (htmlToPlainText(ctx.part.html).trim().isEmpty && !ctx.part.html.contains('<img')) children.add(_instructions());
         for (final q in section.questions) {
           children.add(EssayQuestion(question: q, ctx: ctx));
         }
@@ -957,7 +958,7 @@ class _EssayQuestionState extends State<EssayQuestion> {
           ),
           const SizedBox(width: 10),
           // The task is already in the left pane (part text): do not print it twice.
-          if (htmlToPlainText(ctx.part.html).trim().isEmpty)
+          if (htmlToPlainText(ctx.part.html).trim().isEmpty && !ctx.part.html.contains('<img'))
             Expanded(child: ctx.html(q.html, ctx.questionStyle, docId: questionDocId(questionId: q.id)))
           else
             const Spacer(),
