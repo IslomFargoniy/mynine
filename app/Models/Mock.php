@@ -2,16 +2,19 @@
 
 namespace App\Models;
 
+use App\Models\Concerns\BelongsToCenter;
 use App\Models\User\User;
 use Carbon\Carbon;
 use Database\Factories\MockFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Query\Builder as QueryBuilder;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\DB;
 
 class Mock extends Model
 {
-    use HasFactory;
+    use BelongsToCenter, HasFactory;
 
     /** @use HasFactory<MockFactory> */
     protected $fillable = [
@@ -90,6 +93,24 @@ class Mock extends Model
         return $mocks->first(fn (Mock $m) => $m->status === 'active')
             ?? $mocks->first(fn (Mock $m) => $now->between(Carbon::parse($m->started_at), Carbon::parse($m->finished_at)))
             ?? $mocks->first(fn (Mock $m) => Carbon::parse($m->started_at)->gt($now));
+    }
+
+    /**
+     * Sub-select of the ids of one center's mocks (for whereIn on tables owned through a mock).
+     */
+    public static function centerMockIds(int $centerId): QueryBuilder
+    {
+        return DB::table('mocks')->select('id')->where('owner_id', $centerId);
+    }
+
+    /**
+     * Created outside a center context: the creator's center.
+     */
+    protected function fallbackCenterId(): ?int
+    {
+        $creator = $this->user_id ? User::query()->find($this->user_id) : null;
+
+        return $creator?->homeCenterId();
     }
 
     public function test()

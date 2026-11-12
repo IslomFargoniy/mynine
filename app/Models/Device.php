@@ -3,13 +3,14 @@
 namespace App\Models;
 
 use App\Exceptions\ApiException;
+use App\Models\Concerns\BelongsToCenter;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Str;
 
 class Device extends Model
 {
-    use HasFactory;
+    use BelongsToCenter, HasFactory;
 
     protected $fillable = [
         'machine_id',
@@ -49,7 +50,7 @@ class Device extends Model
             return null;
         }
 
-        return static::where('token_hash', static::hashToken($plainToken))->first();
+        return static::withoutGlobalScope(Scopes\CenterScope::class)->where('token_hash', static::hashToken($plainToken))->first();
     }
 
     /**
@@ -74,16 +75,17 @@ class Device extends Model
         $this->forceFill([
             'is_approved' => true,
             'approved_at' => now(),
-            'number' => $number ?? $this->number ?? static::nextFreeNumber(),
+            'number' => $number ?? $this->number ?? static::nextFreeNumber($this->owner_id ? (int) $this->owner_id : null),
         ])->save();
     }
 
     /**
-     * Lowest exam-room number (1..MAX_NUMBER) not used by any PC.
+     * Lowest exam-room number (1..MAX_NUMBER) not used by any PC of the center (default: the current one).
      */
-    public static function nextFreeNumber(): ?int
+    public static function nextFreeNumber(?int $centerId = null): ?int
     {
-        $used = static::query()->whereNotNull('number')->orderBy('number')->pluck('number')->all();
+        $query = $centerId !== null ? static::query()->ofCenter($centerId) : static::query();
+        $used = $query->whereNotNull('number')->orderBy('number')->pluck('number')->all();
         $next = 1;
         foreach ($used as $n) {
             if ((int) $n > $next) {

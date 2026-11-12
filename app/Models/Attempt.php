@@ -3,11 +3,15 @@
 namespace App\Models;
 
 use App\Jobs\EvaluateEssayJob;
+use App\Models\Scopes\CenterScope;
+use App\Support\CurrentCenter;
 use Carbon\Carbon;
 use Database\Factories\AttemptsFactory;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 
 class Attempt extends Model
@@ -44,6 +48,40 @@ class Attempt extends Model
 
     /** @var array<int>|null|false false = not resolved yet */
     private array|null|false $cachedModuleTestTypeIds = false;
+
+    /**
+     * Mock attempts belong to their mock's center. Attempts without a mock (practice on the website) belong
+     * to the platform (Mynine); other centers only see their own user's practice attempts.
+     */
+    protected static function booted(): void
+    {
+        static::addGlobalScope(new CenterScope);
+    }
+
+    public function applyCenterScope(Builder $builder, int $centerId): void
+    {
+        $isMynine = app(CurrentCenter::class)->isMynine($centerId);
+
+        $builder->where(fn (Builder $q) => $q
+            ->whereIn($this->qualifyColumn('mock_id'), Mock::centerMockIds($centerId))
+            ->orWhere(fn (Builder $w) => $w
+                ->whereNull($this->qualifyColumn('mock_id'))
+                ->when(! $isMynine, fn (Builder $u) => $u->where($this->qualifyColumn('user_id'), Auth::id() ?? 0))));
+    }
+
+    /**
+     * Owner (center Admin id) of a mock attempt; null for practice attempts.
+     */
+    public function centerId(): ?int
+    {
+        if (! $this->mock_id) {
+            return null;
+        }
+
+        $owner = Mock::withoutGlobalScope(CenterScope::class)->withoutEagerLoads()->whereKey($this->mock_id)->value('owner_id');
+
+        return $owner !== null ? (int) $owner : null;
+    }
 
     public function mockStudent()
     {

@@ -2,13 +2,14 @@
 
 namespace App\Models;
 
+use App\Models\Concerns\BelongsToCenterThroughMock;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Laravel\Sanctum\HasApiTokens;
 
 class MockStudent extends Model
 {
-    use HasApiTokens, HasFactory;
+    use BelongsToCenterThroughMock, HasApiTokens, HasFactory;
 
     protected $fillable = [
         'mock_id',
@@ -51,7 +52,7 @@ class MockStudent extends Model
     }
 
     /**
-     * Candidate codes are exactly six digits (100000-999999), unique across all mocks, so a candidate types
+     * Candidate codes are exactly six digits (100000-999999), unique across all mocks of all centers, so a candidate types
      * only digits on the exam PC. The unique index on mock_students.code backs this up.
      */
     public const CODE_PATTERN = '/^\d{6}$/';
@@ -68,7 +69,7 @@ class MockStudent extends Model
     {
         do {
             $code = self::randomCode();
-        } while (static::where('code', $code)->exists());
+        } while (static::withoutGlobalScopes()->where('code', $code)->exists());
 
         return $code;
     }
@@ -89,7 +90,7 @@ class MockStudent extends Model
                     $batch[$code] = $code;
                 }
             }
-            $taken = static::whereIn('code', array_values($batch))->pluck('code')->flip();
+            $taken = static::withoutGlobalScopes()->whereIn('code', array_values($batch))->pluck('code')->flip();
             foreach ($batch as $code) {
                 if (! isset($taken[$code])) {
                     $codes[$code] = $code;
