@@ -2,11 +2,13 @@
 
 namespace App\Jobs;
 
+use App\Models\AiUsageLog;
 use App\Models\TestImport;
 use App\Models\TestType;
 use App\Services\Import\AiRateLimitException;
 use App\Services\Import\MockTestImporter;
 use App\Services\Import\MockTestPdfParser;
+use App\Support\AiUsage;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
@@ -60,7 +62,12 @@ class ImportMockModuleJob implements ShouldQueue
             : null;
 
         try {
-            $result = $parser->parseFiles($this->module, $disk->path($files[$key]), $answers);
+            $result = app(AiUsage::class)->during([
+                'owner_id' => $import->owner_id,
+                'user_id' => $import->user_id,
+                'purpose' => AiUsageLog::PURPOSE_PDF_IMPORT,
+                'test_import_id' => $import->id,
+            ], fn () => $parser->parseFiles($this->module, $disk->path($files[$key]), $answers));
         } catch (RateLimitException|AiRateLimitException $e) {
             if ($this->attempts() < $this->tries) {
                 // Wait for the per-minute token window to reset, then try this module again.

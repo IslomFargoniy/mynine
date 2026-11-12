@@ -2,16 +2,42 @@
 
 namespace App\Services;
 
+use App\Support\AiUsage;
 use OpenAI;
 use OpenAI\Client;
+use OpenAI\Responses\Chat\CreateResponse;
 
+/**
+ * Every chat call is recorded in ai_usage_logs (App\Support\AiUsage) with the token counts of the response.
+ */
 class OpenAIService
 {
     protected $client;
 
+    /** Set by usingClient() (tests): replaces both the default and the long-timeout import client. */
+    private ?Client $fixedClient = null;
+
     public function __construct()
     {
         $this->client = OpenAI::client(config('services.openai.key'));
+    }
+
+    public function usingClient(Client $client): static
+    {
+        $this->client = $client;
+        $this->fixedClient = $client;
+
+        return $this;
+    }
+
+    private function recordUsage(CreateResponse $response, string $requestedModel): void
+    {
+        app(AiUsage::class)->record(
+            'openai',
+            $response->model !== '' ? $response->model : $requestedModel,
+            (int) ($response->usage?->promptTokens ?? 0),
+            (int) ($response->usage?->completionTokens ?? 0),
+        );
     }
 
     public function evaluateEssay(string $taskPrompt, string $questionText, string $essayText): string
@@ -49,6 +75,7 @@ EOT;
             ],
             'max_tokens' => 1200,
         ]);
+        $this->recordUsage($response, 'gpt-4o-mini');
 
         return $response->choices[0]->message->content ?? '{"overall": 0, "feedback": "No response from AI"}';
     }
@@ -123,6 +150,7 @@ EOT;
                 ],
                 'max_tokens' => 4000,
             ]);
+            $this->recordUsage($response, 'gpt-4o-mini');
 
             $jsonString = $response->choices[0]->message->content ?? '{"sections": []}';
 
@@ -212,8 +240,9 @@ ANSWER KEY:
 {$keyBlock}
 EOT;
 
+        $model = (string) config('services.openai.import_model', 'gpt-4o');
         $response = $this->importClient()->chat()->create([
-            'model' => (string) config('services.openai.import_model', 'gpt-4o'),
+            'model' => $model,
             'response_format' => ['type' => 'json_object'],
             'temperature' => 0,
             'max_tokens' => 16000,
@@ -222,6 +251,7 @@ EOT;
                 ['role' => 'user', 'content' => $prompt],
             ],
         ]);
+        $this->recordUsage($response, $model);
 
         $choice = $response->choices[0] ?? null;
         if (($choice?->finishReason ?? null) === 'length') {
@@ -251,6 +281,10 @@ EOT;
      */
     private function importClient(): Client
     {
+        if ($this->fixedClient) {
+            return $this->fixedClient;
+        }
+
         return OpenAI::factory()
             ->withApiKey((string) config('services.openai.key'))
             ->withHttpClient(new \GuzzleHttp\Client(['timeout' => (int) config('services.openai.import_timeout', 300)]))

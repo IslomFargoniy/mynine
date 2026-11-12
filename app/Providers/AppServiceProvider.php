@@ -14,6 +14,7 @@ use App\Observers\MockObserver;
 use App\Observers\SectionObserver;
 use App\Observers\TestObserver;
 use App\Observers\UserObserver;
+use App\Support\AiUsage;
 use App\Support\CurrentCenter;
 use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Http\Request;
@@ -29,6 +30,7 @@ class AppServiceProvider extends ServiceProvider
     public function register(): void
     {
         $this->app->singleton(CurrentCenter::class);
+        $this->app->singleton(AiUsage::class);
     }
 
     /**
