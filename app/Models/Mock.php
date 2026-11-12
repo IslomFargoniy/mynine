@@ -113,6 +113,19 @@ class Mock extends Model
         return $creator?->homeCenterId();
     }
 
+    /**
+     * A candidate of this mock started a written module (billed): only the SuperAdmin may delete the mock.
+     */
+    public function hasBilledCandidates(): bool
+    {
+        return CenterBillableCandidate::query()->where('mock_id', $this->id)->exists()
+            || Attempt::withoutGlobalScopes()->withoutEagerLoads()
+                ->where('mock_id', $this->id)
+                ->whereHas('attempt_types', fn ($q) => $q->withoutEagerLoads()
+                    ->whereHas('type', fn ($t) => $t->whereIn('name', Attempt::DESKTOP_MODULE_ORDER)))
+                ->exists();
+    }
+
     public function test()
     {
         return $this->belongsTo(Test::class, 'test_id');

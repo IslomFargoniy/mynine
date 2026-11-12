@@ -33,10 +33,11 @@ export interface ReportRow {
 }
 
 export interface BilledCandidate {
-    id: number;
+    /** mock_students.id when recorded (the candidate may have been deleted since) */
+    id: number | null;
     name: string;
     code: string;
-    mock_id: number;
+    mock_id: number | null;
     mock: string;
     started_at: string;
 }
@@ -110,7 +111,7 @@ export function CandidatesTable({ candidates }: { candidates: BilledCandidate[] 
             </TableHeader>
             <TableBody>
                 {candidates.map((c, i) => (
-                    <TableRow key={c.id}>
+                    <TableRow key={`${c.id ?? c.code}-${i}`}>
                         <TableCell className="text-muted-foreground tabular-nums">{i + 1}</TableCell>
                         <TableCell className="text-foreground font-semibold">{c.name}</TableCell>
                         <TableCell label={t('reports.columns.code')} className="font-mono text-xs">

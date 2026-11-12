@@ -38,8 +38,7 @@ class CenterController extends Controller
         $staff = DB::table('users')->whereIn('owner_id', $ids)->groupBy('owner_id')->selectRaw('owner_id, COUNT(*) as n')->pluck('n', 'owner_id');
         $candidates = DB::table('mock_students')->join('mocks', 'mocks.id', '=', 'mock_students.mock_id')
             ->whereIn('mocks.owner_id', $ids)->groupBy('mocks.owner_id')->selectRaw('mocks.owner_id, COUNT(*) as n')->pluck('n', 'owner_id');
-        $attempts = DB::table('attempts')->join('mocks', 'mocks.id', '=', 'attempts.mock_id')
-            ->whereIn('mocks.owner_id', $ids)->groupBy('mocks.owner_id')->selectRaw('mocks.owner_id, COUNT(*) as n')->pluck('n', 'owner_id');
+        $attempts = $count('attempts');
 
         return Inertia::render('centers/index', [
             'centers' => $centers->map(fn (CenterSetting $c) => [

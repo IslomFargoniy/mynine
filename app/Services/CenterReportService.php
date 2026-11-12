@@ -2,7 +2,6 @@
 
 namespace App\Services;
 
-use App\Models\Attempt;
 use App\Models\CenterSetting;
 use Carbon\CarbonImmutable;
 use Illuminate\Database\Query\Builder;
@@ -11,13 +10,12 @@ use Illuminate\Support\Facades\DB;
 /**
  * Monthly usage of the centers: the billing numbers (candidates who sat the exam) and the AI cost.
  *
- * A candidate is BILLED to a month when:
- *  - they are a candidate (mock_students row) of a mock of the center, and
- *  - their exam attempt has at least one written module (Listening, Reading or Writing) started, i.e. an
- *    attempt_types row of that module exists (it is created when the candidate opens the module), and
- *  - the attempt was started (attempts.started_at, else created_at) inside the month, Asia/Tashkent time.
- * Each candidate (code) counts once. A candidate who only had Speaking, or never started a module, is not
- * counted. "Mocks held" = mocks of the center whose start time is inside the month.
+ * A candidate is BILLED to a month when they have a center_billable_candidates row counted inside the month
+ * (Asia/Tashkent time). The row is written once, the first time the candidate's mock attempt starts a
+ * written module (Listening, Reading or Writing), with counted_at = the attempt's start (attempts.started_at,
+ * else created_at), and it is never changed or deleted — deleting the mock, the candidate or the attempt later
+ * does not lower the count. A candidate who only had Speaking, or never started a module, is not counted.
+ * "Mocks held" = mocks of the center whose start time is inside the month.
  */
 class CenterReportService
 {
@@ -39,46 +37,36 @@ class CenterReportService
     }
 
     /**
-     * Billed candidates (one row per candidate), optionally of one center.
+     * Billed candidates (one center_billable_candidates row per candidate), optionally of one center.
      */
     public function candidatesQuery(string $month, ?int $centerId = null): Builder
     {
         [$from, $to] = self::monthRange($month);
-        $startedAt = DB::raw('COALESCE(attempts.started_at, attempts.created_at)');
 
-        return DB::table('mock_students')
-            ->join('mocks', 'mocks.id', '=', 'mock_students.mock_id')
-            ->join('attempts', 'attempts.mock_student_id', '=', 'mock_students.id')
-            ->whereColumn('attempts.mock_id', 'mocks.id')
-            ->whereBetween($startedAt, [$from->format('Y-m-d H:i:s'), $to->format('Y-m-d H:i:s')])
-            ->whereExists(fn (Builder $q) => $q->selectRaw('1')
-                ->from('attempt_types')
-                ->join('types', 'types.id', '=', 'attempt_types.type_id')
-                ->whereColumn('attempt_types.attempt_id', 'attempts.id')
-                ->whereIn('types.name', Attempt::DESKTOP_MODULE_ORDER))
-            ->when($centerId !== null, fn (Builder $q) => $q->where('mocks.owner_id', $centerId));
+        return DB::table('center_billable_candidates')
+            ->whereBetween('counted_at', [$from->format('Y-m-d H:i:s'), $to->format('Y-m-d H:i:s')])
+            ->when($centerId !== null, fn (Builder $q) => $q->where('owner_id', $centerId));
     }
 
     /**
-     * The billed candidates of one center in a month, for checking an invoice.
+     * The billed candidates of one center in a month, for checking an invoice (also those whose mock or
+     * candidate row was deleted later: mock_id / id may point to a deleted row).
      *
-     * @return array<int, array{id: int, name: string, code: string, mock: string, mock_id: int, started_at: string}>
+     * @return array<int, array{id: int|null, name: string, code: string, mock: string, mock_id: int|null, started_at: string}>
      */
     public function candidates(int $centerId, string $month): array
     {
         return $this->candidatesQuery($month, $centerId)
-            ->selectRaw('mock_students.id, mock_students.name, mock_students.code, mocks.id as mock_id, mocks.name as mock, MIN(COALESCE(attempts.started_at, attempts.created_at)) as started_at')
-            ->groupBy('mock_students.id', 'mock_students.name', 'mock_students.code', 'mocks.id', 'mocks.name')
-            ->orderBy('started_at')
-            ->orderBy('mock_students.name')
+            ->orderBy('counted_at')
+            ->orderBy('name')
             ->get()
             ->map(fn ($row) => [
-                'id' => (int) $row->id,
+                'id' => $row->mock_student_id !== null ? (int) $row->mock_student_id : null,
                 'name' => (string) $row->name,
                 'code' => (string) $row->code,
-                'mock_id' => (int) $row->mock_id,
-                'mock' => (string) $row->mock,
-                'started_at' => CarbonImmutable::parse($row->started_at, config('app.timezone'))->format('Y-m-d H:i'),
+                'mock_id' => $row->mock_id !== null ? (int) $row->mock_id : null,
+                'mock' => (string) $row->mock_name,
+                'started_at' => CarbonImmutable::parse($row->counted_at, config('app.timezone'))->format('Y-m-d H:i'),
             ])
             ->all();
     }
@@ -100,8 +88,8 @@ class CenterReportService
             ->get();
 
         $candidates = $this->candidatesQuery($month, $centerId)
-            ->groupBy('mocks.owner_id')
-            ->selectRaw('mocks.owner_id, COUNT(DISTINCT mock_students.id) as n')
+            ->groupBy('owner_id')
+            ->selectRaw('owner_id, COUNT(*) as n')
             ->pluck('n', 'owner_id');
 
         $mocks = DB::table('mocks')

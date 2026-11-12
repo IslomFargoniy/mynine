@@ -231,13 +231,19 @@ class MockController extends Controller
     /**
      * Remove the specified resource from storage.
      */
-    public function destroy(Mock $mock)
+    public function destroy(Request $request, Mock $mock)
     {
         $this->authorize('delete', $mock);
 
         // A candidate is still writing (or resuming) this mock: deleting it would break their exam.
         if ($mock->hasUnfinishedAttempt()) {
             return back()->with('error', __('mock_has_running_attempt'));
+        }
+
+        // Candidates of this mock sat a written module: the results (and the billing) stay; only the platform
+        // owner may delete it. Its attempts keep their center (attempts.owner_id) and billing rows remain.
+        if (! $request->user()->isSuperAdmin() && $mock->hasBilledCandidates()) {
+            return back()->with('error', __('mock_has_exam_results'));
         }
 
         try {

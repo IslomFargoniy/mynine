@@ -1338,6 +1338,8 @@
     "test_in_use_cannot_move": "A mock that has not ended (or has results) uses this test, so it cannot be moved to practice.",
     "mock_has_running_attempt": "A candidate is still taking this mock. Finish their exam in the monitor first.",
     "candidate_has_running_attempt": "This candidate's exam is not finished yet. Finish it in the monitor first.",
+    "candidate_has_exam_results": "This candidate has already sat a written module. They cannot be deleted (results and billing are kept). Contact the platform administrator.",
+    "mock_has_exam_results": "Candidates of this mock have already sat a written module. It cannot be deleted (results and billing are kept). Contact the platform administrator.",
     "device_has_running_exam": "An exam is running on \":name\" right now. Finish it or release the PC in the monitor first.",
     "attempt_not_finished": "This attempt is not finished yet. Finish it first.",
     "writing_not_submitted": "The Writing module is not submitted yet.",

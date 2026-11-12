@@ -1338,6 +1338,8 @@
     "test_in_use_cannot_move": "Bu testdan tugamagan (yoki natijasi bor) mock foydalanadi, shuning uchun uni amaliyotga o'tkazib bo'lmaydi.",
     "mock_has_running_attempt": "Nomzod hali bu mockni topshirmoqda. Avval monitorda imtihonini yakunlang.",
     "candidate_has_running_attempt": "Bu nomzodning imtihoni hali tugamagan. Avval monitorda yakunlang.",
+    "candidate_has_exam_results": "Bu nomzod yozma modulni allaqachon boshlagan. Uni o'chirib bo'lmaydi (natijalar va hisob saqlanadi). Platforma administratoriga murojaat qiling.",
+    "mock_has_exam_results": "Bu mock nomzodlari yozma modulni allaqachon boshlagan. Uni o'chirib bo'lmaydi (natijalar va hisob saqlanadi). Platforma administratoriga murojaat qiling.",
     "device_has_running_exam": "\":name\" kompyuterida hozir imtihon ketmoqda. Avval monitorda uni yakunlang yoki kompyuterni bo'shating.",
     "attempt_not_finished": "Bu urinish hali tugamagan. Avval uni yakunlang.",
     "writing_not_submitted": "Writing moduli hali topshirilmagan.",

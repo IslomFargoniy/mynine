@@ -36,6 +36,22 @@ class MockStudent extends Model
         'attempt',
     ];
 
+    /**
+     * The candidate started a written module (billed): only the SuperAdmin may delete them.
+     */
+    public function isBilled(): bool
+    {
+        if (CenterBillableCandidate::query()->where('mock_student_id', $this->id)->exists()) {
+            return true;
+        }
+
+        return Attempt::withoutGlobalScopes()->withoutEagerLoads()
+            ->where('mock_student_id', $this->id)
+            ->whereHas('attempt_types', fn ($q) => $q->withoutEagerLoads()
+                ->whereHas('type', fn ($t) => $t->whereIn('name', Attempt::DESKTOP_MODULE_ORDER)))
+            ->exists();
+    }
+
     public function mock()
     {
         return $this->belongsTo(Mock::class, 'mock_id');

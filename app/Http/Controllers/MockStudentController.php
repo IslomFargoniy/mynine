@@ -177,13 +177,18 @@ class MockStudentController extends Controller
     /**
      * Delete candidate (Admin)
      */
-    public function destroy(MockStudent $mockStudent)
+    public function destroy(Request $request, MockStudent $mockStudent)
     {
         $this->authorize('deleteStudents', $mockStudent->mock);
 
         $attempt = $mockStudent->attempt;
         if ($attempt && $attempt->finished_at === null) {
             return back()->with('error', __('candidate_has_running_attempt'));
+        }
+
+        // A candidate who sat a written module is billed and has results: only the platform owner may delete.
+        if (! $request->user()->isSuperAdmin() && $mockStudent->isBilled()) {
+            return back()->with('error', __('candidate_has_exam_results'));
         }
 
         DB::transaction(function () use ($mockStudent) {
