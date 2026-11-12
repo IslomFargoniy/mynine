@@ -92,10 +92,6 @@ class SpeakingController extends Controller
             'only_unassigned' => ['nullable', 'boolean'],
         ]);
 
-        if (! $mock->speaking_starts_at) {
-            return back()->with('error', __('speaking_start_missing'));
-        }
-
         $students = MockStudent::query()->with('attempt')->where('mock_id', $mock->id)->get();
         $fixed = $request->boolean('only_unassigned') ? $students->whereNotNull('speaking_at') : collect();
         $toAssign = $students->diff($fixed);
@@ -105,7 +101,11 @@ class SpeakingController extends Controller
             : $toAssign->sortBy(fn (MockStudent $s) => [$s->attempt?->finished_at ? Carbon::parse($s->attempt->finished_at)->getTimestamp() : PHP_INT_MAX, $s->name]);
 
         $taken = $fixed->map(fn (MockStudent $s) => $s->speaking_at->getTimestamp())->flip();
-        $slot = Carbon::parse($mock->speaking_starts_at);
+        // From the mock's Speaking start time, or from now when it is not set or already passed
+        // (rounded up to the next 5 minutes).
+        $now = now()->second(0);
+        $now->addMinutes((5 - $now->minute % 5) % 5);
+        $slot = $mock->speaking_starts_at ? Carbon::parse($mock->speaking_starts_at)->max($now) : $now;
         $minutes = max(1, (int) ($mock->speaking_slot_minutes ?: 15));
 
         foreach ($toAssign->values() as $student) {
@@ -157,6 +157,11 @@ class SpeakingController extends Controller
         }
 
         $this->exam->storeManualScore($attempt, $this->speakingTypeId(), $band, $comment);
+
+        // Scored without a slot: record when the Speaking test took place.
+        if (! $mockStudent->speaking_at) {
+            $mockStudent->forceFill(['speaking_at' => now()->second(0)])->saveQuietly();
+        }
 
         return back()->with('success', __('speaking_score_saved', ['band' => $band]));
     }

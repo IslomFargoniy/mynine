@@ -966,14 +966,15 @@
             "order_name": "By name",
             "only_unassigned": "Only candidates without a slot",
             "assign": "Assign",
-            "no_start": "Set the speaking start time in the mock settings first.",
+            "no_start": "Slots start from now (no Speaking start time is set for this mock).",
             "slot": "Slot",
             "written": "Written",
             "band": "Band",
             "not_yet": "Not yet",
             "score": "Score",
             "rescore": "Re-score",
-            "note": "Examiner note (optional)"
+            "note": "Examiner note (optional)",
+            "now": "now"
         },
         "writing": {
             "description": "{{count}} in the list · {{pending}} essays waiting for AI",

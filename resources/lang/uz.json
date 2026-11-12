@@ -966,14 +966,15 @@
             "order_name": "Ism bo'yicha",
             "only_unassigned": "Faqat sloti yo'qlar",
             "assign": "Belgilash",
-            "no_start": "Avval mock sozlamalarida Speaking boshlanish vaqtini kiriting.",
+            "no_start": "Slotlar hozirdan boshlanadi (bu mock uchun Speaking boshlanish vaqti kiritilmagan).",
             "slot": "Vaqt",
             "written": "Yozma",
             "band": "Ball",
             "not_yet": "Hali yo'q",
             "score": "Baholash",
             "rescore": "Qayta baholash",
-            "note": "Imtihonchi izohi (ixtiyoriy)"
+            "note": "Imtihonchi izohi (ixtiyoriy)",
+            "now": "hozir"
         },
         "writing": {
             "description": "Ro'yxatda {{count}} ta · AI baholashini kutayotgan insholar: {{pending}}",

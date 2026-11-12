@@ -160,7 +160,7 @@ export default function SpeakingIndex() {
                     description={
                         mock
                             ? t('exam_admin.speaking.description', {
-                                  start: fmtDateTime(mock.speaking_starts_at),
+                                  start: mock.speaking_starts_at ? fmtDateTime(mock.speaking_starts_at) : t('exam_admin.speaking.now'),
                                   minutes: mock.speaking_slot_minutes,
                               })
                             : undefined
@@ -192,11 +192,11 @@ export default function SpeakingIndex() {
                             <input type="checkbox" className="accent-primary" checked={onlyUnassigned} onChange={(e) => setOnlyUnassigned(e.target.checked)} />
                             {t('exam_admin.speaking.only_unassigned')}
                         </label>
-                        <Button size="sm" disabled={!mock.speaking_starts_at} onClick={autoAssign} className="rounded-full text-xs">
+                        <Button size="sm" onClick={autoAssign} className="rounded-full text-xs">
                             <Wand2 className="h-3.5 w-3.5" />
                             {t('exam_admin.speaking.assign')}
                         </Button>
-                        {!mock.speaking_starts_at && <span className="text-[11px] text-rose-700 dark:text-rose-300">{t('exam_admin.speaking.no_start')}</span>}
+                        {!mock.speaking_starts_at && <span className="text-[11px] text-muted-foreground">{t('exam_admin.speaking.no_start')}</span>}
                     </Panel>
                 )}
 

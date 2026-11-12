@@ -492,6 +492,7 @@ test('scoring speaking creates the attempt and the Speaking attempt_type with th
 });
 
 test('speaking slots are assigned consecutively from the speaking start', function () {
+    $this->travelTo(now()->setTime(9, 0)); // slots never start in the past
     $mock = $this->exam['mock'];
     $mock->update(['speaking_starts_at' => now()->setTime(15, 0), 'speaking_slot_minutes' => 15]);
     MockStudent::create(['mock_id' => $mock->id, 'name' => 'Bobur', 'code' => 'MOCK-100002', 'phone' => '+998901111111']);
