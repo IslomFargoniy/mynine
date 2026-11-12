@@ -4,11 +4,12 @@ namespace App\Policies;
 
 use App\Models\Attempt;
 use App\Models\User\User;
-use App\Policies\Concerns\ChecksContentOwnership;
+use App\Policies\Concerns\ChecksCenter;
+use App\Support\CurrentCenter;
 
 class AttemptPolicy
 {
-    use ChecksContentOwnership;
+    use ChecksCenter;
 
     public function viewAny(User $user): bool
     {
@@ -17,7 +18,7 @@ class AttemptPolicy
 
     /**
      * Who may see an attempt and its results: the candidate (logged in or via candidate code),
-     * and admins.
+     * and the Admin of the attempt's center (mock attempts: the mock's center; practice: Mynine).
      */
     public function view(?User $user, Attempt $attempt): bool
     {
@@ -29,7 +30,7 @@ class AttemptPolicy
             return false;
         }
 
-        if ($user->hasRole('Admin') || (int) $attempt->user_id === (int) $user->id) {
+        if ($attempt->user_id !== null && (int) $attempt->user_id === (int) $user->id) {
             return true;
         }
 
@@ -57,25 +58,27 @@ class AttemptPolicy
      */
     public function grade(User $user, Attempt $attempt): bool
     {
-        return $user->hasRole('Admin') || $this->manages($user, $attempt);
+        return $this->manages($user, $attempt);
     }
 
     public function delete(User $user, Attempt $attempt): bool
     {
-        return $user->hasRole('Admin') || $this->manages($user, $attempt);
+        return $this->manages($user, $attempt);
     }
 
     protected function manages(User $user, Attempt $attempt): bool
     {
-        if (! $this->isContentManager($user)) {
+        if (! $user->isCenterAdmin()) {
             return false;
         }
 
-        if ($attempt->mock && (int) $attempt->mock->user_id === (int) $user->id) {
-            return true;
+        $owner = $attempt->centerId();
+        if ($owner === null) {
+            // Practice attempt (website): the platform's own center.
+            return app(CurrentCenter::class)->isMynine($user->centerId());
         }
 
-        return $this->ownsTest($user, $attempt->test);
+        return $this->inCenter($user, $owner);
     }
 
     protected function isCandidateSession(Attempt $attempt): bool

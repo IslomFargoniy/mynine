@@ -4,6 +4,8 @@ use App\Exceptions\ApiException;
 use App\Http\Middleware\Desktop\AuthenticateCandidate;
 use App\Http\Middleware\Desktop\AuthenticateDevice;
 use App\Http\Middleware\Desktop\EnsureClientVersion;
+use App\Http\Middleware\EnsureCenterIsActive;
+use App\Http\Middleware\EnsureUserIsNotSuspended;
 use App\Http\Middleware\HandleAppearance;
 use App\Http\Middleware\HandleInertiaRequests;
 use App\Http\Middleware\SetLocale;
@@ -33,6 +35,7 @@ return Application::configure(basePath: dirname(__DIR__))
 
         $middleware->web(append: [
             SetLocale::class,
+            EnsureUserIsNotSuspended::class,
             HandleAppearance::class,
             HandleInertiaRequests::class,
             AddLinkHeadersForPreloadedAssets::class,
@@ -45,6 +48,7 @@ return Application::configure(basePath: dirname(__DIR__))
             'desktop.device' => AuthenticateDevice::class,
             'desktop.client' => EnsureClientVersion::class,
             'desktop.candidate' => AuthenticateCandidate::class,
+            'center.active' => EnsureCenterIsActive::class,
         ]);
 
         // Telegram webhooks and the WebApp login (verified via initData signature) cannot carry a CSRF token.

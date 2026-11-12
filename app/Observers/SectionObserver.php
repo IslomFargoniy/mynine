@@ -27,7 +27,7 @@ class SectionObserver
     public function deleting(Section $section): void
     {
         $user = Auth::user();
-        if ($user && ! $user->hasRole('Admin')) {
+        if ($user && ! $user->can('delete', $section)) {
             throw new \Exception('Only admins can delete sections.');
         }
 

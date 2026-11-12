@@ -85,7 +85,7 @@ class ReceptionController extends Controller
             ]),
             'candidates' => $this->rows($students),
             'filters' => ['mock_id' => $showAll ? 'all' : $mockId, 'search' => $search],
-            'canDelete' => $request->user()->hasRole('Admin'),
+            'canDelete' => $request->user()->isCenterAdmin(),
         ]);
     }
 
@@ -127,6 +127,7 @@ class ReceptionController extends Controller
         $ids = array_filter(array_map('intval', explode(',', (string) $request->query('ids', ''))));
         abort_if($ids === [], 422, 'Nomzod tanlanmagan.');
 
+        // Scoped to the current center: ids of other centers' candidates are silently skipped.
         $students = MockStudent::query()
             ->with(['mock' => fn ($q) => $q->withoutEagerLoads(), 'attempt.attempt_types.type'])
             ->whereIn('id', $ids)

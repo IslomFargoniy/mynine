@@ -15,7 +15,7 @@ class HomeController extends Controller
     public function index(Request $request)
     {
         // Reception works from the reception desk; it has no dashboard.
-        if ($request->user()?->hasRole('Reception') && ! $request->user()->hasRole('Admin')) {
+        if ($request->user()?->isReception()) {
             return redirect()->route('reception.index');
         }
 
@@ -52,7 +52,12 @@ class HomeController extends Controller
             ->limit(5)
             ->get();
 
-        $isAdmin = Auth::user()->hasRole('Admin');
+        $isAdmin = Auth::user()->isCenterAdmin();
+        // Platform-wide statistics (sign-ups, every attempt) are the platform owner's; a center's Admin sees the
+        // attempts of their own center's mocks.
+        $platform = Auth::user()->isSuperAdmin();
+        $centerMocks = $platform ? null : Mock::centerMockIds((int) Auth::user()->centerId());
+        $attempts = fn () => DB::table('attempts')->when($centerMocks, fn ($q) => $q->whereIn('mock_id', $centerMocks));
 
         $daily_users = collect();
         $daily_attempts = collect();
@@ -62,7 +67,7 @@ class HomeController extends Controller
 
         if ($isAdmin) {
             $startDate = now()->subDays(30)->toDateString();
-            $daily_users = User::query()
+            $daily_users = ! $platform ? collect() : User::query()
                 ->selectRaw('DATE(created_at) as day_date, count(*) as items_count')
                 ->whereDate('created_at', '>=', $startDate)
                 ->groupBy('day_date')
@@ -73,7 +78,7 @@ class HomeController extends Controller
             // NOTE: DB::table() is used intentionally here instead of Attempt::query()
             // to bypass the Attempt model's $with (attempt_types, test, user, mock)
             // which can interfere with COUNT(*) aggregations and return inflated numbers.
-            $daily_attempts = DB::table('attempts')
+            $daily_attempts = $attempts()
                 ->selectRaw('DATE(finished_at) as day_date, count(*) as items_count, count(distinct user_id) as unique_users_count')
                 ->whereNotNull('finished_at')
                 ->whereDate('finished_at', '>=', $startDate)
@@ -82,7 +87,7 @@ class HomeController extends Controller
                 ->orderBy('day_date', 'asc')
                 ->get();
 
-            $hourly_attempts = DB::table('attempts')
+            $hourly_attempts = $attempts()
                 ->selectRaw('HOUR(finished_at) as hour, count(*) as items_count')
                 ->whereNotNull('finished_at')
                 ->groupByRaw('HOUR(finished_at)')
@@ -90,7 +95,7 @@ class HomeController extends Controller
                 ->orderByRaw('HOUR(finished_at) asc')
                 ->get();
 
-            $today_hourly_attempts = DB::table('attempts')
+            $today_hourly_attempts = $attempts()
                 ->selectRaw('HOUR(finished_at) as hour, count(*) as items_count')
                 ->whereNotNull('finished_at')
                 ->whereDate('finished_at', now()->toDateString())
@@ -99,7 +104,7 @@ class HomeController extends Controller
                 ->orderByRaw('HOUR(finished_at) asc')
                 ->get();
 
-            $weekly_attempts = DB::table('attempts')
+            $weekly_attempts = $attempts()
                 ->selectRaw('(WEEKDAY(finished_at) + 1) as weekday, count(*) as items_count')
                 ->whereNotNull('finished_at')
                 ->groupByRaw('WEEKDAY(finished_at)')

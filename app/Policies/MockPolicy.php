@@ -4,62 +4,66 @@ namespace App\Policies;
 
 use App\Models\Mock;
 use App\Models\User\User;
-use App\Policies\Concerns\ChecksContentOwnership;
+use App\Policies\Concerns\ChecksCenter;
 
+/**
+ * Mocks belong to a center (mocks.owner_id). Admin manages the center's mocks; Reception runs the exam day.
+ */
 class MockPolicy
 {
-    use ChecksContentOwnership;
+    use ChecksCenter;
 
     public function viewAny(User $user): bool
     {
-        return $this->isContentManager($user);
+        return $user->isCenterAdmin();
     }
 
     /**
-     * The mock detail page lists every candidate code, so only the owner (or an admin) may open it.
+     * The mock detail page lists every candidate code: the center's Admin only.
      */
     public function view(User $user, Mock $mock): bool
     {
-        return $this->owns($user, $mock);
+        return $this->adminOf($user, $mock->owner_id);
     }
 
     public function create(User $user): bool
     {
-        return $this->isContentManager($user);
+        return $user->isCenterAdmin();
     }
 
     public function update(User $user, Mock $mock): bool
     {
-        return $this->owns($user, $mock);
+        return $this->adminOf($user, $mock->owner_id);
     }
 
     public function delete(User $user, Mock $mock): bool
     {
-        return $this->owns($user, $mock);
+        return $this->adminOf($user, $mock->owner_id);
     }
 
     /**
-     * Adding candidates, printing code cards and checking them in (Admin + Reception).
+     * Adding candidates, printing code cards and checking them in (Admin + Reception of the mock's center).
      */
     public function manageStudents(User $user, Mock $mock): bool
     {
-        return $this->isStaff($user);
+        return $this->staffOf($user, $mock->owner_id);
     }
 
     /**
-     * Removing a candidate (Admin only).
+     * Removing a candidate (the center's Admin).
      */
     public function deleteStudents(User $user, Mock $mock): bool
     {
-        return $user->hasRole('Admin');
+        return $this->adminOf($user, $mock->owner_id);
     }
 
     /**
      * Reception desk and live monitor (view), result sheets and delivery (Admin + Reception).
+     * Without a mock: the page itself (its lists are scoped to the user's center).
      */
     public function operate(User $user, ?Mock $mock = null): bool
     {
-        return $this->isStaff($user);
+        return $mock === null ? $user->isStaff() : $this->staffOf($user, $mock->owner_id);
     }
 
     /**
@@ -67,16 +71,6 @@ class MockPolicy
      */
     public function examine(User $user, ?Mock $mock = null): bool
     {
-        return $user->hasRole('Admin');
-    }
-
-    protected function isStaff(User $user): bool
-    {
-        return $user->hasAnyRole(['Admin', 'Reception']);
-    }
-
-    protected function owns(User $user, Mock $mock): bool
-    {
-        return $user->hasRole('Admin') || (int) $mock->user_id === (int) $user->id;
+        return $mock === null ? $user->isCenterAdmin() : $this->adminOf($user, $mock->owner_id);
     }
 }

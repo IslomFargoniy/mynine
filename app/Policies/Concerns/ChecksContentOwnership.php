@@ -13,27 +13,38 @@ use App\Models\User\User;
 
 /**
  * Shared ownership rules for test content ([folder] -> test -> test type -> part -> section -> question -> option).
- * Only admins manage content (the Teacher role was removed: the system has Admin, Reception and Student).
+ *
+ * Practice tests and their folders are the platform's public content: only the SuperAdmin (the Mynine
+ * center) manages them. Mock Bank tests belong to one center (tests.owner_id): its Admin manages them.
  */
 trait ChecksContentOwnership
 {
+    use ChecksCenter;
+
+    /**
+     * Practice content (folders, practice tests, users of the website): the platform owner.
+     */
     protected function isContentManager(User $user): bool
     {
-        return $user->hasRole('Admin');
+        return $user->isSuperAdmin();
     }
 
     protected function ownsFolder(User $user, ?Folder $folder): bool
     {
-        return $folder !== null && $user->hasRole('Admin');
+        return $folder !== null && $this->isContentManager($user);
     }
 
     /**
-     * Mock Bank tests have no folder (folder_id = null): content managers own them directly.
+     * Mock Bank tests (no folder): the Admin of the owning center.
      */
     protected function ownsTest(User $user, ?Test $test): bool
     {
         if ($test === null) {
             return false;
+        }
+
+        if ($test->isMock()) {
+            return $this->adminOf($user, $test->owner_id);
         }
 
         return $test->folder_id === null

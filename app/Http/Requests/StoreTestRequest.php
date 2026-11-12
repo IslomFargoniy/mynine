@@ -4,7 +4,7 @@ namespace App\Http\Requests;
 
 use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Foundation\Http\FormRequest;
-use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Gate;
 
 class StoreTestRequest extends FormRequest
 {
@@ -22,7 +22,7 @@ class StoreTestRequest extends FormRequest
 
         $this->merge([
             // Mock Bank tests are never open for practice.
-            'open' => $isMock ? 0 : (Auth::user()->hasRole('Admin') ? ($this->open ?? 0) : 0),
+            'open' => $isMock ? 0 : (Gate::allows('manage-content') ? ($this->open ?? 0) : 0),
             'purpose' => $isMock ? 'mock' : 'practice',
             // Mock Bank tests never belong to a folder.
             'folder_id' => $isMock ? null : $this->input('folder_id'),

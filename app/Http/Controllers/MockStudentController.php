@@ -6,6 +6,7 @@ use App\Models\Mock;
 use App\Models\MockStudent;
 use App\Services\CandidateService;
 use App\Services\ExamService;
+use App\Support\CurrentCenter;
 use App\Support\Pdf;
 use Carbon\Carbon;
 use Illuminate\Http\JsonResponse;
@@ -220,6 +221,14 @@ class MockStudentController extends Controller
             throw ValidationException::withMessages([
                 'code' => [__('mock_inactive')],
             ]);
+        }
+
+        if ($mock->owner_id && app(CurrentCenter::class)->isSuspended((int) $mock->owner_id)) {
+            $message = __('center_suspended_exam');
+            if ($request->isMethod('get')) {
+                return redirect('/?error='.urlencode($message));
+            }
+            throw ValidationException::withMessages(['code' => [$message]]);
         }
 
         if ($mock->require_desktop) {

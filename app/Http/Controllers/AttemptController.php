@@ -36,7 +36,9 @@ class AttemptController extends Controller
             'attempt_types.type',
         ])->orderBy('id', 'desc');
 
-        if (! Auth::user()->hasRole('Admin')) {
+        // Attempt::query() is limited to the current center for staff (CenterScope); a center's Admin sees
+        // all of it, anyone else only their own attempts.
+        if (! Auth::user()->isCenterAdmin()) {
             $data = $data->where(function ($query) {
                 $query->where('user_id', Auth::id())
                     ->orWhereHas('mock', function ($q) {
@@ -108,8 +110,9 @@ class AttemptController extends Controller
         $tests_query = Test::select('id', 'name')->orderByDesc('id');
         $folders_query = Folder::select('id', 'name')->orderByDesc('id');
 
-        if (! Auth::user()->hasRole('Admin')) {
-            $mocks_query->where('active', 1);
+        if (! Auth::user()->isCenterAdmin()) {
+            // Only mocks the user sat (never other centers' mock names).
+            $mocks_query->whereHas('attempts', fn ($q) => $q->where('user_id', Auth::id()));
             $tests_query->practice()->where('active', 1)->where('open', 1);
             $folders_query->where('active', 1);
         }
@@ -120,7 +123,7 @@ class AttemptController extends Controller
             'mocks' => FilterOptions::keep($mocks_query, $request->integer('mock_id')),
             'tests' => FilterOptions::keep($tests_query, $request->integer('test_id')),
             'folders' => FilterOptions::keep($folders_query, $request->integer('folder_id')),
-            'isAdmin' => Auth::user()->hasRole('Admin'),
+            'isAdmin' => Auth::user()->isCenterAdmin(),
             'filters' => $request->only(['search', 'user_id', 'mock_id', 'test_id', 'folder_id', 'from', 'to', 'per_page']),
         ]);
     }

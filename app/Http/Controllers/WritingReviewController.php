@@ -15,6 +15,7 @@ use Inertia\Response;
 
 /**
  * Writing review queue (Admin): AI band + feedback per task, confirm / adjust / re-run AI.
+ * Lists go through whereHas('attempt'), so the Attempt center scope limits them to the current center.
  */
 class WritingReviewController extends Controller
 {
@@ -78,6 +79,10 @@ class WritingReviewController extends Controller
     {
         $this->authorize('examine', Mock::class);
         abort_unless($attemptType->type?->name === 'Writing', 404);
+        // {attemptType} itself is not center-scoped: its attempt is (null for another center's attempt).
+        $attempt = $attemptType->attempt;
+        abort_unless($attempt && $attempt->mock_id, 404);
+        $this->authorize('grade', $attempt);
 
         $data = $request->validate([
             'scores' => ['nullable', 'array'],

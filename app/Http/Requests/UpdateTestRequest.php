@@ -4,7 +4,7 @@ namespace App\Http\Requests;
 
 use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Foundation\Http\FormRequest;
-use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Gate;
 
 class UpdateTestRequest extends FormRequest
 {
@@ -19,7 +19,7 @@ class UpdateTestRequest extends FormRequest
     protected function prepareForValidation(): void
     {
         $this->merge([
-            'open' => Auth::user()->hasRole('Admin') ? ($this->open ?? 0) : 0,
+            'open' => Gate::allows('manage-content') ? ($this->open ?? 0) : 0,
         ]);
     }
 
