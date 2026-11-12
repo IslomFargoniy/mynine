@@ -16,7 +16,7 @@ Authorization: Bearer <exam token>     (exam endpoints only)
 
 Errors: `{ "message": "...", "code": "<machine_code>" }` with HTTP status. Codes used by the app:
 `unauthenticated` 401, `device_blocked` 403, `client_outdated` 426 (body also has `min_version`),
-`invalid_password` 422, `setup_password_missing` 409, `device_not_approved` 403,
+`invalid_password` 422, `setup_password_missing` 409, `device_other_center` 409, `device_not_approved` 403,
 `invalid_code` 422, `mock_not_active` 422, `mock_not_started` 422 (+`starts_at`), `mock_finished` 422,
 `attempt_finished` 409, `paused` 409, `module_locked` 409, `module_time_over` 409, `validation_failed` 422,
 v1.1: `session_revoked` 401, `session_expired` 401, `session_active_elsewhere` 409.
@@ -80,8 +80,12 @@ Response 200: `{ "device_id": 7, "device_token": "<plain token, shown once>", "n
 - Missing / wrong `password` → 422 `invalid_password`.
 - No center password configured for the center → 409 `setup_password_missing` ("… Set the center password in Desktop settings first.").
 - Unknown `center_code` → 422 `invalid_center_code`. Suspended center (after a correct password) → 403 `center_suspended`.
-- Re-registering the same `machine_id` rotates the token and drops the approval (the exam-room number is kept, the admin
-  confirms it again). Blocked devices → 403 `device_blocked`.
+- Re-registering the same `machine_id` with the same center rotates the token and drops the approval (the exam-room
+  number is kept, the admin confirms it again). Blocked devices → 403 `device_blocked`.
+- A PC is identified by (center, `machine_id`). If the `machine_id` is still registered to another center → 409
+  `device_other_center` ("This PC is registered to another center. Ask that center to remove it first."); the other
+  center's PC row and token are left untouched. Once that center deletes the PC (Desktop → PCs), it can register here
+  as a new, unapproved PC.
 - `number` is the exam-room number ("PC 7") the admin gives when approving; it is `null` until the PC is approved.
 
 ### POST /device/heartbeat

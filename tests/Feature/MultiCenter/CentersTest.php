@@ -421,20 +421,35 @@ test('an old client without center_code registers to the Mynine center only', fu
     expect(Device::withoutGlobalScopes()->find($id)->owner_id)->toBe($mynine->id);
 });
 
-test('a PC moving to another center loses its number and running exam, and must be approved again', function () {
+test('a PC registered to another center cannot be taken over; it can move only after that center deletes it', function () {
     $mynine = makeCenter();
     $center = makeCenter('ACME');
     registerDesktopDevice('PC-MOVE', 'PC', true);
     $device = Device::withoutGlobalScopes()->where('machine_id', 'PC-MOVE')->sole();
+    $tokenHash = $device->token_hash;
     expect($device->number)->toBe(1)->and($device->owner_id)->toBe($mynine->id);
 
     centerSettings($center)->setExitPassword('acme-pass');
-    desktopApi('POST', 'device/register', ['machine_id' => 'PC-MOVE', 'password' => 'acme-pass', 'center_code' => 'ACME'])->assertOk();
+    desktopApi('POST', 'device/register', ['machine_id' => 'PC-MOVE', 'password' => 'acme-pass', 'center_code' => 'ACME'])
+        ->assertStatus(409)
+        ->assertJsonPath('code', 'device_other_center')
+        ->assertJsonPath('message', 'This PC is registered to another center. Ask that center to remove it first.');
 
+    // The first center's PC is untouched: same center, token, number and approval.
     $device->refresh();
-    expect($device->owner_id)->toBe($center->id)
-        ->and($device->number)->toBeNull()
-        ->and($device->is_approved)->toBeFalse();
+    expect($device->owner_id)->toBe($mynine->id)
+        ->and($device->token_hash)->toBe($tokenHash)
+        ->and($device->number)->toBe(1)
+        ->and($device->is_approved)->toBeTrue();
+
+    $device->delete();
+    $id = desktopApi('POST', 'device/register', ['machine_id' => 'PC-MOVE', 'password' => 'acme-pass', 'center_code' => 'ACME'])
+        ->assertOk()->json('device_id');
+
+    $moved = Device::withoutGlobalScopes()->findOrFail($id);
+    expect($moved->owner_id)->toBe($center->id)
+        ->and($moved->number)->toBeNull()
+        ->and($moved->is_approved)->toBeFalse();
 });
 
 test('PC numbers are unique per center, not globally', function () {

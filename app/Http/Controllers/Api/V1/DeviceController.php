@@ -22,7 +22,7 @@ class DeviceController extends Controller
     ) {}
 
     /**
-     * POST /device/register — create the PC or rotate its token (same machine_id).
+     * POST /device/register — create the PC or rotate its token (same center + machine_id).
      * Only someone who knows the center password can register a PC. `center_code` picks the center; without
      * it (clients before multi-center) the PC registers to the Mynine center.
      */
@@ -57,19 +57,26 @@ class DeviceController extends Controller
             throw new ApiException(403, 'center_suspended', 'This center is suspended. Contact the platform administrator.');
         }
 
-        // machine_id is unique across centers: a PC moving to another center keeps its row.
-        $device = Device::withoutGlobalScope(CenterScope::class)->firstOrNew(['machine_id' => $data['machine_id']]);
+        // A PC is (center, machine_id). A machine_id still registered to another center is refused: that center
+        // has to delete the PC first, otherwise anyone with their own center password could take it over.
+        $registeredElsewhere = Device::withoutGlobalScope(CenterScope::class)
+            ->where('machine_id', $data['machine_id'])
+            ->where(fn ($q) => $q->whereNull('owner_id')->orWhere('owner_id', '!=', $settings->owner_id))
+            ->exists();
+        if ($registeredElsewhere) {
+            throw ApiException::conflict('device_other_center', 'This PC is registered to another center. Ask that center to remove it first.');
+        }
+
+        $device = Device::withoutGlobalScope(CenterScope::class)->firstOrNew([
+            'owner_id' => $settings->owner_id,
+            'machine_id' => $data['machine_id'],
+        ]);
 
         if ($device->exists && $device->is_blocked) {
             throw new ApiException(403, 'device_blocked', 'This PC is blocked. Contact the administrator.');
         }
 
         $name = trim((string) ($data['name'] ?? ''));
-
-        if ($device->exists && (int) $device->owner_id !== (int) $settings->owner_id) {
-            // Moved to another center: its number and running exam belonged to the old one.
-            $device->forceFill(['number' => null, 'current_attempt_id' => null]);
-        }
         $device->forceFill(['owner_id' => $settings->owner_id]);
 
         $plainToken = $device->rotateToken();
