@@ -307,7 +307,7 @@ as DateTime?,
 /// @nodoc
 mixin _$DeviceRegistration {
 
- int get deviceId; String get deviceToken; String get name;@JsonKey(fromJson: intOrNull) int? get number;@JsonKey(fromJson: boolTrue) bool get approved;@JsonKey(fromJson: stringOrNull) String? get exitPasswordOffline;
+ int get deviceId; String get deviceToken; String get name;@JsonKey(fromJson: intOrNull) int? get number;@JsonKey(fromJson: boolTrue) bool get approved;@JsonKey(fromJson: stringOrNull) String? get exitPasswordOffline;@JsonKey(fromJson: centerInfoOrNull) CenterInfo? get center;
 /// Create a copy of DeviceRegistration
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -321,20 +321,20 @@ $DeviceRegistrationCopyWith<DeviceRegistration> get copyWith => _$DeviceRegistra
 @override
 bool operator ==(Object other) {
   final _this = this as DeviceRegistration;
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is DeviceRegistration&&(identical(other.deviceId, _this.deviceId) || other.deviceId == _this.deviceId)&&(identical(other.deviceToken, _this.deviceToken) || other.deviceToken == _this.deviceToken)&&(identical(other.name, _this.name) || other.name == _this.name)&&(identical(other.number, _this.number) || other.number == _this.number)&&(identical(other.approved, _this.approved) || other.approved == _this.approved)&&(identical(other.exitPasswordOffline, _this.exitPasswordOffline) || other.exitPasswordOffline == _this.exitPasswordOffline));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is DeviceRegistration&&(identical(other.deviceId, _this.deviceId) || other.deviceId == _this.deviceId)&&(identical(other.deviceToken, _this.deviceToken) || other.deviceToken == _this.deviceToken)&&(identical(other.name, _this.name) || other.name == _this.name)&&(identical(other.number, _this.number) || other.number == _this.number)&&(identical(other.approved, _this.approved) || other.approved == _this.approved)&&(identical(other.exitPasswordOffline, _this.exitPasswordOffline) || other.exitPasswordOffline == _this.exitPasswordOffline)&&(identical(other.center, _this.center) || other.center == _this.center));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
 int get hashCode {
   final _this = this as DeviceRegistration;
-  return Object.hash(runtimeType,_this.deviceId,_this.deviceToken,_this.name,_this.number,_this.approved,_this.exitPasswordOffline);
+  return Object.hash(runtimeType,_this.deviceId,_this.deviceToken,_this.name,_this.number,_this.approved,_this.exitPasswordOffline,_this.center);
 }
 
 @override
 String toString() {
   final _this = this as DeviceRegistration;
-  return 'DeviceRegistration(deviceId: ${_this.deviceId}, deviceToken: ${_this.deviceToken}, name: ${_this.name}, number: ${_this.number}, approved: ${_this.approved}, exitPasswordOffline: ${_this.exitPasswordOffline})';
+  return 'DeviceRegistration(deviceId: ${_this.deviceId}, deviceToken: ${_this.deviceToken}, name: ${_this.name}, number: ${_this.number}, approved: ${_this.approved}, exitPasswordOffline: ${_this.exitPasswordOffline}, center: ${_this.center})';
 }
 
 
@@ -345,11 +345,11 @@ abstract mixin class $DeviceRegistrationCopyWith<$Res>  {
   factory $DeviceRegistrationCopyWith(DeviceRegistration value, $Res Function(DeviceRegistration) _then) = _$DeviceRegistrationCopyWithImpl;
 @useResult
 $Res call({
- int deviceId, String deviceToken, String name,@JsonKey(fromJson: intOrNull) int? number,@JsonKey(fromJson: boolTrue) bool approved,@JsonKey(fromJson: stringOrNull) String? exitPasswordOffline
+ int deviceId, String deviceToken, String name,@JsonKey(fromJson: intOrNull) int? number,@JsonKey(fromJson: boolTrue) bool approved,@JsonKey(fromJson: stringOrNull) String? exitPasswordOffline,@JsonKey(fromJson: centerInfoOrNull) CenterInfo? center
 });
 
 
-
+$CenterInfoCopyWith<$Res>? get center;
 
 }
 /// @nodoc
@@ -362,7 +362,7 @@ class _$DeviceRegistrationCopyWithImpl<$Res>
 
 /// Create a copy of DeviceRegistration
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? deviceId = null,Object? deviceToken = null,Object? name = null,Object? number = freezed,Object? approved = null,Object? exitPasswordOffline = freezed,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? deviceId = null,Object? deviceToken = null,Object? name = null,Object? number = freezed,Object? approved = null,Object? exitPasswordOffline = freezed,Object? center = freezed,}) {
   return _then(DeviceRegistration(
 deviceId: null == deviceId ? _self.deviceId : deviceId // ignore: cast_nullable_to_non_nullable
 as int,deviceToken: null == deviceToken ? _self.deviceToken : deviceToken // ignore: cast_nullable_to_non_nullable
@@ -370,10 +370,23 @@ as String,name: null == name ? _self.name : name // ignore: cast_nullable_to_non
 as String,number: freezed == number ? _self.number : number // ignore: cast_nullable_to_non_nullable
 as int?,approved: null == approved ? _self.approved : approved // ignore: cast_nullable_to_non_nullable
 as bool,exitPasswordOffline: freezed == exitPasswordOffline ? _self.exitPasswordOffline : exitPasswordOffline // ignore: cast_nullable_to_non_nullable
-as String?,
+as String?,center: freezed == center ? _self.center : center // ignore: cast_nullable_to_non_nullable
+as CenterInfo?,
   ));
 }
+/// Create a copy of DeviceRegistration
+/// with the given fields replaced by the non-null parameter values.
+@override
+@pragma('vm:prefer-inline')
+$CenterInfoCopyWith<$Res>? get center {
+    if (_self.center == null) {
+    return null;
+  }
 
+  return $CenterInfoCopyWith<$Res>(_self.center!, (value) {
+    return _then(_self.copyWith(center: value));
+  });
+}
 }
 
 
@@ -455,10 +468,10 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( int deviceId,  String deviceToken,  String name, @JsonKey(fromJson: intOrNull)  int? number, @JsonKey(fromJson: boolTrue)  bool approved, @JsonKey(fromJson: stringOrNull)  String? exitPasswordOffline)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( int deviceId,  String deviceToken,  String name, @JsonKey(fromJson: intOrNull)  int? number, @JsonKey(fromJson: boolTrue)  bool approved, @JsonKey(fromJson: stringOrNull)  String? exitPasswordOffline, @JsonKey(fromJson: centerInfoOrNull)  CenterInfo? center)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _DeviceRegistration() when $default != null:
-return $default(_that.deviceId,_that.deviceToken,_that.name,_that.number,_that.approved,_that.exitPasswordOffline);case _:
+return $default(_that.deviceId,_that.deviceToken,_that.name,_that.number,_that.approved,_that.exitPasswordOffline,_that.center);case _:
   return orElse();
 
 }
@@ -476,10 +489,10 @@ return $default(_that.deviceId,_that.deviceToken,_that.name,_that.number,_that.a
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( int deviceId,  String deviceToken,  String name, @JsonKey(fromJson: intOrNull)  int? number, @JsonKey(fromJson: boolTrue)  bool approved, @JsonKey(fromJson: stringOrNull)  String? exitPasswordOffline)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( int deviceId,  String deviceToken,  String name, @JsonKey(fromJson: intOrNull)  int? number, @JsonKey(fromJson: boolTrue)  bool approved, @JsonKey(fromJson: stringOrNull)  String? exitPasswordOffline, @JsonKey(fromJson: centerInfoOrNull)  CenterInfo? center)  $default,) {final _that = this;
 switch (_that) {
 case _DeviceRegistration():
-return $default(_that.deviceId,_that.deviceToken,_that.name,_that.number,_that.approved,_that.exitPasswordOffline);case _:
+return $default(_that.deviceId,_that.deviceToken,_that.name,_that.number,_that.approved,_that.exitPasswordOffline,_that.center);case _:
   throw StateError('Unexpected subclass');
 
 }
@@ -496,10 +509,10 @@ return $default(_that.deviceId,_that.deviceToken,_that.name,_that.number,_that.a
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( int deviceId,  String deviceToken,  String name, @JsonKey(fromJson: intOrNull)  int? number, @JsonKey(fromJson: boolTrue)  bool approved, @JsonKey(fromJson: stringOrNull)  String? exitPasswordOffline)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( int deviceId,  String deviceToken,  String name, @JsonKey(fromJson: intOrNull)  int? number, @JsonKey(fromJson: boolTrue)  bool approved, @JsonKey(fromJson: stringOrNull)  String? exitPasswordOffline, @JsonKey(fromJson: centerInfoOrNull)  CenterInfo? center)?  $default,) {final _that = this;
 switch (_that) {
 case _DeviceRegistration() when $default != null:
-return $default(_that.deviceId,_that.deviceToken,_that.name,_that.number,_that.approved,_that.exitPasswordOffline);case _:
+return $default(_that.deviceId,_that.deviceToken,_that.name,_that.number,_that.approved,_that.exitPasswordOffline,_that.center);case _:
   return null;
 
 }
@@ -511,7 +524,7 @@ return $default(_that.deviceId,_that.deviceToken,_that.name,_that.number,_that.a
 @JsonSerializable()
 
 class _DeviceRegistration implements DeviceRegistration {
-  const _DeviceRegistration({required this.deviceId, required this.deviceToken, required this.name, @JsonKey(fromJson: intOrNull) this.number, @JsonKey(fromJson: boolTrue) this.approved = false, @JsonKey(fromJson: stringOrNull) this.exitPasswordOffline});
+  const _DeviceRegistration({required this.deviceId, required this.deviceToken, required this.name, @JsonKey(fromJson: intOrNull) this.number, @JsonKey(fromJson: boolTrue) this.approved = false, @JsonKey(fromJson: stringOrNull) this.exitPasswordOffline, @JsonKey(fromJson: centerInfoOrNull) this.center});
   factory _DeviceRegistration.fromJson(Map<String, dynamic> json) => _$DeviceRegistrationFromJson(json);
 
 @override final  int deviceId;
@@ -520,6 +533,7 @@ class _DeviceRegistration implements DeviceRegistration {
 @override@JsonKey(fromJson: intOrNull) final  int? number;
 @override@JsonKey(fromJson: boolTrue) final  bool approved;
 @override@JsonKey(fromJson: stringOrNull) final  String? exitPasswordOffline;
+@override@JsonKey(fromJson: centerInfoOrNull) final  CenterInfo? center;
 
 /// Create a copy of DeviceRegistration
 /// with the given fields replaced by the non-null parameter values.
@@ -534,18 +548,18 @@ Map<String, dynamic> toJson() {
 
 @override
 bool operator ==(Object other) {
-    return identical(this, other) || (other.runtimeType == runtimeType&&other is _DeviceRegistration&&(identical(other.deviceId, deviceId) || other.deviceId == deviceId)&&(identical(other.deviceToken, deviceToken) || other.deviceToken == deviceToken)&&(identical(other.name, name) || other.name == name)&&(identical(other.number, number) || other.number == number)&&(identical(other.approved, approved) || other.approved == approved)&&(identical(other.exitPasswordOffline, exitPasswordOffline) || other.exitPasswordOffline == exitPasswordOffline));
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is _DeviceRegistration&&(identical(other.deviceId, deviceId) || other.deviceId == deviceId)&&(identical(other.deviceToken, deviceToken) || other.deviceToken == deviceToken)&&(identical(other.name, name) || other.name == name)&&(identical(other.number, number) || other.number == number)&&(identical(other.approved, approved) || other.approved == approved)&&(identical(other.exitPasswordOffline, exitPasswordOffline) || other.exitPasswordOffline == exitPasswordOffline)&&(identical(other.center, center) || other.center == center));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
 int get hashCode {
-    return Object.hash(runtimeType,deviceId,deviceToken,name,number,approved,exitPasswordOffline);
+    return Object.hash(runtimeType,deviceId,deviceToken,name,number,approved,exitPasswordOffline,center);
 }
 
 @override
 String toString() {
-    return 'DeviceRegistration(deviceId: $deviceId, deviceToken: $deviceToken, name: $name, number: $number, approved: $approved, exitPasswordOffline: $exitPasswordOffline)';
+    return 'DeviceRegistration(deviceId: $deviceId, deviceToken: $deviceToken, name: $name, number: $number, approved: $approved, exitPasswordOffline: $exitPasswordOffline, center: $center)';
 }
 
 
@@ -556,11 +570,11 @@ abstract mixin class _$DeviceRegistrationCopyWith<$Res> implements $DeviceRegist
   factory _$DeviceRegistrationCopyWith(_DeviceRegistration value, $Res Function(_DeviceRegistration) _then) = __$DeviceRegistrationCopyWithImpl;
 @override @useResult
 $Res call({
- int deviceId, String deviceToken, String name,@JsonKey(fromJson: intOrNull) int? number,@JsonKey(fromJson: boolTrue) bool approved,@JsonKey(fromJson: stringOrNull) String? exitPasswordOffline
+ int deviceId, String deviceToken, String name,@JsonKey(fromJson: intOrNull) int? number,@JsonKey(fromJson: boolTrue) bool approved,@JsonKey(fromJson: stringOrNull) String? exitPasswordOffline,@JsonKey(fromJson: centerInfoOrNull) CenterInfo? center
 });
 
 
-
+@override $CenterInfoCopyWith<$Res>? get center;
 
 }
 /// @nodoc
@@ -573,7 +587,7 @@ class __$DeviceRegistrationCopyWithImpl<$Res>
 
 /// Create a copy of DeviceRegistration
 /// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? deviceId = null,Object? deviceToken = null,Object? name = null,Object? number = freezed,Object? approved = null,Object? exitPasswordOffline = freezed,}) {
+@override @pragma('vm:prefer-inline') $Res call({Object? deviceId = null,Object? deviceToken = null,Object? name = null,Object? number = freezed,Object? approved = null,Object? exitPasswordOffline = freezed,Object? center = freezed,}) {
   return _then(_DeviceRegistration(
 deviceId: null == deviceId ? _self.deviceId : deviceId // ignore: cast_nullable_to_non_nullable
 as int,deviceToken: null == deviceToken ? _self.deviceToken : deviceToken // ignore: cast_nullable_to_non_nullable
@@ -581,11 +595,24 @@ as String,name: null == name ? _self.name : name // ignore: cast_nullable_to_non
 as String,number: freezed == number ? _self.number : number // ignore: cast_nullable_to_non_nullable
 as int?,approved: null == approved ? _self.approved : approved // ignore: cast_nullable_to_non_nullable
 as bool,exitPasswordOffline: freezed == exitPasswordOffline ? _self.exitPasswordOffline : exitPasswordOffline // ignore: cast_nullable_to_non_nullable
-as String?,
+as String?,center: freezed == center ? _self.center : center // ignore: cast_nullable_to_non_nullable
+as CenterInfo?,
   ));
 }
 
+/// Create a copy of DeviceRegistration
+/// with the given fields replaced by the non-null parameter values.
+@override
+@pragma('vm:prefer-inline')
+$CenterInfoCopyWith<$Res>? get center {
+    if (_self.center == null) {
+    return null;
+  }
 
+  return $CenterInfoCopyWith<$Res>(_self.center!, (value) {
+    return _then(_self.copyWith(center: value));
+  });
+}
 }
 
 
@@ -874,7 +901,7 @@ as bool?,
 /// @nodoc
 mixin _$DeviceConfig {
 
- String? get exitPasswordOffline; List<String> get bannedProcesses; int get heartbeatSeconds; int get violationBatchSeconds;@JsonKey(fromJson: dateOrNull, toJson: dateToJson) DateTime? get serverTime;@JsonKey(fromJson: stringOrNull) String? get name;@JsonKey(fromJson: intOrNull) int? get number;@JsonKey(fromJson: boolOrNull) bool? get approved;@JsonKey(fromJson: stringOrNull) String? get backgroundUrl;@JsonKey(fromJson: stringOrNull) String? get backgroundSha256;
+ String? get exitPasswordOffline; List<String> get bannedProcesses; int get heartbeatSeconds; int get violationBatchSeconds;@JsonKey(fromJson: dateOrNull, toJson: dateToJson) DateTime? get serverTime;@JsonKey(fromJson: stringOrNull) String? get name;@JsonKey(fromJson: intOrNull) int? get number;@JsonKey(fromJson: boolOrNull) bool? get approved;@JsonKey(fromJson: stringOrNull) String? get backgroundUrl;@JsonKey(fromJson: stringOrNull) String? get backgroundSha256;@JsonKey(fromJson: centerInfoOrNull) CenterInfo? get center;
 /// Create a copy of DeviceConfig
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -888,20 +915,20 @@ $DeviceConfigCopyWith<DeviceConfig> get copyWith => _$DeviceConfigCopyWithImpl<D
 @override
 bool operator ==(Object other) {
   final _this = this as DeviceConfig;
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is DeviceConfig&&(identical(other.exitPasswordOffline, _this.exitPasswordOffline) || other.exitPasswordOffline == _this.exitPasswordOffline)&&const DeepCollectionEquality().equals(other.bannedProcesses, _this.bannedProcesses)&&(identical(other.heartbeatSeconds, _this.heartbeatSeconds) || other.heartbeatSeconds == _this.heartbeatSeconds)&&(identical(other.violationBatchSeconds, _this.violationBatchSeconds) || other.violationBatchSeconds == _this.violationBatchSeconds)&&(identical(other.serverTime, _this.serverTime) || other.serverTime == _this.serverTime)&&(identical(other.name, _this.name) || other.name == _this.name)&&(identical(other.number, _this.number) || other.number == _this.number)&&(identical(other.approved, _this.approved) || other.approved == _this.approved)&&(identical(other.backgroundUrl, _this.backgroundUrl) || other.backgroundUrl == _this.backgroundUrl)&&(identical(other.backgroundSha256, _this.backgroundSha256) || other.backgroundSha256 == _this.backgroundSha256));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is DeviceConfig&&(identical(other.exitPasswordOffline, _this.exitPasswordOffline) || other.exitPasswordOffline == _this.exitPasswordOffline)&&const DeepCollectionEquality().equals(other.bannedProcesses, _this.bannedProcesses)&&(identical(other.heartbeatSeconds, _this.heartbeatSeconds) || other.heartbeatSeconds == _this.heartbeatSeconds)&&(identical(other.violationBatchSeconds, _this.violationBatchSeconds) || other.violationBatchSeconds == _this.violationBatchSeconds)&&(identical(other.serverTime, _this.serverTime) || other.serverTime == _this.serverTime)&&(identical(other.name, _this.name) || other.name == _this.name)&&(identical(other.number, _this.number) || other.number == _this.number)&&(identical(other.approved, _this.approved) || other.approved == _this.approved)&&(identical(other.backgroundUrl, _this.backgroundUrl) || other.backgroundUrl == _this.backgroundUrl)&&(identical(other.backgroundSha256, _this.backgroundSha256) || other.backgroundSha256 == _this.backgroundSha256)&&(identical(other.center, _this.center) || other.center == _this.center));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
 int get hashCode {
   final _this = this as DeviceConfig;
-  return Object.hash(runtimeType,_this.exitPasswordOffline,const DeepCollectionEquality().hash(_this.bannedProcesses),_this.heartbeatSeconds,_this.violationBatchSeconds,_this.serverTime,_this.name,_this.number,_this.approved,_this.backgroundUrl,_this.backgroundSha256);
+  return Object.hash(runtimeType,_this.exitPasswordOffline,const DeepCollectionEquality().hash(_this.bannedProcesses),_this.heartbeatSeconds,_this.violationBatchSeconds,_this.serverTime,_this.name,_this.number,_this.approved,_this.backgroundUrl,_this.backgroundSha256,_this.center);
 }
 
 @override
 String toString() {
   final _this = this as DeviceConfig;
-  return 'DeviceConfig(exitPasswordOffline: ${_this.exitPasswordOffline}, bannedProcesses: ${_this.bannedProcesses}, heartbeatSeconds: ${_this.heartbeatSeconds}, violationBatchSeconds: ${_this.violationBatchSeconds}, serverTime: ${_this.serverTime}, name: ${_this.name}, number: ${_this.number}, approved: ${_this.approved}, backgroundUrl: ${_this.backgroundUrl}, backgroundSha256: ${_this.backgroundSha256})';
+  return 'DeviceConfig(exitPasswordOffline: ${_this.exitPasswordOffline}, bannedProcesses: ${_this.bannedProcesses}, heartbeatSeconds: ${_this.heartbeatSeconds}, violationBatchSeconds: ${_this.violationBatchSeconds}, serverTime: ${_this.serverTime}, name: ${_this.name}, number: ${_this.number}, approved: ${_this.approved}, backgroundUrl: ${_this.backgroundUrl}, backgroundSha256: ${_this.backgroundSha256}, center: ${_this.center})';
 }
 
 
@@ -912,11 +939,11 @@ abstract mixin class $DeviceConfigCopyWith<$Res>  {
   factory $DeviceConfigCopyWith(DeviceConfig value, $Res Function(DeviceConfig) _then) = _$DeviceConfigCopyWithImpl;
 @useResult
 $Res call({
- String? exitPasswordOffline, List<String> bannedProcesses, int heartbeatSeconds, int violationBatchSeconds,@JsonKey(fromJson: dateOrNull, toJson: dateToJson) DateTime? serverTime,@JsonKey(fromJson: stringOrNull) String? name,@JsonKey(fromJson: intOrNull) int? number,@JsonKey(fromJson: boolOrNull) bool? approved,@JsonKey(fromJson: stringOrNull) String? backgroundUrl,@JsonKey(fromJson: stringOrNull) String? backgroundSha256
+ String? exitPasswordOffline, List<String> bannedProcesses, int heartbeatSeconds, int violationBatchSeconds,@JsonKey(fromJson: dateOrNull, toJson: dateToJson) DateTime? serverTime,@JsonKey(fromJson: stringOrNull) String? name,@JsonKey(fromJson: intOrNull) int? number,@JsonKey(fromJson: boolOrNull) bool? approved,@JsonKey(fromJson: stringOrNull) String? backgroundUrl,@JsonKey(fromJson: stringOrNull) String? backgroundSha256,@JsonKey(fromJson: centerInfoOrNull) CenterInfo? center
 });
 
 
-
+$CenterInfoCopyWith<$Res>? get center;
 
 }
 /// @nodoc
@@ -929,7 +956,7 @@ class _$DeviceConfigCopyWithImpl<$Res>
 
 /// Create a copy of DeviceConfig
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? exitPasswordOffline = freezed,Object? bannedProcesses = null,Object? heartbeatSeconds = null,Object? violationBatchSeconds = null,Object? serverTime = freezed,Object? name = freezed,Object? number = freezed,Object? approved = freezed,Object? backgroundUrl = freezed,Object? backgroundSha256 = freezed,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? exitPasswordOffline = freezed,Object? bannedProcesses = null,Object? heartbeatSeconds = null,Object? violationBatchSeconds = null,Object? serverTime = freezed,Object? name = freezed,Object? number = freezed,Object? approved = freezed,Object? backgroundUrl = freezed,Object? backgroundSha256 = freezed,Object? center = freezed,}) {
   return _then(DeviceConfig(
 exitPasswordOffline: freezed == exitPasswordOffline ? _self.exitPasswordOffline : exitPasswordOffline // ignore: cast_nullable_to_non_nullable
 as String?,bannedProcesses: null == bannedProcesses ? _self.bannedProcesses : bannedProcesses // ignore: cast_nullable_to_non_nullable
@@ -941,10 +968,23 @@ as String?,number: freezed == number ? _self.number : number // ignore: cast_nul
 as int?,approved: freezed == approved ? _self.approved : approved // ignore: cast_nullable_to_non_nullable
 as bool?,backgroundUrl: freezed == backgroundUrl ? _self.backgroundUrl : backgroundUrl // ignore: cast_nullable_to_non_nullable
 as String?,backgroundSha256: freezed == backgroundSha256 ? _self.backgroundSha256 : backgroundSha256 // ignore: cast_nullable_to_non_nullable
-as String?,
+as String?,center: freezed == center ? _self.center : center // ignore: cast_nullable_to_non_nullable
+as CenterInfo?,
   ));
 }
+/// Create a copy of DeviceConfig
+/// with the given fields replaced by the non-null parameter values.
+@override
+@pragma('vm:prefer-inline')
+$CenterInfoCopyWith<$Res>? get center {
+    if (_self.center == null) {
+    return null;
+  }
 
+  return $CenterInfoCopyWith<$Res>(_self.center!, (value) {
+    return _then(_self.copyWith(center: value));
+  });
+}
 }
 
 
@@ -1026,10 +1066,10 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String? exitPasswordOffline,  List<String> bannedProcesses,  int heartbeatSeconds,  int violationBatchSeconds, @JsonKey(fromJson: dateOrNull, toJson: dateToJson)  DateTime? serverTime, @JsonKey(fromJson: stringOrNull)  String? name, @JsonKey(fromJson: intOrNull)  int? number, @JsonKey(fromJson: boolOrNull)  bool? approved, @JsonKey(fromJson: stringOrNull)  String? backgroundUrl, @JsonKey(fromJson: stringOrNull)  String? backgroundSha256)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String? exitPasswordOffline,  List<String> bannedProcesses,  int heartbeatSeconds,  int violationBatchSeconds, @JsonKey(fromJson: dateOrNull, toJson: dateToJson)  DateTime? serverTime, @JsonKey(fromJson: stringOrNull)  String? name, @JsonKey(fromJson: intOrNull)  int? number, @JsonKey(fromJson: boolOrNull)  bool? approved, @JsonKey(fromJson: stringOrNull)  String? backgroundUrl, @JsonKey(fromJson: stringOrNull)  String? backgroundSha256, @JsonKey(fromJson: centerInfoOrNull)  CenterInfo? center)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _DeviceConfig() when $default != null:
-return $default(_that.exitPasswordOffline,_that.bannedProcesses,_that.heartbeatSeconds,_that.violationBatchSeconds,_that.serverTime,_that.name,_that.number,_that.approved,_that.backgroundUrl,_that.backgroundSha256);case _:
+return $default(_that.exitPasswordOffline,_that.bannedProcesses,_that.heartbeatSeconds,_that.violationBatchSeconds,_that.serverTime,_that.name,_that.number,_that.approved,_that.backgroundUrl,_that.backgroundSha256,_that.center);case _:
   return orElse();
 
 }
@@ -1047,10 +1087,10 @@ return $default(_that.exitPasswordOffline,_that.bannedProcesses,_that.heartbeatS
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String? exitPasswordOffline,  List<String> bannedProcesses,  int heartbeatSeconds,  int violationBatchSeconds, @JsonKey(fromJson: dateOrNull, toJson: dateToJson)  DateTime? serverTime, @JsonKey(fromJson: stringOrNull)  String? name, @JsonKey(fromJson: intOrNull)  int? number, @JsonKey(fromJson: boolOrNull)  bool? approved, @JsonKey(fromJson: stringOrNull)  String? backgroundUrl, @JsonKey(fromJson: stringOrNull)  String? backgroundSha256)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String? exitPasswordOffline,  List<String> bannedProcesses,  int heartbeatSeconds,  int violationBatchSeconds, @JsonKey(fromJson: dateOrNull, toJson: dateToJson)  DateTime? serverTime, @JsonKey(fromJson: stringOrNull)  String? name, @JsonKey(fromJson: intOrNull)  int? number, @JsonKey(fromJson: boolOrNull)  bool? approved, @JsonKey(fromJson: stringOrNull)  String? backgroundUrl, @JsonKey(fromJson: stringOrNull)  String? backgroundSha256, @JsonKey(fromJson: centerInfoOrNull)  CenterInfo? center)  $default,) {final _that = this;
 switch (_that) {
 case _DeviceConfig():
-return $default(_that.exitPasswordOffline,_that.bannedProcesses,_that.heartbeatSeconds,_that.violationBatchSeconds,_that.serverTime,_that.name,_that.number,_that.approved,_that.backgroundUrl,_that.backgroundSha256);case _:
+return $default(_that.exitPasswordOffline,_that.bannedProcesses,_that.heartbeatSeconds,_that.violationBatchSeconds,_that.serverTime,_that.name,_that.number,_that.approved,_that.backgroundUrl,_that.backgroundSha256,_that.center);case _:
   throw StateError('Unexpected subclass');
 
 }
@@ -1067,10 +1107,10 @@ return $default(_that.exitPasswordOffline,_that.bannedProcesses,_that.heartbeatS
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String? exitPasswordOffline,  List<String> bannedProcesses,  int heartbeatSeconds,  int violationBatchSeconds, @JsonKey(fromJson: dateOrNull, toJson: dateToJson)  DateTime? serverTime, @JsonKey(fromJson: stringOrNull)  String? name, @JsonKey(fromJson: intOrNull)  int? number, @JsonKey(fromJson: boolOrNull)  bool? approved, @JsonKey(fromJson: stringOrNull)  String? backgroundUrl, @JsonKey(fromJson: stringOrNull)  String? backgroundSha256)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String? exitPasswordOffline,  List<String> bannedProcesses,  int heartbeatSeconds,  int violationBatchSeconds, @JsonKey(fromJson: dateOrNull, toJson: dateToJson)  DateTime? serverTime, @JsonKey(fromJson: stringOrNull)  String? name, @JsonKey(fromJson: intOrNull)  int? number, @JsonKey(fromJson: boolOrNull)  bool? approved, @JsonKey(fromJson: stringOrNull)  String? backgroundUrl, @JsonKey(fromJson: stringOrNull)  String? backgroundSha256, @JsonKey(fromJson: centerInfoOrNull)  CenterInfo? center)?  $default,) {final _that = this;
 switch (_that) {
 case _DeviceConfig() when $default != null:
-return $default(_that.exitPasswordOffline,_that.bannedProcesses,_that.heartbeatSeconds,_that.violationBatchSeconds,_that.serverTime,_that.name,_that.number,_that.approved,_that.backgroundUrl,_that.backgroundSha256);case _:
+return $default(_that.exitPasswordOffline,_that.bannedProcesses,_that.heartbeatSeconds,_that.violationBatchSeconds,_that.serverTime,_that.name,_that.number,_that.approved,_that.backgroundUrl,_that.backgroundSha256,_that.center);case _:
   return null;
 
 }
@@ -1082,7 +1122,7 @@ return $default(_that.exitPasswordOffline,_that.bannedProcesses,_that.heartbeatS
 @JsonSerializable()
 
 class _DeviceConfig implements DeviceConfig {
-  const _DeviceConfig({this.exitPasswordOffline,  List<String> bannedProcesses = const <String>[], this.heartbeatSeconds = 20, this.violationBatchSeconds = 10, @JsonKey(fromJson: dateOrNull, toJson: dateToJson) this.serverTime, @JsonKey(fromJson: stringOrNull) this.name, @JsonKey(fromJson: intOrNull) this.number, @JsonKey(fromJson: boolOrNull) this.approved, @JsonKey(fromJson: stringOrNull) this.backgroundUrl, @JsonKey(fromJson: stringOrNull) this.backgroundSha256}): _bannedProcesses = bannedProcesses;
+  const _DeviceConfig({this.exitPasswordOffline,  List<String> bannedProcesses = const <String>[], this.heartbeatSeconds = 20, this.violationBatchSeconds = 10, @JsonKey(fromJson: dateOrNull, toJson: dateToJson) this.serverTime, @JsonKey(fromJson: stringOrNull) this.name, @JsonKey(fromJson: intOrNull) this.number, @JsonKey(fromJson: boolOrNull) this.approved, @JsonKey(fromJson: stringOrNull) this.backgroundUrl, @JsonKey(fromJson: stringOrNull) this.backgroundSha256, @JsonKey(fromJson: centerInfoOrNull) this.center}): _bannedProcesses = bannedProcesses;
   factory _DeviceConfig.fromJson(Map<String, dynamic> json) => _$DeviceConfigFromJson(json);
 
 @override final  String? exitPasswordOffline;
@@ -1101,6 +1141,7 @@ class _DeviceConfig implements DeviceConfig {
 @override@JsonKey(fromJson: boolOrNull) final  bool? approved;
 @override@JsonKey(fromJson: stringOrNull) final  String? backgroundUrl;
 @override@JsonKey(fromJson: stringOrNull) final  String? backgroundSha256;
+@override@JsonKey(fromJson: centerInfoOrNull) final  CenterInfo? center;
 
 /// Create a copy of DeviceConfig
 /// with the given fields replaced by the non-null parameter values.
@@ -1115,18 +1156,18 @@ Map<String, dynamic> toJson() {
 
 @override
 bool operator ==(Object other) {
-    return identical(this, other) || (other.runtimeType == runtimeType&&other is _DeviceConfig&&(identical(other.exitPasswordOffline, exitPasswordOffline) || other.exitPasswordOffline == exitPasswordOffline)&&const DeepCollectionEquality().equals(other.bannedProcesses, _bannedProcesses)&&(identical(other.heartbeatSeconds, heartbeatSeconds) || other.heartbeatSeconds == heartbeatSeconds)&&(identical(other.violationBatchSeconds, violationBatchSeconds) || other.violationBatchSeconds == violationBatchSeconds)&&(identical(other.serverTime, serverTime) || other.serverTime == serverTime)&&(identical(other.name, name) || other.name == name)&&(identical(other.number, number) || other.number == number)&&(identical(other.approved, approved) || other.approved == approved)&&(identical(other.backgroundUrl, backgroundUrl) || other.backgroundUrl == backgroundUrl)&&(identical(other.backgroundSha256, backgroundSha256) || other.backgroundSha256 == backgroundSha256));
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is _DeviceConfig&&(identical(other.exitPasswordOffline, exitPasswordOffline) || other.exitPasswordOffline == exitPasswordOffline)&&const DeepCollectionEquality().equals(other.bannedProcesses, _bannedProcesses)&&(identical(other.heartbeatSeconds, heartbeatSeconds) || other.heartbeatSeconds == heartbeatSeconds)&&(identical(other.violationBatchSeconds, violationBatchSeconds) || other.violationBatchSeconds == violationBatchSeconds)&&(identical(other.serverTime, serverTime) || other.serverTime == serverTime)&&(identical(other.name, name) || other.name == name)&&(identical(other.number, number) || other.number == number)&&(identical(other.approved, approved) || other.approved == approved)&&(identical(other.backgroundUrl, backgroundUrl) || other.backgroundUrl == backgroundUrl)&&(identical(other.backgroundSha256, backgroundSha256) || other.backgroundSha256 == backgroundSha256)&&(identical(other.center, center) || other.center == center));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
 int get hashCode {
-    return Object.hash(runtimeType,exitPasswordOffline,const DeepCollectionEquality().hash(_bannedProcesses),heartbeatSeconds,violationBatchSeconds,serverTime,name,number,approved,backgroundUrl,backgroundSha256);
+    return Object.hash(runtimeType,exitPasswordOffline,const DeepCollectionEquality().hash(_bannedProcesses),heartbeatSeconds,violationBatchSeconds,serverTime,name,number,approved,backgroundUrl,backgroundSha256,center);
 }
 
 @override
 String toString() {
-    return 'DeviceConfig(exitPasswordOffline: $exitPasswordOffline, bannedProcesses: $bannedProcesses, heartbeatSeconds: $heartbeatSeconds, violationBatchSeconds: $violationBatchSeconds, serverTime: $serverTime, name: $name, number: $number, approved: $approved, backgroundUrl: $backgroundUrl, backgroundSha256: $backgroundSha256)';
+    return 'DeviceConfig(exitPasswordOffline: $exitPasswordOffline, bannedProcesses: $bannedProcesses, heartbeatSeconds: $heartbeatSeconds, violationBatchSeconds: $violationBatchSeconds, serverTime: $serverTime, name: $name, number: $number, approved: $approved, backgroundUrl: $backgroundUrl, backgroundSha256: $backgroundSha256, center: $center)';
 }
 
 
@@ -1137,11 +1178,11 @@ abstract mixin class _$DeviceConfigCopyWith<$Res> implements $DeviceConfigCopyWi
   factory _$DeviceConfigCopyWith(_DeviceConfig value, $Res Function(_DeviceConfig) _then) = __$DeviceConfigCopyWithImpl;
 @override @useResult
 $Res call({
- String? exitPasswordOffline, List<String> bannedProcesses, int heartbeatSeconds, int violationBatchSeconds,@JsonKey(fromJson: dateOrNull, toJson: dateToJson) DateTime? serverTime,@JsonKey(fromJson: stringOrNull) String? name,@JsonKey(fromJson: intOrNull) int? number,@JsonKey(fromJson: boolOrNull) bool? approved,@JsonKey(fromJson: stringOrNull) String? backgroundUrl,@JsonKey(fromJson: stringOrNull) String? backgroundSha256
+ String? exitPasswordOffline, List<String> bannedProcesses, int heartbeatSeconds, int violationBatchSeconds,@JsonKey(fromJson: dateOrNull, toJson: dateToJson) DateTime? serverTime,@JsonKey(fromJson: stringOrNull) String? name,@JsonKey(fromJson: intOrNull) int? number,@JsonKey(fromJson: boolOrNull) bool? approved,@JsonKey(fromJson: stringOrNull) String? backgroundUrl,@JsonKey(fromJson: stringOrNull) String? backgroundSha256,@JsonKey(fromJson: centerInfoOrNull) CenterInfo? center
 });
 
 
-
+@override $CenterInfoCopyWith<$Res>? get center;
 
 }
 /// @nodoc
@@ -1154,7 +1195,7 @@ class __$DeviceConfigCopyWithImpl<$Res>
 
 /// Create a copy of DeviceConfig
 /// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? exitPasswordOffline = freezed,Object? bannedProcesses = null,Object? heartbeatSeconds = null,Object? violationBatchSeconds = null,Object? serverTime = freezed,Object? name = freezed,Object? number = freezed,Object? approved = freezed,Object? backgroundUrl = freezed,Object? backgroundSha256 = freezed,}) {
+@override @pragma('vm:prefer-inline') $Res call({Object? exitPasswordOffline = freezed,Object? bannedProcesses = null,Object? heartbeatSeconds = null,Object? violationBatchSeconds = null,Object? serverTime = freezed,Object? name = freezed,Object? number = freezed,Object? approved = freezed,Object? backgroundUrl = freezed,Object? backgroundSha256 = freezed,Object? center = freezed,}) {
   return _then(_DeviceConfig(
 exitPasswordOffline: freezed == exitPasswordOffline ? _self.exitPasswordOffline : exitPasswordOffline // ignore: cast_nullable_to_non_nullable
 as String?,bannedProcesses: null == bannedProcesses ? _self._bannedProcesses : bannedProcesses // ignore: cast_nullable_to_non_nullable
@@ -1166,7 +1207,299 @@ as String?,number: freezed == number ? _self.number : number // ignore: cast_nul
 as int?,approved: freezed == approved ? _self.approved : approved // ignore: cast_nullable_to_non_nullable
 as bool?,backgroundUrl: freezed == backgroundUrl ? _self.backgroundUrl : backgroundUrl // ignore: cast_nullable_to_non_nullable
 as String?,backgroundSha256: freezed == backgroundSha256 ? _self.backgroundSha256 : backgroundSha256 // ignore: cast_nullable_to_non_nullable
-as String?,
+as String?,center: freezed == center ? _self.center : center // ignore: cast_nullable_to_non_nullable
+as CenterInfo?,
+  ));
+}
+
+/// Create a copy of DeviceConfig
+/// with the given fields replaced by the non-null parameter values.
+@override
+@pragma('vm:prefer-inline')
+$CenterInfoCopyWith<$Res>? get center {
+    if (_self.center == null) {
+    return null;
+  }
+
+  return $CenterInfoCopyWith<$Res>(_self.center!, (value) {
+    return _then(_self.copyWith(center: value));
+  });
+}
+}
+
+
+/// @nodoc
+mixin _$CenterInfo {
+
+@JsonKey(fromJson: stringOrEmpty) String get code;@JsonKey(fromJson: stringOrEmpty) String get name;@JsonKey(fromJson: stringOrNull) String? get logoUrl;@JsonKey(fromJson: boolTrue) bool get suspended;
+/// Create a copy of CenterInfo
+/// with the given fields replaced by the non-null parameter values.
+@JsonKey(includeFromJson: false, includeToJson: false)
+@pragma('vm:prefer-inline')
+$CenterInfoCopyWith<CenterInfo> get copyWith => _$CenterInfoCopyWithImpl<CenterInfo>(this as CenterInfo, _$identity);
+
+  /// Serializes this CenterInfo to a JSON map.
+  Map<String, dynamic> toJson();
+
+
+@override
+bool operator ==(Object other) {
+  final _this = this as CenterInfo;
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is CenterInfo&&(identical(other.code, _this.code) || other.code == _this.code)&&(identical(other.name, _this.name) || other.name == _this.name)&&(identical(other.logoUrl, _this.logoUrl) || other.logoUrl == _this.logoUrl)&&(identical(other.suspended, _this.suspended) || other.suspended == _this.suspended));
+}
+
+@JsonKey(includeFromJson: false, includeToJson: false)
+@override
+int get hashCode {
+  final _this = this as CenterInfo;
+  return Object.hash(runtimeType,_this.code,_this.name,_this.logoUrl,_this.suspended);
+}
+
+@override
+String toString() {
+  final _this = this as CenterInfo;
+  return 'CenterInfo(code: ${_this.code}, name: ${_this.name}, logoUrl: ${_this.logoUrl}, suspended: ${_this.suspended})';
+}
+
+
+}
+
+/// @nodoc
+abstract mixin class $CenterInfoCopyWith<$Res>  {
+  factory $CenterInfoCopyWith(CenterInfo value, $Res Function(CenterInfo) _then) = _$CenterInfoCopyWithImpl;
+@useResult
+$Res call({
+@JsonKey(fromJson: stringOrEmpty) String code,@JsonKey(fromJson: stringOrEmpty) String name,@JsonKey(fromJson: stringOrNull) String? logoUrl,@JsonKey(fromJson: boolTrue) bool suspended
+});
+
+
+
+
+}
+/// @nodoc
+class _$CenterInfoCopyWithImpl<$Res>
+    implements $CenterInfoCopyWith<$Res> {
+  _$CenterInfoCopyWithImpl(this._self, this._then);
+
+  final CenterInfo _self;
+  final $Res Function(CenterInfo) _then;
+
+/// Create a copy of CenterInfo
+/// with the given fields replaced by the non-null parameter values.
+@pragma('vm:prefer-inline') @override $Res call({Object? code = null,Object? name = null,Object? logoUrl = freezed,Object? suspended = null,}) {
+  return _then(CenterInfo(
+code: null == code ? _self.code : code // ignore: cast_nullable_to_non_nullable
+as String,name: null == name ? _self.name : name // ignore: cast_nullable_to_non_nullable
+as String,logoUrl: freezed == logoUrl ? _self.logoUrl : logoUrl // ignore: cast_nullable_to_non_nullable
+as String?,suspended: null == suspended ? _self.suspended : suspended // ignore: cast_nullable_to_non_nullable
+as bool,
+  ));
+}
+
+}
+
+
+/// Adds pattern-matching-related methods to [CenterInfo].
+extension CenterInfoPatterns on CenterInfo {
+/// A variant of `map` that fallback to returning `orElse`.
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case final Subclass value:
+///     return ...;
+///   case _:
+///     return orElse();
+/// }
+/// ```
+
+@optionalTypeArgs TResult maybeMap<TResult extends Object?>(TResult Function( _CenterInfo value)?  $default,{required TResult orElse(),}){
+final _that = this;
+switch (_that) {
+case _CenterInfo() when $default != null:
+return $default(_that);case _:
+  return orElse();
+
+}
+}
+/// A `switch`-like method, using callbacks.
+///
+/// Callbacks receives the raw object, upcasted.
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case final Subclass value:
+///     return ...;
+///   case final Subclass2 value:
+///     return ...;
+/// }
+/// ```
+
+@optionalTypeArgs TResult map<TResult extends Object?>(TResult Function( _CenterInfo value)  $default,){
+final _that = this;
+switch (_that) {
+case _CenterInfo():
+return $default(_that);case _:
+  throw StateError('Unexpected subclass');
+
+}
+}
+/// A variant of `map` that fallback to returning `null`.
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case final Subclass value:
+///     return ...;
+///   case _:
+///     return null;
+/// }
+/// ```
+
+@optionalTypeArgs TResult? mapOrNull<TResult extends Object?>(TResult? Function( _CenterInfo value)?  $default,){
+final _that = this;
+switch (_that) {
+case _CenterInfo() when $default != null:
+return $default(_that);case _:
+  return null;
+
+}
+}
+/// A variant of `when` that fallback to an `orElse` callback.
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case Subclass(:final field):
+///     return ...;
+///   case _:
+///     return orElse();
+/// }
+/// ```
+
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function(@JsonKey(fromJson: stringOrEmpty)  String code, @JsonKey(fromJson: stringOrEmpty)  String name, @JsonKey(fromJson: stringOrNull)  String? logoUrl, @JsonKey(fromJson: boolTrue)  bool suspended)?  $default,{required TResult orElse(),}) {final _that = this;
+switch (_that) {
+case _CenterInfo() when $default != null:
+return $default(_that.code,_that.name,_that.logoUrl,_that.suspended);case _:
+  return orElse();
+
+}
+}
+/// A `switch`-like method, using callbacks.
+///
+/// As opposed to `map`, this offers destructuring.
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case Subclass(:final field):
+///     return ...;
+///   case Subclass2(:final field2):
+///     return ...;
+/// }
+/// ```
+
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function(@JsonKey(fromJson: stringOrEmpty)  String code, @JsonKey(fromJson: stringOrEmpty)  String name, @JsonKey(fromJson: stringOrNull)  String? logoUrl, @JsonKey(fromJson: boolTrue)  bool suspended)  $default,) {final _that = this;
+switch (_that) {
+case _CenterInfo():
+return $default(_that.code,_that.name,_that.logoUrl,_that.suspended);case _:
+  throw StateError('Unexpected subclass');
+
+}
+}
+/// A variant of `when` that fallback to returning `null`
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case Subclass(:final field):
+///     return ...;
+///   case _:
+///     return null;
+/// }
+/// ```
+
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function(@JsonKey(fromJson: stringOrEmpty)  String code, @JsonKey(fromJson: stringOrEmpty)  String name, @JsonKey(fromJson: stringOrNull)  String? logoUrl, @JsonKey(fromJson: boolTrue)  bool suspended)?  $default,) {final _that = this;
+switch (_that) {
+case _CenterInfo() when $default != null:
+return $default(_that.code,_that.name,_that.logoUrl,_that.suspended);case _:
+  return null;
+
+}
+}
+
+}
+
+/// @nodoc
+@JsonSerializable()
+
+class _CenterInfo implements CenterInfo {
+  const _CenterInfo({@JsonKey(fromJson: stringOrEmpty) this.code = '', @JsonKey(fromJson: stringOrEmpty) this.name = '', @JsonKey(fromJson: stringOrNull) this.logoUrl, @JsonKey(fromJson: boolTrue) this.suspended = false});
+  factory _CenterInfo.fromJson(Map<String, dynamic> json) => _$CenterInfoFromJson(json);
+
+@override@JsonKey(fromJson: stringOrEmpty) final  String code;
+@override@JsonKey(fromJson: stringOrEmpty) final  String name;
+@override@JsonKey(fromJson: stringOrNull) final  String? logoUrl;
+@override@JsonKey(fromJson: boolTrue) final  bool suspended;
+
+/// Create a copy of CenterInfo
+/// with the given fields replaced by the non-null parameter values.
+@override @JsonKey(includeFromJson: false, includeToJson: false)
+@pragma('vm:prefer-inline')
+_$CenterInfoCopyWith<_CenterInfo> get copyWith => __$CenterInfoCopyWithImpl<_CenterInfo>(this, _$identity);
+
+@override
+Map<String, dynamic> toJson() {
+  return _$CenterInfoToJson(this, );
+}
+
+@override
+bool operator ==(Object other) {
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is _CenterInfo&&(identical(other.code, code) || other.code == code)&&(identical(other.name, name) || other.name == name)&&(identical(other.logoUrl, logoUrl) || other.logoUrl == logoUrl)&&(identical(other.suspended, suspended) || other.suspended == suspended));
+}
+
+@JsonKey(includeFromJson: false, includeToJson: false)
+@override
+int get hashCode {
+    return Object.hash(runtimeType,code,name,logoUrl,suspended);
+}
+
+@override
+String toString() {
+    return 'CenterInfo(code: $code, name: $name, logoUrl: $logoUrl, suspended: $suspended)';
+}
+
+
+}
+
+/// @nodoc
+abstract mixin class _$CenterInfoCopyWith<$Res> implements $CenterInfoCopyWith<$Res> {
+  factory _$CenterInfoCopyWith(_CenterInfo value, $Res Function(_CenterInfo) _then) = __$CenterInfoCopyWithImpl;
+@override @useResult
+$Res call({
+@JsonKey(fromJson: stringOrEmpty) String code,@JsonKey(fromJson: stringOrEmpty) String name,@JsonKey(fromJson: stringOrNull) String? logoUrl,@JsonKey(fromJson: boolTrue) bool suspended
+});
+
+
+
+
+}
+/// @nodoc
+class __$CenterInfoCopyWithImpl<$Res>
+    implements _$CenterInfoCopyWith<$Res> {
+  __$CenterInfoCopyWithImpl(this._self, this._then);
+
+  final _CenterInfo _self;
+  final $Res Function(_CenterInfo) _then;
+
+/// Create a copy of CenterInfo
+/// with the given fields replaced by the non-null parameter values.
+@override @pragma('vm:prefer-inline') $Res call({Object? code = null,Object? name = null,Object? logoUrl = freezed,Object? suspended = null,}) {
+  return _then(_CenterInfo(
+code: null == code ? _self.code : code // ignore: cast_nullable_to_non_nullable
+as String,name: null == name ? _self.name : name // ignore: cast_nullable_to_non_nullable
+as String,logoUrl: freezed == logoUrl ? _self.logoUrl : logoUrl // ignore: cast_nullable_to_non_nullable
+as String?,suspended: null == suspended ? _self.suspended : suspended // ignore: cast_nullable_to_non_nullable
+as bool,
   ));
 }
 

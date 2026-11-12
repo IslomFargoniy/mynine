@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 
+import 'package:crypto/crypto.dart' as crypto;
 import 'package:flutter/foundation.dart';
 import 'package:path/path.dart' as p;
 import 'package:uuid/uuid.dart';
@@ -49,12 +50,20 @@ class DeviceRepository extends ChangeNotifier {
     this.backgroundDir,
   });
 
-  /// Where the code-screen background picture is kept (null: feature off).
+  /// Where the code-screen background picture and the center logo are kept
+  /// (null: feature off).
   final Directory? backgroundDir;
   File? _background;
+  File? _logo;
 
   /// The Admin's background picture for the code screen, once on disk.
   File? get backgroundFile => _background;
+
+  /// The center logo for the code screen, once on disk (null: name only).
+  File? get logoFile => _logo;
+
+  /// Brand name used where the app used to say "Mynine".
+  static const defaultCenterName = 'Mynine';
 
   final MynineApi api;
   final SettingsStore store;
@@ -69,8 +78,34 @@ class DeviceRepository extends ChangeNotifier {
   bool _registered = false;
   bool _blocked = false;
   String? _notApprovedMessage;
+  String? _lastCenterCode;
+  bool _suspendedByLogin = false;
 
   DeviceConfig get config => _config;
+
+  /// The PC's learning center (null until a multi-center server told us).
+  CenterInfo? get center => _config.center;
+
+  /// The center's name, or "Mynine" (older server / no name).
+  String get centerName {
+    final name = _config.center?.name.trim() ?? '';
+    return name.isEmpty ? defaultCenterName : name;
+  }
+
+  /// True when the center is suspended (config, or a login answered
+  /// `center_suspended`): the code screen does not start exams.
+  bool get centerSuspended => _suspendedByLogin || (_config.center?.suspended ?? false);
+
+  /// Last center code used to register (prefills the Setup / admin forms).
+  String? get lastCenterCode => _lastCenterCode;
+
+  /// Records a `center_suspended` answer from `/exam/login`, or (false)
+  /// clears it after a successful login.
+  void noteCenterSuspended(bool suspended) {
+    if (_suspendedByLogin == suspended) return;
+    _suspendedByLogin = suspended;
+    notifyListeners();
+  }
   String get pcName => _pcName ?? Platform.localHostname;
   String? get machineId => _machineId;
 
@@ -109,8 +144,11 @@ class DeviceRepository extends ChangeNotifier {
         _config = DeviceConfig.fromJson((jsonDecode(cfg) as Map).cast<String, Object?>());
       } catch (_) {}
     }
+    _lastCenterCode = await store.read(SettingsKeys.centerCode);
     final cachedBg = _backgroundTarget();
     if (cachedBg != null && cachedBg.existsSync()) _background = cachedBg;
+    final cachedLogo = _logoTarget();
+    if (cachedLogo != null && cachedLogo.existsSync()) _logo = cachedLogo;
     _machineId = await lockdown.machineId();
     if (_machineId == null || _machineId!.isEmpty) {
       _machineId = await store.read(SettingsKeys.machineIdFallback);
@@ -127,11 +165,15 @@ class DeviceRepository extends ChangeNotifier {
   /// registration rotates the token and drops the admin approval.
   ///
   /// Throws [ApiException] `invalid_password` / `setup_password_missing` /
-  /// `device_blocked` / network errors; the stored token is kept on failure.
-  Future<void> register({required String password, String? name}) async {
+  /// `device_blocked` / `invalid_center_code` / `center_suspended` / network
+  /// errors; the stored token is kept on failure. [centerCode] (empty: the
+  /// Mynine center) is remembered after a successful registration.
+  Future<void> register({String? centerCode, required String password, String? name}) async {
+    final code = centerCode?.trim().toUpperCase() ?? '';
     try {
       final r = await api.registerDevice(
         machineId: _machineId!,
+        centerCode: code.isEmpty ? null : code,
         password: password,
         name: (name?.trim().isNotEmpty ?? false) ? name!.trim() : null,
         osVersion: osVersionString(),
@@ -144,6 +186,16 @@ class DeviceRepository extends ChangeNotifier {
       await store.write(SettingsKeys.pcName, r.name);
       _registered = true;
       _blocked = false;
+      _lastCenterCode = code.isEmpty ? null : code;
+      await store.write(SettingsKeys.centerCode, _lastCenterCode);
+      // Another center's branding must not stay on screen: take the new one
+      // (or none from an older server) until /device/config confirms it.
+      if (r.center != _config.center) {
+        _config = _config.copyWith(center: r.center);
+        _suspendedByLogin = false;
+        await store.write(SettingsKeys.deviceConfig, jsonEncode(_config.toJson()));
+        unawaited(syncLogo());
+      }
       // The offline hash comes with the registration (newer servers): the
       // exit password then works even while the PC is not approved / blocked.
       final hash = r.exitPasswordOffline;
@@ -175,7 +227,9 @@ class DeviceRepository extends ChangeNotifier {
       _config = await api.deviceConfig();
       await store.write(SettingsKeys.deviceConfig, jsonEncode(_config.toJson()));
       unawaited(syncBackground());
+      unawaited(syncLogo());
       _blocked = false;
+      if (!(_config.center?.suspended ?? false)) _suspendedByLogin = false;
       _applyIdentity(name: _config.name, number: _config.number, approved: _config.approved ?? true);
       notifyListeners();
     } on ApiException catch (e) {
@@ -326,6 +380,48 @@ class DeviceRepository extends ChangeNotifier {
       }
     } catch (e) {
       debugPrint('Background picture not updated: $e');
+    }
+  }
+
+  File? _logoTarget() {
+    final dir = backgroundDir;
+    final url = _config.center?.logoUrl;
+    if (dir == null || url == null || url.isEmpty || !api.isApiUrl(url)) return null;
+    final key = crypto.sha256.convert(utf8.encode(url)).toString().substring(0, 16);
+    return File(p.join(dir.path, 'logo-$key.img'));
+  }
+
+  Future<void>? _logoJob;
+
+  /// Downloads the center logo named in the config (only from the API
+  /// server; keyed by its URL), or drops it when the center has none.
+  /// Old logos are deleted.
+  Future<void> syncLogo() => _logoJob ??= _syncLogo().whenComplete(() => _logoJob = null);
+
+  Future<void> _syncLogo() async {
+    final dir = backgroundDir;
+    if (dir == null) return;
+    try {
+      final target = _logoTarget();
+      if (target != null && !(target.existsSync() && target.lengthSync() > 0)) {
+        await dir.create(recursive: true);
+        await api.download(_config.center!.logoUrl!, target);
+      }
+      if (_logo?.path != target?.path) {
+        _logo = target;
+        notifyListeners();
+      }
+      if (!dir.existsSync()) return;
+      await for (final f in dir.list()) {
+        final name = p.basename(f.path);
+        if (f is File && name.startsWith('logo-') && f.path != target?.path) {
+          try {
+            await f.delete();
+          } catch (_) {}
+        }
+      }
+    } catch (e) {
+      debugPrint('Center logo not updated: $e');
     }
   }
 

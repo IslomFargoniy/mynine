@@ -40,6 +40,7 @@ _DeviceRegistration _$DeviceRegistrationFromJson(Map<String, dynamic> json) =>
       number: intOrNull(json['number']),
       approved: json['approved'] == null ? false : boolTrue(json['approved']),
       exitPasswordOffline: stringOrNull(json['exit_password_offline']),
+      center: centerInfoOrNull(json['center']),
     );
 
 Map<String, dynamic> _$DeviceRegistrationToJson(_DeviceRegistration instance) =>
@@ -50,6 +51,7 @@ Map<String, dynamic> _$DeviceRegistrationToJson(_DeviceRegistration instance) =>
       'number': instance.number,
       'approved': instance.approved,
       'exit_password_offline': instance.exitPasswordOffline,
+      'center': instance.center?.toJson(),
     };
 
 _DeviceHeartbeat _$DeviceHeartbeatFromJson(Map<String, dynamic> json) =>
@@ -87,6 +89,7 @@ _DeviceConfig _$DeviceConfigFromJson(Map<String, dynamic> json) =>
       approved: boolOrNull(json['approved']),
       backgroundUrl: stringOrNull(json['background_url']),
       backgroundSha256: stringOrNull(json['background_sha256']),
+      center: centerInfoOrNull(json['center']),
     );
 
 Map<String, dynamic> _$DeviceConfigToJson(_DeviceConfig instance) =>
@@ -101,4 +104,20 @@ Map<String, dynamic> _$DeviceConfigToJson(_DeviceConfig instance) =>
       'approved': instance.approved,
       'background_url': instance.backgroundUrl,
       'background_sha256': instance.backgroundSha256,
+      'center': instance.center?.toJson(),
+    };
+
+_CenterInfo _$CenterInfoFromJson(Map<String, dynamic> json) => _CenterInfo(
+  code: json['code'] == null ? '' : stringOrEmpty(json['code']),
+  name: json['name'] == null ? '' : stringOrEmpty(json['name']),
+  logoUrl: stringOrNull(json['logo_url']),
+  suspended: json['suspended'] == null ? false : boolTrue(json['suspended']),
+);
+
+Map<String, dynamic> _$CenterInfoToJson(_CenterInfo instance) =>
+    <String, dynamic>{
+      'code': instance.code,
+      'name': instance.name,
+      'logo_url': instance.logoUrl,
+      'suspended': instance.suspended,
     };

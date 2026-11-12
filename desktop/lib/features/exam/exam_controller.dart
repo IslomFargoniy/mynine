@@ -279,6 +279,7 @@ class ExamController extends ChangeNotifier {
         rethrow;
       }
       device.markApproved();
+      device.noteCenterSuspended(false);
       final previous = _attemptId;
       if (previous != null && previous != login.attemptId) {
         // Another candidate on a locked PC: the lost session keeps its queue
@@ -317,6 +318,7 @@ class ExamController extends ChangeNotifier {
     } on ApiException catch (e) {
       _error = e.userMessage;
       device.noteApproval(e);
+      if (e.code == ApiErrorCode.centerSuspended) device.noteCenterSuspended(true);
       if (e.code == ApiErrorCode.deviceNotApproved) {
         _error = device.notApprovedMessage;
       }

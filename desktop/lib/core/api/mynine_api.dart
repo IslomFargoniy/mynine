@@ -32,8 +32,12 @@ abstract class MynineApi {
   /// `POST /device/register`. [password] is the center password; a wrong one
   /// answers 422 `invalid_password`, a server without one 409
   /// `setup_password_missing`. Without [name] the server picks `PC-xxxx`.
+  /// [centerCode] picks the learning center (`center_code`; empty/null: the
+  /// Mynine center). Unknown code → 422 `invalid_center_code`, suspended
+  /// center → 403 `center_suspended`.
   Future<DeviceRegistration> registerDevice({
     required String machineId,
+    String? centerCode,
     required String password,
     String? name,
     required String osVersion,
@@ -83,6 +87,10 @@ abstract class MynineApi {
     String examToken,
     List<ViolationItem> violations,
   );
+
+  /// True when [url] points at the API server itself (same scheme, host and
+  /// port). Files named by the server (center logo) are only fetched from there.
+  bool isApiUrl(String url);
 
   /// Downloads [url] into [target] with HTTP Range resume.
   ///

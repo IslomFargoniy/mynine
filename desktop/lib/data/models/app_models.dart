@@ -53,6 +53,8 @@ abstract class DeviceRegistration with _$DeviceRegistration {
     @JsonKey(fromJson: boolTrue) @Default(false) bool approved,
     // PBKDF2 hash of the center password for offline checks (newer servers).
     @JsonKey(fromJson: stringOrNull) String? exitPasswordOffline,
+    // The center the PC registered with (multi-center servers; null on older ones).
+    @JsonKey(fromJson: centerInfoOrNull) CenterInfo? center,
   }) = _DeviceRegistration;
 
   factory DeviceRegistration.fromJson(Map<String, Object?> json) =>
@@ -92,8 +94,29 @@ abstract class DeviceConfig with _$DeviceConfig {
     // Code-screen background picture set by the Admin (null: plain).
     @JsonKey(fromJson: stringOrNull) String? backgroundUrl,
     @JsonKey(fromJson: stringOrNull) String? backgroundSha256,
+    // The PC's learning center (multi-center servers; null on older ones).
+    @JsonKey(fromJson: centerInfoOrNull) CenterInfo? center,
   }) = _DeviceConfig;
 
   factory DeviceConfig.fromJson(Map<String, Object?> json) =>
       _$DeviceConfigFromJson(json);
 }
+
+/// `center` in `/device/config` and `/device/register` (multi-center): the
+/// learning center this PC belongs to. Name and logo brand the code screen;
+/// a suspended center cannot start exams.
+@freezed
+abstract class CenterInfo with _$CenterInfo {
+  const factory CenterInfo({
+    @JsonKey(fromJson: stringOrEmpty) @Default('') String code,
+    @JsonKey(fromJson: stringOrEmpty) @Default('') String name,
+    @JsonKey(fromJson: stringOrNull) String? logoUrl,
+    @JsonKey(fromJson: boolTrue) @Default(false) bool suspended,
+  }) = _CenterInfo;
+
+  factory CenterInfo.fromJson(Map<String, Object?> json) => _$CenterInfoFromJson(json);
+}
+
+/// A `center` object, or null when missing / not an object (older server).
+CenterInfo? centerInfoOrNull(Object? value) =>
+    value is Map ? CenterInfo.fromJson(value.map((k, v) => MapEntry(k.toString(), v))) : null;

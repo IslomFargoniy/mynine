@@ -163,7 +163,7 @@ void main() {
 
     testWidgets('setup view shows the password error and passes password + name', (tester) async {
       final calls = <(String, String?)>[];
-      await tester.pumpWidget(wrap(SetupView(onRegister: (password, name) async {
+      await tester.pumpWidget(wrap(SetupView(onRegister: (_, password, name) async {
         calls.add((password, name));
         if (password != 'mynine') {
           throw ApiException(code: ApiErrorCode.invalidPassword, statusCode: 422);
@@ -189,7 +189,7 @@ void main() {
     });
 
     testWidgets('setup view shows setup_password_missing from the server', (tester) async {
-      await tester.pumpWidget(wrap(SetupView(onRegister: (_, _) async {
+      await tester.pumpWidget(wrap(SetupView(onRegister: (_, _, _) async {
         throw ApiException(
           code: ApiErrorCode.setupPasswordMissing,
           statusCode: 409,

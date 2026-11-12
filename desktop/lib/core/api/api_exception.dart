@@ -1,3 +1,6 @@
+/// Shown when the PC's center is suspended (login / register / config).
+const centerSuspendedMessage = 'This center is not active. Please contact the center administration.';
+
 /// Machine error codes from API.md.
 enum ApiErrorCode {
   unauthenticated('unauthenticated'),
@@ -15,6 +18,11 @@ enum ApiErrorCode {
   deviceNotApproved('device_not_approved'),
   invalidPassword('invalid_password'),
   setupPasswordMissing('setup_password_missing'),
+
+  /// Multi-center: 422 on `/device/register` (unknown `center_code`) and
+  /// 403 on register / `/exam/login` (center suspended by the platform owner).
+  invalidCenterCode('invalid_center_code'),
+  centerSuspended('center_suspended'),
   forbidden('forbidden'),
   notFound('not_found'),
   methodNotAllowed('method_not_allowed'),
@@ -118,6 +126,8 @@ class ApiException implements Exception {
         ApiErrorCode.setupPasswordMissing => message?.isNotEmpty == true
             ? message!
             : 'The center password is not set on the server yet. Set it in Desktop settings first.',
+        ApiErrorCode.invalidCenterCode => 'Unknown center code. Check it with your center.',
+        ApiErrorCode.centerSuspended => centerSuspendedMessage,
         ApiErrorCode.forbidden => 'Access denied.',
         ApiErrorCode.notFound => 'Not found on the server.',
         ApiErrorCode.methodNotAllowed => 'Something went wrong. Please try again.',

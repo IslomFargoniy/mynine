@@ -81,6 +81,12 @@ class HttpMynineApi implements MynineApi {
         uri.port == base.port;
   }
 
+  @override
+  bool isApiUrl(String url) {
+    final uri = Uri.tryParse(url);
+    return uri != null && isApiOrigin(uri, baseUrl());
+  }
+
   String _url(String path) {
     final base = baseUrl().replaceAll(RegExp(r'/+$'), '');
     return '$base$path';
@@ -225,6 +231,7 @@ class HttpMynineApi implements MynineApi {
   @override
   Future<DeviceRegistration> registerDevice({
     required String machineId,
+    String? centerCode,
     required String password,
     String? name,
     required String osVersion,
@@ -235,6 +242,7 @@ class HttpMynineApi implements MynineApi {
         '/device/register',
         body: {
           'machine_id': machineId,
+          if (centerCode != null && centerCode.trim().isNotEmpty) 'center_code': centerCode.trim().toUpperCase(),
           'password': password,
           if (name != null && name.trim().isNotEmpty) 'name': name.trim(),
           'os_version': osVersion,

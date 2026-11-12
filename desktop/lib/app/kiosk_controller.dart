@@ -84,11 +84,12 @@ class KioskController extends ChangeNotifier {
     await _beat();
   }
 
-  /// Setup screen / admin menu: register this PC with the center [password].
-  /// Rethrows [ApiException] (`invalid_password`, `setup_password_missing`, …).
-  Future<void> registerDevice({required String password, String? name}) async {
+  /// Setup screen / admin menu: register this PC with the [centerCode] and
+  /// center [password]. Rethrows [ApiException] (`invalid_password`,
+  /// `invalid_center_code`, `center_suspended`, `setup_password_missing`, …).
+  Future<void> registerDevice({String? centerCode, required String password, String? name}) async {
     try {
-      await device.register(password: password, name: name);
+      await device.register(centerCode: centerCode, password: password, name: name);
       connection.reportSuccess();
     } on ApiException catch (e) {
       if (e.isNetwork) connection.reportFailure(e);

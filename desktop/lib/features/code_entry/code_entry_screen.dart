@@ -7,6 +7,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../app/providers.dart';
 import '../../app/theme.dart';
 import '../../app/widgets.dart';
+import '../../core/api/api_exception.dart';
 import '../exam/exam_controller.dart';
 import '../setup/setup_views.dart';
 import '../updater/update_dialog.dart';
@@ -29,12 +30,15 @@ class _CodeEntryScreenState extends ConsumerState<CodeEntryScreen> {
   final _code = TextEditingController();
   final _focus = FocusNode();
   bool _mandatoryShown = false;
+  // Kept for dispose(): Riverpod forbids `ref` once the widget is unmounting.
+  late final UpdateService _updates;
+  late final ExamController _exam;
 
   @override
   void initState() {
     super.initState();
-    final updates = ref.read(updateServiceProvider);
-    final exam = ref.read(examControllerProvider);
+    final updates = _updates = ref.read(updateServiceProvider);
+    final exam = _exam = ref.read(examControllerProvider);
     updates.canAutoInstall =
         () => exam.stage == ExamStage.idle && !exam.busy && exam.attemptId == null;
     WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -49,8 +53,8 @@ class _CodeEntryScreenState extends ConsumerState<CodeEntryScreen> {
 
   @override
   void dispose() {
-    ref.read(updateServiceProvider).removeListener(_onUpdates);
-    ref.read(examControllerProvider).removeListener(_onExam);
+    _updates.removeListener(_onUpdates);
+    _exam.removeListener(_onExam);
     _code.dispose();
     _focus.dispose();
     super.dispose();
@@ -80,6 +84,8 @@ class _CodeEntryScreenState extends ConsumerState<CodeEntryScreen> {
   }
 
   Future<void> _submit() async {
+    // A suspended center cannot start exams (staff can still use the admin menu).
+    if (ref.read(deviceRepositoryProvider).centerSuspended) return;
     final exam = ref.read(examControllerProvider);
     await exam.login(_code.text);
     if (mounted && exam.stage == ExamStage.idle) {
@@ -121,11 +127,14 @@ class _CodeEntryScreenState extends ConsumerState<CodeEntryScreen> {
               builder: (context, _) => !device.isRegistered
                   ? SetupView(
                       initialName: null,
-                      onRegister: (password, name) =>
-                          ref.read(kioskControllerProvider).registerDevice(password: password, name: name),
+                      initialCenterCode: device.lastCenterCode,
+                      onRegister: (centerCode, password, name) => ref
+                          .read(kioskControllerProvider)
+                          .registerDevice(centerCode: centerCode, password: password, name: name),
                     )
                   : device.isApprovalPending
                   ? PendingApprovalView(
+                      centerName: device.centerName,
                       pcName: device.pcName,
                       machineIdShort: device.machineIdShort,
                       onCheckNow: () => ref.read(kioskControllerProvider).checkApprovalNow(),
@@ -138,8 +147,27 @@ class _CodeEntryScreenState extends ConsumerState<CodeEntryScreen> {
                           children: [
                             const IeltsBadge(),
                             const SizedBox(width: 10),
-                            const Text('Mynine', style: TextStyle(fontSize: 22, fontWeight: FontWeight.w800)),
-                            const Spacer(),
+                            if (device.logoFile case final logo?) ...[
+                              Image.file(
+                                logo,
+                                key: const Key('center-logo'),
+                                height: 36,
+                                width: 120,
+                                fit: BoxFit.contain,
+                                alignment: Alignment.centerLeft,
+                                errorBuilder: (_, _, _) => const SizedBox.shrink(),
+                              ),
+                              const SizedBox(width: 10),
+                            ],
+                            Expanded(
+                              child: Text(
+                                device.centerName,
+                                key: const Key('center-name'),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                                style: const TextStyle(fontSize: 22, fontWeight: FontWeight.w800),
+                              ),
+                            ),
                             if (device.pcNumber case final number?) PcNumberBadge(number: number, large: true),
                           ],
                         ),
@@ -174,7 +202,30 @@ class _CodeEntryScreenState extends ConsumerState<CodeEntryScreen> {
                           ),
                           onSubmitted: (_) => _submit(),
                         ),
-                        if (exam.error != null && exam.error != device.notApprovedMessage) ...[
+                        if (device.centerSuspended) ...[
+                          const SizedBox(height: 12),
+                          Container(
+                            key: const Key('center-suspended'),
+                            padding: const EdgeInsets.all(12),
+                            decoration: BoxDecoration(
+                              color: Colors.red.withValues(alpha: 0.06),
+                              border: Border.all(color: Colors.red.withValues(alpha: 0.4)),
+                            ),
+                            child: const Row(children: [
+                              Icon(Icons.block, color: Colors.red, size: 20),
+                              SizedBox(width: 10),
+                              Expanded(
+                                child: Text(
+                                  centerSuspendedMessage,
+                                  style: TextStyle(color: Colors.red, fontWeight: FontWeight.w600),
+                                ),
+                              ),
+                            ]),
+                          ),
+                        ],
+                        if (exam.error != null &&
+                            exam.error != device.notApprovedMessage &&
+                            !(device.centerSuspended && exam.error == centerSuspendedMessage)) ...[
                           const SizedBox(height: 12),
                           Text(
                             exam.error!,
@@ -192,7 +243,7 @@ class _CodeEntryScreenState extends ConsumerState<CodeEntryScreen> {
                         const SizedBox(height: 20),
                         FilledButton(
                           key: const Key('code-submit'),
-                          onPressed: exam.busy ? null : _submit,
+                          onPressed: exam.busy || device.centerSuspended ? null : _submit,
                           child: exam.busy
                               ? const SizedBox(
                                   width: 22,
@@ -200,6 +251,13 @@ class _CodeEntryScreenState extends ConsumerState<CodeEntryScreen> {
                                   child: CircularProgressIndicator(strokeWidth: 2.5, color: Colors.white),
                                 )
                               : const Text('START'),
+                        ),
+                        const SizedBox(height: 16),
+                        const Text(
+                          'Powered by Mynine',
+                          key: Key('powered-by'),
+                          textAlign: TextAlign.center,
+                          style: TextStyle(fontSize: 11, color: AppColors.grey),
                         ),
                       ],
                     ),
