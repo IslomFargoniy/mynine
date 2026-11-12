@@ -240,6 +240,7 @@ Route::middleware([EnsureCandidateOrAuthenticated::class])->group(function () {
 
     Route::get('media/audio/{filename}', [MediaController::class, 'audio'])
         ->where('filename', '[A-Za-z0-9._-]+')
+        ->middleware('throttle:media-audio')
         ->name('media.audio');
 });
 

@@ -83,5 +83,19 @@ class AppServiceProvider extends ServiceProvider
         ]);
 
         RateLimiter::for('desktop-unlock', fn (Request $request) => Limit::perMinute(5)->by('desktop-unlock:'.$deviceKey($request)));
+
+        // Web exam audio: per listener (user, candidate session), not per IP — a whole exam hall can share one IP.
+        // Players send a few Range requests per file; enumeration of guessed file names is what this limits.
+        RateLimiter::for('media-audio', function (Request $request) {
+            $session = $request->hasSession() ? $request->session() : null;
+            $key = $request->user()?->getAuthIdentifier()
+                ? 'u'.$request->user()->getAuthIdentifier()
+                : ($session?->get('mock_student_id') ? 'c'.$session->get('mock_student_id') : 's'.($session?->getId() ?? $request->ip()));
+
+            return [
+                Limit::perMinute(120)->by('media-audio:'.$key),
+                Limit::perMinute(1200)->by('media-audio-ip:'.$request->ip()),
+            ];
+        });
     }
 }
