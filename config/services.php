@@ -71,6 +71,8 @@ return [
         // Main bot: WebApp login, Login Widget, result delivery
         'mynine_bot_token' => env('MynineUzBot_TOKEN'),
         'mynine_bot_username' => env('MynineUzBot_USERNAME', 'MynineUzBot'),
+        // secret_token given to setWebhook; checked on every webhook request (empty: not checked)
+        'webhook_secret' => env('TELEGRAM_WEBHOOK_SECRET'),
     ],
 
 ];
