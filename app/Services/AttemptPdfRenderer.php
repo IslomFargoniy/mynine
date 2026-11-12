@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Models\Attempt;
+use App\Support\CenterBranding;
 use Dompdf\Dompdf;
 use Illuminate\Support\Facades\File;
 
@@ -34,7 +35,8 @@ class AttemptPdfRenderer
             'fontCache' => $fontDir,
             'tempDir' => $tempDir,
         ]);
-        $dompdf->loadHtml(view('pdf.attempt', compact('attempt'))->render());
+        $branding = CenterBranding::forCenter($attempt->centerId());
+        $dompdf->loadHtml(view('pdf.attempt', compact('attempt', 'branding'))->render());
         $dompdf->setPaper('A4', 'portrait');
         $dompdf->render();
 

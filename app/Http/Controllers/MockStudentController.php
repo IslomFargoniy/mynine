@@ -6,6 +6,7 @@ use App\Models\Mock;
 use App\Models\MockStudent;
 use App\Services\CandidateService;
 use App\Services\ExamService;
+use App\Support\CenterBranding;
 use App\Support\CurrentCenter;
 use App\Support\Pdf;
 use Carbon\Carbon;
@@ -145,7 +146,9 @@ class MockStudentController extends Controller
 
         abort_if($students->isEmpty(), 404, __('candidates_not_found'));
 
-        return Pdf::render('pdf.code-cards', compact('mock', 'students'), 'Codes_'.$mock->id);
+        $branding = CenterBranding::forCenter($mock->owner_id ? (int) $mock->owner_id : null);
+
+        return Pdf::render('pdf.code-cards', compact('mock', 'students', 'branding'), 'Codes_'.$mock->id);
     }
 
     /**
@@ -166,7 +169,9 @@ class MockStudentController extends Controller
 
         abort_if($students->isEmpty(), 404, __('candidates_not_found'));
 
-        return response()->view('print.code-tickets', compact('mock', 'students'));
+        $branding = CenterBranding::forCenter($mock->owner_id ? (int) $mock->owner_id : null);
+
+        return response()->view('print.code-tickets', compact('mock', 'students', 'branding'));
     }
 
     /**

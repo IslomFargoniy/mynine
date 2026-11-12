@@ -425,19 +425,30 @@
 
     $verificationUrl = route('attempt.pdf', $attempt->id);
     $verificationCode = 'MY9-' . strtoupper(substr(hash('sha256', $attempt->id . $attempt->created_at), 0, 8));
+
+    // A partner center's mock result: its name / logo instead of Mynine's, plus "Powered by Mynine".
+    $branding = $branding ?? null;
 @endphp
 
 <div class="page-border"></div>
 <div class="page-border-inner"></div>
-<div class="watermark">MYNINE ACADEMY</div>
+<div class="watermark">{{ $branding ? mb_strtoupper($branding->name) : 'MYNINE ACADEMY' }}</div>
 
 <div class="certificate-wrapper">
     <!-- Header -->
     <table class="header-table">
         <tr>
             <td style="vertical-align: middle;">
-                <div class="brand-title">MYNINE.UZ</div>
-                <div class="brand-subtitle">Official IELTS Preparation & Assessment Center</div>
+                @if ($branding)
+                    @if ($logo = $branding->logoDataUri())
+                        <img src="{{ $logo }}" alt="" style="max-height: 34px; max-width: 160px; vertical-align: middle; margin-right: 6px;">
+                    @endif
+                    <span class="brand-title" style="vertical-align: middle;">{{ $branding->name }}</span>
+                    <div class="brand-subtitle">IELTS Mock Exam &middot; Powered by Mynine</div>
+                @else
+                    <div class="brand-title">MYNINE.UZ</div>
+                    <div class="brand-subtitle">Official IELTS Preparation & Assessment Center</div>
+                @endif
             </td>
             <td class="trf-header-right">
                 <div class="trf-badge">Test Report Form</div>
@@ -650,11 +661,15 @@
                 <td style="width: 75%;" class="footer-info">
                     <div style="margin-bottom: 4px;">
                         <span class="seal-box">
-                            <span class="seal-text">✓ MYNINE CERTIFIED ASSESSMENT</span>
+                            <span class="seal-text">✓ {{ $branding ? mb_strtoupper($branding->name).' ASSESSMENT' : 'MYNINE CERTIFIED ASSESSMENT' }}</span>
                         </span>
                         <strong>Verification Code:</strong> <code>{{ $verificationCode }}</code>
                     </div>
-                    <strong>Disclaimer:</strong> This Test Report Form is issued by MyNine.uz Academic Preparation Platform. The scores are generated based on official Cambridge IELTS criteria and intended for performance monitoring and practice evaluation.<br>
+                    @if ($branding)
+                    <strong>Disclaimer:</strong> This mock exam result is issued by {{ $branding->name }} (powered by Mynine). The scores
+                    @else
+                    <strong>Disclaimer:</strong> This Test Report Form is issued by MyNine.uz Academic Preparation Platform. The scores
+                    @endif are generated based on official Cambridge IELTS criteria and intended for performance monitoring and practice evaluation.<br>
                     <strong>Online Verification:</strong> <a href="{{ $verificationUrl }}" style="color: #312e81; text-decoration: none;">{{ $verificationUrl }}</a> | Generated: {{ now()->format('Y-m-d H:i:s') }}
                 </td>
                 <td class="qr-cell">

@@ -6,6 +6,7 @@ use App\Models\Mock;
 use App\Models\MockStudent;
 use App\Services\CandidateService;
 use App\Services\MockResultService;
+use App\Support\CenterBranding;
 use App\Support\Pdf;
 use Carbon\Carbon;
 use Illuminate\Http\RedirectResponse;
@@ -135,6 +136,7 @@ class ReceptionController extends Controller
             ->get();
 
         $sheets = [];
+        $brandings = [];
         foreach ($students as $student) {
             $this->authorize('operate', $student->mock);
             $result = $this->results->result($student);
@@ -142,7 +144,13 @@ class ReceptionController extends Controller
                 continue;
             }
 
+            $ownerId = (int) ($student->mock?->owner_id ?? 0);
+            if (! array_key_exists($ownerId, $brandings)) {
+                $brandings[$ownerId] = CenterBranding::forCenter($ownerId ?: null);
+            }
+
             $sheets[] = [
+                'branding' => $brandings[$ownerId],
                 'name' => $student->name,
                 'code' => $student->code,
                 'mock' => $student->mock?->name,
