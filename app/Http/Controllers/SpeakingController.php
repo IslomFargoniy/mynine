@@ -37,9 +37,12 @@ class SpeakingController extends Controller
     {
         $this->authorize('examine', Mock::class);
 
+        // Mocks started in the last 30 days, upcoming ones, and long-running mocks
+        // that are still open (a mock started months ago may still have candidates).
         $mocks = Mock::query()->withoutEagerLoads()
-            ->where('started_at', '>=', now()->subDays(30))
+            ->where(fn ($q) => $q->where('started_at', '>=', now()->subDays(30))->orWhere('finished_at', '>=', now()))
             ->orderByDesc('started_at')
+            ->orderByDesc('id')
             ->get(['id', 'name', 'started_at', 'finished_at', 'speaking_starts_at', 'speaking_slot_minutes', 'active']);
 
         $mockId = $request->integer('mock_id') ?: null;
