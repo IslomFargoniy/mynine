@@ -25,10 +25,13 @@ Duration listeningPosition(ExamModule module, ServerClock clock, {PausedSince? p
   if (started != null) {
     var e = clock.now().difference(started.toUtc());
     if (pausedSince != null) e -= pausedSince(started);
+    // Audio missed while the app was closed: the recording resumes where it stopped.
+    e -= Duration(seconds: module.audioLagSeconds);
     return e.isNegative ? Duration.zero : e;
   }
   final finished = module.finishedAt;
   if (finished == null || module.durationSeconds <= 0) return Duration.zero;
+  // finished_at already moved by the audio lag (and extra time): no further correction here.
   final elapsed = Duration(seconds: module.durationSeconds) - clock.remaining(finished);
   return elapsed.isNegative ? Duration.zero : elapsed;
 }
@@ -47,6 +50,8 @@ class ListeningAudio extends StatefulWidget {
     required this.clock,
     required this.paused,
     this.pausedSince,
+    this.onPosition,
+    this.onFirstPlay,
   });
 
   final String file;
@@ -54,6 +59,13 @@ class ListeningAudio extends StatefulWidget {
   final ServerClock clock;
   final bool paused;
   final PausedSince? pausedSince;
+
+  /// Where the recording is now (every ~2 s while playing): saved so a restart resumes from here.
+  final ValueChanged<Duration>? onPosition;
+
+  /// Called once, right before the recording first plays on this PC, with where the clock says it should be.
+  /// Returns the module with that start-up delay turned into audio lag (so it starts at 0:00), or null.
+  final Future<ExamModule?> Function(Duration expected)? onFirstPlay;
 
   @override
   State<ListeningAudio> createState() => _ListeningAudioState();
@@ -78,8 +90,16 @@ class _ListeningAudioState extends State<ListeningAudio> {
 
   void _applyVolume() => _p?.setVolume(listeningVolume.value);
 
+  /// The module with any start-up lag applied locally until the rebuilt widget carries it.
+  ExamModule? _adjusted;
+
+  ExamModule get _module {
+    final a = _adjusted;
+    return a != null && a.audioLagSeconds > widget.module.audioLagSeconds ? a : widget.module;
+  }
+
   Duration _expected() =>
-      listeningPosition(widget.module, widget.clock, pausedSince: widget.pausedSince);
+      listeningPosition(_module, widget.clock, pausedSince: widget.pausedSince);
 
   Future<void> _start() async {
     try {
@@ -101,6 +121,10 @@ class _ListeningAudioState extends State<ListeningAudio> {
       final duration = await player.stream.duration
           .firstWhere((d) => d > Duration.zero)
           .timeout(const Duration(seconds: 10), onTimeout: () => Duration.zero);
+      // Opening the file and the audio device takes a few seconds after Start: the intro must not be skipped.
+      final first = widget.onFirstPlay;
+      if (first != null) _adjusted = await first(_expected());
+      if (!mounted) return;
       await _sync(duration);
       _lastWall = DateTime.now();
       _watchdog = Timer.periodic(const Duration(seconds: 2), (_) => unawaited(_check()));
@@ -114,6 +138,7 @@ class _ListeningAudioState extends State<ListeningAudio> {
   Future<void> _check() async {
     final player = _p;
     if (player == null || !mounted || _ended || widget.paused) return;
+    if (_playing) widget.onPosition?.call(player.state.position);
     final now = DateTime.now();
     final last = _lastWall;
     _lastWall = now;

@@ -49,6 +49,7 @@ Route::prefix('v1')->name('api.v1.')->group(function () {
                 Route::post('heartbeat', [ExamController::class, 'heartbeat'])->name('heartbeat');
 
                 Route::post('modules/{typeId}/start', [ModuleController::class, 'start'])->whereNumber('typeId')->name('modules.start');
+                Route::post('modules/{typeId}/audio-lag', [ModuleController::class, 'audioLag'])->whereNumber('typeId')->name('modules.audio-lag');
                 Route::post('modules/{typeId}/submit', [ModuleController::class, 'submit'])->whereNumber('typeId')->name('modules.submit');
 
                 Route::post('answers', [AnswerController::class, 'store'])->name('answers');

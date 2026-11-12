@@ -297,6 +297,68 @@ void main() {
       await h.dispose();
     });
 
+    test('restart in Listening: the audio resumes where it stopped and the module ends that much later', () async {
+      var now = DateTime.utc(2026, 11, 12, 9);
+      final h = await Harness.create(now: () => now);
+      await h.exam.login('DEMO1');
+      h.exam.acceptRules();
+      h.exam.confirmSoundCheck();
+      await waitFor(() => h.exam.stage == ExamStage.exam);
+      final start = h.exam.currentModule!;
+      final end = start.finishedAt!;
+
+      // 20 s heard, then the app dies; it is open again a minute later.
+      now = now.add(const Duration(seconds: 20));
+      h.exam.saveAudioPosition(start.typeId, const Duration(seconds: 20));
+      await Future<void>.delayed(const Duration(milliseconds: 30));
+      h.exam.dispose();
+      now = now.add(const Duration(seconds: 60));
+      final again = h.restartController();
+      expect(await again.resumeIfNeeded(), isTrue);
+      await waitFor(() => again.stage == ExamStage.exam);
+
+      final m = again.currentModule!;
+      expect(m.audioLagSeconds, 60);
+      expect(listeningPosition(m, h.clock, pausedSince: again.pausedSince), const Duration(seconds: 20));
+      expect(m.finishedAt, end.add(const Duration(seconds: 60)));
+      expect(h.api.audioLag[start.typeId], 60);
+
+      // The server's end moved too: a heartbeat does not undo it.
+      final hb = await h.api.examHeartbeat((await h.db.session(_attempt))!.token, queuedAnswers: 0, queuedViolations: 0);
+      again.applyHeartbeat(hb);
+      expect(again.currentModule!.finishedAt, end.add(const Duration(seconds: 60)));
+
+      // A restart without a saved position on this PC (e.g. another PC) keeps the clock's position.
+      expect(listeningPosition(start, h.clock), const Duration(seconds: 80));
+      again.dispose();
+      await h.dispose(disposeExam: false);
+    });
+
+    test('first play: a slow start-up never skips the intro; after a PC switch the clock decides', () async {
+      var now = DateTime.utc(2026, 11, 12, 9);
+      final h = await Harness.create(now: () => now);
+      await h.exam.login('DEMO1');
+      h.exam.acceptRules();
+      h.exam.confirmSoundCheck();
+      await waitFor(() => h.exam.stage == ExamStage.exam);
+      final start = h.exam.currentModule!;
+
+      // Opening the file / audio device took 7 s: the recording still starts at 0:00, the module ends 7 s later.
+      now = now.add(const Duration(seconds: 7));
+      final m = (await h.exam.audioFirstPlay(start.typeId, const Duration(seconds: 7)))!;
+      expect(listeningPosition(m, h.clock), Duration.zero);
+      expect(m.finishedAt, start.finishedAt!.add(const Duration(seconds: 7)));
+      await waitFor(() => h.api.audioLag[start.typeId] == 7);
+      // Only once per module on this PC.
+      expect(await h.exam.audioFirstPlay(start.typeId, const Duration(seconds: 30)), isNull);
+
+      // Another PC (no saved position, module not started there): no rewind.
+      final other = h.restartController();
+      expect(await other.audioFirstPlay(start.typeId + 100, const Duration(seconds: 5)), isNull);
+      other.dispose();
+      await h.dispose();
+    });
+
     test('crash between the last module submit and the final submit: final submit on restart', () async {
       final h = await _inListening();
       final token = (await h.db.session(_attempt))!.token;

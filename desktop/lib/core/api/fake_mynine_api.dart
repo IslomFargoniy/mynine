@@ -160,6 +160,10 @@ class FakeMynineApi implements MynineApi {
   int _tokenSerial = 0;
   final Map<int, DateTime> _started = {};
   final Map<int, DateTime> _finished = {};
+
+  /// Total Listening audio lag per module (`audio-lag`), and every report received.
+  final Map<int, int> audioLag = {};
+  final List<int> audioLagReports = [];
   final Set<int> _submitted = {};
   String? _offlineHash;
   Uint8List? _audioBytes;
@@ -419,6 +423,7 @@ class FakeMynineApi implements MynineApi {
         status: status,
         startedAt: started,
         finishedAt: finished,
+        audioLagSeconds: audioLag[typeId] ?? 0,
         audio: audio,
         parts: [
           for (final p in parts)
@@ -546,6 +551,28 @@ class FakeMynineApi implements MynineApi {
       startedAt: _started[typeId],
       finishedAt: _finished[typeId],
       serverTime: _serverNow,
+    );
+  }
+
+  @override
+  Future<ModuleStartResponse> reportAudioLag(String examToken, int typeId, int lagSeconds) async {
+    await _io('reportAudioLag');
+    _requireToken(examToken);
+    audioLagReports.add(lagSeconds);
+    final end = _finished[typeId];
+    if (end == null) throw ApiException(code: ApiErrorCode.moduleLocked, statusCode: 409);
+    final old = audioLag[typeId] ?? 0;
+    if (lagSeconds > old && !_submitted.contains(typeId)) {
+      _finished[typeId] = end.add(Duration(seconds: lagSeconds - old));
+      audioLag[typeId] = lagSeconds;
+    }
+    return ModuleStartResponse(
+      typeId: typeId,
+      status: ModuleStatus.inProgress,
+      startedAt: _started[typeId],
+      finishedAt: _finished[typeId],
+      serverTime: _serverNow,
+      audioLagSeconds: audioLag[typeId] ?? 0,
     );
   }
 

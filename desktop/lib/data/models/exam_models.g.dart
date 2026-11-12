@@ -93,6 +93,7 @@ _ExamModule _$ExamModuleFromJson(Map<String, dynamic> json) => _ExamModule(
   status: json['status'] as String? ?? ModuleStatus.notStarted,
   startedAt: dateOrNull(json['started_at']),
   finishedAt: dateOrNull(json['finished_at']),
+  audioLagSeconds: (json['audio_lag_seconds'] as num?)?.toInt() ?? 0,
   audio: json['audio'] == null
       ? null
       : ModuleAudio.fromJson(json['audio'] as Map<String, dynamic>),
@@ -112,6 +113,7 @@ Map<String, dynamic> _$ExamModuleToJson(_ExamModule instance) =>
       'status': instance.status,
       'started_at': dateToJson(instance.startedAt),
       'finished_at': dateToJson(instance.finishedAt),
+      'audio_lag_seconds': instance.audioLagSeconds,
       'audio': instance.audio?.toJson(),
       'parts': instance.parts.map((e) => e.toJson()).toList(),
     };
@@ -200,6 +202,7 @@ _ModuleStartResponse _$ModuleStartResponseFromJson(Map<String, dynamic> json) =>
       startedAt: dateOrNull(json['started_at']),
       finishedAt: dateOrNull(json['finished_at']),
       serverTime: dateOrNull(json['server_time']),
+      audioLagSeconds: (json['audio_lag_seconds'] as num?)?.toInt() ?? 0,
     );
 
 Map<String, dynamic> _$ModuleStartResponseToJson(
@@ -210,6 +213,7 @@ Map<String, dynamic> _$ModuleStartResponseToJson(
   'started_at': dateToJson(instance.startedAt),
   'finished_at': dateToJson(instance.finishedAt),
   'server_time': dateToJson(instance.serverTime),
+  'audio_lag_seconds': instance.audioLagSeconds,
 };
 
 _ModuleSubmitResponse _$ModuleSubmitResponseFromJson(

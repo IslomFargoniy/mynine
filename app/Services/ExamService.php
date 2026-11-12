@@ -545,6 +545,36 @@ class ExamService
     }
 
     /**
+     * Desktop: the Listening recording was not heard for $lagSeconds in total (the app was closed / restarting);
+     * the app resumes it where it stopped, so the module (and its parts) end that much later. $lagSeconds is the
+     * total, so a repeated report never extends twice. Capped at the module length. Returns the module.
+     */
+    public function extendForAudioLag(AttemptType $attemptType, int $lagSeconds, int $maxSeconds): AttemptType
+    {
+        return DB::transaction(function () use ($attemptType, $lagSeconds, $maxSeconds) {
+            $type = AttemptType::whereKey($attemptType->id)->lockForUpdate()->firstOrFail();
+            $lag = min(max(0, $lagSeconds), max(0, $maxSeconds));
+            $delta = $lag - (int) $type->audio_lag_seconds;
+            if ($type->is_submitted || $type->finished_at === null || $delta <= 0) {
+                return $type;
+            }
+
+            $oldEnd = Carbon::parse($type->finished_at);
+            $type->forceFill(['finished_at' => $oldEnd->copy()->addSeconds($delta), 'audio_lag_seconds' => $lag])->save();
+
+            AttemptPart::where('attempt_id', $type->attempt_id)
+                ->whereNotNull('finished_at')
+                ->whereHas('part.test_type', fn ($q) => $q->where('type_id', $type->type_id))
+                ->get()
+                ->each(fn (AttemptPart $part) => $part->forceFill([
+                    'finished_at' => Carbon::parse($part->finished_at)->addSeconds($delta),
+                ])->save());
+
+            return $type;
+        });
+    }
+
+    /**
      * Give the running module(s) extra minutes. Returns how many modules were extended.
      */
     public function addTime(Attempt $attempt, int $minutes): int

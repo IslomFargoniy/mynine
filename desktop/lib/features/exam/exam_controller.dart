@@ -17,6 +17,7 @@ import '../../data/repositories/exam_repository.dart';
 import '../../data/repositories/sync_service.dart';
 import '../../data/repositories/violation_queue.dart';
 import '../sound_check/sound_check_screen.dart' show listeningVolume;
+import 'listening_audio.dart' show listeningPosition;
 
 enum ExamStage { idle, prefetching, rules, soundCheck, exam, transition, completed, blocked }
 
@@ -480,6 +481,7 @@ class ExamController extends ChangeNotifier {
     // Listening module first needs its audio on this computer).
     if (m.isInProgress) {
       if (!await _waitForAudio(m)) return;
+      await _resumeAudioWhereItStopped(m);
       _transitionMessage = null;
       _stage = ExamStage.exam;
     } else {
@@ -647,6 +649,115 @@ class ExamController extends ChangeNotifier {
 
   static String _modulesKey(int attemptId) => 'modules:$attemptId';
 
+  // ---- Listening audio after a restart --------------------------------------------------
+
+  /// Missed audio below this is ignored (the position is saved every ~2 s).
+  static const audioResumeThreshold = Duration(seconds: 3);
+
+  static String _audioPosKey(int attemptId, int typeId) => 'audiopos:$attemptId:$typeId';
+
+  /// Audio lag (total seconds) not acknowledged by the server yet, and its module.
+  int? _pendingAudioLag;
+  int? _pendingAudioLagType;
+
+  /// Modules this controller started itself (Start pressed on this PC in this session).
+  final Set<int> _startedHere = {};
+
+  /// Saves where the Listening recording is (called by the player every ~2 s).
+  void saveAudioPosition(int typeId, Duration position) {
+    final id = _attemptId;
+    if (id == null) return;
+    _zone.run(() => unawaited(() async {
+          try {
+            await db.putCache(_audioPosKey(id, typeId), '${position.inMilliseconds}');
+          } catch (_) {}
+        }()));
+  }
+
+  /// After a restart the recording continues where this PC stopped playing it (not where the clock says): the
+  /// missed time becomes audio lag, and the server moves the module's end by it. Without a saved position (first
+  /// start, or another PC) the clock decides as before.
+  Future<void> _resumeAudioWhereItStopped(ExamModule m) async {
+    final id = _attemptId;
+    if (id == null || !m.isListening || !m.isInProgress) return;
+    final savedMs = int.tryParse(await db.getCache(_audioPosKey(id, m.typeId)) ?? '');
+    if (savedMs == null) return;
+    var expected = listeningPosition(m, clock, pausedSince: pausedSince);
+    final length = Duration(seconds: m.durationSeconds);
+    if (m.durationSeconds > 0 && expected > length) expected = length; // the recording had ended anyway
+    final missed = expected - Duration(milliseconds: savedMs);
+    if (missed < audioResumeThreshold) return;
+
+    final lag = m.audioLagSeconds + missed.inSeconds;
+    final i = _modules.indexWhere((x) => x.typeId == m.typeId);
+    if (i < 0) return;
+    _modules[i] = _modules[i].copyWith(
+      audioLagSeconds: lag,
+      finishedAt: _modules[i].finishedAt?.add(Duration(seconds: missed.inSeconds)),
+    );
+    await _persistModules();
+    debugPrint('Listening resumes at ${Duration(milliseconds: savedMs)} (missed $missed, lag ${lag}s)');
+    _pendingAudioLag = lag;
+    _pendingAudioLagType = m.typeId;
+    await _sendAudioLag();
+  }
+
+  /// Start-up delay protection: the first time the recording plays on this PC (no saved position yet), it
+  /// starts at 0:00 however long opening the file / audio device or waiting for the download took since the
+  /// module started; that time becomes audio lag (the module ends that much later). A PC that already played it
+  /// (restart) is handled by [_resumeAudioWhereItStopped].
+  Future<ExamModule?> audioFirstPlay(int typeId, Duration expected) async {
+    final id = _attemptId;
+    if (id == null) return null;
+    final key = _audioPosKey(id, typeId);
+    if (await db.getCache(key) != null) return null;
+    await db.putCache(key, '0');
+    final i = _modules.indexWhere((x) => x.typeId == typeId);
+    // Only for a module started on this PC just now: after a PC switch the clock decides (no replaying), and
+    // a long gap is not a start-up delay.
+    if (i < 0 || !_startedHere.contains(typeId)) return null;
+    if (expected < const Duration(seconds: 1) || expected > const Duration(seconds: 60)) return null;
+    final m = _modules[i];
+    final lag = m.audioLagSeconds + expected.inSeconds;
+    _modules[i] = m.copyWith(
+      audioLagSeconds: lag,
+      finishedAt: m.finishedAt?.add(Duration(seconds: expected.inSeconds)),
+    );
+    await _persistModules();
+    debugPrint('Listening starts at 0:00 (start-up delay $expected, lag ${lag}s)');
+    _pendingAudioLag = lag;
+    _pendingAudioLagType = typeId;
+    unawaited(_sendAudioLag());
+    notifyListeners();
+    return _modules[i];
+  }
+
+  /// Reports the pending audio lag; kept and re-sent with the heartbeat while offline.
+  Future<void> _sendAudioLag() async {
+    final lag = _pendingAudioLag;
+    final typeId = _pendingAudioLagType;
+    final token = _token;
+    if (lag == null || typeId == null || token == null) return;
+    try {
+      final r = await api.reportAudioLag(token, typeId, lag);
+      if (token != _token) return;
+      _pendingAudioLag = null;
+      _pendingAudioLagType = null;
+      final i = _modules.indexWhere((x) => x.typeId == typeId);
+      if (i >= 0 && r.finishedAt != null) {
+        // The server may cap the lag: its numbers win so the audio and the timer stay together.
+        _modules[i] = _modules[i].copyWith(finishedAt: r.finishedAt, audioLagSeconds: r.audioLagSeconds);
+        await _persistModules();
+        notifyListeners();
+      }
+    } on ApiException catch (e) {
+      if (!e.isTransient) {
+        _pendingAudioLag = null;
+        _pendingAudioLagType = null;
+      }
+    } catch (_) {}
+  }
+
   List<ExamModule>? _decodeModules(String raw) {
     try {
       final c = CachedExam.fromJson({
@@ -722,7 +833,9 @@ class ExamController extends ChangeNotifier {
             status: ModuleStatus.inProgress,
             startedAt: r.startedAt,
             finishedAt: r.finishedAt,
+            audioLagSeconds: r.audioLagSeconds,
           );
+          if (r.status == ModuleStatus.inProgress && m.isNotStarted) _startedHere.add(m.typeId);
           await _persistModules();
           break;
         } on ApiException catch (e) {
@@ -805,6 +918,7 @@ class ExamController extends ChangeNotifier {
   Future<void> _sendHeartbeat() async {
     final token = _token;
     if (token == null || _stage == ExamStage.blocked || _disposed) return;
+    if (_pendingAudioLag != null) await _sendAudioLag();
     try {
       final r = await api.examHeartbeat(
         token,
@@ -852,7 +966,9 @@ class ExamController extends ChangeNotifier {
       final i = _modules.indexWhere((m) => m.typeId == t.typeId);
       if (i < 0) continue;
       final m = _modules[i];
-      if (m.finishedAt != t.finishedAt && t.finishedAt != null) {
+      // An unacknowledged audio lag moved this end locally; the server's older end must not undo it.
+      final lagPending = _pendingAudioLag != null && _pendingAudioLagType == t.typeId;
+      if (m.finishedAt != t.finishedAt && t.finishedAt != null && !lagPending) {
         _modules[i] = m.copyWith(finishedAt: t.finishedAt);
         changed = true;
       }
@@ -1240,6 +1356,9 @@ class ExamController extends ChangeNotifier {
 
   void _resetSession() {
     _stopTimers();
+    _pendingAudioLag = null;
+    _pendingAudioLagType = null;
+    _startedHere.clear();
     for (final t in _debounces.values) {
       t.cancel();
     }

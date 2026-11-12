@@ -68,6 +68,10 @@ abstract class MynineApi {
 
   Future<ModuleStartResponse> startModule(String examToken, int typeId);
 
+  /// `POST /exam/modules/{type_id}/audio-lag`: total Listening audio missed while the app was closed; the
+  /// server moves the module's end by the difference (idempotent).
+  Future<ModuleStartResponse> reportAudioLag(String examToken, int typeId, int lagSeconds);
+
   Future<AnswersResponse> sendAnswers(String examToken, List<AnswerItem> answers);
 
   Future<ModuleSubmitResponse> submitModule(String examToken, int typeId);

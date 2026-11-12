@@ -51,6 +51,30 @@ class ModuleController extends ExamApiController
     }
 
     /**
+     * POST /exam/modules/{type_id}/audio-lag {lag_seconds} — Listening audio missed while the app was closed;
+     * the app resumes the recording where it stopped and the module ends that much later (total, idempotent).
+     */
+    public function audioLag(Request $request, int $typeId): JsonResponse
+    {
+        $data = $request->validate(['lag_seconds' => ['required', 'integer', 'min:0', 'max:7200']]);
+        $attempt = $this->attempt($request);
+        $module = $this->findModule($attempt, $typeId);
+        if ($module->type?->name !== 'Listening') {
+            throw ApiException::conflict('not_listening', 'Only the Listening module has an audio recording.');
+        }
+
+        $attemptType = AttemptType::where('attempt_id', $attempt->id)->where('type_id', $typeId)->first();
+        if (! $attemptType) {
+            throw ApiException::conflict('module_locked', 'This module has not been started.');
+        }
+        $this->ensureNotFinished($attempt);
+
+        $attemptType = $this->exam->extendForAudioLag($attemptType, (int) $data['lag_seconds'], $this->exam->moduleDurationSeconds($module));
+
+        return response()->json($this->payload->moduleTimer($attemptType) + ['server_time' => $this->serverTime()]);
+    }
+
+    /**
      * POST /exam/modules/{type_id}/submit — finish the module (queues Writing AI evaluation).
      */
     public function submit(Request $request, int $typeId): JsonResponse

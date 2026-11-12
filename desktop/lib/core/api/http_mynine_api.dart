@@ -328,6 +328,15 @@ class HttpMynineApi implements MynineApi {
       ));
 
   @override
+  Future<ModuleStartResponse> reportAudioLag(String examToken, int typeId, int lagSeconds) async =>
+      ModuleStartResponse.fromJson(await _json(
+        'POST',
+        '/exam/modules/$typeId/audio-lag',
+        examToken: examToken,
+        body: {'lag_seconds': lagSeconds},
+      ));
+
+  @override
   Future<AnswersResponse> sendAnswers(
     String examToken,
     List<AnswerItem> answers,

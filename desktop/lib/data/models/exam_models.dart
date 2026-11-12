@@ -94,6 +94,10 @@ abstract class ExamModule with _$ExamModule {
     @Default(ModuleStatus.notStarted) String status,
     @JsonKey(fromJson: dateOrNull, toJson: dateToJson) DateTime? startedAt,
     @JsonKey(fromJson: dateOrNull, toJson: dateToJson) DateTime? finishedAt,
+
+    /// Listening audio missed while the app was closed (seconds, total). The
+    /// recording resumes where it stopped: position = elapsed − this.
+    @Default(0) int audioLagSeconds,
     ModuleAudio? audio,
     @Default(<PartSummary>[]) List<PartSummary> parts,
   }) = _ExamModule;
@@ -171,6 +175,7 @@ abstract class ModuleStartResponse with _$ModuleStartResponse {
     @JsonKey(fromJson: dateOrNull, toJson: dateToJson) DateTime? startedAt,
     @JsonKey(fromJson: dateOrNull, toJson: dateToJson) DateTime? finishedAt,
     @JsonKey(fromJson: dateOrNull, toJson: dateToJson) DateTime? serverTime,
+    @Default(0) int audioLagSeconds,
   }) = _ModuleStartResponse;
 
   factory ModuleStartResponse.fromJson(Map<String, Object?> json) =>

@@ -1472,7 +1472,9 @@ as bool,
 mixin _$ExamModule {
 
  int get typeId;/// `listening` | `reading` | `writing`
- String get type; String get title; int get durationSeconds; String get status;@JsonKey(fromJson: dateOrNull, toJson: dateToJson) DateTime? get startedAt;@JsonKey(fromJson: dateOrNull, toJson: dateToJson) DateTime? get finishedAt; ModuleAudio? get audio; List<PartSummary> get parts;
+ String get type; String get title; int get durationSeconds; String get status;@JsonKey(fromJson: dateOrNull, toJson: dateToJson) DateTime? get startedAt;@JsonKey(fromJson: dateOrNull, toJson: dateToJson) DateTime? get finishedAt;/// Listening audio missed while the app was closed (seconds, total). The
+/// recording resumes where it stopped: position = elapsed − this.
+ int get audioLagSeconds; ModuleAudio? get audio; List<PartSummary> get parts;
 /// Create a copy of ExamModule
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -1486,20 +1488,20 @@ $ExamModuleCopyWith<ExamModule> get copyWith => _$ExamModuleCopyWithImpl<ExamMod
 @override
 bool operator ==(Object other) {
   final _this = this as ExamModule;
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is ExamModule&&(identical(other.typeId, _this.typeId) || other.typeId == _this.typeId)&&(identical(other.type, _this.type) || other.type == _this.type)&&(identical(other.title, _this.title) || other.title == _this.title)&&(identical(other.durationSeconds, _this.durationSeconds) || other.durationSeconds == _this.durationSeconds)&&(identical(other.status, _this.status) || other.status == _this.status)&&(identical(other.startedAt, _this.startedAt) || other.startedAt == _this.startedAt)&&(identical(other.finishedAt, _this.finishedAt) || other.finishedAt == _this.finishedAt)&&(identical(other.audio, _this.audio) || other.audio == _this.audio)&&const DeepCollectionEquality().equals(other.parts, _this.parts));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is ExamModule&&(identical(other.typeId, _this.typeId) || other.typeId == _this.typeId)&&(identical(other.type, _this.type) || other.type == _this.type)&&(identical(other.title, _this.title) || other.title == _this.title)&&(identical(other.durationSeconds, _this.durationSeconds) || other.durationSeconds == _this.durationSeconds)&&(identical(other.status, _this.status) || other.status == _this.status)&&(identical(other.startedAt, _this.startedAt) || other.startedAt == _this.startedAt)&&(identical(other.finishedAt, _this.finishedAt) || other.finishedAt == _this.finishedAt)&&(identical(other.audioLagSeconds, _this.audioLagSeconds) || other.audioLagSeconds == _this.audioLagSeconds)&&(identical(other.audio, _this.audio) || other.audio == _this.audio)&&const DeepCollectionEquality().equals(other.parts, _this.parts));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
 int get hashCode {
   final _this = this as ExamModule;
-  return Object.hash(runtimeType,_this.typeId,_this.type,_this.title,_this.durationSeconds,_this.status,_this.startedAt,_this.finishedAt,_this.audio,const DeepCollectionEquality().hash(_this.parts));
+  return Object.hash(runtimeType,_this.typeId,_this.type,_this.title,_this.durationSeconds,_this.status,_this.startedAt,_this.finishedAt,_this.audioLagSeconds,_this.audio,const DeepCollectionEquality().hash(_this.parts));
 }
 
 @override
 String toString() {
   final _this = this as ExamModule;
-  return 'ExamModule(typeId: ${_this.typeId}, type: ${_this.type}, title: ${_this.title}, durationSeconds: ${_this.durationSeconds}, status: ${_this.status}, startedAt: ${_this.startedAt}, finishedAt: ${_this.finishedAt}, audio: ${_this.audio}, parts: ${_this.parts})';
+  return 'ExamModule(typeId: ${_this.typeId}, type: ${_this.type}, title: ${_this.title}, durationSeconds: ${_this.durationSeconds}, status: ${_this.status}, startedAt: ${_this.startedAt}, finishedAt: ${_this.finishedAt}, audioLagSeconds: ${_this.audioLagSeconds}, audio: ${_this.audio}, parts: ${_this.parts})';
 }
 
 
@@ -1510,7 +1512,7 @@ abstract mixin class $ExamModuleCopyWith<$Res>  {
   factory $ExamModuleCopyWith(ExamModule value, $Res Function(ExamModule) _then) = _$ExamModuleCopyWithImpl;
 @useResult
 $Res call({
- int typeId, String type, String title, int durationSeconds, String status,@JsonKey(fromJson: dateOrNull, toJson: dateToJson) DateTime? startedAt,@JsonKey(fromJson: dateOrNull, toJson: dateToJson) DateTime? finishedAt, ModuleAudio? audio, List<PartSummary> parts
+ int typeId, String type, String title, int durationSeconds, String status,@JsonKey(fromJson: dateOrNull, toJson: dateToJson) DateTime? startedAt,@JsonKey(fromJson: dateOrNull, toJson: dateToJson) DateTime? finishedAt, int audioLagSeconds, ModuleAudio? audio, List<PartSummary> parts
 });
 
 
@@ -1527,7 +1529,7 @@ class _$ExamModuleCopyWithImpl<$Res>
 
 /// Create a copy of ExamModule
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? typeId = null,Object? type = null,Object? title = null,Object? durationSeconds = null,Object? status = null,Object? startedAt = freezed,Object? finishedAt = freezed,Object? audio = freezed,Object? parts = null,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? typeId = null,Object? type = null,Object? title = null,Object? durationSeconds = null,Object? status = null,Object? startedAt = freezed,Object? finishedAt = freezed,Object? audioLagSeconds = null,Object? audio = freezed,Object? parts = null,}) {
   return _then(ExamModule(
 typeId: null == typeId ? _self.typeId : typeId // ignore: cast_nullable_to_non_nullable
 as int,type: null == type ? _self.type : type // ignore: cast_nullable_to_non_nullable
@@ -1536,7 +1538,8 @@ as String,durationSeconds: null == durationSeconds ? _self.durationSeconds : dur
 as int,status: null == status ? _self.status : status // ignore: cast_nullable_to_non_nullable
 as String,startedAt: freezed == startedAt ? _self.startedAt : startedAt // ignore: cast_nullable_to_non_nullable
 as DateTime?,finishedAt: freezed == finishedAt ? _self.finishedAt : finishedAt // ignore: cast_nullable_to_non_nullable
-as DateTime?,audio: freezed == audio ? _self.audio : audio // ignore: cast_nullable_to_non_nullable
+as DateTime?,audioLagSeconds: null == audioLagSeconds ? _self.audioLagSeconds : audioLagSeconds // ignore: cast_nullable_to_non_nullable
+as int,audio: freezed == audio ? _self.audio : audio // ignore: cast_nullable_to_non_nullable
 as ModuleAudio?,parts: null == parts ? _self.parts : parts // ignore: cast_nullable_to_non_nullable
 as List<PartSummary>,
   ));
@@ -1635,10 +1638,10 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( int typeId,  String type,  String title,  int durationSeconds,  String status, @JsonKey(fromJson: dateOrNull, toJson: dateToJson)  DateTime? startedAt, @JsonKey(fromJson: dateOrNull, toJson: dateToJson)  DateTime? finishedAt,  ModuleAudio? audio,  List<PartSummary> parts)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( int typeId,  String type,  String title,  int durationSeconds,  String status, @JsonKey(fromJson: dateOrNull, toJson: dateToJson)  DateTime? startedAt, @JsonKey(fromJson: dateOrNull, toJson: dateToJson)  DateTime? finishedAt,  int audioLagSeconds,  ModuleAudio? audio,  List<PartSummary> parts)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _ExamModule() when $default != null:
-return $default(_that.typeId,_that.type,_that.title,_that.durationSeconds,_that.status,_that.startedAt,_that.finishedAt,_that.audio,_that.parts);case _:
+return $default(_that.typeId,_that.type,_that.title,_that.durationSeconds,_that.status,_that.startedAt,_that.finishedAt,_that.audioLagSeconds,_that.audio,_that.parts);case _:
   return orElse();
 
 }
@@ -1656,10 +1659,10 @@ return $default(_that.typeId,_that.type,_that.title,_that.durationSeconds,_that.
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( int typeId,  String type,  String title,  int durationSeconds,  String status, @JsonKey(fromJson: dateOrNull, toJson: dateToJson)  DateTime? startedAt, @JsonKey(fromJson: dateOrNull, toJson: dateToJson)  DateTime? finishedAt,  ModuleAudio? audio,  List<PartSummary> parts)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( int typeId,  String type,  String title,  int durationSeconds,  String status, @JsonKey(fromJson: dateOrNull, toJson: dateToJson)  DateTime? startedAt, @JsonKey(fromJson: dateOrNull, toJson: dateToJson)  DateTime? finishedAt,  int audioLagSeconds,  ModuleAudio? audio,  List<PartSummary> parts)  $default,) {final _that = this;
 switch (_that) {
 case _ExamModule():
-return $default(_that.typeId,_that.type,_that.title,_that.durationSeconds,_that.status,_that.startedAt,_that.finishedAt,_that.audio,_that.parts);case _:
+return $default(_that.typeId,_that.type,_that.title,_that.durationSeconds,_that.status,_that.startedAt,_that.finishedAt,_that.audioLagSeconds,_that.audio,_that.parts);case _:
   throw StateError('Unexpected subclass');
 
 }
@@ -1676,10 +1679,10 @@ return $default(_that.typeId,_that.type,_that.title,_that.durationSeconds,_that.
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( int typeId,  String type,  String title,  int durationSeconds,  String status, @JsonKey(fromJson: dateOrNull, toJson: dateToJson)  DateTime? startedAt, @JsonKey(fromJson: dateOrNull, toJson: dateToJson)  DateTime? finishedAt,  ModuleAudio? audio,  List<PartSummary> parts)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( int typeId,  String type,  String title,  int durationSeconds,  String status, @JsonKey(fromJson: dateOrNull, toJson: dateToJson)  DateTime? startedAt, @JsonKey(fromJson: dateOrNull, toJson: dateToJson)  DateTime? finishedAt,  int audioLagSeconds,  ModuleAudio? audio,  List<PartSummary> parts)?  $default,) {final _that = this;
 switch (_that) {
 case _ExamModule() when $default != null:
-return $default(_that.typeId,_that.type,_that.title,_that.durationSeconds,_that.status,_that.startedAt,_that.finishedAt,_that.audio,_that.parts);case _:
+return $default(_that.typeId,_that.type,_that.title,_that.durationSeconds,_that.status,_that.startedAt,_that.finishedAt,_that.audioLagSeconds,_that.audio,_that.parts);case _:
   return null;
 
 }
@@ -1691,7 +1694,7 @@ return $default(_that.typeId,_that.type,_that.title,_that.durationSeconds,_that.
 @JsonSerializable()
 
 class _ExamModule extends ExamModule {
-  const _ExamModule({required this.typeId, required this.type, required this.title, this.durationSeconds = 0, this.status = ModuleStatus.notStarted, @JsonKey(fromJson: dateOrNull, toJson: dateToJson) this.startedAt, @JsonKey(fromJson: dateOrNull, toJson: dateToJson) this.finishedAt, this.audio,  List<PartSummary> parts = const <PartSummary>[]}): _parts = parts,super._();
+  const _ExamModule({required this.typeId, required this.type, required this.title, this.durationSeconds = 0, this.status = ModuleStatus.notStarted, @JsonKey(fromJson: dateOrNull, toJson: dateToJson) this.startedAt, @JsonKey(fromJson: dateOrNull, toJson: dateToJson) this.finishedAt, this.audioLagSeconds = 0, this.audio,  List<PartSummary> parts = const <PartSummary>[]}): _parts = parts,super._();
   factory _ExamModule.fromJson(Map<String, dynamic> json) => _$ExamModuleFromJson(json);
 
 @override final  int typeId;
@@ -1702,6 +1705,9 @@ class _ExamModule extends ExamModule {
 @override@JsonKey() final  String status;
 @override@JsonKey(fromJson: dateOrNull, toJson: dateToJson) final  DateTime? startedAt;
 @override@JsonKey(fromJson: dateOrNull, toJson: dateToJson) final  DateTime? finishedAt;
+/// Listening audio missed while the app was closed (seconds, total). The
+/// recording resumes where it stopped: position = elapsed − this.
+@override@JsonKey() final  int audioLagSeconds;
 @override final  ModuleAudio? audio;
  final  List<PartSummary> _parts;
 @override@JsonKey() List<PartSummary> get parts {
@@ -1724,18 +1730,18 @@ Map<String, dynamic> toJson() {
 
 @override
 bool operator ==(Object other) {
-    return identical(this, other) || (other.runtimeType == runtimeType&&other is _ExamModule&&(identical(other.typeId, typeId) || other.typeId == typeId)&&(identical(other.type, type) || other.type == type)&&(identical(other.title, title) || other.title == title)&&(identical(other.durationSeconds, durationSeconds) || other.durationSeconds == durationSeconds)&&(identical(other.status, status) || other.status == status)&&(identical(other.startedAt, startedAt) || other.startedAt == startedAt)&&(identical(other.finishedAt, finishedAt) || other.finishedAt == finishedAt)&&(identical(other.audio, audio) || other.audio == audio)&&const DeepCollectionEquality().equals(other.parts, _parts));
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is _ExamModule&&(identical(other.typeId, typeId) || other.typeId == typeId)&&(identical(other.type, type) || other.type == type)&&(identical(other.title, title) || other.title == title)&&(identical(other.durationSeconds, durationSeconds) || other.durationSeconds == durationSeconds)&&(identical(other.status, status) || other.status == status)&&(identical(other.startedAt, startedAt) || other.startedAt == startedAt)&&(identical(other.finishedAt, finishedAt) || other.finishedAt == finishedAt)&&(identical(other.audioLagSeconds, audioLagSeconds) || other.audioLagSeconds == audioLagSeconds)&&(identical(other.audio, audio) || other.audio == audio)&&const DeepCollectionEquality().equals(other.parts, _parts));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
 int get hashCode {
-    return Object.hash(runtimeType,typeId,type,title,durationSeconds,status,startedAt,finishedAt,audio,const DeepCollectionEquality().hash(_parts));
+    return Object.hash(runtimeType,typeId,type,title,durationSeconds,status,startedAt,finishedAt,audioLagSeconds,audio,const DeepCollectionEquality().hash(_parts));
 }
 
 @override
 String toString() {
-    return 'ExamModule(typeId: $typeId, type: $type, title: $title, durationSeconds: $durationSeconds, status: $status, startedAt: $startedAt, finishedAt: $finishedAt, audio: $audio, parts: $parts)';
+    return 'ExamModule(typeId: $typeId, type: $type, title: $title, durationSeconds: $durationSeconds, status: $status, startedAt: $startedAt, finishedAt: $finishedAt, audioLagSeconds: $audioLagSeconds, audio: $audio, parts: $parts)';
 }
 
 
@@ -1746,7 +1752,7 @@ abstract mixin class _$ExamModuleCopyWith<$Res> implements $ExamModuleCopyWith<$
   factory _$ExamModuleCopyWith(_ExamModule value, $Res Function(_ExamModule) _then) = __$ExamModuleCopyWithImpl;
 @override @useResult
 $Res call({
- int typeId, String type, String title, int durationSeconds, String status,@JsonKey(fromJson: dateOrNull, toJson: dateToJson) DateTime? startedAt,@JsonKey(fromJson: dateOrNull, toJson: dateToJson) DateTime? finishedAt, ModuleAudio? audio, List<PartSummary> parts
+ int typeId, String type, String title, int durationSeconds, String status,@JsonKey(fromJson: dateOrNull, toJson: dateToJson) DateTime? startedAt,@JsonKey(fromJson: dateOrNull, toJson: dateToJson) DateTime? finishedAt, int audioLagSeconds, ModuleAudio? audio, List<PartSummary> parts
 });
 
 
@@ -1763,7 +1769,7 @@ class __$ExamModuleCopyWithImpl<$Res>
 
 /// Create a copy of ExamModule
 /// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? typeId = null,Object? type = null,Object? title = null,Object? durationSeconds = null,Object? status = null,Object? startedAt = freezed,Object? finishedAt = freezed,Object? audio = freezed,Object? parts = null,}) {
+@override @pragma('vm:prefer-inline') $Res call({Object? typeId = null,Object? type = null,Object? title = null,Object? durationSeconds = null,Object? status = null,Object? startedAt = freezed,Object? finishedAt = freezed,Object? audioLagSeconds = null,Object? audio = freezed,Object? parts = null,}) {
   return _then(_ExamModule(
 typeId: null == typeId ? _self.typeId : typeId // ignore: cast_nullable_to_non_nullable
 as int,type: null == type ? _self.type : type // ignore: cast_nullable_to_non_nullable
@@ -1772,7 +1778,8 @@ as String,durationSeconds: null == durationSeconds ? _self.durationSeconds : dur
 as int,status: null == status ? _self.status : status // ignore: cast_nullable_to_non_nullable
 as String,startedAt: freezed == startedAt ? _self.startedAt : startedAt // ignore: cast_nullable_to_non_nullable
 as DateTime?,finishedAt: freezed == finishedAt ? _self.finishedAt : finishedAt // ignore: cast_nullable_to_non_nullable
-as DateTime?,audio: freezed == audio ? _self.audio : audio // ignore: cast_nullable_to_non_nullable
+as DateTime?,audioLagSeconds: null == audioLagSeconds ? _self.audioLagSeconds : audioLagSeconds // ignore: cast_nullable_to_non_nullable
+as int,audio: freezed == audio ? _self.audio : audio // ignore: cast_nullable_to_non_nullable
 as ModuleAudio?,parts: null == parts ? _self._parts : parts // ignore: cast_nullable_to_non_nullable
 as List<PartSummary>,
   ));
@@ -2937,7 +2944,7 @@ as String?,
 /// @nodoc
 mixin _$ModuleStartResponse {
 
- int get typeId; String get status;@JsonKey(fromJson: dateOrNull, toJson: dateToJson) DateTime? get startedAt;@JsonKey(fromJson: dateOrNull, toJson: dateToJson) DateTime? get finishedAt;@JsonKey(fromJson: dateOrNull, toJson: dateToJson) DateTime? get serverTime;
+ int get typeId; String get status;@JsonKey(fromJson: dateOrNull, toJson: dateToJson) DateTime? get startedAt;@JsonKey(fromJson: dateOrNull, toJson: dateToJson) DateTime? get finishedAt;@JsonKey(fromJson: dateOrNull, toJson: dateToJson) DateTime? get serverTime; int get audioLagSeconds;
 /// Create a copy of ModuleStartResponse
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -2951,20 +2958,20 @@ $ModuleStartResponseCopyWith<ModuleStartResponse> get copyWith => _$ModuleStartR
 @override
 bool operator ==(Object other) {
   final _this = this as ModuleStartResponse;
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is ModuleStartResponse&&(identical(other.typeId, _this.typeId) || other.typeId == _this.typeId)&&(identical(other.status, _this.status) || other.status == _this.status)&&(identical(other.startedAt, _this.startedAt) || other.startedAt == _this.startedAt)&&(identical(other.finishedAt, _this.finishedAt) || other.finishedAt == _this.finishedAt)&&(identical(other.serverTime, _this.serverTime) || other.serverTime == _this.serverTime));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is ModuleStartResponse&&(identical(other.typeId, _this.typeId) || other.typeId == _this.typeId)&&(identical(other.status, _this.status) || other.status == _this.status)&&(identical(other.startedAt, _this.startedAt) || other.startedAt == _this.startedAt)&&(identical(other.finishedAt, _this.finishedAt) || other.finishedAt == _this.finishedAt)&&(identical(other.serverTime, _this.serverTime) || other.serverTime == _this.serverTime)&&(identical(other.audioLagSeconds, _this.audioLagSeconds) || other.audioLagSeconds == _this.audioLagSeconds));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
 int get hashCode {
   final _this = this as ModuleStartResponse;
-  return Object.hash(runtimeType,_this.typeId,_this.status,_this.startedAt,_this.finishedAt,_this.serverTime);
+  return Object.hash(runtimeType,_this.typeId,_this.status,_this.startedAt,_this.finishedAt,_this.serverTime,_this.audioLagSeconds);
 }
 
 @override
 String toString() {
   final _this = this as ModuleStartResponse;
-  return 'ModuleStartResponse(typeId: ${_this.typeId}, status: ${_this.status}, startedAt: ${_this.startedAt}, finishedAt: ${_this.finishedAt}, serverTime: ${_this.serverTime})';
+  return 'ModuleStartResponse(typeId: ${_this.typeId}, status: ${_this.status}, startedAt: ${_this.startedAt}, finishedAt: ${_this.finishedAt}, serverTime: ${_this.serverTime}, audioLagSeconds: ${_this.audioLagSeconds})';
 }
 
 
@@ -2975,7 +2982,7 @@ abstract mixin class $ModuleStartResponseCopyWith<$Res>  {
   factory $ModuleStartResponseCopyWith(ModuleStartResponse value, $Res Function(ModuleStartResponse) _then) = _$ModuleStartResponseCopyWithImpl;
 @useResult
 $Res call({
- int typeId, String status,@JsonKey(fromJson: dateOrNull, toJson: dateToJson) DateTime? startedAt,@JsonKey(fromJson: dateOrNull, toJson: dateToJson) DateTime? finishedAt,@JsonKey(fromJson: dateOrNull, toJson: dateToJson) DateTime? serverTime
+ int typeId, String status,@JsonKey(fromJson: dateOrNull, toJson: dateToJson) DateTime? startedAt,@JsonKey(fromJson: dateOrNull, toJson: dateToJson) DateTime? finishedAt,@JsonKey(fromJson: dateOrNull, toJson: dateToJson) DateTime? serverTime, int audioLagSeconds
 });
 
 
@@ -2992,14 +2999,15 @@ class _$ModuleStartResponseCopyWithImpl<$Res>
 
 /// Create a copy of ModuleStartResponse
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? typeId = null,Object? status = null,Object? startedAt = freezed,Object? finishedAt = freezed,Object? serverTime = freezed,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? typeId = null,Object? status = null,Object? startedAt = freezed,Object? finishedAt = freezed,Object? serverTime = freezed,Object? audioLagSeconds = null,}) {
   return _then(ModuleStartResponse(
 typeId: null == typeId ? _self.typeId : typeId // ignore: cast_nullable_to_non_nullable
 as int,status: null == status ? _self.status : status // ignore: cast_nullable_to_non_nullable
 as String,startedAt: freezed == startedAt ? _self.startedAt : startedAt // ignore: cast_nullable_to_non_nullable
 as DateTime?,finishedAt: freezed == finishedAt ? _self.finishedAt : finishedAt // ignore: cast_nullable_to_non_nullable
 as DateTime?,serverTime: freezed == serverTime ? _self.serverTime : serverTime // ignore: cast_nullable_to_non_nullable
-as DateTime?,
+as DateTime?,audioLagSeconds: null == audioLagSeconds ? _self.audioLagSeconds : audioLagSeconds // ignore: cast_nullable_to_non_nullable
+as int,
   ));
 }
 
@@ -3084,10 +3092,10 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( int typeId,  String status, @JsonKey(fromJson: dateOrNull, toJson: dateToJson)  DateTime? startedAt, @JsonKey(fromJson: dateOrNull, toJson: dateToJson)  DateTime? finishedAt, @JsonKey(fromJson: dateOrNull, toJson: dateToJson)  DateTime? serverTime)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( int typeId,  String status, @JsonKey(fromJson: dateOrNull, toJson: dateToJson)  DateTime? startedAt, @JsonKey(fromJson: dateOrNull, toJson: dateToJson)  DateTime? finishedAt, @JsonKey(fromJson: dateOrNull, toJson: dateToJson)  DateTime? serverTime,  int audioLagSeconds)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _ModuleStartResponse() when $default != null:
-return $default(_that.typeId,_that.status,_that.startedAt,_that.finishedAt,_that.serverTime);case _:
+return $default(_that.typeId,_that.status,_that.startedAt,_that.finishedAt,_that.serverTime,_that.audioLagSeconds);case _:
   return orElse();
 
 }
@@ -3105,10 +3113,10 @@ return $default(_that.typeId,_that.status,_that.startedAt,_that.finishedAt,_that
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( int typeId,  String status, @JsonKey(fromJson: dateOrNull, toJson: dateToJson)  DateTime? startedAt, @JsonKey(fromJson: dateOrNull, toJson: dateToJson)  DateTime? finishedAt, @JsonKey(fromJson: dateOrNull, toJson: dateToJson)  DateTime? serverTime)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( int typeId,  String status, @JsonKey(fromJson: dateOrNull, toJson: dateToJson)  DateTime? startedAt, @JsonKey(fromJson: dateOrNull, toJson: dateToJson)  DateTime? finishedAt, @JsonKey(fromJson: dateOrNull, toJson: dateToJson)  DateTime? serverTime,  int audioLagSeconds)  $default,) {final _that = this;
 switch (_that) {
 case _ModuleStartResponse():
-return $default(_that.typeId,_that.status,_that.startedAt,_that.finishedAt,_that.serverTime);case _:
+return $default(_that.typeId,_that.status,_that.startedAt,_that.finishedAt,_that.serverTime,_that.audioLagSeconds);case _:
   throw StateError('Unexpected subclass');
 
 }
@@ -3125,10 +3133,10 @@ return $default(_that.typeId,_that.status,_that.startedAt,_that.finishedAt,_that
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( int typeId,  String status, @JsonKey(fromJson: dateOrNull, toJson: dateToJson)  DateTime? startedAt, @JsonKey(fromJson: dateOrNull, toJson: dateToJson)  DateTime? finishedAt, @JsonKey(fromJson: dateOrNull, toJson: dateToJson)  DateTime? serverTime)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( int typeId,  String status, @JsonKey(fromJson: dateOrNull, toJson: dateToJson)  DateTime? startedAt, @JsonKey(fromJson: dateOrNull, toJson: dateToJson)  DateTime? finishedAt, @JsonKey(fromJson: dateOrNull, toJson: dateToJson)  DateTime? serverTime,  int audioLagSeconds)?  $default,) {final _that = this;
 switch (_that) {
 case _ModuleStartResponse() when $default != null:
-return $default(_that.typeId,_that.status,_that.startedAt,_that.finishedAt,_that.serverTime);case _:
+return $default(_that.typeId,_that.status,_that.startedAt,_that.finishedAt,_that.serverTime,_that.audioLagSeconds);case _:
   return null;
 
 }
@@ -3140,7 +3148,7 @@ return $default(_that.typeId,_that.status,_that.startedAt,_that.finishedAt,_that
 @JsonSerializable()
 
 class _ModuleStartResponse implements ModuleStartResponse {
-  const _ModuleStartResponse({required this.typeId, required this.status, @JsonKey(fromJson: dateOrNull, toJson: dateToJson) this.startedAt, @JsonKey(fromJson: dateOrNull, toJson: dateToJson) this.finishedAt, @JsonKey(fromJson: dateOrNull, toJson: dateToJson) this.serverTime});
+  const _ModuleStartResponse({required this.typeId, required this.status, @JsonKey(fromJson: dateOrNull, toJson: dateToJson) this.startedAt, @JsonKey(fromJson: dateOrNull, toJson: dateToJson) this.finishedAt, @JsonKey(fromJson: dateOrNull, toJson: dateToJson) this.serverTime, this.audioLagSeconds = 0});
   factory _ModuleStartResponse.fromJson(Map<String, dynamic> json) => _$ModuleStartResponseFromJson(json);
 
 @override final  int typeId;
@@ -3148,6 +3156,7 @@ class _ModuleStartResponse implements ModuleStartResponse {
 @override@JsonKey(fromJson: dateOrNull, toJson: dateToJson) final  DateTime? startedAt;
 @override@JsonKey(fromJson: dateOrNull, toJson: dateToJson) final  DateTime? finishedAt;
 @override@JsonKey(fromJson: dateOrNull, toJson: dateToJson) final  DateTime? serverTime;
+@override@JsonKey() final  int audioLagSeconds;
 
 /// Create a copy of ModuleStartResponse
 /// with the given fields replaced by the non-null parameter values.
@@ -3162,18 +3171,18 @@ Map<String, dynamic> toJson() {
 
 @override
 bool operator ==(Object other) {
-    return identical(this, other) || (other.runtimeType == runtimeType&&other is _ModuleStartResponse&&(identical(other.typeId, typeId) || other.typeId == typeId)&&(identical(other.status, status) || other.status == status)&&(identical(other.startedAt, startedAt) || other.startedAt == startedAt)&&(identical(other.finishedAt, finishedAt) || other.finishedAt == finishedAt)&&(identical(other.serverTime, serverTime) || other.serverTime == serverTime));
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is _ModuleStartResponse&&(identical(other.typeId, typeId) || other.typeId == typeId)&&(identical(other.status, status) || other.status == status)&&(identical(other.startedAt, startedAt) || other.startedAt == startedAt)&&(identical(other.finishedAt, finishedAt) || other.finishedAt == finishedAt)&&(identical(other.serverTime, serverTime) || other.serverTime == serverTime)&&(identical(other.audioLagSeconds, audioLagSeconds) || other.audioLagSeconds == audioLagSeconds));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
 int get hashCode {
-    return Object.hash(runtimeType,typeId,status,startedAt,finishedAt,serverTime);
+    return Object.hash(runtimeType,typeId,status,startedAt,finishedAt,serverTime,audioLagSeconds);
 }
 
 @override
 String toString() {
-    return 'ModuleStartResponse(typeId: $typeId, status: $status, startedAt: $startedAt, finishedAt: $finishedAt, serverTime: $serverTime)';
+    return 'ModuleStartResponse(typeId: $typeId, status: $status, startedAt: $startedAt, finishedAt: $finishedAt, serverTime: $serverTime, audioLagSeconds: $audioLagSeconds)';
 }
 
 
@@ -3184,7 +3193,7 @@ abstract mixin class _$ModuleStartResponseCopyWith<$Res> implements $ModuleStart
   factory _$ModuleStartResponseCopyWith(_ModuleStartResponse value, $Res Function(_ModuleStartResponse) _then) = __$ModuleStartResponseCopyWithImpl;
 @override @useResult
 $Res call({
- int typeId, String status,@JsonKey(fromJson: dateOrNull, toJson: dateToJson) DateTime? startedAt,@JsonKey(fromJson: dateOrNull, toJson: dateToJson) DateTime? finishedAt,@JsonKey(fromJson: dateOrNull, toJson: dateToJson) DateTime? serverTime
+ int typeId, String status,@JsonKey(fromJson: dateOrNull, toJson: dateToJson) DateTime? startedAt,@JsonKey(fromJson: dateOrNull, toJson: dateToJson) DateTime? finishedAt,@JsonKey(fromJson: dateOrNull, toJson: dateToJson) DateTime? serverTime, int audioLagSeconds
 });
 
 
@@ -3201,14 +3210,15 @@ class __$ModuleStartResponseCopyWithImpl<$Res>
 
 /// Create a copy of ModuleStartResponse
 /// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? typeId = null,Object? status = null,Object? startedAt = freezed,Object? finishedAt = freezed,Object? serverTime = freezed,}) {
+@override @pragma('vm:prefer-inline') $Res call({Object? typeId = null,Object? status = null,Object? startedAt = freezed,Object? finishedAt = freezed,Object? serverTime = freezed,Object? audioLagSeconds = null,}) {
   return _then(_ModuleStartResponse(
 typeId: null == typeId ? _self.typeId : typeId // ignore: cast_nullable_to_non_nullable
 as int,status: null == status ? _self.status : status // ignore: cast_nullable_to_non_nullable
 as String,startedAt: freezed == startedAt ? _self.startedAt : startedAt // ignore: cast_nullable_to_non_nullable
 as DateTime?,finishedAt: freezed == finishedAt ? _self.finishedAt : finishedAt // ignore: cast_nullable_to_non_nullable
 as DateTime?,serverTime: freezed == serverTime ? _self.serverTime : serverTime // ignore: cast_nullable_to_non_nullable
-as DateTime?,
+as DateTime?,audioLagSeconds: null == audioLagSeconds ? _self.audioLagSeconds : audioLagSeconds // ignore: cast_nullable_to_non_nullable
+as int,
   ));
 }
 

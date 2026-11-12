@@ -2,10 +2,12 @@
 
 use App\Models\Attempt;
 use App\Models\AttemptAnswer;
+use App\Models\AttemptPart;
 use App\Models\AttemptType;
 use App\Models\Device;
 use App\Models\Option;
 use App\Models\Question;
+use App\Models\TestType;
 use App\Services\ExamService;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Storage;
@@ -245,4 +247,46 @@ test('12) a mock keeps its modules once a candidate started one', function () {
         ->assertSessionHasErrors('modules');
     // Saving the other fields with the same modules still works.
     $this->actingAs($this->admin)->put(route('mock.update', $mock), $payload(array_reverse($current)))->assertSessionHasNoErrors();
+});
+
+test('audio lag: the Listening module ends later by the missed audio, once per total, capped; not for other modules', function () {
+    $end = startListening();
+    $uri = 'exam/modules/'.$this->listening.'/audio-lag';
+
+    $r = desktopApi('POST', $uri, ['lag_seconds' => 60], $this->device, $this->token)->assertOk();
+    expect(Carbon::parse($r->json('finished_at'))->diffInSeconds($end->copy()->addSeconds(60), true))->toBeLessThan(1)
+        ->and($r->json('audio_lag_seconds'))->toBe(60);
+
+    // The same total again (a retry) or a smaller one: no further change.
+    desktopApi('POST', $uri, ['lag_seconds' => 60], $this->device, $this->token)->assertOk();
+    desktopApi('POST', $uri, ['lag_seconds' => 10], $this->device, $this->token)->assertOk();
+    $type = AttemptType::where('attempt_id', $this->attempt->id)->where('type_id', $this->listening)->firstOrFail();
+    expect(Carbon::parse($type->finished_at)->diffInSeconds($end->copy()->addSeconds(60), true))->toBeLessThan(1)
+        ->and($type->audio_lag_seconds)->toBe(60);
+
+    // A later restart adds only the difference; the parts move with the module.
+    desktopApi('POST', $uri, ['lag_seconds' => 90], $this->device, $this->token)->assertOk();
+    expect(Carbon::parse($type->fresh()->finished_at)->diffInSeconds($end->copy()->addSeconds(90), true))->toBeLessThan(1);
+    $partEnd = AttemptPart::where('attempt_id', $this->attempt->id)->where('part_id', $this->exam['partL']->id)->value('finished_at');
+    expect(Carbon::parse($partEnd)->diffInSeconds($end->copy()->addSeconds(90), true))->toBeLessThan(1);
+
+    // The exam state carries the lag (the app uses it for the audio position after a restart).
+    $state = desktopApi('GET', 'exam', [], $this->device, $this->token)->assertOk();
+    expect(collect($state->json('modules'))->firstWhere('type_id', $this->listening)['audio_lag_seconds'])->toBe(90);
+
+    // Capped at the module length.
+    $listeningModule = TestType::where('test_id', $this->exam['testL']->id)->where('type_id', $this->listening)->firstOrFail();
+    $max = app(ExamService::class)->moduleDurationSeconds($listeningModule);
+    desktopApi('POST', $uri, ['lag_seconds' => 7000], $this->device, $this->token)->assertOk()->assertJsonPath('audio_lag_seconds', min(7000, $max));
+});
+
+test('audio lag: refused before the module started and after the attempt finished', function () {
+    $uri = 'exam/modules/'.$this->listening.'/audio-lag';
+    desktopApi('POST', $uri, ['lag_seconds' => 30], $this->device, $this->token)->assertStatus(409);
+
+    startListening();
+    app(ExamService::class)->finishAttempt($this->attempt->fresh());
+    $before = AttemptType::where('attempt_id', $this->attempt->id)->where('type_id', $this->listening)->value('finished_at');
+    desktopApi('POST', $uri, ['lag_seconds' => 30], $this->device, $this->token);
+    expect(AttemptType::where('attempt_id', $this->attempt->id)->where('type_id', $this->listening)->value('finished_at'))->toEqual($before);
 });

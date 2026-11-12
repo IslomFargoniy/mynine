@@ -369,6 +369,8 @@ class InsperaHeader extends ConsumerWidget {
             clock: clock,
             paused: exam.paused,
             pausedSince: exam.pausedSince,
+            onPosition: (pos) => exam.saveAudioPosition(module.typeId, pos),
+            onFirstPlay: (expected) => exam.audioFirstPlay(module.typeId, expected),
           ),
           const SizedBox(width: 4),
         ],

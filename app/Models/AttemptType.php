@@ -27,10 +27,12 @@ class AttemptType extends Model
         'reviewed_at',
         'reviewed_by',
         'offline_at_end',
+        'audio_lag_seconds',
     ];
 
     protected $casts = [
         'offline_at_end' => 'boolean',
+        'audio_lag_seconds' => 'integer',
     ];
 
     protected $with = [

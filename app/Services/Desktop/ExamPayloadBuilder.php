@@ -47,6 +47,7 @@ class ExamPayloadBuilder
                 'status' => $this->moduleStatus($attemptType),
                 'started_at' => $this->iso($attemptType?->started_at),
                 'finished_at' => $this->iso($attemptType?->finished_at),
+                'audio_lag_seconds' => (int) ($attemptType?->audio_lag_seconds ?? 0),
                 'audio' => $this->moduleAudio($testType),
                 'parts' => array_values(array_map(fn (array $n) => [
                     'id' => $n['id'],
@@ -86,6 +87,7 @@ class ExamPayloadBuilder
             'status' => $this->moduleStatus($attemptType),
             'started_at' => $this->iso($attemptType->started_at),
             'finished_at' => $this->iso($attemptType->finished_at),
+            'audio_lag_seconds' => (int) $attemptType->audio_lag_seconds,
         ];
     }
 
