@@ -34,8 +34,15 @@ interface PageProps {
 
 const BANDS = Array.from({ length: 19 }, (_, i) => i * 0.5);
 
+/**
+ * Slot as server (Asia/Tashkent) wall-clock time: the ISO value carries the server offset ("…T09:00:00+05:00"),
+ * and the saved value is read as server time, so a browser in another time zone must not shift it.
+ */
 function toLocalInput(value: string | null): string {
-    return value ? format(new Date(value), "yyyy-MM-dd'T'HH:mm") : '';
+    if (!value) return '';
+    if (/^\d{4}-\d{2}-\d{2}[T ]\d{2}:\d{2}/.test(value)) return value.slice(0, 16).replace(' ', 'T');
+    const date = new Date(value);
+    return Number.isNaN(date.getTime()) ? '' : format(date, "yyyy-MM-dd'T'HH:mm");
 }
 
 function SlotEditor({ candidate }: { candidate: SpeakingCandidate }) {
@@ -171,6 +178,7 @@ export default function SpeakingIndex() {
                             value={mock?.id ?? ''}
                             onChange={(e) => router.get(route('speaking.index'), { mock_id: e.target.value || undefined })}
                         >
+                            {mocks.length === 0 && <option value="">{t('exam_admin.monitor.no_mocks')}</option>}
                             {mocks.map((m) => (
                                 <option key={m.id} value={m.id}>
                                     {m.name} · {fmtDateTime(m.started_at, 'dd.MM')}
@@ -200,8 +208,10 @@ export default function SpeakingIndex() {
                     </Panel>
                 )}
 
-                {candidates.length === 0 ? (
-                    <EmptyState>{t('exam_admin.reception.no_candidates')}</EmptyState>
+                {!mock ? (
+                    <EmptyState>{t('exam_admin.speaking.no_mocks')}</EmptyState>
+                ) : candidates.length === 0 ? (
+                    <EmptyState>{t('exam_admin.speaking.no_candidates')}</EmptyState>
                 ) : (
                     <Panel className="overflow-hidden p-0">
                         <Table>

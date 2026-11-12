@@ -1,5 +1,5 @@
 import DeleteItemModal from '@/components/delete-item-modal';
-import { ModuleBadge } from '@/components/exam-admin/shared';
+import { EmptyState, ModuleBadge } from '@/components/exam-admin/shared';
 import MockStudentManager from '@/components/mock/mock-student-manager';
 
 import { Mock, type MockPaginate, SearchData, Test } from '@/types';
@@ -87,6 +87,14 @@ const MockTable = ({ tests: _tests, searchData, ...mock }: MockTableProps) => {
                     {t('create')} {t('mock')}
                 </Link>
             </div>
+
+            {mock.data.length === 0 && (
+                <EmptyState>
+                    {searchData.search || searchData.test_id || searchData.folder_id || searchData.user_id || (searchData.from && searchData.to)
+                        ? t('mock_table.empty_filtered')
+                        : t('mock_table.empty')}
+                </EmptyState>
+            )}
 
             {/* Cards Grid */}
             <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
@@ -202,7 +210,9 @@ const MockTable = ({ tests: _tests, searchData, ...mock }: MockTableProps) => {
                     {mock.links.map((link, index) => (
                         <Link
                             key={index}
-                            href={`${link.url ?? '?'}&search=${searchData.search}&per_page=${searchData.per_page}`}
+                            href={link.url ?? ''}
+                                // The server keeps every filter in the page links (withQueryString).
+                                onClick={(e) => !link.url && e.preventDefault()}
                             className={`rounded-full px-3 py-1 text-sm transition ${
                                 link.active
                                     ? 'btn-glass-primary'

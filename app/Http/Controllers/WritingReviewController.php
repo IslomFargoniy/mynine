@@ -66,7 +66,7 @@ class WritingReviewController extends Controller
                 'links' => $page->linkCollection(),
             ],
             'pendingAi' => $this->pendingAiCount(),
-            'mocks' => Mock::query()->withoutEagerLoads()->whereHas('attempts')->orderByDesc('started_at')->limit(50)->get(['id', 'name']),
+            'mocks' => $this->mockOptions($mockId),
             'filters' => ['status' => $status, 'mock_id' => $mockId],
         ]);
     }
@@ -166,6 +166,22 @@ class WritingReviewController extends Controller
                     'ai_pending' => $answer->score === null && mb_strlen($text) > 10,
                 ];
             });
+    }
+
+    /**
+     * Mocks with attempts (latest 50), plus the filtered one so the dropdown matches the list.
+     *
+     * @return Collection<int, Mock>
+     */
+    private function mockOptions(?int $mockId): Collection
+    {
+        $mocks = Mock::query()->withoutEagerLoads()->whereHas('attempts')->orderByDesc('started_at')->limit(50)->get(['id', 'name']);
+
+        if ($mockId && ! $mocks->contains('id', $mockId) && ($mock = Mock::withoutEagerLoads()->find($mockId, ['id', 'name']))) {
+            $mocks->push($mock);
+        }
+
+        return $mocks->toBase();
     }
 
     private function pendingAiCount(): int

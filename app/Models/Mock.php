@@ -29,7 +29,9 @@ class Mock extends Model
 
     protected $casts = [
         'require_desktop' => 'boolean',
-        'speaking_starts_at' => 'datetime',
+        // Serialized as Asia/Tashkent wall-clock time like started_at/finished_at (not UTC), so the mock form
+        // shows and re-saves the same time whatever the browser's time zone.
+        'speaking_starts_at' => 'datetime:Y-m-d H:i:s',
         'speaking_slot_minutes' => 'integer',
     ];
 

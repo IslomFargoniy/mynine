@@ -33,19 +33,31 @@ class MonitorController extends Controller
     {
         $this->authorize('operate', Mock::class);
 
+        $columns = ['id', 'name', 'started_at', 'finished_at', 'active', 'require_desktop'];
+        $runningAttempts = fn ($q) => $q->whereNull('finished_at');
+
+        // Current mocks (±1 day), plus any mock a candidate is still writing (resumed after the mock's end).
         $mocks = Mock::query()
             ->withoutEagerLoads()
-            ->where(fn ($q) => $q->where('finished_at', '>=', now()->subDay())->orWhereNull('finished_at'))
-            ->where('started_at', '<=', now()->addDay())
-            ->withCount('attempts')
+            ->where(fn ($q) => $q
+                ->where(fn ($w) => $w
+                    ->where(fn ($f) => $f->where('finished_at', '>=', now()->subDay())->orWhereNull('finished_at'))
+                    ->where('started_at', '<=', now()->addDay()))
+                ->orWhereHas('attempts', $runningAttempts))
+            ->withCount(['attempts', 'attempts as running_count' => $runningAttempts])
             ->orderByDesc('started_at')
-            ->get(['id', 'name', 'started_at', 'finished_at', 'active', 'require_desktop']);
+            ->get($columns);
 
         $mockId = $request->integer('mock_id') ?: null;
         $mock = $mockId ? Mock::withoutEagerLoads()->find($mockId) : null;
-        if (! $mock) {
-            $mock = $mocks->first(fn (Mock $m) => $m->status === 'active') ?? $mocks->first();
+        if ($mock && ! $mocks->contains('id', $mock->id)) {
+            // Opened from an older mock's page: keep it in the dropdown so the selection matches the list.
+            $mocks->push(Mock::withoutEagerLoads()->withCount('attempts')->find($mock->id, $columns));
         }
+        // Default: the mock candidates are writing right now, then a running mock, then the latest one.
+        $mock ??= $mocks->first(fn (Mock $m) => $m->running_count > 0)
+            ?? $mocks->first(fn (Mock $m) => $m->status === 'active')
+            ?? $mocks->first();
 
         return Inertia::render('monitor/index', [
             'mocks' => $mocks->map(fn (Mock $m) => [

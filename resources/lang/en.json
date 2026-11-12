@@ -387,7 +387,9 @@
     "minute": "Minute",
     "mock": "Mock",
     "mock_table": {
-        "title": "Mock exam"
+        "title": "Mock exam",
+        "empty": "No mocks yet. Create the first one with the button above.",
+        "empty_filtered": "No mocks match the filters. Clear the filters to see all mocks."
     },
     "modal": {
         "ai_import_desc": "Paste raw test text or upload a DOCX/TXT file. AI will automatically parse sections, question types, questions, options, and correct answers.",
@@ -851,7 +853,8 @@
                 "no_folders": "Create a folder first in the Test Bank.",
                 "submit": "Move to practice",
                 "open_test_bank": "Open Test Bank"
-            }
+            },
+            "empty_filtered": "No mock tests match the status or search filter."
         },
         "mock_form": {
             "create_title": "New mock",
@@ -924,7 +927,10 @@
                 "writing_review": "Writing confirmation",
                 "speaking": "Speaking"
             },
-            "select_all": "Select all"
+            "select_all": "Select all",
+            "no_mocks_hint": "No mocks on this day. Pick another date or create a mock.",
+            "no_candidates_hint": "No candidates yet. Use \"Add candidates\" (choose a mock first if there are several on this day).",
+            "no_match": "No candidates match “{{search}}”."
         },
         "monitor": {
             "summary": "{{active}} in progress, {{online}} online, {{total}} total",
@@ -947,7 +953,9 @@
             "unlock_confirm": "Unlock the PC of {{name}}?",
             "release_device": "Release PC",
             "release_device_hint": "Unbind the exam from this PC so the candidate can continue on another PC.",
-            "release_device_confirm": "Release the PC of {{name}}? The exam on that PC stops and the candidate logs in again on another PC."
+            "release_device_confirm": "Release the PC of {{name}}? The exam on that PC stops and the candidate logs in again on another PC.",
+            "no_mocks_hint": "No current mock (from yesterday to tomorrow) and no candidate is writing an exam right now.",
+            "empty_hint": "No attempts yet: candidates appear here once they log in with their code on an exam PC."
         },
         "violation": {
             "focus_lost": "Focus lost",
@@ -974,7 +982,9 @@
             "score": "Score",
             "rescore": "Re-score",
             "note": "Examiner note (optional)",
-            "now": "now"
+            "now": "now",
+            "no_mocks": "No current mock: Speaking lists mocks from the last 30 days and mocks that are still open. Create a mock first.",
+            "no_candidates": "No candidates in this mock yet. Add them on the Reception page or on the mock page."
         },
         "writing": {
             "description": "{{count}} in the list · {{pending}} essays waiting for AI",
@@ -1089,7 +1099,8 @@
     "attempts_table": {
         "candidate": "Candidate",
         "actions": "Actions",
-        "empty": "No attempts yet."
+        "empty": "No attempts yet.",
+        "empty_filtered": "No attempts match the filters. Clear the filters to see all attempts."
     },
     "mock_show": {
         "overall": "Overall",

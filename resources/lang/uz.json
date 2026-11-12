@@ -387,7 +387,9 @@
     "minute": "Daqiqa",
     "mock": "Mock",
     "mock_table": {
-        "title": "Sinov imtihoni"
+        "title": "Sinov imtihoni",
+        "empty": "Hali mocklar yo'q. Yuqoridagi tugma bilan birinchisini yarating.",
+        "empty_filtered": "Filtrlarga mos mock topilmadi. Barcha mocklarni ko'rish uchun filtrlarni tozalang."
     },
     "modal": {
         "ai_import_desc": "Test matnini joylashtiring yoki DOCX/TXT faylini yuklang. AI bo'limlar, savol turlari, savollar, variantlar va to'g'ri javoblarni avtomatik ravishda ajratib oladi.",
@@ -851,7 +853,8 @@
                 "no_folders": "Avval Test Bankda papka yarating.",
                 "submit": "Amaliyotga o'tkazish",
                 "open_test_bank": "Test Bankni ochish"
-            }
+            },
+            "empty_filtered": "Holat yoki qidiruv filtriga mos test topilmadi."
         },
         "mock_form": {
             "create_title": "Yangi mock",
@@ -924,7 +927,10 @@
                 "writing_review": "Writing tasdig'i",
                 "speaking": "Speaking"
             },
-            "select_all": "Hammasini tanlash"
+            "select_all": "Hammasini tanlash",
+            "no_mocks_hint": "Bu kunda mock yo'q. Boshqa sanani tanlang yoki mock yarating.",
+            "no_candidates_hint": "Hali nomzodlar yo'q. \"Nomzod qo'shish\" tugmasidan foydalaning (bu kunda bir nechta mock bo'lsa, avval mockni tanlang).",
+            "no_match": "“{{search}}” bo'yicha nomzod topilmadi."
         },
         "monitor": {
             "summary": "{{active}} ta jarayonda, {{online}} ta onlayn, jami {{total}}",
@@ -947,7 +953,9 @@
             "unlock_confirm": "{{name}} kompyuteri ochilsinmi?",
             "release_device": "Kompyuterni bo'shatish",
             "release_device_hint": "Imtihonni bu kompyuterdan ajratish — nomzod boshqa kompyuterda davom ettiradi.",
-            "release_device_confirm": "{{name}} kompyuterini bo'shatasizmi? Bu kompyuterdagi imtihon to'xtaydi, nomzod boshqa kompyuterda qayta kiradi."
+            "release_device_confirm": "{{name}} kompyuterini bo'shatasizmi? Bu kompyuterdagi imtihon to'xtaydi, nomzod boshqa kompyuterda qayta kiradi.",
+            "no_mocks_hint": "Joriy mock yo'q (kechadan ertagacha) va hozir hech bir nomzod imtihon yozmayapti.",
+            "empty_hint": "Hali urinishlar yo'q: nomzodlar imtihon kompyuterida kodi bilan kirgach shu yerda ko'rinadi."
         },
         "violation": {
             "focus_lost": "Oynadan chiqish",
@@ -974,7 +982,9 @@
             "score": "Baholash",
             "rescore": "Qayta baholash",
             "note": "Imtihonchi izohi (ixtiyoriy)",
-            "now": "hozir"
+            "now": "hozir",
+            "no_mocks": "Joriy mock yo'q: Speaking oxirgi 30 kundagi va hali ochiq mocklarni ko'rsatadi. Avval mock yarating.",
+            "no_candidates": "Bu mockda hali nomzod yo'q. Ularni Qabulxona yoki mock sahifasida qo'shing."
         },
         "writing": {
             "description": "Ro'yxatda {{count}} ta · AI baholashini kutayotgan insholar: {{pending}}",
@@ -1089,7 +1099,8 @@
     "attempts_table": {
         "candidate": "Nomzod",
         "actions": "Amallar",
-        "empty": "Hali urinishlar yo'q."
+        "empty": "Hali urinishlar yo'q.",
+        "empty_filtered": "Filtrlarga mos urinish topilmadi. Barchasini ko'rish uchun filtrlarni tozalang."
     },
     "mock_show": {
         "overall": "Umumiy",

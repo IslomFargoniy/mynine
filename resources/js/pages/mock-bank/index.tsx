@@ -438,7 +438,7 @@ export default function MockBankIndex() {
                 </div>
 
                 {tests.length === 0 ? (
-                    <EmptyState>{t('exam_admin.bank.empty')}</EmptyState>
+                    <EmptyState>{filters.status || filters.search ? t('exam_admin.bank.empty_filtered') : t('exam_admin.bank.empty')}</EmptyState>
                 ) : (
                     <div className="space-y-3">
                         {tests.map((test) => (

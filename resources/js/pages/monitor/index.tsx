@@ -99,8 +99,10 @@ export default function MonitorIndex() {
                     }
                 />
 
-                {!mock || attempts.length === 0 ? (
-                    <EmptyState>{t('exam_admin.monitor.empty')}</EmptyState>
+                {!mock ? (
+                    <EmptyState>{t('exam_admin.monitor.no_mocks_hint')}</EmptyState>
+                ) : attempts.length === 0 ? (
+                    <EmptyState>{t('exam_admin.monitor.empty_hint')}</EmptyState>
                 ) : (
                     <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
                         {attempts.map((a) => {

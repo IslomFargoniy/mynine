@@ -163,9 +163,13 @@ export default function ReceptionIndex() {
                 </div>
 
                 {mocks.length === 0 ? (
-                    <EmptyState>{t('exam_admin.reception.no_mocks')}</EmptyState>
+                    <EmptyState>{t('exam_admin.reception.no_mocks_hint')}</EmptyState>
                 ) : candidates.length === 0 ? (
-                    <EmptyState>{t('exam_admin.reception.no_candidates')}</EmptyState>
+                    <EmptyState>
+                        {filters.search
+                            ? t('exam_admin.reception.no_match', { search: filters.search })
+                            : t('exam_admin.reception.no_candidates_hint')}
+                    </EmptyState>
                 ) : (
                     <Panel className="overflow-hidden p-0">
                         <Table>

@@ -44,6 +44,17 @@ function toInput(value?: string | null): string {
     return Number.isNaN(date.getTime()) ? '' : format(date, 'yyyy-MM-dd HH:mm');
 }
 
+/** New mock: starts now (next 5 minutes), ends the same evening (at least 4 hours later). */
+function defaultTimes(): { start: string; end: string } {
+    const start = new Date();
+    start.setSeconds(0, 0);
+    start.setMinutes(Math.ceil(start.getMinutes() / 5) * 5);
+    const end = new Date(start);
+    end.setHours(23, 55, 0, 0);
+    if (end.getTime() - start.getTime() < 4 * 3600000) end.setTime(start.getTime() + 4 * 3600000);
+    return { start: format(start, 'yyyy-MM-dd HH:mm'), end: format(end, 'yyyy-MM-dd HH:mm') };
+}
+
 function DateTimeField({ id, value, onChange }: { id: string; value: string; onChange: (value: string) => void }) {
     return (
         <DatePicker
@@ -68,11 +79,13 @@ export default function MockForm() {
 
     const current = (type: ModuleKey) => mock?.modules?.find((m) => m.type?.name === type)?.test_type_id ?? '';
 
+    const defaults = useMemo(defaultTimes, []);
+
     const { data, setData, post, put, processing, errors, transform } = useForm({
         name: mock?.name ?? '',
         comment: mock?.comment ?? '',
-        started_at: toInput(mock?.started_at),
-        finished_at: toInput(mock?.finished_at),
+        started_at: mock ? toInput(mock.started_at) : defaults.start,
+        finished_at: mock ? toInput(mock.finished_at) : defaults.end,
         active: mock ? Number(mock.active) : 1,
         require_desktop: mock ? !!mock.require_desktop : true,
         speaking_starts_at: toInput(mock?.speaking_starts_at),
@@ -113,9 +126,26 @@ export default function MockForm() {
         return m.used_on.some((d) => Math.abs(new Date(d).getTime() - target) < reuseDays * 86400000);
     };
 
+    // Same rule as MockBankService::autoPick, for the exam date chosen in the form (the server's pick is
+    // for the date the form was opened with): least recently used module outside the reuse window.
+    const suggested = useMemo(() => {
+        const target = new Date(String(data.started_at ?? '').replace(' ', 'T')).getTime();
+        if (Number.isNaN(target)) return autoPick;
+        const lastUse = (m: BankModule) => Math.max(0, ...(m.used_on ?? []).map((d) => new Date(d).getTime()));
+        const picks: Record<string, number | null> = {};
+        MODULE_TYPES.forEach((type) => {
+            const best = (byType[type] ?? [])
+                .filter((m) => modules.some((x) => x.id === m.id) && !isRecent(m))
+                .sort((a, b) => lastUse(a) - lastUse(b) || a.id - b.id)[0];
+            picks[type] = best?.id ?? null;
+        });
+        return picks;
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [data.started_at, byType, modules, autoPick, reuseDays]);
+
     const applyAutoPick = () => {
         MODULE_TYPES.forEach((type) => {
-            const id = autoPick[type];
+            const id = suggested[type];
             if (id) setData(type, id);
         });
     };
@@ -240,7 +270,7 @@ export default function MockForm() {
                                             <option key={m.id} value={m.id}>
                                                 {m.test_name}
                                                 {isRecent(m) ? ' ⚠' : ''}
-                                                {autoPick[type] === m.id ? ` (${t('exam_admin.mock_form.suggested')})` : ''}
+                                                {suggested[type] === m.id ? ` (${t('exam_admin.mock_form.suggested')})` : ''}
                                             </option>
                                         ))}
                                     </select>

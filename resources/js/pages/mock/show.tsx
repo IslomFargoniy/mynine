@@ -122,6 +122,8 @@ export default function MockShow() {
     const attendedStudents = students.filter((s: any) => s.attended).length;
     const pendingStudents = totalStudents - attendedStudents;
     const isActive = mock.active === 1;
+    // Reception lists one day: today (server default) while the mock is open, otherwise its exam day.
+    const receptionDate = mock.status === 'active' ? undefined : (mock.started_at ?? '').slice(0, 10) || undefined;
 
     const attendanceBadge = (attended: boolean) => (
         <span
@@ -207,7 +209,7 @@ export default function MockShow() {
                             <Pencil className="h-4 w-4" /> {t('exam_admin.common.edit')}
                         </Link>
                         <Link
-                            href={route('reception.index', { mock_id: mock.id, date: (mock.started_at ?? '').slice(0, 10) || undefined })}
+                            href={route('reception.index', { mock_id: mock.id, date: receptionDate })}
                             className="inline-flex h-9 items-center gap-1.5 rounded-full border border-glass-edge bg-glass-subtle px-4 text-xs font-bold text-foreground hover:bg-accent"
                         >
                             <ConciergeBell className="h-4 w-4" /> {t('exam_admin.nav.reception')}

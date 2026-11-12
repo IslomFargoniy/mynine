@@ -44,7 +44,11 @@ class ReceptionController extends Controller
             ->orderBy('started_at')
             ->get(['id', 'name', 'started_at', 'finished_at', 'active', 'require_desktop', 'speaking_starts_at']);
 
-        $mockIds = $mockId && $mocks->contains('id', $mockId) ? [$mockId] : $mocks->pluck('id')->all();
+        // A mock_id of another day (stale link, date changed) is dropped: all of the day's mocks are listed.
+        if ($mockId && ! $mocks->contains('id', $mockId)) {
+            $mockId = null;
+        }
+        $mockIds = $mockId ? [$mockId] : $mocks->pluck('id')->all();
 
         $students = MockStudent::query()
             ->with(['mock' => fn ($q) => $q->withoutEagerLoads(), 'attempt.attempt_types.type', 'attempt.device:id,name,number,last_seen_at', 'deliveredBy:id,name'])

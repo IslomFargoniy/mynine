@@ -49,8 +49,12 @@ class MockController extends Controller
             });
         }
 
+        // Date-only bounds: the "to" day is included (whereBetween with '2026-11-12' would stop at 00:00).
         if ($request->from && $request->to) {
-            $mock->whereBetween('created_at', [$request->from, $request->to]);
+            $range = self::dayRange($request->from, $request->to);
+            if ($range) {
+                $mock->whereBetween('created_at', $range);
+            }
         }
 
         if ($request->user_id) {
@@ -82,7 +86,9 @@ class MockController extends Controller
 
         $mock = $mock->select('id', 'test_id', 'user_id', 'name', 'comment', 'active', 'require_desktop', 'started_at', 'finished_at', 'created_at')
             ->orderBy('id', 'desc')
-            ->paginate($per_page);
+            ->paginate($per_page)
+            // Page links keep the filters (test, folder, dates...), not only the page number.
+            ->withQueryString();
 
         // Filter tests and folders based on role for search dropdowns
         $tests_query = Test::query()->select('id', 'name', 'folder_id')->with('folder:id,name');
@@ -101,6 +107,20 @@ class MockController extends Controller
             'isAdmin' => Auth::user()->hasRole('Admin'),
             'filters' => $request->only(['search', 'user_id', 'test_id', 'folder_id', 'from', 'to', 'per_page']),
         ]);
+    }
+
+    /**
+     * Inclusive [start of "from" day, end of "to" day] for date filters, or null when a date is invalid.
+     *
+     * @return array{0: Carbon, 1: Carbon}|null
+     */
+    public static function dayRange(mixed $from, mixed $to): ?array
+    {
+        try {
+            return [Carbon::parse((string) $from)->startOfDay(), Carbon::parse((string) $to)->endOfDay()];
+        } catch (\Throwable) {
+            return null;
+        }
     }
 
     /**

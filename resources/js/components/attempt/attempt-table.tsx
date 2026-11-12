@@ -97,7 +97,13 @@ const AttemptTable = ({ searchData, hidePagination, ...attempt }: AttemptTablePr
                     </TableRow>
                 </TableHeader>
                 <TableBody>
-                    {attempt.data.length === 0 && <TableEmpty colSpan={7}>{t('attempts_table.empty')}</TableEmpty>}
+                    {attempt.data.length === 0 && (
+                        <TableEmpty colSpan={7}>
+                            {searchData?.search || searchData?.mock_id || searchData?.test_id || searchData?.folder_id || searchData?.user_id || (searchData?.from && searchData?.to)
+                                ? t('attempts_table.empty_filtered')
+                                : t('attempts_table.empty')}
+                        </TableEmpty>
+                    )}
                     {attempt.data.map((item, index) => {
                         const globalIndex = (attempt.current_page - 1) * attempt.per_page + index + 1;
                         const isFinished = !!item.finished_at;
@@ -211,7 +217,9 @@ const AttemptTable = ({ searchData, hidePagination, ...attempt }: AttemptTablePr
                         {attempt.links.map((link, index) => (
                             <Link
                                 key={index}
-                                href={`${link.url ?? '?'}&search=${searchData.search}&per_page=${searchData.per_page}`}
+                                href={link.url ?? ''}
+                                // The server keeps every filter in the page links (withQueryString).
+                                onClick={(e) => !link.url && e.preventDefault()}
                                 className={`px-3 py-1 rounded-full text-sm transition-all duration-200 ${
                                     link.active
                                         ? 'btn-glass-primary'
