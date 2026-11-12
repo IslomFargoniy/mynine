@@ -1105,6 +1105,8 @@
     "candidates_not_found": "Кандидаты не найдены.",
     "candidate_deleted": "Кандидат удалён.",
     "code_tickets_title": "Чеки с кодами",
+    "ticket_code_label": "Код кандидата",
+    "ticket_note": "Введите этот код на экзаменационном компьютере. Сохраните чек до получения результатов.",
     "attempts_table": {
         "candidate": "Кандидат",
         "actions": "Действия",

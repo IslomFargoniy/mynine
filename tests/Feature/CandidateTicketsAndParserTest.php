@@ -79,12 +79,15 @@ test('code tickets show only the requested candidates of that mock', function ()
         ->assertSee('AVGUST17-697100')
         ->assertDontSee('AVGUST17-111111')
         ->assertDontSee($foreign->code)
-        ->assertSee('size: 80mm auto', false)
+        // An explicit receipt page: Chrome ignores "80mm auto" and prints on A4.
+        ->assertSee('size: 80mm 70mm', false)
         ->assertSee('page-break-after: always', false)
         ->assertSee('window.print()', false);
 
-    // Names are not printed: only the code.
-    $response->assertDontSee('>Mine<', false);
+    // Receipt layout: mock name, the candidate's name and the instruction.
+    $response->assertSee('>Mine<', false)
+        ->assertSee($this->mock->name)
+        ->assertSee(__('ticket_note'));
 });
 
 test('code tickets without ids list every candidate of the mock; unknown ids give 404', function () {

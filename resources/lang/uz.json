@@ -1105,6 +1105,8 @@
     "candidates_not_found": "Nomzodlar topilmadi.",
     "candidate_deleted": "Nomzod o'chirildi.",
     "code_tickets_title": "Kod cheklari",
+    "ticket_code_label": "Kandidat kodi",
+    "ticket_note": "Bu kodni imtihon kompyuteriga kiriting. Natijani olguningizcha chekni saqlang.",
     "attempts_table": {
         "candidate": "Nomzod",
         "actions": "Amallar",

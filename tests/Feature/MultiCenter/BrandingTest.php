@@ -49,7 +49,7 @@ test('a partner center\'s 80 mm tickets show its logo and name and a small Power
         ->assertSee('class="center-logo"', false)
         ->assertSee('Powered by Mynine')
         ->assertSee('111111')
-        ->assertSee('size: 80mm auto', false);
+        ->assertSee('size: 80mm 70mm', false);
 });
 
 test('without a logo the partner ticket prints the name only', function () {
@@ -59,11 +59,11 @@ test('without a logo the partner ticket prints the name only', function () {
         ->assertSee('Powered by Mynine');
 });
 
-test('the Mynine center\'s tickets are unchanged (code only)', function () {
+test('the Mynine center\'s tickets keep the Mynine receipt header', function () {
     $this->actingAs($this->mynine)->get(route('mock.code-tickets', $this->mynineExam['mock']))->assertOk()
         ->assertSee('222222')
-        ->assertDontSee('Powered by Mynine')
-        ->assertDontSee('center-name">', false);
+        ->assertSee('Mynine · IELTS')
+        ->assertDontSee('Powered by Mynine');
 });
 
 test('A4 code cards carry the partner\'s embedded logo and name; Mynine cards keep the Mynine brand', function () {

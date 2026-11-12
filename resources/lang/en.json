@@ -1105,6 +1105,8 @@
     "candidates_not_found": "No candidates found.",
     "candidate_deleted": "Candidate deleted.",
     "code_tickets_title": "Code tickets",
+    "ticket_code_label": "Candidate code",
+    "ticket_note": "Enter this code on the exam computer. Keep the ticket until you get your results.",
     "attempts_table": {
         "candidate": "Candidate",
         "actions": "Actions",
