@@ -2,6 +2,7 @@
 
 namespace App\Http\Requests;
 
+use App\Rules\UniquePhone;
 use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Support\Facades\Auth;
@@ -33,7 +34,7 @@ class StoreUserRequest extends FormRequest
         return [
             'user_id' => 'nullable|integer|exists:users,id',
             'name' => 'required|string|max:255',
-            'phone' => 'nullable|string|max:20|unique:users,phone',
+            'phone' => ['nullable', 'string', 'max:20', 'unique:users,phone', new UniquePhone],
             'role' => 'nullable|string',
             'email' => 'nullable|email|unique:users,email',
             'password' => 'nullable|string|min:6',

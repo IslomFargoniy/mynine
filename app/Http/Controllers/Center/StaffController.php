@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Center;
 
 use App\Http\Controllers\Controller;
 use App\Models\User\User;
+use App\Rules\UniquePhone;
 use App\Support\CurrentCenter;
 use App\Support\UserSessions;
 use Illuminate\Http\RedirectResponse;
@@ -55,7 +56,7 @@ class StaffController extends Controller
         $data = $request->validate([
             'name' => ['required', 'string', 'max:255'],
             'email' => ['nullable', 'required_without:phone', 'email', 'max:255', Rule::unique('users', 'email')],
-            'phone' => ['nullable', 'required_without:email', 'string', 'max:32', Rule::unique('users', 'phone')],
+            'phone' => ['nullable', 'required_without:email', 'string', 'max:32', Rule::unique('users', 'phone'), new UniquePhone],
             'password' => ['required', 'string', 'min:8', 'max:255'],
         ]);
 
@@ -81,7 +82,7 @@ class StaffController extends Controller
         $data = $request->validate([
             'name' => ['required', 'string', 'max:255'],
             'email' => ['nullable', 'required_without:phone', 'email', 'max:255', Rule::unique('users', 'email')->ignore($staff->id)],
-            'phone' => ['nullable', 'required_without:email', 'string', 'max:32', Rule::unique('users', 'phone')->ignore($staff->id)],
+            'phone' => ['nullable', 'required_without:email', 'string', 'max:32', Rule::unique('users', 'phone')->ignore($staff->id), new UniquePhone($staff->id)],
             'password' => ['nullable', 'string', 'min:8', 'max:255'],
         ]);
 

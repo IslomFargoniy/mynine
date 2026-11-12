@@ -2,6 +2,7 @@
 
 namespace App\Http\Requests;
 
+use App\Rules\UniquePhone;
 use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
@@ -32,6 +33,7 @@ class UpdateUserRequest extends FormRequest
                 'string',
                 'max:20',
                 Rule::unique('users', 'phone')->ignore($userId),
+                new UniquePhone(is_object($userId) ? $userId->id : ($userId ? (int) $userId : null)),
             ],
             'role' => 'nullable|string',
             'email' => [

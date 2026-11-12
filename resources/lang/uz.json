@@ -1339,6 +1339,8 @@
     "mock_has_running_attempt": "Nomzod hali bu mockni topshirmoqda. Avval monitorda imtihonini yakunlang.",
     "candidate_has_running_attempt": "Bu nomzodning imtihoni hali tugamagan. Avval monitorda yakunlang.",
     "candidate_has_exam_results": "Bu nomzod yozma modulni allaqachon boshlagan. Uni o'chirib bo'lmaydi (natijalar va hisob saqlanadi). Platforma administratoriga murojaat qiling.",
+    "phone_taken": "Bu telefon raqami boshqa akkauntda ishlatilgan.",
+    "phone_login_ambiguous": "Bu telefon raqami bir nechta akkauntga tegishli. Email bilan kiring yoki qo'llab-quvvatlashga murojaat qiling.",
     "mock_has_exam_results": "Bu mock nomzodlari yozma modulni allaqachon boshlagan. Uni o'chirib bo'lmaydi (natijalar va hisob saqlanadi). Platforma administratoriga murojaat qiling.",
     "device_has_running_exam": "\":name\" kompyuterida hozir imtihon ketmoqda. Avval monitorda uni yakunlang yoki kompyuterni bo'shating.",
     "attempt_not_finished": "Bu urinish hali tugamagan. Avval uni yakunlang.",

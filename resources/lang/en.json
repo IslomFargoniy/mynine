@@ -1339,6 +1339,8 @@
     "mock_has_running_attempt": "A candidate is still taking this mock. Finish their exam in the monitor first.",
     "candidate_has_running_attempt": "This candidate's exam is not finished yet. Finish it in the monitor first.",
     "candidate_has_exam_results": "This candidate has already sat a written module. They cannot be deleted (results and billing are kept). Contact the platform administrator.",
+    "phone_taken": "This phone number is already used by another account.",
+    "phone_login_ambiguous": "This phone number belongs to more than one account. Log in with your email, or contact support.",
     "mock_has_exam_results": "Candidates of this mock have already sat a written module. It cannot be deleted (results and billing are kept). Contact the platform administrator.",
     "device_has_running_exam": "An exam is running on \":name\" right now. Finish it or release the PC in the monitor first.",
     "attempt_not_finished": "This attempt is not finished yet. Finish it first.",

@@ -5,6 +5,7 @@ namespace App\Models\User;
 // use Illuminate\Contracts\Auth\MustVerifyEmail;
 use App\Models\Attempt;
 use App\Models\CenterSetting;
+use App\Services\CandidateService;
 use App\Support\CurrentCenter;
 use Database\Factories\UserFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -13,12 +14,42 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
+use Illuminate\Support\Collection;
 use Spatie\Permission\Traits\HasRoles;
 
 class User extends Authenticatable
 {
     /** @use HasFactory<UserFactory> */
     use HasFactory, HasRoles, Notifiable;
+
+    /**
+     * Users whose phone is the same number as $phone, whatever the stored format ("901234567",
+     * "998901234567", "+998 90 123-45-67" are one number; CandidateService::normalizePhone). Foreign numbers
+     * match on their digits.
+     *
+     * @return Collection<int, self>
+     */
+    public static function withSamePhone(?string $phone, ?int $exceptId = null): Collection
+    {
+        $digits = preg_replace('/\D+/', '', (string) $phone);
+        if (strlen($digits) < 5) {
+            return collect();
+        }
+
+        $normalized = CandidateService::normalizePhone($phone);
+        $tail = substr($digits, -9);
+        $stripped = "REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(phone, ' ', ''), '+', ''), '-', ''), '(', ''), ')', ''), '.', '')";
+
+        return static::query()
+            ->whereNotNull('phone')
+            ->when($exceptId, fn ($q) => $q->whereKeyNot($exceptId))
+            ->whereRaw("{$stripped} LIKE ?", ['%'.$tail])
+            ->get()
+            ->filter(fn (self $user) => $normalized !== null
+                ? CandidateService::normalizePhone($user->phone) === $normalized
+                : preg_replace('/\D+/', '', (string) $user->phone) === $digits)
+            ->values();
+    }
 
     /**
      * The attributes that are mass assignable.
