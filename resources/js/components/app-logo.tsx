@@ -26,14 +26,14 @@ export default function AppLogo() {
                 ) : (
                     <span
                         aria-hidden="true"
-                        className="hidden size-9 shrink-0 items-center justify-center rounded-xl bg-primary text-base font-extrabold text-primary-foreground shadow-sm group-data-[collapsible=icon]:flex"
+                        className="bg-primary text-primary-foreground hidden size-9 shrink-0 items-center justify-center rounded-xl text-base font-extrabold shadow-sm group-data-[collapsible=icon]:flex"
                     >
                         {center.name.trim().charAt(0).toUpperCase()}
                     </span>
                 )}
                 <span className="flex min-w-0 flex-col leading-tight group-data-[collapsible=icon]:hidden">
-                    <span className="truncate text-base font-extrabold tracking-tight text-foreground">{center.name}</span>
-                    <span className="truncate text-[10px] font-medium text-muted-foreground">Powered by Mynine</span>
+                    <span className="text-foreground truncate text-base font-extrabold tracking-tight">{center.name}</span>
+                    <span className="text-muted-foreground truncate text-[10px] font-medium">Powered by Mynine</span>
                 </span>
             </span>
         );
@@ -54,7 +54,7 @@ export default function AppLogo() {
                 height={36}
                 className="size-9 shrink-0 rounded-xl bg-white object-contain shadow-sm ring-1 ring-black/5"
             />
-            <span className="truncate text-lg font-extrabold tracking-tight text-foreground group-data-[collapsible=icon]:hidden">
+            <span className="text-foreground truncate text-lg font-extrabold tracking-tight group-data-[collapsible=icon]:hidden">
                 {capitalizeDomain}
             </span>
         </span>

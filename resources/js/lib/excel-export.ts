@@ -47,3 +47,17 @@ export const exportAttemptsToExcel = (attempts: Attempt[], fileName: string = 'A
     const data = new Blob([excelBuffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet;charset=UTF-8' });
     saveAs(data, `${fileName}_${formatServerTime(new Date(), 'yyyy-MM-dd')}.xlsx`);
 };
+
+/**
+ * Generic export: one sheet per entry, each a list of flat rows (column title => value).
+ */
+export const exportSheetsToExcel = (sheets: { name: string; rows: Record<string, string | number | null>[] }[], fileName: string) => {
+    const workbook = XLSX.utils.book_new();
+    sheets.forEach((sheet) => {
+        XLSX.utils.book_append_sheet(workbook, XLSX.utils.json_to_sheet(sheet.rows), sheet.name.slice(0, 31));
+    });
+
+    const excelBuffer = XLSX.write(workbook, { bookType: 'xlsx', type: 'array' });
+    const data = new Blob([excelBuffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet;charset=UTF-8' });
+    saveAs(data, `${fileName}.xlsx`);
+};

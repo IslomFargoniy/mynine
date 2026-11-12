@@ -756,7 +756,9 @@
             "group_center": "Center",
             "staff": "Staff",
             "center_settings": "Center settings",
-            "centers": "Centers"
+            "centers": "Centers",
+            "reports": "Reports",
+            "usage": "Usage"
         },
         "common": {
             "actions": "Actions",
@@ -1464,6 +1466,47 @@
             "password": "Password",
             "login_hint": "They sign in with the email or phone and this password (at least 8 characters).",
             "password_keep": "Leave the password empty to keep the current one."
+        }
+    },
+    "reports": {
+        "description": "Monthly billing and AI usage per center (Asia/Tashkent time).",
+        "usage_description": "This month's numbers of {{name}}.",
+        "month": "Month",
+        "export": "Export to Excel",
+        "close": "Close",
+        "loading": "Loading…",
+        "totals": "Total",
+        "practice": "Mynine practice",
+        "practice_hint": "AI use on the website (practice tests), not tied to a center",
+        "calls": "calls",
+        "tokens": "tokens",
+        "calls_tokens": "{{calls}} calls · {{tokens}} tokens",
+        "unpriced": "{{count}} AI calls used a model without a price in config/ai_pricing.php; their cost is not included.",
+        "no_candidates": "No billed candidates in this month.",
+        "rule": {
+            "title": "Who is counted",
+            "body": "A candidate is billed in a month when their exam attempt for one of the center's mocks has at least one written module (Listening, Reading or Writing) started, and the attempt was started in that month (Asia/Tashkent time). Each candidate code counts once. Candidates who only took Speaking, or never started a module, are not counted. Mocks held = the center's mocks whose start time is in the month.",
+            "ai": "AI cost is an estimate from the token counts and the prices in config/ai_pricing.php (USD per 1M tokens); the provider's invoice is the real amount."
+        },
+        "columns": {
+            "center": "Center",
+            "code": "Code",
+            "status": "Status",
+            "candidates": "Candidates sat",
+            "mocks": "Mocks held",
+            "writing_eval": "AI: Writing evaluation",
+            "pdf_import": "AI: PDF import",
+            "other_ai": "AI: other",
+            "ai_total": "AI total",
+            "candidate": "Candidate",
+            "mock": "Mock",
+            "date": "Started"
+        },
+        "drill": {
+            "title": "{{name}}: candidates of {{month}}",
+            "description": "{{count}} billed candidates. Use this list to check the invoice.",
+            "failed": "The list could not be loaded.",
+            "open": "Show the counted candidates"
         }
     }
 }

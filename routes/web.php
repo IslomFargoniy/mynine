@@ -12,6 +12,7 @@ use App\Http\Controllers\Auth\TelegramLoginController;
 use App\Http\Controllers\BlogController;
 use App\Http\Controllers\Center\CenterController;
 use App\Http\Controllers\Center\CenterSettingsController;
+use App\Http\Controllers\Center\ReportController;
 use App\Http\Controllers\Center\StaffController;
 use App\Http\Controllers\Desktop\DeviceController as DesktopDeviceController;
 use App\Http\Controllers\Desktop\SettingsController as DesktopSettingsController;
@@ -113,6 +114,15 @@ Route::middleware(['auth', 'verified', 'center.active'])->group(function () {
         Route::post('{center}/status', [CenterController::class, 'status'])->whereNumber('center')->name('status');
         Route::post('{center}/replace-admin', [CenterController::class, 'replaceAdmin'])->whereNumber('center')->name('replace-admin');
         Route::post('{center}/switch', [CenterController::class, 'switch'])->whereNumber('center')->name('switch');
+    });
+
+    /*
+    | Reports (SuperAdmin): billed candidates, mocks and AI cost per center and month. Usage: a center Admin's own row.
+    */
+    Route::get('/reports', [ReportController::class, 'index'])->middleware('role:SuperAdmin')->name('reports.index');
+    Route::middleware('role:Admin|SuperAdmin')->group(function () {
+        Route::get('/reports/candidates', [ReportController::class, 'candidates'])->name('reports.candidates');
+        Route::get('/usage', [ReportController::class, 'usage'])->name('usage.index');
     });
 
     /*

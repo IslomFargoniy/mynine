@@ -756,7 +756,9 @@
             "group_center": "Markaz",
             "staff": "Xodimlar",
             "center_settings": "Markaz sozlamalari",
-            "centers": "Markazlar"
+            "centers": "Markazlar",
+            "reports": "Hisobotlar",
+            "usage": "Foydalanish"
         },
         "common": {
             "actions": "Amallar",
@@ -1464,6 +1466,47 @@
             "password": "Parol",
             "login_hint": "Xodim email yoki telefon va shu parol bilan kiradi (kamida 8 ta belgi).",
             "password_keep": "Joriy parolni saqlash uchun parolni bo'sh qoldiring."
+        }
+    },
+    "reports": {
+        "description": "Har bir markaz bo'yicha oylik hisob-kitob va AI sarfi (Toshkent vaqti).",
+        "usage_description": "{{name}} markazining oy bo'yicha ko'rsatkichlari.",
+        "month": "Oy",
+        "export": "Excelga yuklab olish",
+        "close": "Yopish",
+        "loading": "Yuklanmoqda…",
+        "totals": "Jami",
+        "practice": "Mynine amaliyot",
+        "practice_hint": "Saytdagi (amaliyot testlari) AI sarfi, markazga bog'lanmagan",
+        "calls": "so'rov",
+        "tokens": "token",
+        "calls_tokens": "{{calls}} so'rov · {{tokens}} token",
+        "unpriced": "{{count}} ta AI so'rovi config/ai_pricing.php da narxi yo'q modeldan foydalangan; ularning narxi hisobga kirmagan.",
+        "no_candidates": "Bu oyda hisoblangan nomzodlar yo'q.",
+        "rule": {
+            "title": "Kimlar hisoblanadi",
+            "body": "Nomzod oyga hisoblanadi, agar markaz mockidagi imtihon urinishida kamida bitta yozma modul (Listening, Reading yoki Writing) boshlangan bo'lsa va urinish shu oyda boshlangan bo'lsa (Toshkent vaqti). Har bir nomzod kodi bir marta hisoblanadi. Faqat Speaking topshirgan yoki birorta modulni boshlamagan nomzodlar hisoblanmaydi. O'tkazilgan mocklar = boshlanish vaqti shu oyga to'g'ri keladigan mocklar.",
+            "ai": "AI narxi tokenlar soni va config/ai_pricing.php dagi narxlar (1M token uchun USD) bo'yicha taxminiy; haqiqiy summa provayder hisobida."
+        },
+        "columns": {
+            "center": "Markaz",
+            "code": "Kod",
+            "status": "Holat",
+            "candidates": "Imtihon topshirgan nomzodlar",
+            "mocks": "O'tkazilgan mocklar",
+            "writing_eval": "AI: Writing baholash",
+            "pdf_import": "AI: PDF import",
+            "other_ai": "AI: boshqa",
+            "ai_total": "AI jami",
+            "candidate": "Nomzod",
+            "mock": "Mock",
+            "date": "Boshlangan"
+        },
+        "drill": {
+            "title": "{{name}}: {{month}} nomzodlari",
+            "description": "{{count}} ta hisoblangan nomzod. Hisob-fakturani tekshirish uchun.",
+            "failed": "Ro'yxatni yuklab bo'lmadi.",
+            "open": "Hisoblangan nomzodlarni ko'rsatish"
         }
     }
 }

@@ -18,6 +18,8 @@ import {
     Building2,
     ClipboardList,
     ConciergeBell,
+    FileBarChart,
+    Gauge,
     GithubIcon as Github,
     GraduationCap,
     LayoutDashboard,
@@ -112,7 +114,12 @@ export function AppSidebar() {
                 items: [
                     { title: t('exam_admin.nav.staff'), href: '/staff', icon: UserCog },
                     { title: t('exam_admin.nav.center_settings'), href: '/center/settings', icon: Settings2 },
-                    ...(isSuperAdmin ? [{ title: t('exam_admin.nav.centers'), href: '/centers', icon: Building2 }] : []),
+                    ...(isSuperAdmin
+                        ? [
+                              { title: t('exam_admin.nav.centers'), href: '/centers', icon: Building2 },
+                              { title: t('exam_admin.nav.reports'), href: '/reports', icon: FileBarChart },
+                          ]
+                        : [{ title: t('exam_admin.nav.usage'), href: '/usage', icon: Gauge }]),
                 ],
             },
         ];
