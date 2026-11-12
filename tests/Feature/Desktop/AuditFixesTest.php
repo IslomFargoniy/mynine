@@ -8,7 +8,6 @@ use App\Models\Device;
 use App\Models\Folder;
 use App\Models\MockStudent;
 use App\Models\Option;
-use App\Models\Setting;
 use App\Services\ExamService;
 use App\Services\Import\MockTestImporter;
 use App\Services\MockResultService;
@@ -124,6 +123,7 @@ test('2) content guards refuse while a mock module (not only mocks.test_id) uses
 // 3. toPractice / test delete never touch mocks
 
 test('3) a test used by a mock module is neither moved to practice nor deleted with its mocks', function () {
+    $this->admin = makeSuperAdmin(); // moving to the practice Test Bank is the platform owner's
     $testW = $this->exam['testW'];
     $folder = Folder::create(['name' => 'Practice', 'user_id' => $this->admin->id, 'active' => 1]);
 
@@ -298,7 +298,7 @@ test('11) device registration returns the offline exit password check value', fu
     desktopApi('POST', 'device/register', ['machine_id' => 'GUID-X', 'password' => 'center-pass'])
         ->assertOk()
         ->assertJsonPath('approved', false)
-        ->assertJsonPath('exit_password_offline', Setting::get(Setting::DESKTOP_EXIT_PASSWORD_OFFLINE));
+        ->assertJsonPath('exit_password_offline', centerSettings()->exit_password_offline);
 
-    expect(Setting::get(Setting::DESKTOP_EXIT_PASSWORD_OFFLINE))->not->toBeNull();
+    expect(centerSettings()->exit_password_offline)->not->toBeNull();
 });

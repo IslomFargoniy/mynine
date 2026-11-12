@@ -11,7 +11,7 @@ use App\Models\TestType;
 use App\Models\Type;
 
 test('it automatically unchecks other options for singular choice question types on update', function () {
-    $user = makeUser('Admin');
+    $user = makeUser('SuperAdmin');
 
     $folder = Folder::create(['name' => 'Test Folder', 'user_id' => $user->id]);
     $test = TestModel::create([

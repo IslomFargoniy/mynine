@@ -9,7 +9,8 @@ use App\Models\Question;
 use Illuminate\Support\Facades\URL;
 
 beforeEach(function () {
-    $this->admin = makeUser('Admin');
+    // Practice content and practice attempts belong to the platform (Mynine) center: its owner is the SuperAdmin.
+    $this->admin = makeUser('SuperAdmin');
     $this->reception = makeUser('Reception');
     $this->student = makeUser('Student');
     $this->otherStudent = makeUser('Student');
@@ -132,7 +133,8 @@ test('attempt results are only visible to the candidate and admins', function ()
     $this->actingAs($this->reception)->get(route('attempt.show', $this->attempt->id))->assertForbidden();
     $this->actingAs($this->student)->get(route('attempt.show', $this->attempt->id))->assertOk();
     $this->actingAs($this->admin)->get(route('attempt.show', $this->attempt->id))->assertOk();
-    $this->actingAs(makeUser('Admin'))->get(route('attempt.show', $this->attempt->id))->assertOk();
+    // Another center's Admin never sees the platform's practice attempts.
+    $this->actingAs(makeUser('Admin'))->get(route('attempt.show', $this->attempt->id))->assertNotFound();
 });
 
 test('the PDF needs a signed link or permission to view the attempt', function () {

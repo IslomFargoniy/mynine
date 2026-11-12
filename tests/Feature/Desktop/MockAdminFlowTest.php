@@ -13,7 +13,6 @@ use App\Models\MockStudent;
 use App\Models\Option;
 use App\Models\Part;
 use App\Models\Question;
-use App\Models\Setting;
 use App\Models\Test as ExamTest;
 use App\Models\TestType;
 use App\Services\CandidateService;
@@ -122,6 +121,8 @@ test('a test is marked ready only when every module passes the readiness check',
 });
 
 test('moving a bank test to practice makes it an open practice test in the chosen folder', function () {
+    // Practice tests are the platform's content: only the platform owner (SuperAdmin, Mynine's Admin) moves tests there.
+    $this->admin = makeSuperAdmin();
     $folder = Folder::create(['name' => 'Practice folder', 'user_id' => $this->admin->id, 'active' => 1]);
 
     // A folderless bank test needs a target folder.
@@ -700,9 +701,10 @@ test('the exit password is stored in both online and offline formats', function 
     $this->actingAs($this->admin)->post(route('desktop.settings.exit-password'), ['password' => 'secret12', 'password_confirmation' => 'secret12'])
         ->assertSessionHas('success');
 
-    expect(Setting::checkExitPassword('secret12'))->toBeTrue()
-        ->and(Hash::check('secret12', Setting::get(Setting::DESKTOP_EXIT_PASSWORD)))->toBeTrue()
-        ->and(Setting::get(Setting::DESKTOP_EXIT_PASSWORD_OFFLINE))->toStartWith('pbkdf2_sha256$');
+    $settings = centerSettings($this->admin);
+    expect($settings->checkExitPassword('secret12'))->toBeTrue()
+        ->and(Hash::check('secret12', $settings->exit_password))->toBeTrue()
+        ->and($settings->exit_password_offline)->toStartWith('pbkdf2_sha256$');
 });
 
 test('writing band weights Task 2 twice as much as Task 1', function () {

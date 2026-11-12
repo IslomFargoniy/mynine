@@ -14,7 +14,8 @@ function testBankIds($page): array
 }
 
 beforeEach(function () {
-    $this->admin = makeUser('Admin');
+    // Practice content (folders, practice tests) is managed by the platform owner.
+    $this->admin = makeUser('SuperAdmin');
 
     // Visible: active folder, active + open test with content.
     $this->visible = makeTestContent($this->admin, 'Reading', ['name' => 'Visible']);

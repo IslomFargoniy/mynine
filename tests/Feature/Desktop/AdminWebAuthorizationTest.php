@@ -3,7 +3,6 @@
 use App\Models\Attempt;
 use App\Models\AttemptType;
 use App\Models\Device;
-use App\Models\Setting;
 
 /*
 | Authorization of every web route added for the mock-exam system (Admin / Reception / Student / guest).
@@ -111,7 +110,7 @@ test('the Exam PCs page carries the center password status', function () {
     $this->actingAs($this->admin)->get(route('desktop.devices.index'))->assertOk()
         ->assertInertia(fn ($page) => $page->where('centerPassword.set', false)->where('centerPassword.updatedAt', null));
 
-    Setting::setExitPassword('secret12');
+    centerSettings()->setExitPassword('secret12');
 
     $this->actingAs($this->admin)->get(route('desktop.devices.index'))->assertOk()
         ->assertInertia(fn ($page) => $page->where('centerPassword.set', true)->where('centerPassword.updatedAt', fn ($v) => is_string($v)));
