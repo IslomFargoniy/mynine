@@ -1,8 +1,10 @@
+import { sanitizeHtml } from '@/utils/sanitize-html';
+
 const getImagePrefix = () => {
     return process.env.NODE_ENV === 'production' ? '' : '';
 };
 
-const cleanTinyMce = (html: string): string => {
+const cleanTinyMce = (html: string | null | undefined): string => {
     if (!html) return '';
 
     let cleaned = html;
@@ -38,8 +40,8 @@ const cleanTinyMce = (html: string): string => {
     // 6️⃣ Collapse multiple spaces but keep one
     cleaned = cleaned.replace(/[ \t]{2,}/g, ' ');
 
-    // 7️⃣ Trim
-    return cleaned.trim();
+    // 7️⃣ Trim, then allow-list sanitize (this helper feeds dangerouslySetInnerHTML)
+    return sanitizeHtml(cleaned.trim());
 };
 
 export { getImagePrefix, cleanTinyMce };

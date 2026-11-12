@@ -27,6 +27,7 @@
         "socialiteproviders/manager": "^4.8",
         "socialiteproviders/telegram": "dev-master",
         "spatie/laravel-permission": "^6.16",
+        "symfony/html-sanitizer": "^7.4",
         "tightenco/ziggy": "^2.4"
     },
     "require-dev": {
