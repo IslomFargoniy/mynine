@@ -250,6 +250,45 @@ void main() {
       await h.dispose();
     });
 
+    test('a lost session signs in again in the background and the exam goes on', () async {
+      final h = await _inListening();
+      final exam = h.exam..recoverLostSessions = true;
+      h.api.offline = true;
+      exam.setAnswer(partId: 101, questionId: 7003, text: 'Bristol');
+      await Future<void>.delayed(const Duration(milliseconds: 30));
+      h.api.offline = false;
+      h.api.revokeToken('session_expired');
+      h.sync.kick();
+      await waitFor(() => h.api.calls.where((c) => c == 'login').length >= 2);
+      await waitFor(() => exam.stage == ExamStage.exam);
+      expect(exam.answerFor(7003).text, 'Bristol');
+      await waitFor(() => h.api.savedAnswers.containsKey(7003));
+      await h.dispose();
+    });
+
+    test('a lost session that cannot be restored goes back to the code screen and keeps the answers', () async {
+      final h = await _inListening();
+      final exam = h.exam..recoverLostSessions = true;
+      h.api.offline = true;
+      exam.setAnswer(partId: 101, questionId: 7003, text: 'Bristol');
+      await Future<void>.delayed(const Duration(milliseconds: 30));
+      h.api.offline = false;
+      h.api.activeElsewhere = true;
+      h.api.revokeToken('session_revoked');
+      h.sync.kick();
+      await waitFor(() => exam.stage == ExamStage.idle);
+      expect(exam.error, isNull);
+      expect(await AnswerQueueRepository(h.db).pendingCount(), 1);
+
+      // The invigilator released it: the candidate signs in on this PC again and the answer goes out.
+      h.api.activeElsewhere = false;
+      await exam.login('DEMO1');
+      exam.acceptRules();
+      exam.confirmSoundCheck();
+      await waitFor(() => h.api.savedAnswers.containsKey(7003));
+      await h.dispose();
+    });
+
     test('expired token on a module submit locks the exam (no Completed screen)', () async {
       final h = await _inListening();
       h.api.revokeToken('session_expired');

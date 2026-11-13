@@ -40,7 +40,9 @@ class Harness {
         sync: sync,
         device: device,
         connection: connection,
-      );
+      )
+        ..recoverLostSessions = false
+        ..recoverRetryDelay = const Duration(milliseconds: 10);
 
   /// Builds the harness with the PC already registered (center password
   /// `mynine`). [approved] = admin approval; [number] = its exam-room number
@@ -83,7 +85,10 @@ class Harness {
       sync: sync,
       device: device,
       connection: connection,
-    );
+    )
+      // Most tests look at the locked state itself; the background recovery has its own tests.
+      ..recoverLostSessions = false
+      ..recoverRetryDelay = const Duration(milliseconds: 10);
     return Harness._(api, db, exam, device, sync, tmp, clock, connection);
   }
 

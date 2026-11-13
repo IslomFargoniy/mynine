@@ -635,6 +635,7 @@ class ExamController extends ChangeNotifier {
       _blockReason = BlockReason.sessionLost;
       _stage = ExamStage.blocked;
       notifyListeners();
+      unawaited(_recoverLostSession());
       return true;
     }
     if (paused != null) {
@@ -1340,6 +1341,31 @@ class ExamController extends ChangeNotifier {
     _blockReason = reason;
     _transitionMessage = null;
     _set(() => _stage = ExamStage.blocked);
+    if (reason == BlockReason.sessionLost) unawaited(_recoverLostSession());
+  }
+
+  /// Pause between the background sign-in tries of [_recoverLostSession].
+  Duration recoverRetryDelay = const Duration(seconds: 2);
+
+  /// Off only in tests that look at the locked state itself.
+  bool recoverLostSessions = true;
+
+  /// A lost session (token expired or revoked) is not put in front of the candidate: the PC signs in again with the
+  /// same code in the background and the exam goes on. When that is refused (the exam now runs on another PC, it is
+  /// finished, the code is gone) the PC returns to the code screen. The answers stay queued on this PC and are sent
+  /// when this candidate signs in here again.
+  Future<void> _recoverLostSession() async {
+    if (!recoverLostSessions) return;
+    final code = _candidateCode;
+    for (var i = 0; i < 3 && code.isNotEmpty && !_disposed; i++) {
+      if (i > 0) await Future<void>.delayed(recoverRetryDelay);
+      if (_stage != ExamStage.blocked || _blockReason != BlockReason.sessionLost) return;
+      await login(code);
+      if (_stage != ExamStage.blocked) return;
+    }
+    if (_disposed || _stage != ExamStage.blocked || _blockReason != BlockReason.sessionLost) return;
+    _error = null;
+    returnToCodeScreen();
   }
 
   /// Called by the Completed screen after 10 s (or by staff from the admin

@@ -336,7 +336,7 @@ void main() {
       await h.dispose();
     });
 
-    testWidgets('the re-login field accepts old codes like AVGUST17-697100', (tester) async {
+    testWidgets('a lost session shows no text while it is restored in the background', (tester) async {
       late Harness h;
       await tester.runAsync(() async {
         h = await _inListening();
@@ -351,10 +351,9 @@ void main() {
         ],
         child: MaterialApp(theme: buildTheme(), home: const BlockedScreen()),
       ));
-      await tester.enterText(find.byKey(const Key('blocked-code')), 'avgust17-697100 !x');
-      await tester.pump();
-      final field = tester.widget<TextField>(find.byKey(const Key('blocked-code')));
-      expect(field.controller!.text, 'AVGUST17-697100X');
+      expect(find.byKey(const Key('blocked-recovering')), findsOneWidget);
+      expect(find.byKey(const Key('blocked-message')), findsNothing);
+      expect(find.textContaining('invigilator'), findsNothing);
 
       await tester.pumpWidget(const SizedBox());
       await tester.runAsync(h.dispose);

@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../app/providers.dart';
@@ -8,13 +7,9 @@ import '../../core/theme/web_tokens.dart';
 import '../setup/setup_views.dart';
 import 'exam_controller.dart';
 
-/// The exam is locked: the server refused the session's token (the candidate
-/// signed in on another PC, or the session expired) or this app version is
-/// no longer accepted. Nothing is lost — the answers stay queued on this PC.
-///
-/// After the invigilator released the session in the admin panel, the
-/// candidate's code can be entered here again: the same attempt continues
-/// and the queued answers are uploaded with the new token.
+/// The exam is locked. A lost session (token revoked or expired) only shows a spinner while the PC signs in again in
+/// the background ([ExamController]); an app version the server no longer accepts shows its message. Nothing is
+/// lost — the answers stay queued on this PC.
 class BlockedScreen extends ConsumerStatefulWidget {
   const BlockedScreen({super.key});
 
@@ -23,14 +18,6 @@ class BlockedScreen extends ConsumerStatefulWidget {
 }
 
 class _BlockedScreenState extends ConsumerState<BlockedScreen> {
-  final _code = TextEditingController();
-
-  @override
-  void dispose() {
-    _code.dispose();
-    super.dispose();
-  }
-
   @override
   Widget build(BuildContext context) {
     final exam = ref.watch(examControllerProvider);
@@ -72,8 +59,16 @@ class _BlockedScreenState extends ConsumerState<BlockedScreen> {
                   onCheckNow: () => ref.read(kioskControllerProvider).checkApprovalNow(),
                 );
               }
+              // A lost session is restored in the background (or the PC goes back to the code screen): nothing to
+              // read for the candidate meanwhile.
+              if (exam.blockReason == BlockReason.sessionLost) {
+                return const Padding(
+                  key: Key('blocked-recovering'),
+                  padding: EdgeInsets.all(24),
+                  child: Center(child: CircularProgressIndicator()),
+                );
+              }
               final lines = exam.blockMessage.split('\n');
-              final canRelogin = exam.blockReason == BlockReason.sessionLost;
               return Column(mainAxisSize: MainAxisSize.min, children: [
                 const Icon(Icons.lock_outline, size: 64, color: TW.amber500),
                 const SizedBox(height: 16),
@@ -90,41 +85,6 @@ class _BlockedScreenState extends ConsumerState<BlockedScreen> {
                   Text('${exam.candidateName} · ${exam.candidateCode}',
                       style: inter(14, weight: FontWeight.w600, color: TW.gray700)),
                 ],
-                if (canRelogin) ...[
-                  const SizedBox(height: 28),
-                  Text('After the invigilator has released the session, enter the code again:',
-                      textAlign: TextAlign.center, style: inter(13, color: TW.gray500)),
-                  const SizedBox(height: 10),
-                  SizedBox(
-                    width: 280,
-                    child: TextField(
-                      key: const Key('blocked-code'),
-                      controller: _code,
-                      enabled: !exam.busy,
-                      textAlign: TextAlign.center,
-                      // Candidates of attempts made before the 6-digit codes
-                      // keep their old codes (e.g. AVGUST17-697100).
-                      textCapitalization: TextCapitalization.characters,
-                      inputFormatters: [
-                        FilteringTextInputFormatter.allow(RegExp('[A-Za-z0-9-]')),
-                        LengthLimitingTextInputFormatter(32),
-                        const _UpperCaseFormatter(),
-                      ],
-                      decoration: const InputDecoration(hintText: 'Exam code'),
-                      onSubmitted: (_) => exam.login(_code.text),
-                    ),
-                  ),
-                  if (exam.error != null) ...[
-                    const SizedBox(height: 8),
-                    Text(exam.error!, textAlign: TextAlign.center, style: const TextStyle(color: Colors.red)),
-                  ],
-                  const SizedBox(height: 12),
-                  FilledButton(
-                    key: const Key('blocked-relogin'),
-                    onPressed: exam.busy ? null : () => exam.login(_code.text),
-                    child: const Text('Sign in again'),
-                  ),
-                ],
               ]);
             },
           ),
@@ -140,12 +100,4 @@ class _BlockedScreenState extends ConsumerState<BlockedScreen> {
       ]),
     );
   }
-}
-
-class _UpperCaseFormatter extends TextInputFormatter {
-  const _UpperCaseFormatter();
-
-  @override
-  TextEditingValue formatEditUpdate(TextEditingValue oldValue, TextEditingValue newValue) =>
-      newValue.copyWith(text: newValue.text.toUpperCase());
 }
