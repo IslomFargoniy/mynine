@@ -1,1 +1,1 @@
-{"version":"1.0.29","file":"mynine-setup-1.0.29.exe","sha256":"5532195231423b4be257494bb31d507c54073ae062e968046d1cb91bb81dcbc8","size":19654821,"mandatory":true,"min_version":"1.0.29","notes":"Plain drag-and-drop boxes in summaries.","published_at":"2026-11-13T11:54:42Z"}
+{"version":"1.0.30","file":"mynine-setup-1.0.30.exe","sha256":"89f98099a2214e0c194aae22dc2ebb4e754c01f5bfcce6e63c1ab418caf5a09e","size":19656815,"mandatory":true,"min_version":"1.0.30","notes":"Text from PDFs wraps (non-breaking spaces).","published_at":"2026-11-13T12:43:43Z"}
