@@ -149,12 +149,24 @@ class ReceptionController extends Controller
                 $brandings[$ownerId] = CenterBranding::forCenter($ownerId ?: null);
             }
 
+            $branding = $brandings[$ownerId];
+            $testDate = $student->mock?->started_at ? Carbon::parse($student->mock->started_at) : null;
+            $variant = $student->mock?->test?->variant === 'general' ? 'general' : 'academic';
+            $centreNumber = strtoupper($branding?->code ?: 'MYNINE');
+
             $sheets[] = [
-                'branding' => $brandings[$ownerId],
+                'branding' => $branding,
+                'center_name' => $branding?->name ?: 'Mynine',
+                'centre_number' => $centreNumber,
+                'module' => $variant === 'general' ? 'GENERAL TRAINING' : 'ACADEMIC',
                 'name' => $student->name,
+                'phone' => $student->phone,
                 'code' => $student->code,
                 'mock' => $student->mock?->name,
-                'date' => $student->mock?->started_at ? Carbon::parse($student->mock->started_at)->format('d.m.Y') : '',
+                'date' => $testDate ? strtoupper($testDate->format('d/M/Y')) : '',
+                'issued' => now()->format('d/m/Y'),
+                'form_number' => ($testDate ?? now())->format('y').preg_replace('/[^A-Z0-9]/', '', $centreNumber).$student->code.'M'.$student->id.($variant === 'general' ? 'G' : 'A'),
+                'cefr' => self::cefr((float) $result['overall']),
                 'listening' => $result['listening'],
                 'reading' => $result['reading'],
                 'writing' => $result['writing'],
@@ -168,6 +180,18 @@ class ReceptionController extends Controller
         abort_if($sheets === [], 422, __('results_not_ready_selected'));
 
         return Pdf::render('pdf.result-sheet', compact('sheets'), 'Results_'.now()->format('Ymd_His'));
+    }
+
+    /** CEFR level of an overall band (as on the web result page). */
+    private static function cefr(float $overall): string
+    {
+        return match (true) {
+            $overall >= 8.5 => 'C2',
+            $overall >= 7.0 => 'C1',
+            $overall >= 5.5 => 'B2',
+            $overall >= 4.0 => 'B1',
+            default => 'A2',
+        };
     }
 
     /**

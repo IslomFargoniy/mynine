@@ -95,12 +95,12 @@ test('reception result sheets are branded per candidate\'s center', function () 
         ->assertOk()->assertHeader('Content-Type', 'application/pdf');
 
     $html = view('pdf.result-sheet', $box->data)->render();
-    expect($html)->toContain('Alpha Academy')->toContain('Powered by Mynine')->not->toContain('mynine.uz &middot;');
+    expect($html)->toContain('Alpha Academy')->toContain('Powered by Mynine')->toContain('Test Report Form')->toContain('B2')->not->toContain('&middot; mynine.uz');
 
     $box = captureView('pdf.result-sheet');
     $this->actingAs(makeUser('Reception', $this->mynine))->get(route('reception.result-sheets', ['ids' => $this->mynineExam['student']->id]))->assertOk();
     $html = view('pdf.result-sheet', $box->data)->render();
-    expect($html)->toContain('<div class="brand">Mynine</div>')->toContain('mynine.uz &middot;')->not->toContain('Powered by Mynine');
+    expect($html)->toContain('<span class="center-name">Mynine</span>')->toContain('&middot; mynine.uz')->not->toContain('Powered by Mynine');
 });
 
 test('the attempt result PDF of a partner mock shows the center; practice and Mynine mocks keep MYNINE.UZ', function () {
