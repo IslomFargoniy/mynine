@@ -26,6 +26,8 @@ class QuestionContext {
     required this.keys,
     this.images,
     this.store,
+    this.passageQuestionIds = const {},
+    this.pickedHeading,
   });
 
   final ExamController exam;
@@ -38,6 +40,12 @@ class QuestionContext {
 
   /// Highlights + notes (null: plain text, e.g. in tests or the review screen).
   final HighlightStore? store;
+
+  /// Matching questions answered by dragging a heading into the passage (`{14}` boxes, [PassageDropBox]).
+  final Set<int> passageQuestionIds;
+
+  /// Tap-to-place: the heading picked in the list waits for a tap on a passage box.
+  final ValueNotifier<String?>? pickedHeading;
 
   GlobalKey keyFor(int questionId) => keys.putIfAbsent(questionId, GlobalKey.new);
 
@@ -760,10 +768,15 @@ class _MatchingViewState extends State<MatchingView> {
   Widget build(BuildContext context) {
     final ctx = widget.ctx;
     final headings = _headings;
+    final inPassage = widget.section.questions.where((q) => ctx.passageQuestionIds.contains(q.id)).toList();
+    final rows = widget.section.questions.where((q) => !ctx.passageQuestionIds.contains(q.id)).toList();
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 16), // my-4
       child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
-        if (_hasTexts) ...[
+        if (inPassage.isNotEmpty) ...[
+          _dragList(headings, inPassage),
+          if (rows.isNotEmpty) const SizedBox(height: 24),
+        ] else if (_hasTexts) ...[
           Container(
             padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
@@ -784,12 +797,69 @@ class _MatchingViewState extends State<MatchingView> {
           ),
           const SizedBox(height: 24),
         ],
-        for (final (i, q) in widget.section.questions.indexed) ...[
+        for (final (i, q) in rows.indexed) ...[
           if (i > 0) const SizedBox(height: 12),
           _row(q, headings),
         ],
       ]),
     );
+  }
+
+  /// Headings to drag into the passage boxes. A heading in use leaves the list (letters A–H may repeat).
+  Widget _dragList(List<String> headings, List<QuestionPayload> inPassage) {
+    final ctx = widget.ctx;
+    final available = [...headings];
+    if (_hasTexts) {
+      for (final q in inPassage) {
+        final t = ctx.answer(q.id).text;
+        if (t != null) available.remove(t);
+      }
+    }
+    final picked = ctx.pickedHeading;
+    Widget list(String? pickedValue) => Container(
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            color: ctx.palette.standard ? TW.gray50 : ctx.palette.panel,
+            border: Border.all(color: ctx.c(TW.gray300), width: 2),
+            borderRadius: BorderRadius.circular(8),
+          ),
+          child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+            Text(_hasTexts ? 'LIST OF HEADINGS' : 'OPTIONS',
+                style: inter(14, weight: FontWeight.w700, color: ctx.c(TW.gray800), letterSpacing: 0.7)),
+            const SizedBox(height: 10),
+            Wrap(
+              spacing: 8,
+              runSpacing: 8,
+              children: [
+                for (final h in available)
+                  if (_hasTexts)
+                    SizedBox(
+                      width: double.infinity,
+                      child: Align(
+                        alignment: Alignment.centerLeft,
+                        child: HeadingChip(
+                          key: Key('heading-$h'),
+                          label: h,
+                          ctx: ctx,
+                          picked: pickedValue == h,
+                          onTap: picked == null ? null : () => picked.value = pickedValue == h ? null : h,
+                        ),
+                      ),
+                    )
+                  else
+                  HeadingChip(
+                    key: Key('heading-$h'),
+                    label: h,
+                    ctx: ctx,
+                    picked: pickedValue == h,
+                    onTap: picked == null ? null : () => picked.value = pickedValue == h ? null : h,
+                  ),
+              ],
+            ),
+          ]),
+        );
+    if (picked == null) return list(null);
+    return ValueListenableBuilder<String?>(valueListenable: picked, builder: (_, v, _) => list(v));
   }
 
   Widget _row(QuestionPayload q, List<String> headings) {
@@ -826,6 +896,154 @@ class _MatchingViewState extends State<MatchingView> {
           onChanged: (v) => ctx.setText(q.id, v, debounce: false),
         ),
       ]),
+    );
+  }
+}
+
+/// A heading to drag into a passage box ([PassageDropBox]); tap picks it for tap-to-place.
+class HeadingChip extends StatelessWidget {
+  const HeadingChip({super.key, required this.label, required this.ctx, this.picked = false, this.onTap, this.fromQuestionId});
+
+  final String label;
+  final QuestionContext ctx;
+  final bool picked;
+  final VoidCallback? onTap;
+
+  /// Set when the chip is the content of a box (dragging it moves the heading).
+  final int? fromQuestionId;
+
+  Widget _box({bool dragging = false}) => Container(
+        constraints: const BoxConstraints(maxWidth: WebTokens.matchingSlotWidth + 40),
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+        decoration: BoxDecoration(
+          color: picked && ctx.palette.standard ? TW.blue50 : (ctx.palette.standard ? TW.white : ctx.palette.background),
+          border: Border.all(color: picked ? WebTokens.dropOverBorder : ctx.c(TW.gray400)),
+          boxShadow: dragging ? const [BoxShadow(color: Color(0x33000000), blurRadius: 6, offset: Offset(0, 2))] : null,
+        ),
+        child: Text(label, style: inter(14, color: ctx.c(TW.gray900), height: 1.375)),
+      );
+
+  @override
+  Widget build(BuildContext context) {
+    if (ctx.locked) return Opacity(opacity: 0.5, child: _box());
+    return Draggable<HeadingDrag>(
+      data: HeadingDrag(label, fromQuestionId),
+      feedback: Material(color: Colors.transparent, child: _box(dragging: true)),
+      childWhenDragging: Opacity(opacity: 0.4, child: _box()),
+      child: MouseRegion(
+        cursor: SystemMouseCursors.grab,
+        child: GestureDetector(onTap: onTap, child: _box()),
+      ),
+    );
+  }
+}
+
+/// Payload of a heading drag.
+class HeadingDrag {
+  const HeadingDrag(this.label, [this.fromQuestionId]);
+  final String label;
+  final int? fromQuestionId;
+}
+
+/// A heading box inside the passage (IELTS computer test, web `passage-drop-zone.tsx`): empty it shows the question
+/// number; a heading is dropped in from the list (or tapped in after picking it), can be dragged on to another box,
+/// and × sends it back.
+class PassageDropBox extends StatelessWidget {
+  const PassageDropBox({super.key, required this.question, required this.ctx});
+
+  final QuestionPayload question;
+  final QuestionContext ctx;
+
+  void _place(HeadingDrag d) {
+    if (ctx.locked) return;
+    final from = d.fromQuestionId;
+    if (from == question.id) return;
+    if (from != null) ctx.setText(from, '', debounce: false);
+    ctx.setText(question.id, d.label, debounce: false);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final value = ctx.answer(question.id).text;
+    final filled = value != null && value.isNotEmpty;
+    final picked = ctx.pickedHeading;
+    Widget box(String? pickedValue) => DragTarget<HeadingDrag>(
+          onWillAcceptWithDetails: (_) => !ctx.locked,
+          onAcceptWithDetails: (d) => _place(d.data),
+          builder: (context, candidates, _) {
+            final over = candidates.isNotEmpty || pickedValue != null;
+            final border = over && ctx.palette.standard
+                ? WebTokens.dropOverBorder
+                : (filled ? ctx.c(TW.black) : ctx.c(TW.gray500));
+            final content = Container(
+              constraints: const BoxConstraints(minWidth: 260, minHeight: 36),
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+              child: Row(mainAxisSize: MainAxisSize.min, children: [
+                Text('${question.number}',
+                    style: inter(14, weight: FontWeight.w700, color: ctx.c(WebTokens.gapNumber))),
+                const SizedBox(width: 8),
+                if (filled) ...[
+                  Flexible(
+                    child: Draggable<HeadingDrag>(
+                      data: HeadingDrag(value, question.id),
+                      maxSimultaneousDrags: ctx.locked ? 0 : 1,
+                      feedback: Material(
+                        color: Colors.transparent,
+                        child: HeadingChip(label: value, ctx: ctx),
+                      ),
+                      childWhenDragging: Opacity(
+                        opacity: 0.4,
+                        child: Text(value, style: inter(14, weight: FontWeight.w600, color: ctx.palette.text)),
+                      ),
+                      child: MouseRegion(
+                        cursor: SystemMouseCursors.grab,
+                        child: Text(value, style: inter(14, weight: FontWeight.w600, color: ctx.palette.text)),
+                      ),
+                    ),
+                  ),
+                  if (!ctx.locked) ...[
+                    const SizedBox(width: 6),
+                    GestureDetector(
+                      key: Key('clear-${question.id}'),
+                      onTap: () => ctx.setText(question.id, '', debounce: false),
+                      child: MouseRegion(
+                        cursor: SystemMouseCursors.click,
+                        child: Text('×', style: inter(16, color: ctx.c(TW.gray500))),
+                      ),
+                    ),
+                  ],
+                ],
+              ]),
+            );
+            final decorated = filled && !over
+                ? DecoratedBox(
+                    decoration: BoxDecoration(
+                      color: ctx.palette.standard ? TW.white : ctx.palette.background,
+                      border: Border.all(color: border, width: 2),
+                    ),
+                    child: content,
+                  )
+                : _DashedBox(
+                    color: border,
+                    fill: over && ctx.palette.standard ? WebTokens.dropOverBg : (ctx.palette.standard ? TW.white : null),
+                    radius: 0,
+                    child: content,
+                  );
+            return GestureDetector(
+              key: Key('passage-drop-${question.number}'),
+              onTap: pickedValue == null || ctx.locked
+                  ? null
+                  : () {
+                      _place(HeadingDrag(pickedValue));
+                      picked?.value = null;
+                    },
+              child: Padding(padding: const EdgeInsets.symmetric(vertical: 4), child: decorated),
+            );
+          },
+        );
+    return KeyedSubtree(
+      key: ctx.keyFor(question.id),
+      child: picked == null ? box(null) : ValueListenableBuilder<String?>(valueListenable: picked, builder: (_, v, _) => box(v)),
     );
   }
 }

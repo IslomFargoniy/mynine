@@ -10,6 +10,7 @@ import '../../core/theme/web_tokens.dart';
 import '../../data/db/app_database.dart';
 import 'html_document.dart';
 import 'html_view.dart';
+import 'passage_slots.dart';
 
 /// Highlights + notes of one part, persisted in SQLite.
 class HighlightStore extends ChangeNotifier {
@@ -102,6 +103,8 @@ class PassagePane extends StatefulWidget {
     required this.palette,
     this.onToggleNotes,
     this.imageResolver,
+    this.slotNumbers = const {},
+    this.slotBuilder,
   });
 
   final int partId;
@@ -111,6 +114,10 @@ class PassagePane extends StatefulWidget {
   final ExamPalette palette;
   final VoidCallback? onToggleNotes;
   final ImageResolver? imageResolver;
+
+  /// Question numbers with a heading box (`{14}`) in the passage ([passageSlots]), built by [slotBuilder].
+  final Set<int> slotNumbers;
+  final Widget Function(BuildContext context, int number)? slotBuilder;
 
   @override
   State<PassagePane> createState() => _PassagePaneState();
@@ -202,7 +209,11 @@ class _PassagePaneState extends State<PassagePane> {
   @override
   Widget build(BuildContext context) {
     final p = widget.palette;
-    final doc = parseHtmlCached(widget.html);
+    final slotBuilder = widget.slotBuilder;
+    final hasSlots = widget.slotNumbers.isNotEmpty && slotBuilder != null;
+    final doc = hasSlots
+        ? parseHtmlCached(hoistPassageMarkers(widget.html), blankPattern: passageSlotPattern)
+        : parseHtmlCached(widget.html);
     return ListenableBuilder(
       listenable: widget.store,
       builder: (context, _) {
@@ -232,6 +243,14 @@ class _PassagePaneState extends State<PassagePane> {
                   noteColor: p.note,
                   imageResolver: widget.imageResolver,
                   onSelectionChanged: _onSelection,
+                  blankBuilder: hasSlots
+                      ? (context, blank) {
+                          final n = passageSlotNumber(blank.marker);
+                          return n != null && widget.slotNumbers.contains(n)
+                              ? slotBuilder(context, n)
+                              : Text(blank.marker);
+                        }
+                      : null,
                   blockSpacing: WebTokens.passageFontSize * 1.25, // prose p margin 1.25em
                   tableHeaderColor: p.standard ? WebTokens.tableHeaderBg : null,
                   tableBorderColor: p.standard ? WebTokens.tableBorder : p.text,

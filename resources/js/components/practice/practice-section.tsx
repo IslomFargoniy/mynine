@@ -25,6 +25,8 @@ interface SectionUpdateProps {
     setSelectedPart: React.Dispatch<React.SetStateAction<Part | null>>;
     flaggedIds: Set<number>;
     toggleFlag: (id: number) => void;
+    /** Matching questions answered in the passage (`{14}` boxes). */
+    passageQuestionIds?: Set<number>;
 }
 
 export default function PracticeSection({
@@ -34,7 +36,8 @@ export default function PracticeSection({
                                             sectionIndex,
                                             setSelectedPart,
                                             flaggedIds,
-                                            toggleFlag
+                                            toggleFlag,
+                                            passageQuestionIds
                                         }: SectionUpdateProps) {
     const { t } = useTranslation();
 
@@ -326,6 +329,7 @@ export default function PracticeSection({
                         }}
                         flaggedIds={flaggedIds}
                         toggleFlag={toggleFlag}
+                        passageQuestionIds={passageQuestionIds}
                     />
                 </div>
             ) : (section.question_type.type !== 'complete_section' &&

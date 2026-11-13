@@ -1,14 +1,21 @@
-import React, { useRef, useEffect, useState } from 'react';
-import { Attempt, Part } from '@/types';
+import React, { useRef, useEffect, useState, useMemo } from 'react';
+import { createPortal } from 'react-dom';
+import { toast } from 'sonner';
+import { Attempt, Part, Question, Section } from '@/types';
 import { sanitizeAndInsertWbr } from '@/utils/sanitizeAndInsertWbr';
+import { syncQueue } from '@/services/sync-queue';
+import PassageDropZone from '@/components/practice/passage-drop-zone';
+import { hoistPassageMarkers, mountPassageSlots, passageSlots, PassageSlot } from '@/utils/passageSlots';
 import { Highlighter, FileText, X, Trash2, StickyNote, ChevronDown, ChevronUp } from 'lucide-react';
 
 interface PartUpdateProps {
     part: Part;
     attempt: Attempt;
+    /** Needed for headings dropped into the passage (`{14}` boxes); without it the boxes are not built. */
+    setSelectedPart?: React.Dispatch<React.SetStateAction<Part | null>>;
 }
 
-export default function PracticePart({ attempt, part }: PartUpdateProps) {
+export default function PracticePart({ attempt, part, setSelectedPart }: PartUpdateProps) {
     const textRef = useRef<HTMLDivElement>(null);
     const toolbarRef = useRef<HTMLDivElement>(null);
 
@@ -38,6 +45,15 @@ export default function PracticePart({ attempt, part }: PartUpdateProps) {
         return () => window.removeEventListener('toggle-candidate-notes', handleToggleNotes);
     }, []);
 
+    // Matching headings answered inside the passage. Keyed by the passage + numbering only, so answering
+    // (which replaces `part`) does not rebuild the passage DOM.
+    const slotKey = setSelectedPart
+        ? (part.sections ?? []).map((s: Section) => `${s.question_type?.type}:${s.questions.map((q: Question) => q.id).join(',')}`).join('|')
+        : '';
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    const slots = useMemo(() => (setSelectedPart ? passageSlots(part) : new Map<number, PassageSlot>()), [part.textarea, part.order, slotKey]);
+    const [slotHosts, setSlotHosts] = useState<Map<number, HTMLElement>>(new Map());
+
     useEffect(() => {
         if (!textRef.current) return;
 
@@ -45,9 +61,56 @@ export default function PracticePart({ attempt, part }: PartUpdateProps) {
         if (saved) {
             textRef.current.innerHTML = sanitizeAndInsertWbr(saved, 40);
         } else {
-            textRef.current.innerHTML = sanitizeAndInsertWbr(part.textarea || '', 40);
+            const html = slots.size > 0 ? hoistPassageMarkers(part.textarea || '') : part.textarea || '';
+            textRef.current.innerHTML = sanitizeAndInsertWbr(html, 40);
         }
-    }, [part.textarea, highlightStorageKey]);
+        setSlotHosts(slots.size > 0 ? mountPassageSlots(textRef.current, slots) : new Map());
+    }, [part.textarea, highlightStorageKey, slots]);
+
+    /** Current answer of a question (the part in state carries the saved answers). */
+    const answerOf = (questionId: number): string => {
+        for (const s of part.sections ?? []) {
+            const q = s.questions.find((x: Question) => x.id === questionId);
+            if (q) return q.attempt_answer?.answer_text ?? '';
+        }
+        return '';
+    };
+
+    const saveSlot = async (slot: PassageSlot, value: string) => {
+        const text = value.trim();
+        setSelectedPart?.((prev) => {
+            if (!prev) return prev;
+            return {
+                ...prev,
+                sections: prev.sections.map((s: Section) => ({
+                    ...s,
+                    questions: s.questions.map((q: Question) =>
+                        q.id !== slot.question.id
+                            ? q
+                            : {
+                                  ...q,
+                                  attempt_answer: text
+                                      ? ({ id: Date.now(), question_id: q.id, answer_text: text } as unknown as Question['attempt_answer'])
+                                      : undefined,
+                              },
+                    ),
+                })),
+            };
+        });
+        try {
+            const res = await syncQueue.saveAnswer({
+                attemptId: attempt.id,
+                partId: slot.section.part_id,
+                questionId: slot.question.id,
+                answerText: text === '' ? null : text,
+            });
+            if (res.error && !res.offline) throw new Error(res.error);
+        } catch (error) {
+            toast.error(error instanceof Error ? error.message : String(error));
+        }
+    };
+
+    const slotByQuestion = (questionId: number) => Array.from(slots.values()).find((s) => s.question.id === questionId);
 
     const handleMouseUp = () => {
         const selection = window.getSelection();
@@ -113,6 +176,7 @@ export default function PracticePart({ attempt, part }: PartUpdateProps) {
             {
                 acceptNode: (node) => {
                     if (!node.nodeValue?.trim()) return NodeFilter.FILTER_REJECT;
+                    if (node.parentElement?.closest('.passage-drop')) return NodeFilter.FILTER_REJECT;
                     if (node.parentElement?.classList.contains('highlight'))
                         return NodeFilter.FILTER_REJECT;
 
@@ -232,7 +296,10 @@ export default function PracticePart({ attempt, part }: PartUpdateProps) {
 
     const saveHighlights = () => {
         if (!textRef.current) return;
-        localStorage.setItem(highlightStorageKey, textRef.current.innerHTML);
+        // Heading boxes are stored empty (React fills them again).
+        const copy = textRef.current.cloneNode(true) as HTMLElement;
+        copy.querySelectorAll('span.passage-drop').forEach((el) => (el.innerHTML = ''));
+        localStorage.setItem(highlightStorageKey, copy.innerHTML);
     };
 
     return (
@@ -307,6 +374,27 @@ export default function PracticePart({ attempt, part }: PartUpdateProps) {
                 className="prose dark:prose-invert text-[14px] leading-[1.7] break-words max-w-full ielts-passage font-sans text-black"
                 onMouseUp={handleMouseUp}
             />
+
+            {Array.from(slotHosts.entries()).map(([number, host]) => {
+                const slot = slots.get(number);
+                if (!slot) return null;
+                return createPortal(
+                    <PassageDropZone
+                        slot={slot}
+                        value={answerOf(slot.question.id)}
+                        onPlace={(label, fromQuestionId) => {
+                            if (fromQuestionId && fromQuestionId !== slot.question.id) {
+                                const from = slotByQuestion(fromQuestionId);
+                                if (from) void saveSlot(from, '');
+                            }
+                            void saveSlot(slot, label);
+                        }}
+                        onClear={() => void saveSlot(slot, '')}
+                    />,
+                    host,
+                    `slot-${slot.question.id}`,
+                );
+            })}
 
             {/* Official Inspera Floating Toolbar (White card with Clear/Note and Highlight) */}
             {toolbarPos && (
@@ -406,6 +494,10 @@ export default function PracticePart({ attempt, part }: PartUpdateProps) {
                   border-radius: 2px;
                   padding: 1px 0;
                   transition: background-color 0.2s;
+                }
+                .ielts-passage span.passage-drop {
+                  display: inline-block;
+                  vertical-align: middle;
                 }
                 mark.note-highlight {
                   background-color: rgba(147, 197, 253, 0.5);

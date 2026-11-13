@@ -16,6 +16,7 @@ import '../../data/models/exam_models.dart';
 import '../../data/models/part_payload.dart';
 import '../../data/repositories/sync_service.dart';
 import '../passage/passage_pane.dart';
+import '../passage/passage_slots.dart';
 import '../questions/question_widgets.dart';
 import 'exam_controller.dart';
 import 'listening_audio.dart';
@@ -33,6 +34,9 @@ class ExamShell extends ConsumerStatefulWidget {
 
 class _ExamShellState extends ConsumerState<ExamShell> {
   final Map<int, GlobalKey> _questionKeys = {};
+
+  /// Tap-to-place heading for the passage boxes (shared by both panes).
+  final _pickedHeading = ValueNotifier<String?>(null);
   /// Passage width share. A notifier (not setState) so dragging the divider rebuilds only the split row,
   /// never the passage and question widgets themselves (that made the drag lag on the exam PCs).
   final _split = ValueNotifier<double>(WebTokens.splitDefault);
@@ -43,6 +47,7 @@ class _ExamShellState extends ConsumerState<ExamShell> {
   void dispose() {
     _store?.dispose();
     _split.dispose();
+    _pickedHeading.dispose();
     super.dispose();
   }
 
@@ -182,15 +187,20 @@ class _ExamShellState extends ConsumerState<ExamShell> {
     );
   }
 
+  QuestionContext _ctxFor(ExamController exam, PartPayload part, ExamPalette palette) => QuestionContext(
+        exam: exam,
+        part: part,
+        palette: palette,
+        keys: _questionKeys,
+        images: (src) => _resolveImage(exam, src),
+        store: _storeFor(exam),
+        // Listening has no passage pane, so its matching questions keep the select.
+        passageQuestionIds: part.type == 'listening' ? const {} : passageSlotQuestionIds(part),
+        pickedHeading: _pickedHeading,
+      );
+
   Widget _questionsPane(ExamController exam, PartPayload part, ExamPalette palette, {required bool constrained}) {
-    final ctx = QuestionContext(
-      exam: exam,
-      part: part,
-      palette: palette,
-      keys: _questionKeys,
-      images: (src) => _resolveImage(exam, src),
-      store: _storeFor(exam),
-    );
+    final ctx = _ctxFor(exam, part, palette);
     final column = Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
       for (final s in part.sections) SectionView(key: ValueKey('s-${s.id}'), section: s, ctx: ctx),
     ]);
@@ -216,6 +226,7 @@ class _ExamShellState extends ConsumerState<ExamShell> {
     if (module.isListening) {
       return _questionsPane(exam, part, palette, constrained: true);
     }
+    final slots = passageSlots(part);
     final left = PassagePane(
       key: ValueKey('passage-${part.id}'),
       partId: part.id,
@@ -225,6 +236,8 @@ class _ExamShellState extends ConsumerState<ExamShell> {
       palette: palette,
       onToggleNotes: () => setState(() => _notesOpen = !_notesOpen),
       imageResolver: (src) => _resolveImage(exam, src),
+      slotNumbers: slots.keys.toSet(),
+      slotBuilder: (context, n) => PassageDropBox(question: slots[n]!, ctx: _ctxFor(exam, part, palette)),
     );
     // Built once per shell build; the split row below reuses these same instances while dragging, so Flutter
     // only re-lays them out at the new width instead of rebuilding every text block and question.
