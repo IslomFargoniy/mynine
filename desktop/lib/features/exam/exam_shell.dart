@@ -231,7 +231,7 @@ class _ExamShellState extends ConsumerState<ExamShell> {
       key: ValueKey('passage-${part.id}'),
       partId: part.id,
       title: part.name,
-      html: part.html,
+      html: slots.isEmpty ? part.html : passageHtml(part),
       store: _storeFor(exam),
       palette: palette,
       onToggleNotes: () => setState(() => _notesOpen = !_notesOpen),
@@ -1090,8 +1090,11 @@ class _InactivePartState extends State<_InactivePart> {
 
   @override
   Widget build(BuildContext context) {
+    // Counted in question numbers: a "Choose TWO" question covers two.
     final qs = widget.part.allQuestions.toList();
-    final answered = qs.where((q) => widget.exam.answerFor(q.id).isAnswered).length;
+    final total = qs.fold<int>(0, (s, q) => s + q.answerCount);
+    final answered =
+        qs.where((q) => widget.exam.answerFor(q.id).isAnswered).fold<int>(0, (s, q) => s + q.answerCount);
     return MouseRegion(
       cursor: SystemMouseCursors.click,
       onEnter: (_) => setState(() => _hover = true),
@@ -1114,7 +1117,7 @@ class _InactivePartState extends State<_InactivePart> {
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
               decoration: const BoxDecoration(color: WebTokens.inactivePartCountBg, borderRadius: WebTokens.r2),
-              child: Text('$answered of ${qs.length}',
+              child: Text('$answered of $total',
                   style: inter(12, weight: FontWeight.w600, color: _hover ? TW.gray600 : WebTokens.inactivePartCount)),
             ),
           ]),

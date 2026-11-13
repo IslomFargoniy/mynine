@@ -16,24 +16,121 @@ export interface PassageSlot {
     sectionIndex: number;
 }
 
-export function passageSlots(part: Part | null | undefined): Map<number, PassageSlot> {
-    const out = new Map<number, PassageSlot>();
-    const html = part?.textarea ?? '';
-    if (!part || !/\{\d{1,3}\}/.test(html)) return out;
+/** Plain text of an HTML fragment. */
+function plain(html: string | null | undefined): string {
+    return (html ?? '')
+        .replace(/<[^>]*>/g, ' ')
+        .replace(/&nbsp;/gi, ' ')
+        .replace(/\s+/g, ' ')
+        .trim();
+}
 
-    const present = new Set(Array.from(html.matchAll(MARKER), (m) => Number(m[1])));
+/** "Section A" / "Paragraph B" / "C" → the paragraph letter. */
+export function paragraphLetter(questionHtml: string | null | undefined): string | null {
+    const m = plain(questionHtml).match(/^(?:section|paragraph)?\s*([A-Za-z])\.?$/i);
+    return m ? m[1].toUpperCase() : null;
+}
+
+/** First question number of each section (the right pane's numbering). */
+function sectionStarts(part: Part): number[] {
     let order = Number(part.order ?? 0);
-    (part.sections ?? []).forEach((section, sectionIndex) => {
+    return (part.sections ?? []).map((section) => {
         const start = order;
-        if (section.question_type?.type === 'matching') {
-            section.questions.forEach((question, i) => {
-                const number = start + 1 + i;
-                if (present.has(number)) out.set(number, { number, question, section, sectionIndex });
-            });
-        }
         order = start + section.questions.reduce((sum, q) => sum + Number(q.is_correct_count ?? 1), 0);
+        return start;
+    });
+}
+
+/**
+ * Without `{n}` markers: a matching section whose questions are "Section A" … "Section F" gets a box above each
+ * passage paragraph that opens with that letter (bold "A", or a plain "A " when every letter is found in order).
+ */
+export function insertAutoMarkers(html: string, part: Part): string {
+    if (!html || /\{\d{1,3}\}/.test(html) || /passage-drop/.test(html)) return html;
+    const starts = sectionStarts(part);
+    let out = html;
+    (part.sections ?? []).forEach((section, si) => {
+        if (section.question_type?.type !== 'matching') return;
+        const wanted = section.questions
+            .map((q, i) => ({ letter: paragraphLetter(q.textarea), number: starts[si] + 1 + i }))
+            .filter((w): w is { letter: string; number: number } => !!w.letter);
+        if (wanted.length === 0) return;
+
+        const find = (letter: string, bold: boolean, from: number): number => {
+            const re = bold
+                ? new RegExp(`<p(?:\\s[^>]*)?>(?:\\s|&nbsp;)*<(strong|b)>(?:\\s|&nbsp;)*${letter}[.:)]?(?:\\s|&nbsp;)*</\\1>`, 'g')
+                : new RegExp(`<p(?:\\s[^>]*)?>(?:\\s|&nbsp;)*${letter}[.:)]?(?:\\s|&nbsp;)+`, 'g');
+            re.lastIndex = from;
+            const m = re.exec(out);
+            return m ? m.index : -1;
+        };
+        for (const bold of [true, false]) {
+            const at: number[] = [];
+            let from = 0;
+            for (const w of wanted) {
+                const i = find(w.letter, bold, from);
+                if (i < 0) break;
+                at.push(i);
+                from = i + 1;
+            }
+            // Bold letters may be partial; plain letters only count when all are found in order.
+            if (at.length === 0 || (!bold && at.length < wanted.length)) continue;
+            for (let k = at.length - 1; k >= 0; k--) out = `${out.slice(0, at[k])}<p>{${wanted[k].number}}</p>${out.slice(at[k])}`;
+            return;
+        }
     });
     return out;
+}
+
+/** The passage HTML with the heading boxes' markers (written by the author, or found from "Section A"…). */
+export function passageHtml(part: Part | null | undefined): string {
+    if (!part) return '';
+    return insertAutoMarkers(part.textarea ?? '', part);
+}
+
+export function passageSlots(part: Part | null | undefined): Map<number, PassageSlot> {
+    const out = new Map<number, PassageSlot>();
+    if (!part) return out;
+    const html = passageHtml(part);
+    if (!/\{\d{1,3}\}/.test(html)) return out;
+
+    const present = new Set(Array.from(html.matchAll(MARKER), (m) => Number(m[1])));
+    const starts = sectionStarts(part);
+    (part.sections ?? []).forEach((section, sectionIndex) => {
+        if (section.question_type?.type !== 'matching') return;
+        section.questions.forEach((question, i) => {
+            const number = starts[sectionIndex] + 1 + i;
+            if (present.has(number)) out.set(number, { number, question, section, sectionIndex });
+        });
+    });
+    return out;
+}
+
+/**
+ * Headings given only as a range (i–vii) with their texts in the section's instructions (`<li>vi Developments…</li>`):
+ * value → full text, so the chips and boxes show the heading, while the answer stays the number.
+ */
+export function headingTexts(sectionHtml: string | null | undefined, values: string[]): Record<string, string> {
+    const items = Array.from((sectionHtml ?? '').matchAll(/<li[^>]*>([\s\S]*?)<\/li>/gi), (m) => plain(m[1]));
+    const out: Record<string, string> = {};
+    values.forEach((v) => {
+        const hit = items.find((t) => t.toLowerCase().startsWith(`${v.toLowerCase()} `) || t.toLowerCase().startsWith(`${v.toLowerCase()}.`));
+        if (hit) out[v] = hit;
+    });
+    return out;
+}
+
+/** In drag mode the list of headings becomes the draggable list: the static copy in the instructions goes. */
+export function stripHeadingList(sectionHtml: string, values: string[]): string {
+    const texts = headingTexts(sectionHtml, values);
+    if (Object.keys(texts).length < Math.max(2, values.length - 1)) return sectionHtml;
+    return sectionHtml
+        .replace(/<(ul|ol)[^>]*>([\s\S]*?)<\/\1>/gi, (list, _t, inner: string) => {
+            const lis = Array.from(inner.matchAll(/<li[^>]*>([\s\S]*?)<\/li>/gi), (m) => plain(m[1]).toLowerCase());
+            const isHeadings = lis.length > 0 && lis.every((t) => values.some((v) => t.startsWith(`${v.toLowerCase()} `) || t.startsWith(`${v.toLowerCase()}.`)));
+            return isHeadings ? '' : list;
+        })
+        .replace(/<(p|h[1-6])[^>]*>(?:\s|&nbsp;|<\/?(?:strong|b|em)>)*list of headings(?:\s|&nbsp;|<\/?(?:strong|b|em)>)*<\/\1>/gi, '');
 }
 
 /** Question ids answered in the passage (their select is not shown in the right pane). */

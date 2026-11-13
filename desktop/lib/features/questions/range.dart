@@ -10,8 +10,10 @@ List<String> buildRange(String? fromRaw, String? toRaw) {
   if (numRe.hasMatch(from) && numRe.hasMatch(to)) {
     return _span(int.parse(from), int.parse(to)).map((n) => '$n').toList();
   }
+  // "i"–"v" / "i"–"x" are heading numbers (roman), not letters I…V / I…X.
+  final romanList = from == 'i' && RegExp(r'^[ivx]$').hasMatch(to);
   final letterRe = RegExp(r'^[A-Za-z]$');
-  if (letterRe.hasMatch(from) && letterRe.hasMatch(to)) {
+  if (!romanList && letterRe.hasMatch(from) && letterRe.hasMatch(to)) {
     return _span(from.toUpperCase().codeUnitAt(0), to.toUpperCase().codeUnitAt(0))
         .map(String.fromCharCode)
         .toList();

@@ -4,6 +4,8 @@ import { HEADING_MIME, headingPick, PassageSlot, readHeadingDrag, usePickedHeadi
 interface Props {
     slot: PassageSlot;
     value: string;
+    /** Text shown for the value (the full heading when the answer is its number). */
+    display?: string;
     onPlace: (label: string, fromQuestionId?: number) => void;
     onClear: () => void;
 }
@@ -12,7 +14,7 @@ interface Props {
  * A heading box inside the passage (IELTS computer test): empty it shows the question number; a heading is dropped
  * in from the list (or tapped in after picking it), can be dragged on to another box, and × sends it back.
  */
-export default function PassageDropZone({ slot, value, onPlace, onClear }: Props) {
+export default function PassageDropZone({ slot, value, display, onPlace, onClear }: Props) {
     const [over, setOver] = useState(false);
     const picked = usePickedHeading();
     const qId = slot.question.id;
@@ -59,7 +61,7 @@ export default function PassageDropZone({ slot, value, onPlace, onClear }: Props
                         onDragStart={(e) => writeHeadingDrag(e, { label: value, fromQuestionId: qId })}
                         className="min-w-0 flex-1 cursor-grab font-semibold break-words text-black dark:text-white"
                     >
-                        {value}
+                        {display || value}
                     </span>
                     <button
                         type="button"

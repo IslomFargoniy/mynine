@@ -746,16 +746,19 @@ export default function Practice() {
 
                         return parts.map((p, idx) => {
                             const isActive = idx === ci;
+                            // Counted in question numbers: a "Choose TWO" question covers two.
                             let answered = 0;
-                            const total = p.sections?.reduce((s, sec) => {
-                                sec.questions?.forEach(q => {
+                            let total = 0;
+                            p.sections?.forEach((sec) => {
+                                sec.questions?.forEach((q) => {
+                                    const count = Number(q.is_correct_count ?? 1) || 1;
+                                    total += count;
                                     if (q.attempt_answer && (
                                         (q.attempt_answer.attempt_answer_options?.length ?? 0) > 0 ||
                                         (q.attempt_answer.answer_text?.trim())
-                                    )) answered++;
+                                    )) answered += count;
                                 });
-                                return s + (sec.questions?.length || 0);
-                            }, 0) || 0;
+                            });
 
                             if (isActive) {
                                 return (

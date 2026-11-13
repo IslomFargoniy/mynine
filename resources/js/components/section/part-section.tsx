@@ -43,7 +43,8 @@ export default function PartSection({ section, globalIndex }: SectionUpdateProps
         });
     };
 
-    const questionCount = section.questions?.length ?? 0;
+    // Question numbers, not rows: a "Choose TWO" question covers two.
+    const questionCount = (section.questions ?? []).reduce((sum, q) => sum + (Number(q.is_correct_count) || 1), 0);
     const questionRange = questionCount > 0
         ? `Q${globalIndex + 1}–${globalIndex + questionCount}`
         : t('no_questions');

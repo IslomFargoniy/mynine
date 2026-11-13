@@ -10,6 +10,7 @@ import '../exam/exam_controller.dart';
 import '../passage/html_document.dart';
 import '../passage/html_view.dart';
 import '../passage/passage_pane.dart' show HighlightStore, SelectableHtml, questionDocId;
+import '../passage/passage_slots.dart' show headingTexts, stripHeadingList;
 import 'range.dart';
 
 // Widgets in this file reproduce resources/js/components/practice/
@@ -171,8 +172,11 @@ class SectionView extends StatelessWidget {
   /// Non-gap section html: `text-base/8` (16 px / 32 px line height).
   Widget _instructions() {
     if (section.html.trim().isEmpty) return const SizedBox.shrink();
+    // Headings dragged into the passage: the draggable list below replaces the static one.
+    final dragMode = section.questionType == QuestionType.matching &&
+        section.questions.any((q) => ctx.passageQuestionIds.contains(q.id));
     return ctx.html(
-      section.html,
+      dragMode ? stripHeadingList(section.html, buildRange(section.fromOption, section.toOption)) : section.html,
       inter(16, color: ctx.palette.text, height: WebTokens.sectionInstructionLineHeight),
       docId: questionDocId(sectionId: section.id),
     );
@@ -805,11 +809,17 @@ class _MatchingViewState extends State<MatchingView> {
     );
   }
 
+  /// Headings given as a range (i–vii) with their texts in the instructions: value → text.
+  Map<String, String> get _rangeTexts =>
+      _hasTexts ? const {} : headingTexts(widget.section.html, _headings);
+
   /// Headings to drag into the passage boxes. A heading in use leaves the list (letters A–H may repeat).
   Widget _dragList(List<String> headings, List<QuestionPayload> inPassage) {
     final ctx = widget.ctx;
+    final texts = _rangeTexts;
+    final isHeadings = _hasTexts || texts.isNotEmpty;
     final available = [...headings];
-    if (_hasTexts) {
+    if (isHeadings) {
       for (final q in inPassage) {
         final t = ctx.answer(q.id).text;
         if (t != null) available.remove(t);
@@ -824,7 +834,7 @@ class _MatchingViewState extends State<MatchingView> {
             borderRadius: BorderRadius.circular(8),
           ),
           child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-            Text(_hasTexts ? 'LIST OF HEADINGS' : 'OPTIONS',
+            Text(isHeadings ? 'LIST OF HEADINGS' : 'OPTIONS',
                 style: inter(14, weight: FontWeight.w700, color: ctx.c(TW.gray800), letterSpacing: 0.7)),
             const SizedBox(height: 10),
             Wrap(
@@ -832,7 +842,7 @@ class _MatchingViewState extends State<MatchingView> {
               runSpacing: 8,
               children: [
                 for (final h in available)
-                  if (_hasTexts)
+                  if (isHeadings)
                     SizedBox(
                       width: double.infinity,
                       child: Align(
@@ -840,6 +850,7 @@ class _MatchingViewState extends State<MatchingView> {
                         child: HeadingChip(
                           key: Key('heading-$h'),
                           label: h,
+                          display: texts[h],
                           ctx: ctx,
                           picked: pickedValue == h,
                           onTap: picked == null ? null : () => picked.value = pickedValue == h ? null : h,
@@ -902,9 +913,21 @@ class _MatchingViewState extends State<MatchingView> {
 
 /// A heading to drag into a passage box ([PassageDropBox]); tap picks it for tap-to-place.
 class HeadingChip extends StatelessWidget {
-  const HeadingChip({super.key, required this.label, required this.ctx, this.picked = false, this.onTap, this.fromQuestionId});
+  const HeadingChip({
+    super.key,
+    required this.label,
+    required this.ctx,
+    this.display,
+    this.picked = false,
+    this.onTap,
+    this.fromQuestionId,
+  });
 
+  /// The answer value (heading text, or its number i–vii).
   final String label;
+
+  /// Shown instead of [label] (the full heading when the value is its number).
+  final String? display;
   final QuestionContext ctx;
   final bool picked;
   final VoidCallback? onTap;
@@ -920,7 +943,7 @@ class HeadingChip extends StatelessWidget {
           border: Border.all(color: picked ? WebTokens.dropOverBorder : ctx.c(TW.gray400)),
           boxShadow: dragging ? const [BoxShadow(color: Color(0x33000000), blurRadius: 6, offset: Offset(0, 2))] : null,
         ),
-        child: Text(label, style: inter(14, color: ctx.c(TW.gray900), height: 1.375)),
+        child: Text(display ?? label, style: inter(14, color: ctx.c(TW.gray900), height: 1.375)),
       );
 
   @override
@@ -962,6 +985,13 @@ class PassageDropBox extends StatelessWidget {
     ctx.setText(question.id, d.label, debounce: false);
   }
 
+  /// The full heading of an answer given as its number (i–vii with the texts in the instructions).
+  String _display(String value) {
+    final section = ctx.part.sections.where((s) => s.questions.any((q) => q.id == question.id)).firstOrNull;
+    if (section == null || section.options.isNotEmpty) return value;
+    return headingTexts(section.html, buildRange(section.fromOption, section.toOption))[value] ?? value;
+  }
+
   @override
   Widget build(BuildContext context) {
     final value = ctx.answer(question.id).text;
@@ -989,15 +1019,15 @@ class PassageDropBox extends StatelessWidget {
                       maxSimultaneousDrags: ctx.locked ? 0 : 1,
                       feedback: Material(
                         color: Colors.transparent,
-                        child: HeadingChip(label: value, ctx: ctx),
+                        child: HeadingChip(label: value, display: _display(value), ctx: ctx),
                       ),
                       childWhenDragging: Opacity(
                         opacity: 0.4,
-                        child: Text(value, style: inter(14, weight: FontWeight.w600, color: ctx.palette.text)),
+                        child: Text(_display(value), style: inter(14, weight: FontWeight.w600, color: ctx.palette.text)),
                       ),
                       child: MouseRegion(
                         cursor: SystemMouseCursors.grab,
-                        child: Text(value, style: inter(14, weight: FontWeight.w600, color: ctx.palette.text)),
+                        child: Text(_display(value), style: inter(14, weight: FontWeight.w600, color: ctx.palette.text)),
                       ),
                     ),
                   ),

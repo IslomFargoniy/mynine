@@ -66,6 +66,10 @@ void main() {
     expect(buildRange('1', '3'), ['1', '2', '3']);
     expect(buildRange('i', 'iv'), ['I', 'II', 'III', 'IV']);
     expect(buildRange('x, y', 'x, y'), ['X', 'Y']);
+    // Lower-case i…v / i…x are heading numbers, not the letters I…V.
+    expect(buildRange('i', 'v'), ['I', 'II', 'III', 'IV', 'V']);
+    expect(buildRange('i', 'x').length, 10);
+    expect(buildRange('A', 'D'), ['A', 'B', 'C', 'D']);
     expect(buildRange(null, 'A'), isEmpty);
   });
 
@@ -181,6 +185,88 @@ void main() {
     await tester.pumpAndSettle();
     expect(h.exam.answerFor(q.id).text, heading);
     expect(picked.value, isNull);
+    await _done(tester, h);
+  });
+
+  testWidgets('matching in the passage without markers: "Section A" questions find the bold paragraph letters', (tester) async {
+    final h = await _toModule(tester, reading: true);
+    final base = h.exam.currentPart!;
+    final matching = base.sections.firstWhere((s) => s.questionType == QuestionType.matching);
+    // As imported from a publisher's paper: headings i–v only as a range, their texts in the instructions.
+    final section = matching.copyWith(
+      options: const [],
+      fromOption: 'i',
+      toOption: 'v',
+      html: '<p>Choose the correct heading.</p><p><strong>List of Headings</strong></p><ul>'
+          '<li><strong>i</strong> How weather affected human evolution</li><li>ii A disappointing find</li>'
+          '<li>iii Two gaps in our knowledge</li><li>iv A multi-disciplinary approach</li><li>v Evidence of a landscape</li></ul>',
+      questions: [
+        for (final (i, q) in matching.questions.indexed) q.copyWith(html: 'Section ${String.fromCharCode(65 + i)}'),
+      ],
+    );
+    final part = base.copyWith(
+      html: '<h3>Beachcombing</h3><p><strong>A</strong> Kenya has long been known.</p>'
+          '<p>A lot of research.</p><p><strong>B</strong> Along with Foley.</p><p><strong>C</strong> Some finds.</p>',
+      sections: [for (final s in base.sections) s.id == section.id ? section : s],
+    );
+    final slots = passageSlots(part);
+    expect(slots.length, section.questions.length.clamp(0, 3));
+    expect(passageHtml(part), contains('<p>{${section.questions.first.number}}</p><p><strong>A</strong>'));
+    expect(passageHtml(part), contains('<p>A lot of research.</p>')); // a plain "A lot" is not a label
+
+    tester.view.physicalSize = const Size(1600, 1200);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.reset);
+    final store = HighlightStore(h.db, 1);
+    addTearDown(store.dispose);
+    final palette = ExamPalette.of(ContrastSetting.standard);
+    final keys = <int, GlobalKey>{};
+    QuestionContext ctx() => QuestionContext(
+          exam: h.exam,
+          part: part,
+          palette: palette,
+          keys: keys,
+          passageQuestionIds: passageSlotQuestionIds(part),
+        );
+    await tester.pumpWidget(MaterialApp(
+      theme: buildTheme(),
+      home: Scaffold(
+        body: ListenableBuilder(
+          listenable: h.exam,
+          builder: (_, _) => Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
+            Expanded(
+              child: PassagePane(
+                partId: part.id,
+                title: part.name,
+                html: passageHtml(part),
+                store: store,
+                palette: palette,
+                slotNumbers: slots.keys.toSet(),
+                slotBuilder: (_, n) => PassageDropBox(question: slots[n]!, ctx: ctx()),
+              ),
+            ),
+            Expanded(child: SingleChildScrollView(child: SectionView(section: section, ctx: ctx()))),
+          ]),
+        ),
+      ),
+    ));
+    await tester.pumpAndSettle();
+
+    // The chips carry the heading texts; the static list in the instructions is gone.
+    expect(find.text('ii A disappointing find'), findsOneWidget);
+    final q = section.questions.first;
+    final g = await tester.startGesture(tester.getCenter(find.byKey(const Key('heading-II'))));
+    await tester.pump(const Duration(milliseconds: 50));
+    await g.moveBy(const Offset(-20, 0));
+    await tester.pump();
+    await g.moveTo(tester.getCenter(find.byKey(Key('passage-drop-${q.number}'))));
+    await tester.pump();
+    await g.up();
+    await tester.pumpAndSettle();
+    // The answer is the number (as with the select); the box shows the heading.
+    expect(h.exam.answerFor(q.id).text, 'II');
+    expect(find.text('ii A disappointing find'), findsOneWidget);
+    expect(find.byKey(const Key('heading-II')), findsNothing);
     await _done(tester, h);
   });
 

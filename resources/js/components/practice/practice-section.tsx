@@ -9,6 +9,8 @@ import { cleanTinyMce } from '@/utils/util';
 import PracticeQuestion from '@/components/practice/practice-question';
 import MatchingHeadings from '@/components/practice/matching-headings';
 import { syncQueue } from '@/services/sync-queue';
+import { stripHeadingList } from '@/utils/passageSlots';
+import { buildRange } from '@/utils/rangeHelpers';
 
 interface DragOption {
     id: string | number;
@@ -307,7 +309,14 @@ export default function PracticeSection({
                 ) : (
                     <div
                         className="text-base/8"
-                        dangerouslySetInnerHTML={{ __html: cleanTinyMce(section.textarea) }}
+                        dangerouslySetInnerHTML={{
+                            __html: cleanTinyMce(
+                                // Headings dragged into the passage: the list below is the draggable one.
+                                section.question_type.type === 'matching' && section.questions.some((q) => passageQuestionIds?.has(q.id))
+                                    ? stripHeadingList(section.textarea ?? '', buildRange(section.from_option, section.to_option))
+                                    : section.textarea,
+                            ),
+                        }}
                     />
                 )}
             </div>

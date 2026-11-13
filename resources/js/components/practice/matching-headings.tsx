@@ -1,6 +1,6 @@
 import { Question, Section } from '@/types';
 import { buildRange } from '@/utils/rangeHelpers';
-import { headingPick, usePickedHeading, writeHeadingDrag } from '@/utils/passageSlots';
+import { headingPick, headingTexts, usePickedHeading, writeHeadingDrag } from '@/utils/passageSlots';
 
 interface MatchingHeadingsProps {
     section: Section;
@@ -36,8 +36,11 @@ export default function MatchingHeadings({
     const inPassage = section.questions.filter((q: Question) => passageQuestionIds?.has(q.id));
     const dragMode = inPassage.length > 0;
 
+    // Headings given as a range (i–vii) with their texts in the instructions: the chips show the texts.
+    const rangeTexts = hasTexts ? {} : headingTexts(section.textarea, headingOptions);
+    const isHeadings = hasTexts || Object.keys(rangeTexts).length > 0;
     // A heading used in a passage box leaves the list (letters A–H may repeat, so they stay).
-    const available = hasTexts
+    const available = isHeadings
         ? (() => {
               const left = [...headingOptions];
               inPassage.forEach((q: Question) => {
@@ -53,9 +56,9 @@ export default function MatchingHeadings({
             {dragMode && (
                 <div className="rounded-lg border-2 border-gray-300 bg-gray-50 p-4 shadow-xs dark:border-gray-700 dark:bg-gray-800/80">
                     <h4 className="mb-2.5 text-sm font-bold tracking-wider text-gray-800 uppercase dark:text-gray-200">
-                        {hasTexts ? 'List of Headings' : 'Options'}
+                        {isHeadings ? 'List of Headings' : 'Options'}
                     </h4>
-                    <div className={hasTexts ? 'flex flex-col items-start gap-2' : 'flex flex-wrap gap-2'}>
+                    <div className={isHeadings ? 'flex flex-col items-start gap-2' : 'flex flex-wrap gap-2'}>
                         {available.map((heading, idx) => (
                             <div
                                 key={`${heading}-${idx}`}
@@ -69,7 +72,7 @@ export default function MatchingHeadings({
                                         : 'border-gray-400 bg-white hover:border-black dark:border-gray-600 dark:bg-gray-900'
                                 }`}
                             >
-                                {heading}
+                                {rangeTexts[heading] ?? heading}
                             </div>
                         ))}
                     </div>

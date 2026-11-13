@@ -5,7 +5,8 @@ import { Attempt, Part, Question, Section } from '@/types';
 import { sanitizeAndInsertWbr } from '@/utils/sanitizeAndInsertWbr';
 import { syncQueue } from '@/services/sync-queue';
 import PassageDropZone from '@/components/practice/passage-drop-zone';
-import { hoistPassageMarkers, mountPassageSlots, passageSlots, PassageSlot } from '@/utils/passageSlots';
+import { headingTexts, hoistPassageMarkers, insertAutoMarkers, mountPassageSlots, passageHtml, passageSlots, PassageSlot } from '@/utils/passageSlots';
+import { buildRange } from '@/utils/rangeHelpers';
 import { Highlighter, FileText, X, Trash2, StickyNote, ChevronDown, ChevronUp } from 'lucide-react';
 
 interface PartUpdateProps {
@@ -59,13 +60,21 @@ export default function PracticePart({ attempt, part, setSelectedPart }: PartUpd
 
         const saved = localStorage.getItem(highlightStorageKey);
         if (saved) {
-            textRef.current.innerHTML = sanitizeAndInsertWbr(saved, 40);
+            // Highlights saved before the boxes existed: the boxes are added to them the same way.
+            textRef.current.innerHTML = sanitizeAndInsertWbr(slots.size > 0 ? insertAutoMarkers(saved, part) : saved, 40);
         } else {
-            const html = slots.size > 0 ? hoistPassageMarkers(part.textarea || '') : part.textarea || '';
+            const html = slots.size > 0 ? hoistPassageMarkers(passageHtml(part)) : part.textarea || '';
             textRef.current.innerHTML = sanitizeAndInsertWbr(html, 40);
         }
         setSlotHosts(slots.size > 0 ? mountPassageSlots(textRef.current, slots) : new Map());
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [part.textarea, highlightStorageKey, slots]);
+
+    /** Full heading text of an answer given as a number (i–vii with the texts in the instructions). */
+    const displayOf = (slot: PassageSlot, value: string): string => {
+        if (!value || (slot.section.options?.length ?? 0) > 0) return value;
+        return headingTexts(slot.section.textarea, buildRange(slot.section.from_option, slot.section.to_option))[value] ?? value;
+    };
 
     /** Current answer of a question (the part in state carries the saved answers). */
     const answerOf = (questionId: number): string => {
@@ -382,6 +391,7 @@ export default function PracticePart({ attempt, part, setSelectedPart }: PartUpd
                     <PassageDropZone
                         slot={slot}
                         value={answerOf(slot.question.id)}
+                        display={displayOf(slot, answerOf(slot.question.id))}
                         onPlace={(label, fromQuestionId) => {
                             if (fromQuestionId && fromQuestionId !== slot.question.id) {
                                 const from = slotByQuestion(fromQuestionId);

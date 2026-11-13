@@ -14,8 +14,9 @@ export function buildRange(fromRaw?: string | null, toRaw?: string | null): stri
         return arr;
     }
 
-    // single letters
-    if (/^[A-Za-z]$/.test(from) && /^[A-Za-z]$/.test(to)) {
+    // single letters ("i"–"v" / "i"–"x" are heading numbers, roman, not letters I…V / I…X)
+    const romanList = from === 'i' && /^[ivx]$/.test(to);
+    if (!romanList && /^[A-Za-z]$/.test(from) && /^[A-Za-z]$/.test(to)) {
         const a = from.toUpperCase().charCodeAt(0);
         const b = to.toUpperCase().charCodeAt(0);
         const step = a <= b ? 1 : -1;
