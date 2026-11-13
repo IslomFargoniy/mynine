@@ -69,6 +69,16 @@ final class CenterBranding
             return null;
         }
 
-        return $this->dataUri = 'data:'.$mime.';base64,'.base64_encode((string) $disk->get($this->logoPath));
+        $bytes = (string) $disk->get($this->logoPath);
+        // dompdf does not draw WebP: hand it a PNG copy.
+        if ($mime === 'image/webp' && function_exists('imagecreatefromstring') && ($img = @imagecreatefromstring($bytes))) {
+            imagesavealpha($img, true);
+            ob_start();
+            imagepng($img);
+            $bytes = (string) ob_get_clean();
+            $mime = 'image/png';
+        }
+
+        return $this->dataUri = 'data:'.$mime.';base64,'.base64_encode($bytes);
     }
 }

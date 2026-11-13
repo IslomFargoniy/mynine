@@ -17,13 +17,15 @@
         .h2 { font-size: 12.5px; font-weight: bold; }
         .rows { border-collapse: separate; border-spacing: 0 7pt; margin: -7pt 0; }
         .brand { font-size: 34px; font-weight: bold; letter-spacing: -0.5pt; line-height: 1; }
-        .logo { max-height: 50pt; max-width: 220pt; }
+        .logo { max-height: 48pt; max-width: 120pt; }
+        .watermark { position: absolute; top: 250pt; left: 0; right: 0; text-align: center; opacity: 0.06; }
+        .watermark img { width: 330pt; }
         .note { font-size: 6.6px; font-style: italic; line-height: 1.3; }
         .photo { width: 112pt; height: 108pt; background: #e5e5e5; border: 0.6pt solid #bbb; text-align: center; vertical-align: middle; color: #8a8a8a; font-size: 34px; font-weight: bold; }
         .sl { font-size: 10.5px; font-weight: bold; white-space: nowrap; padding-right: 6pt; }
         .sc { border: 0.9pt solid #333; background: #d9d9d9; width: 34pt; height: 32pt; text-align: center; font-size: 10.5px; }
         .stamp { border: 0.9pt solid #333; height: 92pt; text-align: center; vertical-align: top; padding-top: 6pt; font-size: 10px; font-weight: bold; }
-        .stamp img { max-height: 54pt; max-width: 108pt; margin-top: 8pt; }
+        .stamp img { max-height: 50pt; max-width: 100pt; margin-top: 6pt; }
         .stamp .nm { margin-top: 22pt; font-size: 12px; }
         .comments { border: 0.9pt solid #333; height: 78pt; }
         .footer { border-top: 0.8pt solid #555; padding-top: 5pt; font-size: 8px; text-align: center; }
@@ -39,15 +41,20 @@
             ->map(fn ($w) => mb_strtoupper(mb_substr($w, 0, 1)))->implode('');
     @endphp
 
+    @if ($logo)
+        <div class="watermark"><img src="{{ $logo }}" alt=""></div>
+    @endif
+
     {{-- Header --}}
     <table class="w100">
         <tr>
             <td style="vertical-align: bottom;">
-                @if ($logo)
-                    <img class="logo" src="{{ $logo }}" alt="">
-                @else
-                    <div class="brand"><span class="center-name">{{ $sheet['center_name'] }}</span></div>
-                @endif
+                <table><tr>
+                    @if ($logo)
+                        <td style="padding-right: 10pt; vertical-align: middle;"><img class="logo" src="{{ $logo }}" alt=""></td>
+                    @endif
+                    <td style="vertical-align: middle;"><div class="brand"><span class="center-name">{{ $sheet['center_name'] }}</span></div></td>
+                </tr></table>
                 <div style="font-size: 13.5px; font-weight: bold; margin-top: 5pt;">Test Report Form</div>
             </td>
             <td style="width: 196pt; vertical-align: bottom;">
@@ -148,6 +155,7 @@
                     Issued by
                     @if ($logo)
                         <br><img src="{{ $logo }}" alt="">
+                        <div style="font-size: 10px; margin-top: 4pt;">{{ $sheet['center_name'] }}</div>
                     @else
                         <div class="nm">{{ $sheet['center_name'] }}</div>
                     @endif
@@ -175,7 +183,7 @@
         </tr>
     </table>
 
-    <div style="height: 92pt;"></div>
+    <div style="height: 60pt;"></div>
     <div class="footer">
         This mock examination result was issued by {{ $sheet['center_name'] }} and is not an official IELTS Test Report Form
         @if ($branding)
