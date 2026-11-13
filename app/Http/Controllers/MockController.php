@@ -107,10 +107,10 @@ class MockController extends Controller
         // ?date=YYYY-MM-DD[ HH:MM] picks modules for that exam date (reuse rule), default now.
         $date = $request->filled('date') ? rescue(fn () => Carbon::parse($request->query('date')), null, false) : null;
 
-        return Inertia::render('mock/form', [
-            'mock' => null,
-            ...$this->formProps($bank, $date),
-        ]);
+        $props = ['mock' => null, ...$this->formProps($bank, $date)];
+
+        // The mock modal loads the form data as JSON; a direct visit gets the full page.
+        return $this->wantsFormJson($request) ? response()->json($props) : Inertia::render('mock/form', $props);
     }
 
     /**
@@ -162,16 +162,24 @@ class MockController extends Controller
     /**
      * Show the form for editing the specified resource.
      */
-    public function edit(Mock $mock, MockBankService $bank)
+    public function edit(Request $request, Mock $mock, MockBankService $bank)
     {
         $this->authorize('update', $mock);
 
         $mock->load(['modules.testType.test:id,name', 'modules.type', 'test:id,name']);
 
-        return Inertia::render('mock/form', [
+        $props = [
             'mock' => $mock,
             ...$this->formProps($bank, $mock->started_at ? Carbon::parse($mock->started_at) : null, $mock),
-        ]);
+        ];
+
+        return $this->wantsFormJson($request) ? response()->json($props) : Inertia::render('mock/form', $props);
+    }
+
+    /** A plain JSON request (the mock modal), not an Inertia visit. */
+    private function wantsFormJson(Request $request): bool
+    {
+        return $request->wantsJson() && ! $request->header('X-Inertia');
     }
 
     /**
@@ -192,6 +200,11 @@ class MockController extends Controller
             // The exam date may have moved: last_used_at shows the latest exam date of each module.
             $bank->refreshLastUsed($mock->modules()->pluck('test_type_id')->map(fn ($id) => (int) $id)->all());
         });
+
+        // Edited in the modal: stay on the page it was opened from (list or mock page).
+        if ($request->boolean('stay')) {
+            return back()->with('success', __('success.mock_updated'));
+        }
 
         return redirect()->route('mock.show', $mock)->with('success', __('success.mock_updated'));
     }

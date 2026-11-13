@@ -10,6 +10,7 @@ import { ModuleBadge } from '@/components/exam-admin/shared';
 import { toast } from 'sonner';
 
 import MockStudentManager from '@/components/mock/mock-student-manager';
+import MockFormModal from '@/components/mock/mock-form-modal';
 import DeleteItemModal from '@/components/delete-item-modal';
 import { Button } from '@/components/ui/button';
 import { exportAttemptsToExcel } from '@/lib/excel-export';
@@ -84,6 +85,7 @@ export default function MockShow() {
     const [activeTab, setActiveTab] = useState<'students' | 'attempts'>('students');
 
     const [openDeleteModal, setOpenDeleteModal] = useState(false);
+    const [editOpen, setEditOpen] = useState(false);
     const [selectedAttemptToDelete, setSelectedAttemptToDelete] = useState<any>(null);
     const { delete: deleteAttempt } = useForm();
 
@@ -205,9 +207,14 @@ export default function MockShow() {
                     </div>
 
                     <div className="flex flex-wrap items-center gap-2">
-                        <Link href={route('mock.edit', mock.id)} className="inline-flex h-9 items-center gap-1.5 rounded-full bg-indigo-500/12 px-4 text-xs font-bold text-brand hover:bg-indigo-500/20">
+                        <button
+                            type="button"
+                            onClick={() => setEditOpen(true)}
+                            className="inline-flex h-9 cursor-pointer items-center gap-1.5 rounded-full bg-indigo-500/12 px-4 text-xs font-bold text-brand hover:bg-indigo-500/20"
+                        >
                             <Pencil className="h-4 w-4" /> {t('exam_admin.common.edit')}
-                        </Link>
+                        </button>
+                        <MockFormModal open={editOpen} onOpenChange={setEditOpen} mockId={mock.id} />
                         <Link
                             href={route('reception.index', { mock_id: mock.id, date: receptionDate })}
                             className="inline-flex h-9 items-center gap-1.5 rounded-full border border-glass-edge bg-glass-subtle px-4 text-xs font-bold text-foreground hover:bg-accent"

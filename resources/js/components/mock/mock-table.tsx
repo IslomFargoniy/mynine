@@ -1,6 +1,7 @@
 import DeleteItemModal from '@/components/delete-item-modal';
 import { EmptyState, ModuleBadge } from '@/components/exam-admin/shared';
 import MockStudentManager from '@/components/mock/mock-student-manager';
+import MockFormModal from '@/components/mock/mock-form-modal';
 
 import { Mock, type MockPaginate, SearchData, Test } from '@/types';
 import { Link, useForm } from '@inertiajs/react';
@@ -19,6 +20,8 @@ const MockTable = ({ tests: _tests, searchData, ...mock }: MockTableProps) => {
     const { t } = useTranslation(); // Using the translation hook
     const [, setOpen] = useState(false);
     const [openDelete, setOpenDelete] = useState(false);
+    /** Mock form modal: id null = new mock. */
+    const [formMock, setFormMock] = useState<{ id: number | null } | null>(null);
     const [selectedMock, setSelectedMock] = useState<Mock | null>(null);
 
     const renderStatusBadge = (item: Mock) => {
@@ -79,13 +82,15 @@ const MockTable = ({ tests: _tests, searchData, ...mock }: MockTableProps) => {
         <div>
             <div className="mb-4 flex items-center justify-between">
                 <h2 className="text-xl font-semibold text-foreground">{t('mock')}</h2>
-                <Link
-                    href={route('mock.create')}
+                <button
+                    type="button"
+                    onClick={() => setFormMock({ id: null })}
                     className="btn-glass-primary inline-flex cursor-pointer items-center gap-2 rounded-full px-5 py-2.5 text-xs font-bold transition-all hover:brightness-110 active:scale-95"
                 >
                     <Plus className="h-4 w-4" />
                     {t('create')} {t('mock')}
-                </Link>
+                </button>
+                <MockFormModal open={formMock !== null} onOpenChange={(o) => !o && setFormMock(null)} mockId={formMock?.id} />
             </div>
 
             {mock.data.length === 0 && (
@@ -171,13 +176,14 @@ const MockTable = ({ tests: _tests, searchData, ...mock }: MockTableProps) => {
                                 />
 
                                 <div className="flex items-center gap-1.5">
-                                    <Link
-                                        href={route('mock.edit', item.id)}
+                                    <button
+                                        type="button"
+                                        onClick={() => setFormMock({ id: item.id })}
                                         className="p-2 bg-indigo-500/12 text-brand hover:bg-primary hover:text-primary-foreground rounded-full font-semibold text-xs transition-all cursor-pointer active:scale-95"
                                         title={t('edit')}
                                     >
                                         <PencilIcon className="h-3.5 w-3.5" />
-                                    </Link>
+                                    </button>
 
                                     <button
                                         type="button"
