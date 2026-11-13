@@ -6,6 +6,10 @@ interface Props {
     value: string;
     /** Text shown for the value (the full heading when the answer is its number). */
     display?: string;
+    /** Narrow box (letters A–H next to a question). */
+    compact?: boolean;
+    /** The number is already on the question row's badge. */
+    hideNumber?: boolean;
     onPlace: (label: string, fromQuestionId?: number) => void;
     onClear: () => void;
 }
@@ -14,7 +18,7 @@ interface Props {
  * A heading box inside the passage (IELTS computer test): empty it shows the question number; a heading is dropped
  * in from the list (or tapped in after picking it), can be dragged on to another box, and × sends it back.
  */
-export default function PassageDropZone({ slot, value, display, onPlace, onClear }: Props) {
+export default function PassageDropZone({ slot, value, display, compact = false, hideNumber = false, onPlace, onClear }: Props) {
     const [over, setOver] = useState(false);
     const picked = usePickedHeading();
     const qId = slot.question.id;
@@ -45,7 +49,7 @@ export default function PassageDropZone({ slot, value, display, onPlace, onClear
                 onPlace(picked);
                 headingPick.set(null);
             }}
-            className={`my-1 inline-flex min-h-[36px] min-w-[260px] max-w-full items-center gap-2 border-2 px-2.5 py-1 align-middle text-[14px] leading-snug select-none ${
+            className={`my-1 inline-flex min-h-[36px] ${compact ? 'min-w-[110px] shrink-0' : 'min-w-[260px] sm:max-w-[420px]'} max-w-full items-center gap-2 border-2 px-2.5 py-1 align-middle text-[14px] leading-snug select-none ${
                 over || picked
                     ? 'border-dashed border-blue-600 bg-blue-50 dark:bg-blue-950/40'
                     : value
@@ -53,7 +57,7 @@ export default function PassageDropZone({ slot, value, display, onPlace, onClear
                       : 'border-dashed border-gray-500 bg-white dark:bg-gray-900'
             } ${picked ? 'cursor-pointer' : ''}`}
         >
-            <span className="shrink-0 font-bold text-black dark:text-white">{slot.number}</span>
+            {!hideNumber && <span className="shrink-0 font-bold text-black dark:text-white">{slot.number}</span>}
             {value ? (
                 <>
                     <span

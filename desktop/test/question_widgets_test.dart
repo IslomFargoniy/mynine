@@ -73,25 +73,57 @@ void main() {
     expect(buildRange(null, 'A'), isEmpty);
   });
 
-  testWidgets('matching: each question picks its heading from a select', (tester) async {
+  testWidgets('matching: each question gets its heading dragged into the box next to it (no select)', (tester) async {
     final h = await _toModule(tester, reading: true);
     final part = h.exam.currentPart!;
     final section = part.sections.firstWhere((s) => s.questionType == QuestionType.matching);
     await _pumpSection(tester, h, part, section);
     expect(find.text('LIST OF HEADINGS'), findsOneWidget);
+    expect(find.byKey(const Key('select-8008')), findsNothing);
     const heading = 'ii A rapid and safe building process';
-    await tester.tap(find.byKey(const Key('select-8008')));
-    await tester.pumpAndSettle();
-    await tester.tap(find.text(heading).last);
-    await tester.pumpAndSettle();
-    expect(h.exam.answerFor(8008).text, heading);
+    Future<void> drag(Finder from, Finder to) async {
+      final g = await tester.startGesture(tester.getCenter(from));
+      await tester.pump(const Duration(milliseconds: 50));
+      await g.moveBy(const Offset(-20, 0));
+      await tester.pump();
+      await g.moveTo(tester.getCenter(to));
+      await tester.pump();
+      await g.up();
+      await tester.pumpAndSettle();
+    }
 
-    // "–" clears the answer.
-    await tester.tap(find.byKey(const Key('select-8008')));
-    await tester.pumpAndSettle();
-    await tester.tap(find.text('–').last);
+    await drag(find.byKey(const Key('heading-$heading')), find.byKey(const Key('passage-drop-8')));
+    expect(h.exam.answerFor(8008).text, heading);
+    expect(find.byKey(const Key('heading-$heading')), findsNothing); // a used heading leaves the list
+
+    // × sends it back.
+    await tester.tap(find.byKey(const Key('clear-8008')));
     await tester.pumpAndSettle();
     expect(h.exam.answerFor(8008).isAnswered, isFalse);
+    await _done(tester, h);
+  });
+
+  testWidgets('matching information (letters A–H): letters stay in the list and can be used again', (tester) async {
+    final h = await _toModule(tester, reading: true);
+    final base = h.exam.currentPart!;
+    final matching = base.sections.firstWhere((s) => s.questionType == QuestionType.matching);
+    final section = matching.copyWith(options: const [], fromOption: 'A', toOption: 'H', html: '<p>Which section contains…</p>');
+    final part = base.copyWith(sections: [for (final s in base.sections) s.id == section.id ? section : s]);
+    await _pumpSection(tester, h, part, section);
+    expect(find.text('OPTIONS'), findsOneWidget);
+    final qs = section.questions;
+    for (final q in qs.take(2)) {
+      final g = await tester.startGesture(tester.getCenter(find.byKey(const Key('heading-C'))));
+      await tester.pump(const Duration(milliseconds: 50));
+      await g.moveBy(const Offset(-20, 0));
+      await tester.pump();
+      await g.moveTo(tester.getCenter(find.byKey(Key('passage-drop-${q.number}'))));
+      await tester.pump();
+      await g.up();
+      await tester.pumpAndSettle();
+      expect(h.exam.answerFor(q.id).text, 'C');
+    }
+    expect(find.byKey(const Key('heading-C')), findsOneWidget);
     await _done(tester, h);
   });
 

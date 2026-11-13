@@ -1,5 +1,6 @@
 import { Question, Section } from '@/types';
 import { buildRange } from '@/utils/rangeHelpers';
+import PassageDropZone from '@/components/practice/passage-drop-zone';
 import { headingPick, headingTexts, usePickedHeading, writeHeadingDrag } from '@/utils/passageSlots';
 
 interface MatchingHeadingsProps {
@@ -33,17 +34,18 @@ export default function MatchingHeadings({
         section.options && section.options.length > 0 ? section.options.map((o: any) => o.textarea || o.option_text || String(o)) : [];
     const hasTexts = textOptions.length > 0;
     const headingOptions = hasTexts ? textOptions : buildRange(section.from_option, section.to_option);
-    const inPassage = section.questions.filter((q: Question) => passageQuestionIds?.has(q.id));
-    const dragMode = inPassage.length > 0;
+    // IELTS computer test: every matching task is answered by dragging an option into a box (in the passage when it
+    // has `{n}` / "Section A" boxes, otherwise next to the question). No options at all: the old select stays.
+    const dragMode = headingOptions.length > 0;
 
     // Headings given as a range (i–vii) with their texts in the instructions: the chips show the texts.
     const rangeTexts = hasTexts ? {} : headingTexts(section.textarea, headingOptions);
     const isHeadings = hasTexts || Object.keys(rangeTexts).length > 0;
-    // A heading used in a passage box leaves the list (letters A–H may repeat, so they stay).
+    // A heading in use leaves the list (letters A–H may repeat, so they stay).
     const available = isHeadings
         ? (() => {
               const left = [...headingOptions];
-              inPassage.forEach((q: Question) => {
+              section.questions.forEach((q: Question) => {
                   const i = left.indexOf(answers[q.id] || '');
                   if (i >= 0) left.splice(i, 1);
               });
@@ -103,7 +105,7 @@ export default function MatchingHeadings({
 
                     return (
                         <div
-                            id={`question-${q.id}`}
+                            id={dragMode ? undefined : `question-${q.id}`}
                             key={q.id}
                             className="flex flex-col justify-between gap-3 rounded-md border border-gray-200 bg-white px-3.5 py-2.5 shadow-2xs sm:flex-row sm:items-center dark:border-gray-700/80 dark:bg-gray-900"
                         >
@@ -128,6 +130,20 @@ export default function MatchingHeadings({
                                 </span>
                             </div>
 
+                            {dragMode ? (
+                                <PassageDropZone
+                                    slot={{ number: qNumber, question: q, section, sectionIndex: 0 }}
+                                    value={currentAnswer}
+                                    display={rangeTexts[currentAnswer] ?? currentAnswer}
+                                    compact={!isHeadings}
+                                    hideNumber
+                                    onPlace={(label, fromQuestionId) => {
+                                        if (fromQuestionId && fromQuestionId !== q.id) onAnswerChange(fromQuestionId, '');
+                                        onAnswerChange(q.id, label);
+                                    }}
+                                    onClear={() => onAnswerChange(q.id, '')}
+                                />
+                            ) : (
                             <select
                                 value={currentAnswer}
                                 onChange={(e) => onAnswerChange(q.id, e.target.value)}
@@ -143,6 +159,7 @@ export default function MatchingHeadings({
                                     </option>
                                 ))}
                             </select>
+                            )}
                         </div>
                     );
                 })}

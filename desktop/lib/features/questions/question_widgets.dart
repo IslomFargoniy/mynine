@@ -173,8 +173,7 @@ class SectionView extends StatelessWidget {
   Widget _instructions() {
     if (section.html.trim().isEmpty) return const SizedBox.shrink();
     // Headings dragged into the passage: the draggable list below replaces the static one.
-    final dragMode = section.questionType == QuestionType.matching &&
-        section.questions.any((q) => ctx.passageQuestionIds.contains(q.id));
+    final dragMode = section.questionType == QuestionType.matching;
     return ctx.html(
       dragMode ? stripHeadingList(section.html, buildRange(section.fromOption, section.toOption)) : section.html,
       inter(16, color: ctx.palette.text, height: WebTokens.sectionInstructionLineHeight),
@@ -772,13 +771,14 @@ class _MatchingViewState extends State<MatchingView> {
   Widget build(BuildContext context) {
     final ctx = widget.ctx;
     final headings = _headings;
-    final inPassage = widget.section.questions.where((q) => ctx.passageQuestionIds.contains(q.id)).toList();
     final rows = widget.section.questions.where((q) => !ctx.passageQuestionIds.contains(q.id)).toList();
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 16), // my-4
       child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
-        if (inPassage.isNotEmpty) ...[
-          _dragList(headings, inPassage),
+        // IELTS computer test: every matching task is answered by dragging an option into a box (in the passage
+        // or next to the question). No options at all: the old select stays.
+        if (headings.isNotEmpty) ...[
+          _dragList(headings, widget.section.questions),
           if (rows.isNotEmpty) const SizedBox(height: 24),
         ] else if (_hasTexts) ...[
           Container(
@@ -896,6 +896,14 @@ class _MatchingViewState extends State<MatchingView> {
               style: inter(14, weight: FontWeight.w600, color: ctx.c(TW.gray800), height: 1.375)),
         ),
         const SizedBox(width: 12),
+        if (headings.isNotEmpty)
+          PassageDropBox(
+            question: q,
+            ctx: ctx,
+            inRow: true,
+            compact: !(_hasTexts || _rangeTexts.isNotEmpty),
+          )
+        else
         AnswerSelect(
           key: Key('select-${q.id}'),
           value: ctx.answer(q.id).text,
@@ -972,10 +980,16 @@ class HeadingDrag {
 /// number; a heading is dropped in from the list (or tapped in after picking it), can be dragged on to another box,
 /// and × sends it back.
 class PassageDropBox extends StatelessWidget {
-  const PassageDropBox({super.key, required this.question, required this.ctx});
+  const PassageDropBox({super.key, required this.question, required this.ctx, this.inRow = false, this.compact = false});
 
   final QuestionPayload question;
   final QuestionContext ctx;
+
+  /// Next to a question in the questions pane: the row has the number badge and the scroll key.
+  final bool inRow;
+
+  /// Narrow box (letters A–H).
+  final bool compact;
 
   void _place(HeadingDrag d) {
     if (ctx.locked) return;
@@ -1006,12 +1020,14 @@ class PassageDropBox extends StatelessWidget {
                 ? WebTokens.dropOverBorder
                 : (filled ? ctx.c(TW.black) : ctx.c(TW.gray500));
             final content = Container(
-              constraints: const BoxConstraints(minWidth: 260, minHeight: 36),
+              constraints: BoxConstraints(minWidth: compact ? 110 : 260, minHeight: 36, maxWidth: compact ? 200 : 420),
               padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
               child: Row(mainAxisSize: MainAxisSize.min, children: [
-                Text('${question.number}',
-                    style: inter(14, weight: FontWeight.w700, color: ctx.c(WebTokens.gapNumber))),
-                const SizedBox(width: 8),
+                if (!inRow) ...[
+                  Text('${question.number}',
+                      style: inter(14, weight: FontWeight.w700, color: ctx.c(WebTokens.gapNumber))),
+                  const SizedBox(width: 8),
+                ],
                 if (filled) ...[
                   Flexible(
                     child: Draggable<HeadingDrag>(
@@ -1071,10 +1087,8 @@ class PassageDropBox extends StatelessWidget {
             );
           },
         );
-    return KeyedSubtree(
-      key: ctx.keyFor(question.id),
-      child: picked == null ? box(null) : ValueListenableBuilder<String?>(valueListenable: picked, builder: (_, v, _) => box(v)),
-    );
+    final child = picked == null ? box(null) : ValueListenableBuilder<String?>(valueListenable: picked, builder: (_, v, _) => box(v));
+    return inRow ? child : KeyedSubtree(key: ctx.keyFor(question.id), child: child);
   }
 }
 
