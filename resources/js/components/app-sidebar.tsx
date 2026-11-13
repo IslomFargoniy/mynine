@@ -142,7 +142,9 @@ export function AppSidebar() {
                 </SidebarMenu>
             </SidebarHeader>
 
-            {auth?.center && <CenterBadge center={auth.center} superAdmin={isSuperAdmin} />}
+            {/* The logo already names the center (the SuperAdmin switches it in the header): the card only warns
+                when the center is suspended. */}
+            {auth?.center?.suspended && <CenterBadge center={auth.center} superAdmin={isSuperAdmin} />}
 
             <SidebarContent data-sidebar-scroll className="gap-3 py-2 [scrollbar-gutter:stable] [scrollbar-width:thin] group-data-[collapsible=icon]:[scrollbar-gutter:auto]">
                 {groups.map((group, index) => (

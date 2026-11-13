@@ -2,7 +2,7 @@ import { type Auth } from '@/types';
 import { usePage } from '@inertiajs/react';
 
 /**
- * Sidebar / header logo. Staff of a partner center see their center's logo and name (name only when no
+ * Sidebar / header logo (also the center's identity in the sidebar: name and code). Staff of a partner center see their center's logo and name (name only when no
  * logo is uploaded) with a small "Powered by Mynine"; the SuperAdmin, the Mynine center and everyone
  * else see the Mynine logo.
  */
@@ -26,14 +26,16 @@ export default function AppLogo() {
                 ) : (
                     <span
                         aria-hidden="true"
-                        className="bg-primary text-primary-foreground hidden size-9 shrink-0 items-center justify-center rounded-xl text-base font-extrabold shadow-sm group-data-[collapsible=icon]:flex"
+                        className="bg-primary text-primary-foreground flex size-9 shrink-0 items-center justify-center rounded-xl text-base font-extrabold shadow-sm"
                     >
                         {center.name.trim().charAt(0).toUpperCase()}
                     </span>
                 )}
                 <span className="flex min-w-0 flex-col leading-tight group-data-[collapsible=icon]:hidden">
                     <span className="text-foreground truncate text-base font-extrabold tracking-tight">{center.name}</span>
-                    <span className="text-muted-foreground truncate text-[10px] font-medium">Powered by Mynine</span>
+                    <span className="text-muted-foreground truncate text-[10px] font-medium">
+                        <span className="font-mono">{center.code}</span> · Powered by Mynine
+                    </span>
                 </span>
             </span>
         );
