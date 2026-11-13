@@ -1,10 +1,11 @@
 import { sanitizeHtml } from '@/utils/sanitize-html';
+import { normalizeContentHtml } from '@/utils/util';
 
 export function sanitizeAndInsertWbr(html: string, maxLen = 40): string {
     if (!html) return '';
 
     const parser = new DOMParser();
-    const doc = parser.parseFromString(sanitizeHtml(html), 'text/html');
+    const doc = parser.parseFromString(sanitizeHtml(normalizeContentHtml(html)), 'text/html');
 
     const SKIP_TAGS = new Set(['PRE', 'CODE', 'STYLE', 'SCRIPT', 'TEXTAREA']);
 

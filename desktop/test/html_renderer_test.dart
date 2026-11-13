@@ -4,6 +4,12 @@ import 'package:mynine_desktop/features/passage/html_document.dart';
 import 'package:mynine_desktop/features/passage/html_view.dart';
 
 void main() {
+  test('text tokenised word by word is rejoined (PDF / AI import)', () {
+    expect(cleanTinyMce("<p>Club of America . California ' s laws , its {24} , ok</p>"),
+        "<p>Club of America. California's laws, its {24}, ok</p>");
+    expect(cleanTinyMce('<p>It is 5 % of 1,000. e.g. fine</p>'), '<p>It is 5% of 1,000. e.g. fine</p>');
+  });
+
   group('HtmlDocument', () {
     test('flattens blocks, collapses whitespace and assigns offsets', () {
       final doc = HtmlDocument.parse(
@@ -11,13 +17,13 @@ void main() {
         '<ul><li>one</li><li>two<br>lines</li></ul><ol><li>first</li></ol>',
       );
       final blocks = doc.textBlocks.toList();
-      expect(blocks.map((b) => b.text), ['Title', 'Hello big world !', 'one', 'two\nlines', 'first']);
+      expect(blocks.map((b) => b.text), ['Title', 'Hello big world!', 'one', 'two\nlines', 'first']);
       expect(blocks[0].kind, BlockKind.h2);
       expect(blocks[2].listMarker, '•');
       expect(blocks[4].listMarker, '1.');
-      expect(doc.plainText, 'TitleHello big world !onetwo\nlinesfirst');
+      expect(doc.plainText, 'TitleHello big world!onetwo\nlinesfirst');
       expect(blocks[1].start, 5);
-      expect(blocks[1].end, 5 + 'Hello big world !'.length);
+      expect(blocks[1].end, 5 + 'Hello big world!'.length);
       final bold = blocks[1].inlines.whereType<TextRun>().firstWhere((r) => r.style.bold);
       expect(bold.text, 'big');
       expect(doc.textInRange(bold.start, bold.end), 'big');

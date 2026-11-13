@@ -4,6 +4,41 @@ const getImagePrefix = () => {
     return process.env.NODE_ENV === 'production' ? '' : '';
 };
 
+/**
+ * Content pasted from Word / PDFs / the AI import, made readable everywhere it is shown:
+ *   - spans glued word to word (`<span>The</span><span>Model</span>`) get a space, but nothing is added before
+ *     punctuation (`America</span><span>.` stays "America.");
+ *   - inline styles that break the page's typography go (word / letter spacing, font family / size, line height,
+ *     indent, nowrap, word-break); bold, italic, colour and alignment stay;
+ *   - text tokenised word by word is rejoined: "America ." → "America.", "California ' s" → "California's".
+ */
+export function normalizeContentHtml(html: string): string {
+    if (!html) return '';
+    let out = html.replace(
+        /([\p{L}\p{N}])(<\/(?:span|b|i|u|strong|em)>)(<(?:span|b|i|u|strong|em)(?:\s[^>]*)?>)(?=[\p{L}\p{N}])/gu,
+        '$1$2 $3',
+    );
+    out = out.replace(/(<[a-z][a-z0-9]*\s[^>]*?)style="([^"]*)"([^>]*>)/gi, (_m, before: string, styleVal: string, after: string) => {
+        const kept = styleVal
+            .split(';')
+            .map((d) => d.trim())
+            .filter((d) => d && !/^(word-spacing|letter-spacing|font-family|font-size|line-height|text-indent|white-space|word-break|overflow-wrap)\s*:/i.test(d))
+            .join('; ');
+        return kept ? `${before}style="${kept}"${after}` : `${before.trimEnd()}${after}`;
+    });
+    // Text only (never inside tags or `{…}` blanks).
+    return out
+        .split(/(<[^>]+>)/)
+        .map((part) =>
+            part.startsWith('<')
+                ? part
+                : part
+                      .replace(/([\p{L}\p{N}"'”’)\]}]) +([.,;:!?%)](?=\s|$))/gu, '$1$2')
+                      .replace(/(\p{L}) ?['’] ?(s|t|d|m|ll|re|ve)\b/gu, "$1'$2"),
+        )
+        .join('');
+}
+
 const cleanTinyMce = (html: string | null | undefined): string => {
     if (!html) return '';
 
@@ -15,27 +50,7 @@ const cleanTinyMce = (html: string | null | undefined): string => {
     // 2️⃣ Replace non-breaking spaces with normal space
     cleaned = cleaned.replace(/&nbsp;/gi, ' ');
 
-    // 3️⃣ Fix missing spaces between inline tags like </span><span>
-    cleaned = cleaned.replace(/<\/(span|b|i|u|strong|em)>(?=<\1)/gi, '</$1> ');
-    cleaned = cleaned.replace(/<\/(span|b|i|u|strong|em)>(?=<[a-z])/gi, '</$1> ');
-
-    // 4️⃣ Add space between closing and opening inline tags generally
-    cleaned = cleaned.replace(/><(span|b|i|u|strong|em)/gi, '> <$1');
-
-    // 5️⃣ Remove only problematic inline style properties (nowrap, fixed widths)
-    // but PRESERVE formatting styles (font-weight, font-size, text-align, color, etc.)
-    cleaned = cleaned.replace(/(<[a-z][a-z0-9]*\s+[^>]*?)style="([^"]*)"([^>]*?>)/gi, (match, before, styleVal, after) => {
-        const cleanedStyle = styleVal
-            .replace(/white-space\s*:\s*nowrap;?/gi, '')
-            .replace(/word-break\s*:\s*[^;]+;?/gi, '')
-            .replace(/overflow-wrap\s*:\s*[^;]+;?/gi, '')
-            .trim();
-
-        if (cleanedStyle) {
-            return `${before}style="${cleanedStyle}"${after}`;
-        }
-        return `${before}${after}`.replace(/\s{2,}/g, ' ');
-    });
+    cleaned = normalizeContentHtml(cleaned);
 
     // 6️⃣ Collapse multiple spaces but keep one
     cleaned = cleaned.replace(/[ \t]{2,}/g, ' ');

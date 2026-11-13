@@ -78,9 +78,32 @@ class HtmlDocument {
 
 /// Mirrors `cleanTinyMce` from the web app (zero-width chars, &nbsp;).
 String cleanTinyMce(String html) {
-  return html
+  final cleaned = html
       .replaceAll(RegExp('[​-‍﻿]'), '')
       .replaceAll(RegExp('&nbsp;', caseSensitive: false), ' ');
+  return _normalizeText(cleaned);
+}
+
+final _tagSplit = RegExp(r'(<[^>]+>)');
+final _spaceBeforePunct = RegExp(r'''([\p{L}\p{N}"'”’)\]}]) +([.,;:!?%)])(?=\s|$)''', unicode: true);
+final _apostrophe = RegExp(r"(\p{L}) ?['’] ?(s|t|d|m|ll|re|ve)\b", unicode: true);
+
+/// Text tokenised word by word (PDF / AI import) is rejoined, as on the web (`normalizeContentHtml`):
+/// "America ." → "America.", "California ' s" → "California's". Tags and `{…}` blanks are left alone.
+String _normalizeText(String html) {
+  final out = StringBuffer();
+  var last = 0;
+  String fix(String t) => t
+      .replaceAllMapped(_spaceBeforePunct, (m) => '${m[1]}${m[2]}')
+      .replaceAllMapped(_apostrophe, (m) => "${m[1]}'${m[2]}");
+  for (final m in _tagSplit.allMatches(html)) {
+    out
+      ..write(fix(html.substring(last, m.start)))
+      ..write(m[0]);
+    last = m.end;
+  }
+  out.write(fix(html.substring(last)));
+  return out.toString();
 }
 
 /// Plain text of an HTML fragment (for option labels, matching headings).
