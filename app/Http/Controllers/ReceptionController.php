@@ -6,7 +6,7 @@ use App\Models\Mock;
 use App\Models\MockStudent;
 use App\Services\CandidateService;
 use App\Services\MockResultService;
-use App\Support\CenterBranding;
+use App\Services\ResultSheetService;
 use App\Support\Pdf;
 use Carbon\Carbon;
 use Illuminate\Http\RedirectResponse;
@@ -24,6 +24,7 @@ class ReceptionController extends Controller
     public function __construct(
         private readonly MockResultService $results,
         private readonly CandidateService $candidates,
+        private readonly ResultSheetService $sheets,
     ) {}
 
     public function index(Request $request): Response
@@ -136,85 +137,17 @@ class ReceptionController extends Controller
             ->get();
 
         $sheets = [];
-        $brandings = [];
-        $logos = [];
         foreach ($students as $student) {
             $this->authorize('operate', $student->mock);
-            $result = $this->results->result($student);
-            if (! $result['ready']) {
-                continue;
+            if ($sheet = $this->sheets->sheet($student)) {
+                $sheets[] = $sheet;
+                $student->forceFill(['result_printed_at' => now()])->saveQuietly();
             }
-
-            $ownerId = (int) ($student->mock?->owner_id ?? 0);
-            if (! array_key_exists($ownerId, $brandings)) {
-                $brandings[$ownerId] = CenterBranding::forCenter($ownerId ?: null);
-                $logos[$ownerId] = $brandings[$ownerId]?->logoDataUri() ?? CenterBranding::uploadedLogoDataUri($ownerId ?: null);
-            }
-
-            $branding = $brandings[$ownerId];
-            $testDate = $student->mock?->started_at ? Carbon::parse($student->mock->started_at) : null;
-            $variant = $student->mock?->test?->variant === 'general' ? 'general' : 'academic';
-            $centreNumber = strtoupper($branding?->code ?: 'MYNINE');
-
-            $sheets[] = [
-                'branding' => $branding,
-                'logo' => $logos[$ownerId],
-                'center_name' => $branding?->name ?: 'Mynine',
-                'centre_number' => $centreNumber,
-                'module' => $variant === 'general' ? 'GENERAL TRAINING' : 'ACADEMIC',
-                'name' => $student->name,
-                ...self::splitName((string) $student->name),
-                'code' => $student->code,
-                'mock' => $student->mock?->name,
-                'date' => $testDate ? strtoupper($testDate->format('d/M/Y')) : '',
-                'issued' => now()->format('d/m/Y'),
-                'form_number' => ($testDate ?? now())->format('y').preg_replace('/[^A-Z0-9]/', '', $centreNumber).$student->code.'M'.$student->id.($variant === 'general' ? 'G' : 'A'),
-                'cefr' => self::cefr((float) $result['overall']),
-                'listening' => $result['listening'],
-                'reading' => $result['reading'],
-                'writing' => $result['writing'],
-                'speaking' => $result['speaking'],
-                'overall' => $result['overall'],
-            ];
-
-            $student->forceFill(['result_printed_at' => now()])->saveQuietly();
         }
 
         abort_if($sheets === [], 422, __('results_not_ready_selected'));
 
         return Pdf::render('pdf.result-sheet', compact('sheets'), 'Results_'.now()->format('Ymd_His'));
-    }
-
-    /**
-     * Family name / first name(s) for the report form. Uzbek names are usually written "Family First"; a surname
-     * suffix (-ov, -eva, -iy …) at the end means "First Family".
-     *
-     * @return array{family: string, first: string}
-     */
-    private static function splitName(string $name): array
-    {
-        $words = preg_split('/\s+/u', trim($name), -1, PREG_SPLIT_NO_EMPTY) ?: [];
-        if (count($words) < 2) {
-            return ['family' => '-', 'first' => $words[0] ?? '-'];
-        }
-        $surname = '/(ov|ova|ev|eva|yev|yeva|iy|aya|in|ina|zoda|dze|yan|enko)$/iu';
-        if (preg_match($surname, end($words)) && ! preg_match($surname, $words[0])) {
-            return ['family' => array_pop($words), 'first' => implode(' ', $words)];
-        }
-
-        return ['family' => array_shift($words), 'first' => implode(' ', $words)];
-    }
-
-    /** CEFR level of an overall band (as on the web result page). */
-    private static function cefr(float $overall): string
-    {
-        return match (true) {
-            $overall >= 8.5 => 'C2',
-            $overall >= 7.0 => 'C1',
-            $overall >= 5.5 => 'B2',
-            $overall >= 4.0 => 'B1',
-            default => 'A2',
-        };
     }
 
     /**

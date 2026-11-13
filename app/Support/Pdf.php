@@ -15,6 +15,19 @@ class Pdf
      */
     public static function render(string $view, array $data, string $filename): Response
     {
+        return response(self::output($view, $data), 200, [
+            'Content-Type' => 'application/pdf',
+            'Content-Disposition' => 'inline; filename="'.preg_replace('/[^A-Za-z0-9_.-]/', '_', $filename).'.pdf"',
+        ]);
+    }
+
+    /**
+     * The PDF bytes of a view.
+     *
+     * @param  array<string, mixed>  $data
+     */
+    public static function output(string $view, array $data): string
+    {
         $dompdf = new Dompdf([
             'isPhpEnabled' => false,
             'isRemoteEnabled' => false,
@@ -26,9 +39,6 @@ class Pdf
         $dompdf->setPaper('A4', 'portrait');
         $dompdf->render();
 
-        return response($dompdf->output(), 200, [
-            'Content-Type' => 'application/pdf',
-            'Content-Disposition' => 'inline; filename="'.preg_replace('/[^A-Za-z0-9_.-]/', '_', $filename).'.pdf"',
-        ]);
+        return (string) $dompdf->output();
     }
 }

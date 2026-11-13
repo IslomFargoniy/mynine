@@ -7,10 +7,12 @@ use App\Models\MockStudent;
 use App\Models\User\User;
 use App\Services\IeltsScoreConverter;
 use App\Services\MockResultService;
+use App\Services\ResultSheetService;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\Facades\URL;
 use Telegram\Bot\Api;
+use Telegram\Bot\FileUpload\InputFile;
 use Telegram\Bot\Keyboard\Keyboard;
 
 class MynineUzBotService
@@ -212,15 +214,23 @@ class MynineUzBotService
         $msg .= "🏆 *OVERALL BAND SCORE:* *{$overallBand}*\n";
         $msg .= "🎯 *CEFR Darajasi:* *{$cefr}*\n";
         $msg .= "━━━━━━━━━━━━━━━━━━━\n";
-        $msg .= "📄 Rasmiy sertifikat (TRF) va batafsil tahlilni quyidagi tugmalar orqali ko'rishingiz mumkin:";
 
-        $keyboard = Keyboard::make()->inline()
-            ->row([
+        // The result sheet (PDF) only once every module is ready (Writing checked, Speaking marked).
+        $sheets = app(ResultSheetService::class);
+        $sheet = $sheets->sheet($student);
+        $msg .= $sheet
+            ? '📄 Natija varaqasi (PDF) quyida yuborildi.'
+            : "📄 Natija varaqasi (PDF) barcha modullar natijasi tayyor bo'lganda shu yerda yuklab olinadi. Kodingizni keyinroq qayta yuboring.";
+
+        $keyboard = Keyboard::make()->inline();
+        if ($sheet) {
+            $keyboard->row([
                 Keyboard::inlineButton([
-                    'text' => '📄 Rasmiy TRF Sertifikat (PDF)',
+                    'text' => '📊 Batafsil tahlil (PDF)',
                     'url' => url(URL::temporarySignedRoute('attempt.pdf', now()->addDays(30), ['attempt' => $attempt->id], false)),
                 ]),
             ]);
+        }
 
         // The detailed web page requires a login, so only offer it to registered candidates
         if ($attempt->user_id) {
@@ -232,7 +242,28 @@ class MynineUzBotService
             ]);
         }
 
-        $this->sendSafeMessage($chatId, $msg, $keyboard, 'Markdown');
+        $this->sendSafeMessage($chatId, $msg, $sheet || $attempt->user_id ? $keyboard : null, 'Markdown');
+
+        if ($sheet) {
+            $this->sendResultSheet($chatId, $student, $sheets->pdf([$sheet]));
+        }
+    }
+
+    /**
+     * The result sheet as a PDF document in the chat.
+     */
+    protected function sendResultSheet(int|string $chatId, MockStudent $student, string $pdf): void
+    {
+        try {
+            $this->telegram->sendDocument([
+                'chat_id' => $chatId,
+                'document' => InputFile::createFromContents($pdf, 'Result_'.$student->code.'.pdf'),
+                'caption' => '📄 '.$student->name.' — natija varaqasi',
+            ]);
+        } catch (\Exception $e) {
+            Log::error('Telegram sendDocument error: '.$e->getMessage());
+            $this->sendSafeMessage($chatId, 'PDF yuborilmadi. Iltimos, birozdan keyin kodingizni qayta yuboring.');
+        }
     }
 
     /**
