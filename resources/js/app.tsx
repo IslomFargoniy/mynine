@@ -11,6 +11,7 @@ import { resolvePageComponent } from 'laravel-vite-plugin/inertia-helpers';
 import { createRoot } from 'react-dom/client';
 import { initializeTheme } from './hooks/use-appearance';
 import { Toaster } from 'sonner';
+import './lib/toast-dedupe';
 import { initTelegramWebApp } from './hooks/use-telegram';
 import { TelegramThemeProvider } from './components/telegram-theme-provider';
 import { useIsDark } from './hooks/use-is-dark';

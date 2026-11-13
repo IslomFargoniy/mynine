@@ -1,6 +1,6 @@
 import { type SharedData } from '@/types';
 import { usePage } from '@inertiajs/react';
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import { toast } from 'sonner';
 
@@ -9,7 +9,15 @@ export default function FlashMessages() {
     const { flash, errors } = props;
     const { t } = useTranslation();
 
+    // Each flash is shown once: the effect also re-runs on partial reloads and language changes of the same page.
+    const shown = useRef('');
+
     useEffect(() => {
+        const errorText = errors.error ? (Array.isArray(errors.error) ? errors.error[0] : errors.error) : '';
+        const signature = JSON.stringify([flash.success, flash.error, flash.warning, flash.info, errorText]);
+        if (signature === shown.current) return;
+        shown.current = signature;
+
         if (flash.success) {
             toast.success(t(flash.success));
         }

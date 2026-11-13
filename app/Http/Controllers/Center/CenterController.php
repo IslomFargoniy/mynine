@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\CenterAuditLog;
 use App\Models\CenterSetting;
 use App\Models\User\User;
+use App\Services\Users\UserMerger;
 use App\Support\CurrentCenter;
 use App\Support\UserSessions;
 use Illuminate\Http\RedirectResponse;
@@ -194,16 +195,12 @@ class CenterController extends Controller
             throw ValidationException::withMessages(['email' => __('center_replace_email_staff')]);
         }
 
-        DB::transaction(function () use ($center, $data, $oldEmail, $newEmail, $holder) {
+        $holderId = $holder?->id;
+        $merged = null;
+        DB::transaction(function () use ($center, $data, $oldEmail, $newEmail, $holder, $holderId, &$merged) {
             if ($holder) {
-                $holder->forceFill([
-                    'email' => 'archived+'.$holder->id.'.'.now()->timestamp.'@mynine.invalid',
-                    'google_id' => null,
-                    'github_id' => null,
-                    'telegram_id' => null,
-                    'password' => Str::random(40),
-                ])->saveQuietly();
-                UserSessions::invalidate($holder);
+                // Same person: their results move to the center account and the old account goes.
+                $merged = app(UserMerger::class)->mergeInto($holder, $center);
             }
 
             $center->forceFill([
@@ -228,7 +225,7 @@ class CenterController extends Controller
                 'new_email' => $newEmail,
                 'meta' => array_filter([
                     'center_code' => $center->centerSetting?->code,
-                    'archived_user_id' => $holder?->id,
+                    ($merged ? 'merged_user_id' : 'archived_user_id') => $holderId,
                 ]),
             ]);
         });

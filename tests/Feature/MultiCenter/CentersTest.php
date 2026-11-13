@@ -203,25 +203,25 @@ test('replacing a center\'s admin clears the old person\'s logins, ends their se
     $this->assertGuest();
 });
 
-test('Replace admin can take the email of an ordinary user: that account is archived, the person signs in to the center', function () {
+test('Replace admin can take the email of an ordinary user: their results move to the center and the old account is deleted', function () {
     config(['session.driver' => 'database']);
     $super = makeSuperAdmin();
     $center = makeCenter('NOVA');
     $student = makeUser('Student');
     $student->forceFill(['email' => 'person@example.com', 'google_id' => 'g-person', 'telegram_id' => '555'])->saveQuietly();
+    $exam = makeDesktopExam($super);
+    $attempt = \App\Models\Attempt::create(['user_id' => $student->id, 'test_id' => $exam['testL']->id, 'name' => 'Practice', 'started_at' => now()]);
     DB::table('sessions')->insert(['id' => 'student-session', 'user_id' => $student->id, 'payload' => 'x', 'last_activity' => time()]);
 
     $this->actingAs($super)->post(route('centers.replace-admin', $center), ['email' => 'Person@Example.com'])
         ->assertSessionHasNoErrors()->assertSessionHas('success');
 
-    $student = $student->fresh();
     expect($center->fresh()->email)->toBe('person@example.com')
-        ->and($student->email)->toEndWith('@mynine.invalid')
-        ->and($student->google_id)->toBeNull()
-        ->and($student->telegram_id)->toBeNull()
-        ->and($student->hasRole('Student'))->toBeTrue()
+        ->and(User::find($student->id))->toBeNull()
+        ->and(User::where('email', 'like', '%@mynine.invalid')->exists())->toBeFalse()
+        ->and($attempt->fresh()->user_id)->toBe($center->id)
         ->and(DB::table('sessions')->where('id', 'student-session')->exists())->toBeFalse();
-    expect(CenterAuditLog::where('action', 'admin_replaced')->sole()->meta['archived_user_id'] ?? null)->toBe($student->id);
+    expect(CenterAuditLog::where('action', 'admin_replaced')->sole()->meta['merged_user_id'] ?? null)->toBe($student->id);
 
     // Google sign-in with that address now opens the center.
     $this->post(route('logout'));
