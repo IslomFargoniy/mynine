@@ -3,7 +3,7 @@
     header (center, mock, date), the code large, the candidate's name and a short instruction. Black only,
     one ticket per page (the driver cuts after each page). The page has an explicit size — Chrome ignores
     "size: 80mm auto" and falls back to A4. A partner center's ticket shows its logo (grayscale) and name on top and
-    "Powered by Mynine" at the bottom ($branding from CenterBranding; null for the Mynine center).
+    "Powered by Mynine" at the bottom ($branding from CenterBranding; null without a center; "Powered by Mynine" only for partners).
     Opens the print dialog on load and closes / goes back after printing.
 --}}
 @php
@@ -72,7 +72,7 @@
             <div class="name">{{ $student->name }}</div>
             <div class="rule"></div>
             <div class="note">{{ __('ticket_note') }}</div>
-            <div class="foot">{{ $branding ? 'Powered by Mynine' : 'mynine.uz' }} · {{ now()->format('d.m.Y H:i') }}</div>
+            <div class="foot">{{ $branding?->partner ? 'Powered by Mynine' : 'mynine.uz' }} · {{ now()->format('d.m.Y H:i') }}</div>
         </div>
     @endforeach
 

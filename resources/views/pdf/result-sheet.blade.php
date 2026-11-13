@@ -41,7 +41,7 @@
 @foreach ($sheets as $sheet)
     @php
         $branding = $sheet['branding'] ?? null;
-        $logo = ($sheet['logo'] ?? null) ?: ($branding ? $branding->logoDataUri() : null) ?: $mynineLogo;
+        $logo = $branding?->logoDataUri() ?: $mynineLogo;
         $initials = collect(preg_split('/\s+/u', trim((string) $sheet['name'])))->filter()->take(2)
             ->map(fn ($w) => mb_strtoupper(mb_substr($w, 0, 1)))->implode('');
     @endphp
@@ -191,7 +191,7 @@
     <div style="height: 60pt;"></div>
     <div class="footer">
         This mock examination result was issued by {{ $sheet['center_name'] }} and is not an official IELTS Test Report Form
-        @if ($branding)
+        @if ($branding?->partner)
             &middot; Powered by Mynine
         @else
             &middot; mynine.uz

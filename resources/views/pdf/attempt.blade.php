@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>IELTS Test Report Form - MyNine</title>
+    <title>IELTS Mock Result - {{ ($branding ?? null)?->name ?? 'Mynine' }}</title>
     <style>
         @page {
             margin: 25pt 30pt;
@@ -426,7 +426,7 @@
     $verificationUrl = route('attempt.pdf', $attempt->id);
     $verificationCode = 'MY9-' . strtoupper(substr(hash('sha256', $attempt->id . $attempt->created_at), 0, 8));
 
-    // A partner center's mock result: its name / logo instead of Mynine's, plus "Powered by Mynine".
+    // A center's result: its own name / logo (partners also "Powered by Mynine"); practice keeps MYNINE.UZ.
     $branding = $branding ?? null;
 @endphp
 
@@ -444,10 +444,10 @@
                         <img src="{{ $logo }}" alt="" style="max-height: 34px; max-width: 160px; vertical-align: middle; margin-right: 6px;">
                     @endif
                     <span class="brand-title" style="vertical-align: middle;">{{ $branding->name }}</span>
-                    <div class="brand-subtitle">IELTS Mock Exam &middot; Powered by Mynine</div>
+                    <div class="brand-subtitle">IELTS Mock Exam{!! $branding->partner ? ' &middot; Powered by Mynine' : '' !!}</div>
                 @else
                     <div class="brand-title">MYNINE.UZ</div>
-                    <div class="brand-subtitle">Official IELTS Preparation & Assessment Center</div>
+                    <div class="brand-subtitle">IELTS Preparation Platform</div>
                 @endif
             </td>
             <td class="trf-header-right">
@@ -476,7 +476,7 @@
             <td class="field-label">Candidate Contact:</td>
             <td class="field-value">{{ $candidateContact }}</td>
             <td class="field-label">Test Mode:</td>
-            <td class="field-value">{{ optional($attempt->mock)->name ? 'Official Mock Exam' : 'Full Practice Exam' }}</td>
+            <td class="field-value">{{ optional($attempt->mock)->name ? 'Mock Exam' : 'Full Practice Exam' }}</td>
         </tr>
     </table>
 
@@ -666,7 +666,7 @@
                         <strong>Verification Code:</strong> <code>{{ $verificationCode }}</code>
                     </div>
                     @if ($branding)
-                    <strong>Disclaimer:</strong> This mock exam result is issued by {{ $branding->name }} (powered by Mynine). The scores
+                    <strong>Disclaimer:</strong> This mock exam result is issued by {{ $branding->name }}{{ $branding->partner ? ' (powered by Mynine)' : '' }} and is not an official IELTS Test Report Form. The scores
                     @else
                     <strong>Disclaimer:</strong> This Test Report Form is issued by MyNine.uz Academic Preparation Platform. The scores
                     @endif are generated based on official Cambridge IELTS criteria and intended for performance monitoring and practice evaluation.<br>

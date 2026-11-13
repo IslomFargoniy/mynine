@@ -27,6 +27,7 @@ function captureView(string $view): object
 beforeEach(function () {
     Storage::fake('public');
     $this->mynine = defaultCenter();
+    centerSettings($this->mynine)->forceFill(['name' => 'Mynine Center'])->save();
     $this->partner = makeCenter('ALPHA', ['name' => 'Alpha Academy']);
     $this->partnerExam = makeDesktopExam($this->partner, [], '111111');
     $this->mynineExam = makeDesktopExam($this->mynine, [], '222222');
@@ -59,14 +60,14 @@ test('without a logo the partner ticket prints the name only', function () {
         ->assertSee('Powered by Mynine');
 });
 
-test('the Mynine center\'s tickets keep the Mynine receipt header', function () {
+test('the Mynine center\'s tickets show its own name, without Powered by Mynine', function () {
     $this->actingAs($this->mynine)->get(route('mock.code-tickets', $this->mynineExam['mock']))->assertOk()
         ->assertSee('222222')
-        ->assertSee('Mynine · IELTS')
+        ->assertSee('Mynine Center')
         ->assertDontSee('Powered by Mynine');
 });
 
-test('A4 code cards carry the partner\'s embedded logo and name; Mynine cards keep the Mynine brand', function () {
+test('A4 code cards carry the center\'s embedded logo and name; only partners say Powered by Mynine', function () {
     giveLogo($this->partner);
     $box = captureView('pdf.code-cards');
     $this->actingAs($this->partner)->get(route('mock.code-cards', $this->partnerExam['mock']))->assertOk()->assertHeader('Content-Type', 'application/pdf');
@@ -81,7 +82,7 @@ test('A4 code cards carry the partner\'s embedded logo and name; Mynine cards ke
     $box = captureView('pdf.code-cards');
     $this->actingAs($this->mynine)->get(route('mock.code-cards', $this->mynineExam['mock']))->assertOk();
     $html = view('pdf.code-cards', $box->data)->render();
-    expect($html)->toContain('Mynine Mock Exam')->not->toContain('Powered by Mynine');
+    expect($html)->toContain('Mynine Center')->not->toContain('Powered by Mynine');
 });
 
 test('reception result sheets are branded per candidate\'s center', function () {
@@ -100,7 +101,7 @@ test('reception result sheets are branded per candidate\'s center', function () 
     $box = captureView('pdf.result-sheet');
     $this->actingAs(makeUser('Reception', $this->mynine))->get(route('reception.result-sheets', ['ids' => $this->mynineExam['student']->id]))->assertOk();
     $html = view('pdf.result-sheet', $box->data)->render();
-    expect($html)->toContain('<span class="center-name">Mynine</span>')->toContain('&middot; mynine.uz')->not->toContain('Powered by Mynine');
+    expect($html)->toContain('<span class="center-name">Mynine Center</span>')->toContain('&middot; mynine.uz')->not->toContain('Powered by Mynine');
 });
 
 test('the Mynine center\'s uploaded logo is printed on its result sheets', function () {
@@ -112,11 +113,12 @@ test('the Mynine center\'s uploaded logo is printed on its result sheets', funct
     $box = captureView('pdf.result-sheet');
     $this->actingAs(makeUser('Reception', $this->mynine))->get(route('reception.result-sheets', ['ids' => $this->mynineExam['student']->id]))->assertOk();
 
-    expect($box->data['sheets'][0]['logo'])->toStartWith('data:image/png;base64,')
-        ->and($box->data['sheets'][0]['branding'])->toBeNull();
+    $html = view('pdf.result-sheet', $box->data)->render();
+    expect($box->data['sheets'][0]['branding']->partner)->toBeFalse()
+        ->and($html)->toContain('src="data:image/png;base64,')->not->toContain('Powered by Mynine');
 });
 
-test('the attempt result PDF of a partner mock shows the center; practice and Mynine mocks keep MYNINE.UZ', function () {
+test('the attempt result PDF shows its center (partners: Powered by Mynine); practice keeps MYNINE.UZ', function () {
     $partnerAttempt = Attempt::create(['name' => 'Cand', 'mock_id' => $this->partnerExam['mock']->id, 'mock_student_id' => $this->partnerExam['student']->id, 'test_id' => $this->partnerExam['testL']->id, 'started_at' => now()]);
     $mynineAttempt = Attempt::create(['name' => 'Cand', 'mock_id' => $this->mynineExam['mock']->id, 'mock_student_id' => $this->mynineExam['student']->id, 'test_id' => $this->mynineExam['testL']->id, 'started_at' => now()]);
 
@@ -126,7 +128,7 @@ test('the attempt result PDF of a partner mock shows the center; practice and My
     ])->render();
 
     expect($render($partnerAttempt))->toContain('Alpha Academy')->toContain('ALPHA ACADEMY ASSESSMENT')->toContain('Powered by Mynine')->not->toContain('MYNINE.UZ</div>')
-        ->and($render($mynineAttempt))->toContain('MYNINE.UZ</div>')->toContain('MYNINE CERTIFIED ASSESSMENT')->not->toContain('Powered by Mynine')
+        ->and($render($mynineAttempt))->toContain('Mynine Center')->toContain('MYNINE CENTER ASSESSMENT')->not->toContain('Powered by Mynine')->not->toContain('MYNINE.UZ</div>')
         ->and(CenterBranding::forCenter(null))->toBeNull();
 });
 

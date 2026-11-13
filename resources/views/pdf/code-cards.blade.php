@@ -46,7 +46,9 @@
                         </div>
                         @if ($branding)
                             <div class="hint">Enter this code on the exam computer. Keep the card until you receive your result.</div>
-                            <div class="powered">Powered by Mynine</div>
+                            @if ($branding->partner)
+                                <div class="powered">Powered by Mynine</div>
+                            @endif
                         @else
                             <div class="hint">Enter this code on the Mynine exam computer. Keep the card until you receive your result.</div>
                         @endif

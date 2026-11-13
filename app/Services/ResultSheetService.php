@@ -13,7 +13,7 @@ use Carbon\Carbon;
  */
 class ResultSheetService
 {
-    /** @var array<int, array{0: ?CenterBranding, 1: ?string}> */
+    /** @var array<int, ?CenterBranding> */
     private array $centers = [];
 
     public function __construct(private readonly MockResultService $results) {}
@@ -32,10 +32,9 @@ class ResultSheetService
 
         $ownerId = (int) ($student->mock?->owner_id ?? 0);
         if (! array_key_exists($ownerId, $this->centers)) {
-            $branding = CenterBranding::forCenter($ownerId ?: null);
-            $this->centers[$ownerId] = [$branding, $branding?->logoDataUri() ?? CenterBranding::uploadedLogoDataUri($ownerId ?: null)];
+            $this->centers[$ownerId] = CenterBranding::forCenter($ownerId ?: null);
         }
-        [$branding, $logo] = $this->centers[$ownerId];
+        $branding = $this->centers[$ownerId];
 
         $testDate = $student->mock?->started_at ? Carbon::parse($student->mock->started_at) : null;
         $variant = $student->mock?->test?->variant === 'general' ? 'general' : 'academic';
@@ -43,7 +42,6 @@ class ResultSheetService
 
         return [
             'branding' => $branding,
-            'logo' => $logo,
             'center_name' => $branding?->name ?: 'Mynine',
             'centre_number' => $centreNumber,
             'module' => $variant === 'general' ? 'GENERAL TRAINING' : 'ACADEMIC',

@@ -6,9 +6,9 @@ use App\Models\CenterSetting;
 use Illuminate\Support\Facades\Storage;
 
 /**
- * Branding of a partner center's printouts and pages: its name and logo (center_settings) plus a small
- * "Powered by Mynine". The Mynine center (and records without a center) have no branding: their
- * printouts and pages stay as they always were.
+ * Branding of a center's printouts and pages: its own name and logo (center_settings). A partner center's printouts
+ * also say "Powered by Mynine" ($partner); the Mynine center prints under its own name and logo without it. Records
+ * without a center (practice) have no branding.
  */
 final class CenterBranding
 {
@@ -25,10 +25,11 @@ final class CenterBranding
         public readonly string $name,
         public readonly string $code,
         public readonly ?string $logoPath,
+        public readonly bool $partner = true,
     ) {}
 
     /**
-     * Branding of a center, or null for the Mynine center / no center.
+     * Branding of a center, or null when there is no center.
      */
     public static function forCenter(?int $centerId): ?self
     {
@@ -38,23 +39,8 @@ final class CenterBranding
 
         $settings = CenterSetting::query()->where('owner_id', $centerId)->first();
 
-        return $settings && ! $settings->isMynine()
-            ? new self((string) $settings->name, (string) $settings->code, $settings->logo_path ?: null)
-            : null;
-    }
-
-    /**
-     * The center's uploaded logo as a data: URI for PDFs, also for the Mynine center (which has no other branding).
-     */
-    public static function uploadedLogoDataUri(?int $centerId): ?string
-    {
-        if (! $centerId) {
-            return null;
-        }
-        $settings = CenterSetting::query()->where('owner_id', $centerId)->first();
-
-        return $settings?->logo_path
-            ? (new self((string) $settings->name, (string) $settings->code, $settings->logo_path))->logoDataUri()
+        return $settings
+            ? new self((string) $settings->name ?: 'Mynine', (string) $settings->code, $settings->logo_path ?: null, ! $settings->isMynine())
             : null;
     }
 
