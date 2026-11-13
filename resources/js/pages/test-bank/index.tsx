@@ -193,7 +193,7 @@ export default function TestBank() {
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
             <Head title={t('test_bank.title')} />
-            <div className="flex h-full flex-1 flex-col gap-4 rounded-xl p-4">
+            <div className="mx-auto w-full max-w-7xl p-4 md:p-6 flex h-full flex-1 flex-col gap-4">
                 <div className="mb-2 flex items-center justify-end gap-2">
                     <MobileSearchModal data={data} setData={setData} handleSubmit={handleSubmit} folders={folders} isAdmin={isAdmin} />
                     <div className="hidden w-full lg:block">

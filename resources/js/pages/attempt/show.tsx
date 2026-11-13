@@ -87,7 +87,7 @@ export default function AttemptShow() {
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
             <Head title={t('attempt_result.title', { id: attempt.id })} />
-            <div className="mx-auto flex h-full w-full max-w-7xl flex-1 flex-col gap-5 p-4 md:p-6">
+            <div className="mx-auto w-full max-w-7xl p-4 md:p-6 flex h-full flex-1 flex-col gap-5">
                 {/* Header + actions */}
                 <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
                     <div className="min-w-0">

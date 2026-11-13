@@ -36,7 +36,7 @@ export default function SettingsLayout({ children }: PropsWithChildren) {
     const currentPath = window.location.pathname;
 
     return (
-        <div className="px-4 py-6">
+        <div className="mx-auto w-full max-w-7xl p-4 md:p-6">
             <Heading title={t('settings_layout.title')} description={t('settings_layout.description')} />
 
             <div className="flex flex-col space-y-8 lg:flex-row lg:space-y-0 lg:space-x-12">

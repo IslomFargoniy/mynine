@@ -61,7 +61,7 @@ export default function CenterSettings() {
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
             <Head title={t('exam_admin.nav.center_settings')} />
-            <div className="mx-auto w-full max-w-5xl space-y-5 p-4 md:p-6">
+            <div className="mx-auto w-full max-w-7xl p-4 md:p-6 space-y-5">
                 <CenterTabs />
                 <PageHeader
                     icon={<Settings2 className="h-5 w-5" />}

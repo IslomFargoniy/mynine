@@ -70,7 +70,7 @@ export default function UserShow() {
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
             <Head title={`User ${user.name}`} />
-            <div className="flex h-full flex-1 flex-col gap-6 p-6 lg:p-8 max-w-7xl mx-auto w-full animate-in fade-in duration-500">
+            <div className="mx-auto w-full max-w-7xl p-4 md:p-6 flex h-full flex-1 flex-col gap-6 animate-in fade-in duration-500">
                 {/* Header Section with Welcome */}
                 <div className="glass relative overflow-hidden rounded-[28px] p-8">
                     <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-6">

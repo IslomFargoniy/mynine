@@ -88,7 +88,7 @@ export default function Dashboard() {
         <AppLayout breadcrumbs={breadcrumbs}>
             <Head title={t('sidebar.dashboard')} />
 
-            <div className="flex flex-col gap-6 p-6 lg:p-8 max-w-7xl mx-auto w-full animate-in fade-in duration-500">
+            <div className="mx-auto w-full max-w-7xl p-4 md:p-6 flex flex-col gap-6 animate-in fade-in duration-500">
                 
                 {/* Header Section with Welcome */}
                 <div className="glass relative overflow-hidden rounded-[28px] p-8">

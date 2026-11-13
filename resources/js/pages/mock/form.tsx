@@ -21,7 +21,7 @@ export default function MockForm() {
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
             <Head title={isEdit ? mock.name : t('exam_admin.mock_form.create_title')} />
-            <div className="mx-auto max-w-5xl space-y-5 p-4 md:p-6">
+            <div className="mx-auto w-full max-w-7xl p-4 md:p-6 space-y-5">
                 <PageHeader
                     icon={<GraduationCap className="h-5 w-5" />}
                     title={isEdit ? t('exam_admin.mock_form.edit_title') : t('exam_admin.mock_form.create_title')}

@@ -152,7 +152,7 @@ export default function SpeakingIndex() {
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
             <Head title={t('exam_admin.nav.speaking')} />
-            <div className="mx-auto max-w-6xl space-y-5 p-4 md:p-6">
+            <div className="mx-auto w-full max-w-7xl p-4 md:p-6 space-y-5">
                 <PageHeader
                     icon={<Mic className="h-5 w-5" />}
                     title={t('exam_admin.nav.speaking')}

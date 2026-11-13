@@ -46,7 +46,7 @@ export default function ReportsUsage() {
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
             <Head title={t('exam_admin.nav.usage')} />
-            <div className="mx-auto w-full max-w-5xl space-y-5 p-4 md:p-6">
+            <div className="mx-auto w-full max-w-7xl p-4 md:p-6 space-y-5">
                 <CenterTabs />
                 <PageHeader
                     icon={<Gauge className="h-5 w-5" />}

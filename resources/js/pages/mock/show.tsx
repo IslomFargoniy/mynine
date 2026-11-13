@@ -159,7 +159,7 @@ export default function MockShow() {
         <AppLayout breadcrumbs={breadcrumbs}>
             <Head title={mock.name} />
 
-            <div className="mx-auto max-w-7xl space-y-6 p-4 md:p-6">
+            <div className="mx-auto w-full max-w-7xl p-4 md:p-6 space-y-6">
                 {/* Header */}
                 <div className="flex flex-col justify-between gap-4 lg:flex-row lg:items-center">
                     <div className="flex min-w-0 items-center gap-3">
