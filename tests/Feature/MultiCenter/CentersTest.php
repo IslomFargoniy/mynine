@@ -624,3 +624,25 @@ test('the header center switcher: the SuperAdmin gets every center; switching fr
         ->assertRedirect(route('staff.index'));
     $this->actingAs($super)->post(route('centers.switch', $center))->assertRedirect(route('mock.index'));
 });
+
+test('users:merge-archived folds an account archived by an older Replace admin into the center account', function () {
+    $super = makeSuperAdmin();
+    $center = makeCenter('NOVA');
+    $old = makeUser('Student');
+    $old->forceFill(['email' => 'archived+'.$old->id.'.1794548554@mynine.invalid'])->saveQuietly();
+    $exam = makeDesktopExam($super);
+    $attempt = \App\Models\Attempt::create(['user_id' => $old->id, 'test_id' => $exam['testL']->id, 'name' => 'Old', 'started_at' => now()]);
+    CenterAuditLog::record('admin_replaced', $center->id, ['old_email' => 'x@example.com', 'new_email' => 'p@example.com', 'meta' => ['archived_user_id' => $old->id]]);
+
+    $this->artisan('users:merge-archived', ['--dry-run' => true])->assertSuccessful();
+    expect(User::find($old->id))->not->toBeNull();
+
+    $this->artisan('users:merge-archived')->assertSuccessful();
+    expect(User::find($old->id))->toBeNull()
+        ->and($attempt->fresh()->user_id)->toBe($center->id)
+        ->and(CenterAuditLog::where('action', 'archived_user_merged')->count())->toBe(1);
+
+    // Running it again changes nothing.
+    $this->artisan('users:merge-archived')->assertSuccessful();
+    expect(CenterAuditLog::where('action', 'archived_user_merged')->count())->toBe(1);
+});
