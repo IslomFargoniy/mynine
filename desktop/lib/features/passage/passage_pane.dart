@@ -105,6 +105,8 @@ class PassagePane extends StatefulWidget {
     this.imageResolver,
     this.slotNumbers = const {},
     this.slotBuilder,
+    this.zoneKeys = const {},
+    this.zoneBuilder,
   });
 
   final int partId;
@@ -118,6 +120,10 @@ class PassagePane extends StatefulWidget {
   /// Question numbers with a heading box (`{14}`) in the passage ([passageSlots]), built by [slotBuilder].
   final Set<int> slotNumbers;
   final Widget Function(BuildContext context, int number)? slotBuilder;
+
+  /// Paragraph zones (`{z12:A}`, [passageZones]) of a "which paragraph contains…" task, built by [zoneBuilder].
+  final Set<String> zoneKeys;
+  final Widget Function(BuildContext context, String key)? zoneBuilder;
 
   @override
   State<PassagePane> createState() => _PassagePaneState();
@@ -210,9 +216,10 @@ class _PassagePaneState extends State<PassagePane> {
   Widget build(BuildContext context) {
     final p = widget.palette;
     final slotBuilder = widget.slotBuilder;
-    final hasSlots = widget.slotNumbers.isNotEmpty && slotBuilder != null;
+    final zoneBuilder = widget.zoneBuilder;
+    final hasSlots = (widget.slotNumbers.isNotEmpty && slotBuilder != null) || (widget.zoneKeys.isNotEmpty && zoneBuilder != null);
     final doc = hasSlots
-        ? parseHtmlCached(hoistPassageMarkers(widget.html), blankPattern: passageSlotPattern)
+        ? parseHtmlCached(hoistPassageMarkers(widget.html), blankPattern: passageBlankPattern)
         : parseHtmlCached(widget.html);
     return ListenableBuilder(
       listenable: widget.store,
@@ -245,8 +252,14 @@ class _PassagePaneState extends State<PassagePane> {
                   onSelectionChanged: _onSelection,
                   blankBuilder: hasSlots
                       ? (context, blank) {
+                          final zone = passageZoneKey(blank.marker);
+                          if (zone != null) {
+                            return zoneBuilder != null && widget.zoneKeys.contains(zone)
+                                ? zoneBuilder(context, zone)
+                                : const SizedBox.shrink();
+                          }
                           final n = passageSlotNumber(blank.marker);
-                          return n != null && widget.slotNumbers.contains(n)
+                          return n != null && slotBuilder != null && widget.slotNumbers.contains(n)
                               ? slotBuilder(context, n)
                               : Text(blank.marker);
                         }

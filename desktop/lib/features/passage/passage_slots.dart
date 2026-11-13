@@ -1,4 +1,5 @@
 import '../../data/models/part_payload.dart';
+import '../questions/range.dart';
 import 'html_document.dart' show htmlToPlainText;
 
 /// IELTS "matching headings" inside the passage (web `utils/passageSlots.ts`): the author writes `{14}` in the passage
@@ -68,7 +69,62 @@ String insertAutoMarkers(String html, PartPayload part) {
 }
 
 /// The passage HTML with the heading boxes' markers (written by the author, or found from "Section A"…).
-String passageHtml(PartPayload part) => insertAutoMarkers(part.html, part);
+String passageHtml(PartPayload part) => insertParagraphZones(insertAutoMarkers(part.html, part), part);
+
+/// Heading boxes (`{14}`) and paragraph zones (`{z<sectionId>:A}`): the blanks of the passage.
+final RegExp passageBlankPattern = RegExp(r'\{(?:\d{1,3}|z\d+:[A-Z])\}');
+
+/// "Which paragraph contains the following information?" (matching with letters A–H, statements as questions):
+/// the candidate drags the question numbers onto the paragraphs (web `isParagraphInfoSection`).
+bool isParagraphInfoSection(SectionPayload section) {
+  if (section.questionType != QuestionType.matching || section.options.isNotEmpty) return false;
+  final letters = buildRange(section.fromOption, section.toOption);
+  if (letters.length < 2 || !letters.every((l) => RegExp(r'^[A-Z]$').hasMatch(l))) return false;
+  if (headingTexts(section.html, letters).isNotEmpty) return false;
+  // "Section A" questions are headings for the paragraphs (boxes of their own), not information to place.
+  return !section.questions.any((q) => paragraphLetter(q.html) != null);
+}
+
+/// A zone `{z<sectionId>:A}` above each paragraph letter of the first such section.
+String insertParagraphZones(String html, PartPayload part) {
+  if (html.isEmpty || RegExp(r'\{z\d+:[A-Z]\}').hasMatch(html)) return html;
+  final section = part.sections.where(isParagraphInfoSection).firstOrNull;
+  if (section == null) return html;
+  final letters = buildRange(section.fromOption, section.toOption);
+  for (final clear in [true, false]) {
+    final at = <(String, int)>[];
+    var from = 0;
+    for (final letter in letters) {
+      final m = RegExp(paragraphLabelPattern(letter, clear)).allMatches(html, from).firstOrNull;
+      if (m == null) continue;
+      at.add((letter, m.start));
+      from = m.start + 1;
+    }
+    if (at.length < 2 || (!clear && at.length < letters.length)) continue;
+    var out = html;
+    for (var k = at.length - 1; k >= 0; k--) {
+      out = '${out.substring(0, at[k].$2)}<p>{z${section.id}:${at[k].$1}}</p>${out.substring(at[k].$2)}';
+    }
+    return out;
+  }
+  return html;
+}
+
+/// Zone key (`"<sectionId>:A"`) → its section, for the zones present in [part]'s passage.
+Map<String, SectionPayload> passageZones(PartPayload part) {
+  final out = <String, SectionPayload>{};
+  for (final m in RegExp(r'\{z(\d+):([A-Z])\}').allMatches(passageHtml(part))) {
+    final section = part.sections.where((s) => s.id == int.parse(m[1]!)).firstOrNull;
+    if (section != null) out['${m[1]}:${m[2]}'] = section;
+  }
+  return out;
+}
+
+/// The zone key of a `{z12:A}` marker.
+String? passageZoneKey(String marker) {
+  final m = RegExp(r'^\{z(\d+):([A-Z])\}$').firstMatch(marker);
+  return m == null ? null : '${m[1]}:${m[2]}';
+}
 
 /// Question number → question, for the markers present in [part]'s passage.
 Map<int, QuestionPayload> passageSlots(PartPayload part) {

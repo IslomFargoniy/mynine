@@ -19,7 +19,7 @@ import SoundCheckModal from '@/components/practice/sound-check-modal';
 import { useExamIntegrity } from '@/hooks/use-exam-integrity';
 import { useExamHotkeys } from '@/hooks/use-exam-hotkeys';
 import { syncQueue } from '@/services/sync-queue';
-import { passageSlotQuestionIds, passageSlots } from '@/utils/passageSlots';
+import { passageSlotQuestionIds, passageSlots, passageZones } from '@/utils/passageSlots';
 
 export default function Practice() {
     const { attempt } = usePage<{ attempt: Attempt }>().props;
@@ -144,6 +144,8 @@ export default function Practice() {
 
     // Matching headings answered inside the passage (`{14}` boxes).
     const passageQuestionIds = useMemo(() => passageSlotQuestionIds(passageSlots(selectedPart)), [selectedPart]);
+    // "Which paragraph contains…" sections whose question numbers are dragged onto the passage's paragraphs.
+    const zoneSectionIds = useMemo(() => new Set(Array.from(passageZones(selectedPart).values(), (z) => z.section.id)), [selectedPart]);
 
     const navigateToQuestion = useCallback((qId: number) => {
         setActiveQuestionId(qId);
@@ -668,6 +670,7 @@ export default function Practice() {
                                                     flaggedIds={flaggedIds}
                                                     toggleFlag={toggleFlag}
                                                     passageQuestionIds={passageQuestionIds}
+                                                    dragNumbers={zoneSectionIds.has(section.id)}
                                                 />
                                             );
 

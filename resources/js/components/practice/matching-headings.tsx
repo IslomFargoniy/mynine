@@ -1,7 +1,7 @@
 import { Question, Section } from '@/types';
 import { buildRange } from '@/utils/rangeHelpers';
 import PassageDropZone from '@/components/practice/passage-drop-zone';
-import { headingPick, headingTexts, usePickedHeading, writeHeadingDrag } from '@/utils/passageSlots';
+import { headingPick, headingTexts, usePickedHeading, writeHeadingDrag, writeQuestionDrag } from '@/utils/passageSlots';
 
 interface MatchingHeadingsProps {
     section: Section;
@@ -13,6 +13,8 @@ interface MatchingHeadingsProps {
     toggleFlag?: (questionId: number) => void;
     /** Questions answered by dragging a heading into the passage (`{14}` boxes): no select for them. */
     passageQuestionIds?: Set<number>;
+    /** "Which paragraph contains…": the number badge is dragged onto a paragraph of the passage. */
+    dragNumbers?: boolean;
 }
 
 /**
@@ -27,6 +29,7 @@ export default function MatchingHeadings({
     flaggedIds,
     toggleFlag,
     passageQuestionIds,
+    dragNumbers = false,
 }: MatchingHeadingsProps) {
     const picked = usePickedHeading();
     const textOptions: string[] =
@@ -111,12 +114,15 @@ export default function MatchingHeadings({
                         >
                             <div className="flex min-w-0 flex-1 items-start gap-2.5 sm:items-center">
                                 <span
+                                    draggable={dragNumbers}
+                                    onDragStart={dragNumbers ? (e) => writeQuestionDrag(e, q.id) : undefined}
+                                    title={dragNumbers ? 'Drag onto a paragraph of the passage' : undefined}
                                     onClick={() => toggleFlag?.(q.id)}
                                     className={`flex h-6 min-w-[24px] items-center justify-center border px-1.5 ${
                                         isFlagged
                                             ? 'border-orange-500 bg-orange-50 font-bold text-orange-600'
                                             : 'border-black bg-white font-bold text-black dark:border-white dark:bg-gray-800 dark:text-white'
-                                    } rounded-[2px] text-xs ${toggleFlag ? 'cursor-pointer' : ''} relative shrink-0 shadow-2xs select-none`}
+                                    } rounded-[2px] text-xs ${dragNumbers ? 'cursor-grab' : toggleFlag ? 'cursor-pointer' : ''} relative shrink-0 shadow-2xs select-none`}
                                 >
                                     {qNumber}
                                     {isFlagged && (

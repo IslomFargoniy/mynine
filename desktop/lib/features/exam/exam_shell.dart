@@ -196,6 +196,7 @@ class _ExamShellState extends ConsumerState<ExamShell> {
         store: _storeFor(exam),
         // Listening has no passage pane, so its matching questions keep the select.
         passageQuestionIds: part.type == 'listening' ? const {} : passageSlotQuestionIds(part),
+        zoneSectionIds: part.type == 'listening' ? const {} : {for (final s in passageZones(part).values) s.id},
         pickedHeading: _pickedHeading,
       );
 
@@ -227,17 +228,21 @@ class _ExamShellState extends ConsumerState<ExamShell> {
       return _questionsPane(exam, part, palette, constrained: true);
     }
     final slots = passageSlots(part);
+    final zones = passageZones(part);
     final left = PassagePane(
       key: ValueKey('passage-${part.id}'),
       partId: part.id,
       title: part.name,
-      html: slots.isEmpty ? part.html : passageHtml(part),
+      html: slots.isEmpty && zones.isEmpty ? part.html : passageHtml(part),
       store: _storeFor(exam),
       palette: palette,
       onToggleNotes: () => setState(() => _notesOpen = !_notesOpen),
       imageResolver: (src) => _resolveImage(exam, src),
       slotNumbers: slots.keys.toSet(),
       slotBuilder: (context, n) => PassageDropBox(question: slots[n]!, ctx: _ctxFor(exam, part, palette)),
+      zoneKeys: zones.keys.toSet(),
+      zoneBuilder: (context, key) =>
+          ParagraphZoneBox(section: zones[key]!, letter: key.split(':').last, ctx: _ctxFor(exam, part, palette)),
     );
     // Built once per shell build; the split row below reuses these same instances while dragging, so Flutter
     // only re-lays them out at the new width instead of rebuilding every text block and question.

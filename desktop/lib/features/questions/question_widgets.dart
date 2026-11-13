@@ -29,6 +29,7 @@ class QuestionContext {
     this.store,
     this.passageQuestionIds = const {},
     this.pickedHeading,
+    this.zoneSectionIds = const {},
   });
 
   final ExamController exam;
@@ -47,6 +48,9 @@ class QuestionContext {
 
   /// Tap-to-place: the heading picked in the list waits for a tap on a passage box.
   final ValueNotifier<String?>? pickedHeading;
+
+  /// "Which paragraph contains…" sections whose question numbers are dragged onto the passage ([ParagraphZoneBox]).
+  final Set<int> zoneSectionIds;
 
   GlobalKey keyFor(int questionId) => keys.putIfAbsent(questionId, GlobalKey.new);
 
@@ -885,6 +889,25 @@ class _MatchingViewState extends State<MatchingView> {
         borderRadius: BorderRadius.circular(6),
       ),
       child: Row(children: [
+        if (ctx.zoneSectionIds.contains(widget.section.id) && !ctx.locked)
+          Draggable<QuestionDrag>(
+            key: Key('number-${q.id}'),
+            data: QuestionDrag(q.id),
+            feedback: Material(color: Colors.transparent, child: _NumberChip(number: q.number)),
+            childWhenDragging: Opacity(
+              opacity: 0.4,
+              child: NumberBadge(label: '${q.number}', flagged: ctx.exam.flagged.contains(q.id), onTap: () {}),
+            ),
+            child: MouseRegion(
+              cursor: SystemMouseCursors.grab,
+              child: NumberBadge(
+                label: '${q.number}',
+                flagged: ctx.exam.flagged.contains(q.id),
+                onTap: () => ctx.exam.toggleFlag(q.id),
+              ),
+            ),
+          )
+        else
         NumberBadge(
           label: '${q.number}',
           flagged: ctx.exam.flagged.contains(q.id),
@@ -1089,6 +1112,85 @@ class PassageDropBox extends StatelessWidget {
         );
     final child = picked == null ? box(null) : ValueListenableBuilder<String?>(valueListenable: picked, builder: (_, v, _) => box(v));
     return inRow ? child : KeyedSubtree(key: ctx.keyFor(question.id), child: child);
+  }
+}
+
+/// Payload of a question-number drag (onto a paragraph zone).
+class QuestionDrag {
+  const QuestionDrag(this.questionId);
+  final int questionId;
+}
+
+class _NumberChip extends StatelessWidget {
+  const _NumberChip({required this.number, this.onRemove});
+  final int number;
+  final VoidCallback? onRemove;
+
+  @override
+  Widget build(BuildContext context) => Container(
+        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+        decoration: BoxDecoration(color: TW.white, border: Border.all(color: TW.black)),
+        child: Row(mainAxisSize: MainAxisSize.min, children: [
+          Text('$number', style: inter(13, weight: FontWeight.w700, color: TW.black)),
+          if (onRemove != null) ...[
+            const SizedBox(width: 4),
+            GestureDetector(
+              key: Key('unplace-$number'),
+              onTap: onRemove,
+              child: MouseRegion(cursor: SystemMouseCursors.click, child: Text('×', style: inter(14, color: TW.gray500))),
+            ),
+          ],
+        ]),
+      );
+}
+
+/// Above a paragraph of the passage ("Which paragraph contains…", web `paragraph-zone.tsx`): question numbers are
+/// dragged here from the questions pane (or from another paragraph); × takes one back off. The answer of a question
+/// placed here is the paragraph's letter.
+class ParagraphZoneBox extends StatelessWidget {
+  const ParagraphZoneBox({super.key, required this.section, required this.letter, required this.ctx});
+
+  final SectionPayload section;
+  final String letter;
+  final QuestionContext ctx;
+
+  @override
+  Widget build(BuildContext context) {
+    final placed = section.questions.where((q) => ctx.answer(q.id).text == letter).toList();
+    return DragTarget<QuestionDrag>(
+      onWillAcceptWithDetails: (d) => !ctx.locked && section.questions.any((q) => q.id == d.data.questionId),
+      onAcceptWithDetails: (d) => ctx.setText(d.data.questionId, letter, debounce: false),
+      builder: (context, candidates, _) {
+        final over = candidates.isNotEmpty;
+        return Padding(
+          key: Key('paragraph-zone-$letter'),
+          padding: const EdgeInsets.symmetric(vertical: 4),
+          child: _DashedBox(
+            color: over && ctx.palette.standard ? WebTokens.dropOverBorder : ctx.c(placed.isEmpty ? TW.gray400 : TW.gray500),
+            fill: over && ctx.palette.standard ? WebTokens.dropOverBg : (ctx.palette.standard ? TW.white : null),
+            radius: 0,
+            child: Container(
+              constraints: const BoxConstraints(minWidth: 200, minHeight: 36),
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 5),
+              child: Wrap(spacing: 6, runSpacing: 4, children: [
+                for (final q in placed)
+                  ctx.locked
+                      ? _NumberChip(number: q.number)
+                      : Draggable<QuestionDrag>(
+                          data: QuestionDrag(q.id),
+                          feedback: Material(color: Colors.transparent, child: _NumberChip(number: q.number)),
+                          childWhenDragging: Opacity(opacity: 0.4, child: _NumberChip(number: q.number)),
+                          child: MouseRegion(
+                            cursor: SystemMouseCursors.grab,
+                            child: _NumberChip(number: q.number, onRemove: () => ctx.setText(q.id, '', debounce: false)),
+                          ),
+                        ),
+              ]),
+            ),
+          ),
+        );
+      },
+    );
   }
 }
 

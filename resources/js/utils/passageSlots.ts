@@ -1,5 +1,6 @@
 import { useSyncExternalStore } from 'react';
 import { Part, Question, Section } from '@/types';
+import { buildRange } from '@/utils/rangeHelpers';
 
 /**
  * IELTS "matching headings" placed inside the passage: the author writes `{14}` in the passage where question 14's
@@ -99,10 +100,127 @@ export function insertAutoMarkers(html: string, part: Part): string {
     return out;
 }
 
-/** The passage HTML with the heading boxes' markers (written by the author, or found from "Section A"…). */
+/**
+ * "Which paragraph contains the following information?" (matching with letters A–H, statements as questions): the
+ * candidate drags the question numbers onto the paragraphs. A zone `{z<sectionId>:A}` goes above each paragraph
+ * letter found in the passage; the answer of a question dropped there is that letter (as with the box / select).
+ */
+export interface ParagraphZone {
+    key: string;
+    letter: string;
+    section: Section;
+    sectionIndex: number;
+}
+
+const ZONE = /\{z(\d+):([A-Z])\}/g;
+
+export function isParagraphInfoSection(section: Section): boolean {
+    if (section.question_type?.type !== 'matching' || (section.options?.length ?? 0) > 0) return false;
+    const letters = buildRange(section.from_option, section.to_option);
+    if (letters.length < 2 || !letters.every((l) => /^[A-Z]$/.test(l))) return false;
+    if (Object.keys(headingTexts(section.textarea, letters)).length > 0) return false;
+    // "Section A" questions are headings for the paragraphs (boxes of their own), not information to place.
+    return !section.questions.some((q) => paragraphLetter(q.textarea));
+}
+
+export function insertParagraphZones(html: string, part: Part): string {
+    if (!html || /\{z\d+:[A-Z]\}/.test(html) || /passage-zone/.test(html)) return html;
+    const sectionIndex = (part.sections ?? []).findIndex(isParagraphInfoSection);
+    if (sectionIndex < 0) return html;
+    const section = part.sections[sectionIndex];
+    const letters = buildRange(section.from_option, section.to_option);
+    for (const clear of [true, false]) {
+        const at: { letter: string; index: number }[] = [];
+        let from = 0;
+        for (const letter of letters) {
+            const re = new RegExp(paragraphLabelPattern(letter, clear), 'g');
+            re.lastIndex = from;
+            const m = re.exec(html);
+            if (!m) continue;
+            at.push({ letter, index: m.index });
+            from = m.index + 1;
+        }
+        if (at.length < 2 || (!clear && at.length < letters.length)) continue;
+        let out = html;
+        for (let k = at.length - 1; k >= 0; k--) {
+            out = `${out.slice(0, at[k].index)}<p>{z${section.id}:${at[k].letter}}</p>${out.slice(at[k].index)}`;
+        }
+        return out;
+    }
+    return html;
+}
+
+/** The passage HTML with the heading boxes' markers (written by the author, or found from "Section A"…) and the
+ *  paragraph zones of a "which paragraph contains…" task. */
 export function passageHtml(part: Part | null | undefined): string {
     if (!part) return '';
-    return insertAutoMarkers(part.textarea ?? '', part);
+    return insertParagraphZones(insertAutoMarkers(part.textarea ?? '', part), part);
+}
+
+export function passageZones(part: Part | null | undefined): Map<string, ParagraphZone> {
+    const out = new Map<string, ParagraphZone>();
+    if (!part) return out;
+    for (const m of passageHtml(part).matchAll(ZONE)) {
+        const sectionIndex = (part.sections ?? []).findIndex((s) => s.id === Number(m[1]));
+        if (sectionIndex < 0) continue;
+        const key = `${m[1]}:${m[2]}`;
+        out.set(key, { key, letter: m[2], section: part.sections[sectionIndex], sectionIndex });
+    }
+    return out;
+}
+
+/** Replaces the zone markers with empty `span.passage-zone` hosts (React fills them through portals). */
+export function mountParagraphZones(root: HTMLElement, zones: Map<string, ParagraphZone>): Map<string, HTMLElement> {
+    const hosts = new Map<string, HTMLElement>();
+    root.querySelectorAll<HTMLElement>('span.passage-zone').forEach((el) => {
+        const key = el.dataset.zone ?? '';
+        if (zones.has(key) && !hosts.has(key)) {
+            el.innerHTML = '';
+            el.contentEditable = 'false';
+            hosts.set(key, el);
+        } else {
+            el.remove();
+        }
+    });
+    const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT);
+    const texts: Text[] = [];
+    while (walker.nextNode()) {
+        const t = walker.currentNode as Text;
+        if (/\{z\d+:[A-Z]\}/.test(t.data)) texts.push(t);
+    }
+    texts.forEach((t) => {
+        const frag = document.createDocumentFragment();
+        t.data.split(/(\{z\d+:[A-Z]\})/).forEach((p) => {
+            const m = p.match(/^\{z(\d+):([A-Z])\}$/);
+            const key = m ? `${m[1]}:${m[2]}` : '';
+            if (m && zones.has(key) && !hosts.has(key)) {
+                const host = document.createElement('span');
+                host.className = 'passage-zone';
+                host.dataset.zone = key;
+                host.contentEditable = 'false';
+                hosts.set(key, host);
+                frag.appendChild(host);
+            } else if (p && !m) {
+                frag.appendChild(document.createTextNode(p));
+            }
+        });
+        t.replaceWith(frag);
+    });
+    return hosts;
+}
+
+/** Drag payload of a question number (onto a paragraph zone). */
+export const QUESTION_MIME = 'application/x-mynine-question';
+
+export function writeQuestionDrag(e: React.DragEvent, questionId: number) {
+    e.dataTransfer.setData(QUESTION_MIME, String(questionId));
+    e.dataTransfer.setData('text/plain', String(questionId));
+    e.dataTransfer.effectAllowed = 'move';
+}
+
+export function readQuestionDrag(e: React.DragEvent): number | null {
+    const v = Number(e.dataTransfer.getData(QUESTION_MIME));
+    return Number.isFinite(v) && v > 0 ? v : null;
 }
 
 export function passageSlots(part: Part | null | undefined): Map<number, PassageSlot> {

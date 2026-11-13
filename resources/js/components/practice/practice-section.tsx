@@ -29,6 +29,8 @@ interface SectionUpdateProps {
     toggleFlag: (id: number) => void;
     /** Matching questions answered in the passage (`{14}` boxes). */
     passageQuestionIds?: Set<number>;
+    /** The question numbers are dragged onto the passage's paragraphs. */
+    dragNumbers?: boolean;
 }
 
 export default function PracticeSection({
@@ -39,7 +41,8 @@ export default function PracticeSection({
                                             setSelectedPart,
                                             flaggedIds,
                                             toggleFlag,
-                                            passageQuestionIds
+                                            passageQuestionIds,
+                                            dragNumbers = false
                                         }: SectionUpdateProps) {
     const { t } = useTranslation();
 
@@ -339,6 +342,7 @@ export default function PracticeSection({
                         flaggedIds={flaggedIds}
                         toggleFlag={toggleFlag}
                         passageQuestionIds={passageQuestionIds}
+                        dragNumbers={dragNumbers}
                     />
                 </div>
             ) : (section.question_type.type !== 'complete_section' &&

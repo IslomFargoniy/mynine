@@ -327,6 +327,89 @@ void main() {
     await _done(tester, h);
   });
 
+  testWidgets('which paragraph contains…: question numbers are dragged onto the passage paragraphs', (tester) async {
+    final h = await _toModule(tester, reading: true);
+    final base = h.exam.currentPart!;
+    final matching = base.sections.firstWhere((s) => s.questionType == QuestionType.matching);
+    final section = matching.copyWith(
+      options: const [],
+      fromOption: 'A',
+      toOption: 'D',
+      html: '<p>Which paragraph contains the following information?</p>',
+      questions: [
+        for (final (i, q) in matching.questions.indexed) q.copyWith(html: 'statement number ${i + 1}'),
+      ],
+    );
+    final part = base.copyWith(
+      html: '<h2>Wetlands</h2><p>A</p><p>Wetlands are areas.</p><p>B</p><p>Throughout history.</p>'
+          '<p>C</p><p>They also serve.</p><p>D</p><p>The world.</p>',
+      sections: [for (final s in base.sections) s.id == section.id ? section : s],
+    );
+    final zones = passageZones(part);
+    expect(zones.keys, ['${section.id}:A', '${section.id}:B', '${section.id}:C', '${section.id}:D']);
+
+    tester.view.physicalSize = const Size(1600, 1200);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.reset);
+    final store = HighlightStore(h.db, 1);
+    addTearDown(store.dispose);
+    final palette = ExamPalette.of(ContrastSetting.standard);
+    final keys = <int, GlobalKey>{};
+    QuestionContext ctx() => QuestionContext(
+          exam: h.exam,
+          part: part,
+          palette: palette,
+          keys: keys,
+          zoneSectionIds: {section.id},
+        );
+    await tester.pumpWidget(MaterialApp(
+      theme: buildTheme(),
+      home: Scaffold(
+        body: ListenableBuilder(
+          listenable: h.exam,
+          builder: (_, _) => Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
+            Expanded(
+              child: PassagePane(
+                partId: part.id,
+                title: part.name,
+                html: passageHtml(part),
+                store: store,
+                palette: palette,
+                zoneKeys: zones.keys.toSet(),
+                zoneBuilder: (_, key) => ParagraphZoneBox(section: zones[key]!, letter: key.split(':').last, ctx: ctx()),
+              ),
+            ),
+            Expanded(child: SingleChildScrollView(child: SectionView(section: section, ctx: ctx()))),
+          ]),
+        ),
+      ),
+    ));
+    await tester.pumpAndSettle();
+
+    Future<void> drag(Finder from, Finder to) async {
+      final g = await tester.startGesture(tester.getCenter(from));
+      await tester.pump(const Duration(milliseconds: 50));
+      await g.moveBy(const Offset(-20, 0));
+      await tester.pump();
+      await g.moveTo(tester.getCenter(to));
+      await tester.pump();
+      await g.up();
+      await tester.pumpAndSettle();
+    }
+
+    final q = section.questions.first;
+    await drag(find.byKey(Key('number-${q.id}')), find.byKey(const Key('paragraph-zone-C')));
+    expect(h.exam.answerFor(q.id).text, 'C');
+    // Moved to another paragraph.
+    await drag(find.byKey(Key('unplace-${q.number}')).first, find.byKey(const Key('paragraph-zone-A')));
+    expect(h.exam.answerFor(q.id).text, isNotEmpty);
+    // × takes it off.
+    await tester.tap(find.byKey(Key('unplace-${q.number}')).first);
+    await tester.pumpAndSettle();
+    expect(h.exam.answerFor(q.id).isAnswered, isFalse);
+    await _done(tester, h);
+  });
+
   testWidgets('multiple response: limited to number_count choices', (tester) async {
     final h = await _toModule(tester);
     h.exam.selectPart(102);

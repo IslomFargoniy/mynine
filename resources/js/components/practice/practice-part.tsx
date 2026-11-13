@@ -5,7 +5,20 @@ import { Attempt, Part, Question, Section } from '@/types';
 import { sanitizeAndInsertWbr } from '@/utils/sanitizeAndInsertWbr';
 import { syncQueue } from '@/services/sync-queue';
 import PassageDropZone from '@/components/practice/passage-drop-zone';
-import { headingTexts, hoistPassageMarkers, insertAutoMarkers, mountPassageSlots, passageHtml, passageSlots, PassageSlot } from '@/utils/passageSlots';
+import ParagraphZoneBox from '@/components/practice/paragraph-zone';
+import {
+    headingTexts,
+    hoistPassageMarkers,
+    insertAutoMarkers,
+    insertParagraphZones,
+    mountParagraphZones,
+    mountPassageSlots,
+    ParagraphZone,
+    passageHtml,
+    passageSlots,
+    PassageSlot,
+    passageZones,
+} from '@/utils/passageSlots';
 import { buildRange } from '@/utils/rangeHelpers';
 import { Highlighter, FileText, X, Trash2, StickyNote, ChevronDown, ChevronUp } from 'lucide-react';
 
@@ -54,21 +67,39 @@ export default function PracticePart({ attempt, part, setSelectedPart }: PartUpd
     // eslint-disable-next-line react-hooks/exhaustive-deps
     const slots = useMemo(() => (setSelectedPart ? passageSlots(part) : new Map<number, PassageSlot>()), [part.textarea, part.order, slotKey]);
     const [slotHosts, setSlotHosts] = useState<Map<number, HTMLElement>>(new Map());
+    // "Which paragraph contains…": question numbers dropped onto the paragraphs.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    const zones = useMemo(() => (setSelectedPart ? passageZones(part) : new Map<string, ParagraphZone>()), [part.textarea, part.order, slotKey]);
+    const [zoneHosts, setZoneHosts] = useState<Map<string, HTMLElement>>(new Map());
 
     useEffect(() => {
         if (!textRef.current) return;
 
+        const boxes = slots.size > 0 || zones.size > 0;
         const saved = localStorage.getItem(highlightStorageKey);
         if (saved) {
             // Highlights saved before the boxes existed: the boxes are added to them the same way.
-            textRef.current.innerHTML = sanitizeAndInsertWbr(slots.size > 0 ? insertAutoMarkers(saved, part) : saved, 40);
+            textRef.current.innerHTML = sanitizeAndInsertWbr(boxes ? insertParagraphZones(insertAutoMarkers(saved, part), part) : saved, 40);
         } else {
-            const html = slots.size > 0 ? hoistPassageMarkers(passageHtml(part)) : part.textarea || '';
+            const html = boxes ? hoistPassageMarkers(passageHtml(part)) : part.textarea || '';
             textRef.current.innerHTML = sanitizeAndInsertWbr(html, 40);
         }
         setSlotHosts(slots.size > 0 ? mountPassageSlots(textRef.current, slots) : new Map());
+        setZoneHosts(zones.size > 0 ? mountParagraphZones(textRef.current, zones) : new Map());
         // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [part.textarea, highlightStorageKey, slots]);
+    }, [part.textarea, highlightStorageKey, slots, zones]);
+
+    /** Question numbers of the part (the questions pane's numbering). */
+    const numberOf = useMemo(() => {
+        const map = new Map<number, number>();
+        let order = Number(part.order ?? 0);
+        (part.sections ?? []).forEach((s: Section) => {
+            s.questions.forEach((q: Question, i: number) => map.set(q.id, order + 1 + i));
+            order += s.questions.reduce((sum: number, q: Question) => sum + Number(q.is_correct_count ?? 1), 0);
+        });
+        return map;
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [part.order, slotKey]);
 
     /** Full heading text of an answer given as a number (i–vii with the texts in the instructions). */
     const displayOf = (slot: PassageSlot, value: string): string => {
@@ -85,7 +116,9 @@ export default function PracticePart({ attempt, part, setSelectedPart }: PartUpd
         return '';
     };
 
-    const saveSlot = async (slot: PassageSlot, value: string) => {
+    const saveSlot = (slot: PassageSlot, value: string) => saveAnswer(slot.question.id, slot.section.part_id, value);
+
+    const saveAnswer = async (questionId: number, partId: number, value: string) => {
         const text = value.trim();
         setSelectedPart?.((prev) => {
             if (!prev) return prev;
@@ -94,7 +127,7 @@ export default function PracticePart({ attempt, part, setSelectedPart }: PartUpd
                 sections: prev.sections.map((s: Section) => ({
                     ...s,
                     questions: s.questions.map((q: Question) =>
-                        q.id !== slot.question.id
+                        q.id !== questionId
                             ? q
                             : {
                                   ...q,
@@ -109,8 +142,8 @@ export default function PracticePart({ attempt, part, setSelectedPart }: PartUpd
         try {
             const res = await syncQueue.saveAnswer({
                 attemptId: attempt.id,
-                partId: slot.section.part_id,
-                questionId: slot.question.id,
+                partId,
+                questionId,
                 answerText: text === '' ? null : text,
             });
             if (res.error && !res.offline) throw new Error(res.error);
@@ -185,7 +218,7 @@ export default function PracticePart({ attempt, part, setSelectedPart }: PartUpd
             {
                 acceptNode: (node) => {
                     if (!node.nodeValue?.trim()) return NodeFilter.FILTER_REJECT;
-                    if (node.parentElement?.closest('.passage-drop')) return NodeFilter.FILTER_REJECT;
+                    if (node.parentElement?.closest('.passage-drop, .passage-zone')) return NodeFilter.FILTER_REJECT;
                     if (node.parentElement?.classList.contains('highlight'))
                         return NodeFilter.FILTER_REJECT;
 
@@ -307,7 +340,7 @@ export default function PracticePart({ attempt, part, setSelectedPart }: PartUpd
         if (!textRef.current) return;
         // Heading boxes are stored empty (React fills them again).
         const copy = textRef.current.cloneNode(true) as HTMLElement;
-        copy.querySelectorAll('span.passage-drop').forEach((el) => (el.innerHTML = ''));
+        copy.querySelectorAll('span.passage-drop, span.passage-zone').forEach((el) => (el.innerHTML = ''));
         localStorage.setItem(highlightStorageKey, copy.innerHTML);
     };
 
@@ -403,6 +436,28 @@ export default function PracticePart({ attempt, part, setSelectedPart }: PartUpd
                     />,
                     host,
                     `slot-${slot.question.id}`,
+                );
+            })}
+
+            {Array.from(zoneHosts.entries()).map(([key, host]) => {
+                const zone = zones.get(key);
+                if (!zone) return null;
+                const placed = zone.section.questions
+                    .filter((q: Question) => answerOf(q.id) === zone.letter)
+                    .map((q: Question) => ({ id: q.id, number: numberOf.get(q.id) ?? 0 }));
+                return createPortal(
+                    <ParagraphZoneBox
+                        zone={zone}
+                        placed={placed}
+                        onPlace={(questionId) => {
+                            if (zone.section.questions.some((q: Question) => q.id === questionId)) {
+                                void saveAnswer(questionId, zone.section.part_id, zone.letter);
+                            }
+                        }}
+                        onRemove={(questionId) => void saveAnswer(questionId, zone.section.part_id, '')}
+                    />,
+                    host,
+                    `zone-${key}`,
                 );
             })}
 
@@ -505,7 +560,8 @@ export default function PracticePart({ attempt, part, setSelectedPart }: PartUpd
                   padding: 1px 0;
                   transition: background-color 0.2s;
                 }
-                .ielts-passage span.passage-drop {
+                .ielts-passage span.passage-drop,
+                .ielts-passage span.passage-zone {
                   display: inline-block;
                   vertical-align: middle;
                 }
