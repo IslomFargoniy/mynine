@@ -327,7 +327,7 @@ void main() {
     await _done(tester, h);
   });
 
-  testWidgets('which paragraph contains…: question numbers are dragged onto the passage paragraphs', (tester) async {
+  testWidgets('which paragraph contains…: the statements are dragged onto the passage paragraphs', (tester) async {
     final h = await _toModule(tester, reading: true);
     final base = h.exam.currentPart!;
     final matching = base.sections.firstWhere((s) => s.questionType == QuestionType.matching);
@@ -398,15 +398,20 @@ void main() {
     }
 
     final q = section.questions.first;
-    await drag(find.byKey(Key('number-${q.id}')), find.byKey(const Key('paragraph-zone-C')));
+    expect(find.text('statement number 1'), findsOneWidget);
+    await drag(find.byKey(Key('statement-${q.id}')), find.byKey(const Key('paragraph-zone-C')));
     expect(h.exam.answerFor(q.id).text, 'C');
-    // Moved to another paragraph.
-    await drag(find.byKey(Key('unplace-${q.number}')).first, find.byKey(const Key('paragraph-zone-A')));
-    expect(h.exam.answerFor(q.id).text, isNotEmpty);
-    // × takes it off.
-    await tester.tap(find.byKey(Key('unplace-${q.number}')).first);
+    // The statement left the questions pane and shows in paragraph C.
+    expect(find.byKey(Key('statement-${q.id}')), findsNothing);
+    expect(find.text('statement number 1'), findsOneWidget);
+    // Moved to paragraph A.
+    await drag(find.text('statement number 1'), find.byKey(const Key('paragraph-zone-A')));
+    expect(h.exam.answerFor(q.id).text, 'A');
+    // × sends it back to the questions pane.
+    await tester.tap(find.byKey(Key('unplace-${q.number}')));
     await tester.pumpAndSettle();
     expect(h.exam.answerFor(q.id).isAnswered, isFalse);
+    expect(find.byKey(Key('statement-${q.id}')), findsOneWidget);
     await _done(tester, h);
   });
 

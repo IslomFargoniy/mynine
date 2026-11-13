@@ -370,3 +370,25 @@ export const headingPick = {
 export function usePickedHeading(): string | null {
     return useSyncExternalStore(headingPick.subscribe, headingPick.get, headingPick.get);
 }
+
+/** Tap-to-place for statements ("which paragraph contains…"): the picked question waits for a tap on a paragraph. */
+let pickedQuestion: number | null = null;
+const questionListeners = new Set<() => void>();
+
+export const questionPick = {
+    get: () => pickedQuestion,
+    set(v: number | null) {
+        pickedQuestion = v;
+        questionListeners.forEach((f) => f());
+    },
+    subscribe(f: () => void) {
+        questionListeners.add(f);
+        return () => {
+            questionListeners.delete(f);
+        };
+    },
+};
+
+export function usePickedQuestion(): number | null {
+    return useSyncExternalStore(questionPick.subscribe, questionPick.get, questionPick.get);
+}

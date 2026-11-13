@@ -776,6 +776,23 @@ class _MatchingViewState extends State<MatchingView> {
     final ctx = widget.ctx;
     final headings = _headings;
     final rows = widget.section.questions.where((q) => !ctx.passageQuestionIds.contains(q.id)).toList();
+    // "Which paragraph contains…": the statements themselves are dragged onto the passage's paragraphs; a placed one
+    // leaves this list (it shows in its paragraph, where × sends it back).
+    if (ctx.zoneSectionIds.contains(widget.section.id)) {
+      final left = widget.section.questions.where((q) => !ctx.answer(q.id).isAnswered).toList();
+      return Padding(
+        padding: const EdgeInsets.symmetric(vertical: 16),
+        child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
+          if (left.isEmpty)
+            Text('All statements are placed in the passage.',
+                style: inter(14, color: ctx.c(TW.gray500)).copyWith(fontStyle: FontStyle.italic)),
+          for (final (i, q) in left.indexed) ...[
+            if (i > 0) const SizedBox(height: 10),
+            StatementCard(key: Key('statement-${q.id}'), question: q, ctx: ctx),
+          ],
+        ]),
+      );
+    }
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 16), // my-4
       child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
@@ -889,25 +906,6 @@ class _MatchingViewState extends State<MatchingView> {
         borderRadius: BorderRadius.circular(6),
       ),
       child: Row(children: [
-        if (ctx.zoneSectionIds.contains(widget.section.id) && !ctx.locked)
-          Draggable<QuestionDrag>(
-            key: Key('number-${q.id}'),
-            data: QuestionDrag(q.id),
-            feedback: Material(color: Colors.transparent, child: _NumberChip(number: q.number)),
-            childWhenDragging: Opacity(
-              opacity: 0.4,
-              child: NumberBadge(label: '${q.number}', flagged: ctx.exam.flagged.contains(q.id), onTap: () {}),
-            ),
-            child: MouseRegion(
-              cursor: SystemMouseCursors.grab,
-              child: NumberBadge(
-                label: '${q.number}',
-                flagged: ctx.exam.flagged.contains(q.id),
-                onTap: () => ctx.exam.toggleFlag(q.id),
-              ),
-            ),
-          )
-        else
         NumberBadge(
           label: '${q.number}',
           flagged: ctx.exam.flagged.contains(q.id),
@@ -1115,6 +1113,46 @@ class PassageDropBox extends StatelessWidget {
   }
 }
 
+/// A statement of a "which paragraph contains…" task, dragged onto a paragraph of the passage ([ParagraphZoneBox]).
+class StatementCard extends StatelessWidget {
+  const StatementCard({super.key, required this.question, required this.ctx});
+
+  final QuestionPayload question;
+  final QuestionContext ctx;
+
+  Widget _card({bool dragging = false}) => Container(
+        key: dragging ? null : ctx.keyFor(question.id),
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+        decoration: BoxDecoration(
+          color: ctx.palette.standard ? TW.white : ctx.palette.background,
+          border: Border.all(color: ctx.c(TW.gray400)),
+          boxShadow: dragging ? const [BoxShadow(color: Color(0x33000000), blurRadius: 6, offset: Offset(0, 2))] : null,
+        ),
+        child: Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
+          NumberBadge(label: '${question.number}', flagged: ctx.exam.flagged.contains(question.id), onTap: () {}),
+          const SizedBox(width: 10),
+          Flexible(
+            child: Text(htmlToPlainText(question.html),
+                style: inter(14, weight: FontWeight.w600, color: ctx.c(TW.gray800), height: 1.375)),
+          ),
+        ]),
+      );
+
+  @override
+  Widget build(BuildContext context) {
+    if (ctx.locked) return _card();
+    return Draggable<QuestionDrag>(
+      data: QuestionDrag(question.id),
+      feedback: Material(
+        color: Colors.transparent,
+        child: ConstrainedBox(constraints: const BoxConstraints(maxWidth: 480), child: _card(dragging: true)),
+      ),
+      childWhenDragging: Opacity(opacity: 0.35, child: _card(dragging: true)),
+      child: MouseRegion(cursor: SystemMouseCursors.grab, child: _card()),
+    );
+  }
+}
+
 /// Payload of a question-number drag (onto a paragraph zone).
 class QuestionDrag {
   const QuestionDrag(this.questionId);
@@ -1122,16 +1160,22 @@ class QuestionDrag {
 }
 
 class _NumberChip extends StatelessWidget {
-  const _NumberChip({required this.number, this.onRemove});
+  const _NumberChip({required this.number, this.text, this.onRemove});
   final int number;
+  final String? text;
   final VoidCallback? onRemove;
 
   @override
   Widget build(BuildContext context) => Container(
-        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+        constraints: const BoxConstraints(maxWidth: 420),
+        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
         decoration: BoxDecoration(color: TW.white, border: Border.all(color: TW.black)),
-        child: Row(mainAxisSize: MainAxisSize.min, children: [
+        child: Row(mainAxisSize: MainAxisSize.min, crossAxisAlignment: CrossAxisAlignment.start, children: [
           Text('$number', style: inter(13, weight: FontWeight.w700, color: TW.black)),
+          if (text != null) ...[
+            const SizedBox(width: 8),
+            Flexible(child: Text(text!, style: inter(13, color: TW.black, height: 1.35))),
+          ],
           if (onRemove != null) ...[
             const SizedBox(width: 4),
             GestureDetector(
@@ -1170,19 +1214,26 @@ class ParagraphZoneBox extends StatelessWidget {
             fill: over && ctx.palette.standard ? WebTokens.dropOverBg : (ctx.palette.standard ? TW.white : null),
             radius: 0,
             child: Container(
-              constraints: const BoxConstraints(minWidth: 200, minHeight: 36),
-              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 5),
+              width: double.infinity,
+              constraints: const BoxConstraints(minHeight: 40),
+              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 6),
               child: Wrap(spacing: 6, runSpacing: 4, children: [
                 for (final q in placed)
                   ctx.locked
-                      ? _NumberChip(number: q.number)
+                      ? _NumberChip(number: q.number, text: htmlToPlainText(q.html))
                       : Draggable<QuestionDrag>(
                           data: QuestionDrag(q.id),
-                          feedback: Material(color: Colors.transparent, child: _NumberChip(number: q.number)),
-                          childWhenDragging: Opacity(opacity: 0.4, child: _NumberChip(number: q.number)),
+                          feedback: Material(
+                              color: Colors.transparent, child: _NumberChip(number: q.number, text: htmlToPlainText(q.html))),
+                          childWhenDragging:
+                              Opacity(opacity: 0.4, child: _NumberChip(number: q.number, text: htmlToPlainText(q.html))),
                           child: MouseRegion(
                             cursor: SystemMouseCursors.grab,
-                            child: _NumberChip(number: q.number, onRemove: () => ctx.setText(q.id, '', debounce: false)),
+                            child: _NumberChip(
+                              number: q.number,
+                              text: htmlToPlainText(q.html),
+                              onRemove: () => ctx.setText(q.id, '', debounce: false),
+                            ),
                           ),
                         ),
               ]),

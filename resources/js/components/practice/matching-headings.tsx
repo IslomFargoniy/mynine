@@ -1,7 +1,7 @@
 import { Question, Section } from '@/types';
 import { buildRange } from '@/utils/rangeHelpers';
 import PassageDropZone from '@/components/practice/passage-drop-zone';
-import { headingPick, headingTexts, usePickedHeading, writeHeadingDrag, writeQuestionDrag } from '@/utils/passageSlots';
+import { headingPick, headingTexts, questionPick, usePickedHeading, usePickedQuestion, writeHeadingDrag, writeQuestionDrag } from '@/utils/passageSlots';
 
 interface MatchingHeadingsProps {
     section: Section;
@@ -32,6 +32,7 @@ export default function MatchingHeadings({
     dragNumbers = false,
 }: MatchingHeadingsProps) {
     const picked = usePickedHeading();
+    const pickedQuestion = usePickedQuestion();
     const textOptions: string[] =
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         section.options && section.options.length > 0 ? section.options.map((o: any) => o.textarea || o.option_text || String(o)) : [];
@@ -55,6 +56,46 @@ export default function MatchingHeadings({
               return left;
           })()
         : headingOptions;
+
+    // "Which paragraph contains…": the statements themselves are dragged onto the passage's paragraphs; a placed one
+    // leaves this list (it shows in its paragraph, where × sends it back).
+    if (dragNumbers) {
+        const left = section.questions.filter((q: Question) => !answers[q.id]);
+        return (
+            <div className="my-4 space-y-2.5">
+                {left.length === 0 ? (
+                    <p className="text-sm text-gray-500 italic">All statements are placed in the passage.</p>
+                ) : (
+                    section.questions.map((q: Question, qIdx: number) => {
+                        if (answers[q.id]) return null;
+                        const qNumber = order + qIdx;
+                        const isPicked = pickedQuestion === q.id;
+                        return (
+                            <div
+                                id={`question-${q.id}`}
+                                key={q.id}
+                                draggable
+                                data-testid={`statement-${q.id}`}
+                                onDragStart={(e) => writeQuestionDrag(e, q.id)}
+                                onClick={() => questionPick.set(isPicked ? null : q.id)}
+                                title="Drag onto the paragraph that contains this information"
+                                className={`flex cursor-grab items-start gap-2.5 border px-3.5 py-2.5 shadow-2xs select-none active:cursor-grabbing ${
+                                    isPicked
+                                        ? 'border-blue-600 bg-blue-50 dark:bg-blue-950/40'
+                                        : 'border-gray-400 bg-white hover:border-black dark:border-gray-600 dark:bg-gray-900'
+                                }`}
+                            >
+                                <span className="flex h-6 min-w-[24px] shrink-0 items-center justify-center rounded-[2px] border border-black bg-white px-1.5 text-xs font-bold text-black dark:border-white dark:bg-gray-800 dark:text-white">
+                                    {qNumber}
+                                </span>
+                                <span className="text-sm leading-snug font-semibold text-gray-800 dark:text-gray-200">{q.textarea}</span>
+                            </div>
+                        );
+                    })
+                )}
+            </div>
+        );
+    }
 
     return (
         <div className="my-4 space-y-6">
@@ -114,15 +155,12 @@ export default function MatchingHeadings({
                         >
                             <div className="flex min-w-0 flex-1 items-start gap-2.5 sm:items-center">
                                 <span
-                                    draggable={dragNumbers}
-                                    onDragStart={dragNumbers ? (e) => writeQuestionDrag(e, q.id) : undefined}
-                                    title={dragNumbers ? 'Drag onto a paragraph of the passage' : undefined}
                                     onClick={() => toggleFlag?.(q.id)}
                                     className={`flex h-6 min-w-[24px] items-center justify-center border px-1.5 ${
                                         isFlagged
                                             ? 'border-orange-500 bg-orange-50 font-bold text-orange-600'
                                             : 'border-black bg-white font-bold text-black dark:border-white dark:bg-gray-800 dark:text-white'
-                                    } rounded-[2px] text-xs ${dragNumbers ? 'cursor-grab' : toggleFlag ? 'cursor-pointer' : ''} relative shrink-0 shadow-2xs select-none`}
+                                    } rounded-[2px] text-xs ${toggleFlag ? 'cursor-pointer' : ''} relative shrink-0 shadow-2xs select-none`}
                                 >
                                     {qNumber}
                                     {isFlagged && (

@@ -444,7 +444,7 @@ export default function PracticePart({ attempt, part, setSelectedPart }: PartUpd
                 if (!zone) return null;
                 const placed = zone.section.questions
                     .filter((q: Question) => answerOf(q.id) === zone.letter)
-                    .map((q: Question) => ({ id: q.id, number: numberOf.get(q.id) ?? 0 }));
+                    .map((q: Question) => ({ id: q.id, number: numberOf.get(q.id) ?? 0, text: (q.textarea ?? '').replace(/<[^>]*>/g, ' ').trim() }));
                 return createPortal(
                     <ParagraphZoneBox
                         zone={zone}
@@ -560,10 +560,12 @@ export default function PracticePart({ attempt, part, setSelectedPart }: PartUpd
                   padding: 1px 0;
                   transition: background-color 0.2s;
                 }
-                .ielts-passage span.passage-drop,
-                .ielts-passage span.passage-zone {
+                .ielts-passage span.passage-drop {
                   display: inline-block;
                   vertical-align: middle;
+                }
+                .ielts-passage span.passage-zone {
+                  display: block;
                 }
                 mark.note-highlight {
                   background-color: rgba(147, 197, 253, 0.5);
