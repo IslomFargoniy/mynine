@@ -646,31 +646,48 @@ class _DragDropSectionViewState extends State<DragDropSectionView> {
               return GestureDetector(
                 key: Key('drop-${q.id}'),
                 onTap: _picked != null ? () => _place(q.id, _picked!) : null,
-                child: _DashedBox(
-                  color: over && ctx.palette.standard ? WebTokens.dropOverBorder : ctx.c(WebTokens.dropBorder),
-                  fill: candidates.isNotEmpty && ctx.palette.standard ? WebTokens.dropOverBg : null,
-                  radius: 6,
-                  child: Container(
-                    constraints: const BoxConstraints(minWidth: 120),
-                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                child: Builder(builder: (context) {
+                  final filled = value != null && value.isNotEmpty;
+                  final content = Container(
+                    constraints: const BoxConstraints(minWidth: 140, maxWidth: 360),
+                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                     child: Row(mainAxisSize: MainAxisSize.min, children: [
-                      Text('${q.number}.', style: inter(14, weight: FontWeight.w700, color: ctx.c(WebTokens.gapNumber))),
-                      const SizedBox(width: 8),
-                      ConstrainedBox(
-                        constraints: const BoxConstraints(maxWidth: 160),
-                        child: Text(value ?? '_____',
-                            overflow: TextOverflow.ellipsis, style: inter(14, color: ctx.palette.text)),
-                      ),
-                      if (value != null && !ctx.locked) ...[
+                      Text('${q.number}', style: inter(14, weight: FontWeight.w700, color: ctx.c(WebTokens.gapNumber))),
+                      if (filled) ...[
                         const SizedBox(width: 8),
-                        GestureDetector(
-                          onTap: () => ctx.setText(q.id, '', debounce: false),
-                          child: Text('❌', style: inter(10, color: TW.red500)),
+                        Flexible(
+                          child: Text(value,
+                              style: inter(14, weight: FontWeight.w600, color: ctx.palette.text)),
                         ),
+                        if (!ctx.locked) ...[
+                          const SizedBox(width: 6),
+                          GestureDetector(
+                            onTap: () => ctx.setText(q.id, '', debounce: false),
+                            child: MouseRegion(
+                              cursor: SystemMouseCursors.click,
+                              child: Text('×', style: inter(16, color: ctx.c(TW.gray500))),
+                            ),
+                          ),
+                        ],
                       ],
                     ]),
-                  ),
-                ),
+                  );
+                  // Plain IELTS box: dashed while empty, solid black once filled.
+                  return filled && !over
+                      ? DecoratedBox(
+                          decoration: BoxDecoration(
+                            color: ctx.palette.standard ? TW.white : ctx.palette.background,
+                            border: Border.all(color: ctx.c(TW.black), width: 2),
+                          ),
+                          child: content,
+                        )
+                      : _DashedBox(
+                          color: over && ctx.palette.standard ? WebTokens.dropOverBorder : ctx.c(TW.gray500),
+                          fill: candidates.isNotEmpty && ctx.palette.standard ? WebTokens.dropOverBg : (ctx.palette.standard ? TW.white : null),
+                          radius: 0,
+                          child: content,
+                        );
+                }),
               );
             },
           );
@@ -687,9 +704,7 @@ class _DragDropSectionViewState extends State<DragDropSectionView> {
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4), // px-3 py-1
       decoration: BoxDecoration(
         color: picked ? TW.blue50 : TW.white,
-        border: Border.all(color: WebTokens.chipBorder, width: 2),
-        borderRadius: BorderRadius.circular(6),
-        boxShadow: const [BoxShadow(color: Color(0x1A000000), blurRadius: 2, offset: Offset(0, 1))],
+        border: Border.all(color: picked ? WebTokens.dropOverBorder : TW.gray400),
       ),
       child: Text(label, style: inter(14, color: TW.gray900)),
     );

@@ -195,13 +195,9 @@ export default function PracticeSection({
                 {...listeners}
                 {...attributes}
                 style={style}
-                className={`cursor-grab select-none rounded-md border-[2px] px-3 py-1 text-sm shadow-sm transition-colors duration-200
-                border-blue-500 bg-white text-gray-900
-                dark:border-blue-400 dark:bg-gray-800 dark:text-gray-100
-                hover:bg-blue-50 dark:hover:bg-gray-700
-                active:scale-[0.97]
-                ${isDragging ? 'opacity-50' : ''}
-            `}
+                className={`cursor-grab border border-gray-400 bg-white px-3 py-1 text-sm text-gray-900 select-none hover:border-black active:cursor-grabbing dark:border-gray-600 dark:bg-gray-900 dark:text-gray-100 ${
+                    isDragging ? 'opacity-50' : ''
+                }`}
             >
                 {opt.label}
             </div>
@@ -217,19 +213,25 @@ export default function PracticeSection({
         return (
             <span
                 ref={setNodeRef}
-                className={`inline-flex items-center gap-2 min-w-[120px] rounded-md border border-dashed px-2 py-1 text-sm mx-1 ${
-                    isOver ? 'bg-blue-100 dark:bg-blue-900/40 border-blue-400' : 'border-gray-400 dark:border-gray-600'
+                id={`question-${slotQuestion.id}`}
+                className={`mx-1 inline-flex min-w-[140px] max-w-full items-center gap-2 border-2 px-2 py-0.5 align-middle text-sm ${
+                    isOver
+                        ? 'border-dashed border-blue-600 bg-blue-50 dark:bg-blue-950/40'
+                        : displayText
+                          ? 'border-solid border-black bg-white dark:border-white dark:bg-gray-900'
+                          : 'border-dashed border-gray-500 bg-white dark:bg-gray-900'
                 }`}
             >
-                <span className="font-bold text-black dark:text-white">{number}.</span>
-                <span className="truncate max-w-[10rem]">{displayText || '_____'}</span>
+                <span className="shrink-0 font-bold text-black dark:text-white">{number}</span>
+                {displayText && <span className="min-w-0 flex-1 font-semibold break-words">{displayText}</span>}
                 {displayText && (
                     <button
                         onClick={() => handleRemove(slotQuestion.id)}
                         type="button"
-                        className="text-xs text-red-500 hover:text-red-700"
+                        aria-label={`Clear ${number}`}
+                        className="shrink-0 px-1 text-base leading-none text-gray-500 hover:text-red-600"
                     >
-                        ❌
+                        ×
                     </button>
                 )}
             </span>
@@ -300,7 +302,7 @@ export default function PracticeSection({
             <div className="prose dark:prose-invert text-[16px] leading-[1.7] break-words max-w-full prose-p:my-1.5 prose-ul:my-1.5 prose-li:my-0 prose-headings:my-2 prose-table:my-2">
                 {section.question_type.type === 'drag_and_drop' ? (
                     <DndContext onDragEnd={handleDragEnd}>
-                        {parsedContent}
+                        <div className="max-w-full break-words">{parsedContent}</div>
                         <div className="mt-4 flex flex-wrap gap-2">
                             {availableOptions.map((opt) => (
                                 <DraggableOption key={opt.id} opt={opt} />

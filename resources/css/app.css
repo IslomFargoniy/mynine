@@ -654,6 +654,18 @@ mark.ielts-highlight-span:hover * {
     box-shadow: 0 0 0 1px #60a5fa !important;
 }
 
+/* Gap-filling text always fits its pane: pasted blocks never get wider than the column. */
+.ielts-gap-section {
+    max-width: 100%;
+    overflow-wrap: break-word;
+}
+.ielts-gap-section :where(div, table, p, span, td, th) {
+    max-width: 100% !important;
+}
+.ielts-gap-section table {
+    table-layout: auto !important;
+}
+
 /* Force inline flow ONLY for gap-filling paragraphs (NOT reading passage) */
 .ielts-gap-section p,
 .ielts-question-text p {
