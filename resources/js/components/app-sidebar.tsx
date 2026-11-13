@@ -1,4 +1,5 @@
 import { NavFooter } from '@/components/nav-footer';
+import { CENTER_TAB_PATHS } from '@/components/center/center-tabs';
 import { NavMain } from '@/components/nav-main';
 import { NavUser } from '@/components/nav-user';
 import {
@@ -19,7 +20,6 @@ import {
     ClipboardList,
     ConciergeBell,
     FileBarChart,
-    Gauge,
     GithubIcon as Github,
     GraduationCap,
     LayoutDashboard,
@@ -29,7 +29,6 @@ import {
     PenLine,
     Send,
     Settings2,
-    UserCog,
     Users
 } from 'lucide-react';
 import AppLogo from './app-logo';
@@ -112,14 +111,14 @@ export function AppSidebar() {
             {
                 label: t('exam_admin.nav.group_center'),
                 items: [
-                    { title: t('exam_admin.nav.staff'), href: '/staff', icon: UserCog },
-                    { title: t('exam_admin.nav.center_settings'), href: '/center/settings', icon: Settings2 },
+                    // Settings, staff and usage are tabs of one page (CenterTabs).
+                    { title: t('exam_admin.nav.group_center'), href: '/center/settings', icon: Settings2, activePaths: CENTER_TAB_PATHS },
                     ...(isSuperAdmin
                         ? [
                               { title: t('exam_admin.nav.centers'), href: '/centers', icon: Building2 },
                               { title: t('exam_admin.nav.reports'), href: '/reports', icon: FileBarChart },
                           ]
-                        : [{ title: t('exam_admin.nav.usage'), href: '/usage', icon: Gauge }]),
+                        : []),
                 ],
             },
         ];

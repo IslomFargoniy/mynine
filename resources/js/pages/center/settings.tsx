@@ -1,4 +1,5 @@
 import { CenterPasswordChip, CenterPasswordDialog, type CenterPasswordStatus } from '@/components/exam-admin/center-password-dialog';
+import CenterTabs from '@/components/center/center-tabs';
 import { DesktopBackgroundDialog, type DesktopBackground } from '@/components/exam-admin/desktop-background-dialog';
 import { inputClass, PageHeader, Panel } from '@/components/exam-admin/shared';
 import InputError from '@/components/input-error';
@@ -60,7 +61,8 @@ export default function CenterSettings() {
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
             <Head title={t('exam_admin.nav.center_settings')} />
-            <div className="mx-auto max-w-4xl space-y-5 p-4 md:p-6">
+            <div className="mx-auto max-w-5xl space-y-5 p-4 md:p-6">
+                <CenterTabs />
                 <PageHeader
                     icon={<Settings2 className="h-5 w-5" />}
                     title={t('exam_admin.nav.center_settings')}

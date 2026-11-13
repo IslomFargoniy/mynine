@@ -48,6 +48,8 @@ export interface NavItem {
     href: string;
     icon?: LucideIcon | null;
     isActive?: boolean;
+    /** Other paths that light this item up (tabs of one page). */
+    activePaths?: string[];
 }
 
 export interface SharedData {

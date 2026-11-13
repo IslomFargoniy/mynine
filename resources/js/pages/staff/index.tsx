@@ -1,4 +1,5 @@
 import { EmptyState, fmtDateTime, inputClass, PageHeader, Panel } from '@/components/exam-admin/shared';
+import CenterTabs from '@/components/center/center-tabs';
 import InputError from '@/components/input-error';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
@@ -118,6 +119,7 @@ export default function StaffIndex() {
         <AppLayout breadcrumbs={breadcrumbs}>
             <Head title={t('exam_admin.nav.staff')} />
             <div className="mx-auto max-w-5xl space-y-5 p-4 md:p-6">
+                <CenterTabs />
                 <PageHeader
                     icon={<UserCog className="h-5 w-5" />}
                     title={t('exam_admin.nav.staff')}

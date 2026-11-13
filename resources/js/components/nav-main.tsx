@@ -50,7 +50,9 @@ export function NavMain({ items = [], label }: { items: NavItem[]; label?: strin
             <SidebarMenu className="gap-0.5">
                 {items.map((item) => {
                     const path = page.url.split('?')[0];
-                    const isActive = path === item.href || path.startsWith(item.href + '/') || (item.href === '/dashboard' && page.url === '/');
+                    const isActive =
+                        [item.href, ...(item.activePaths ?? [])].some((h) => path === h || path.startsWith(h + '/')) ||
+                        (item.href === '/dashboard' && page.url === '/');
 
                     return (
                         <SidebarMenuItem key={item.title} ref={isActive ? activeRef : undefined}>

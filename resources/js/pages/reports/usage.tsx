@@ -1,4 +1,5 @@
 import { PageHeader, Panel } from '@/components/exam-admin/shared';
+import CenterTabs from '@/components/center/center-tabs';
 import {
     type BilledCandidate,
     candidateSheetRows,
@@ -46,6 +47,7 @@ export default function ReportsUsage() {
         <AppLayout breadcrumbs={breadcrumbs}>
             <Head title={t('exam_admin.nav.usage')} />
             <div className="mx-auto max-w-5xl space-y-5 p-4 md:p-6">
+                <CenterTabs />
                 <PageHeader
                     icon={<Gauge className="h-5 w-5" />}
                     title={t('exam_admin.nav.usage')}
