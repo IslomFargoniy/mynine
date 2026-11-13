@@ -203,6 +203,47 @@ test('replacing a center\'s admin clears the old person\'s logins, ends their se
     $this->assertGuest();
 });
 
+test('Replace admin can take the email of an ordinary user: that account is archived, the person signs in to the center', function () {
+    config(['session.driver' => 'database']);
+    $super = makeSuperAdmin();
+    $center = makeCenter('NOVA');
+    $student = makeUser('Student');
+    $student->forceFill(['email' => 'person@example.com', 'google_id' => 'g-person', 'telegram_id' => '555'])->saveQuietly();
+    DB::table('sessions')->insert(['id' => 'student-session', 'user_id' => $student->id, 'payload' => 'x', 'last_activity' => time()]);
+
+    $this->actingAs($super)->post(route('centers.replace-admin', $center), ['email' => 'Person@Example.com'])
+        ->assertSessionHasNoErrors()->assertSessionHas('success');
+
+    $student = $student->fresh();
+    expect($center->fresh()->email)->toBe('person@example.com')
+        ->and($student->email)->toEndWith('@mynine.invalid')
+        ->and($student->google_id)->toBeNull()
+        ->and($student->telegram_id)->toBeNull()
+        ->and($student->hasRole('Student'))->toBeTrue()
+        ->and(DB::table('sessions')->where('id', 'student-session')->exists())->toBeFalse();
+    expect(CenterAuditLog::where('action', 'admin_replaced')->sole()->meta['archived_user_id'] ?? null)->toBe($student->id);
+
+    // Google sign-in with that address now opens the center.
+    $this->post(route('logout'));
+    fakeGoogleUser('g-person', 'person@example.com');
+    $this->get(route('google.callback'))->assertRedirect(route('dashboard'));
+    expect(auth()->id())->toBe($center->id);
+});
+
+test('Replace admin cannot take the email of staff or another center', function () {
+    $super = makeSuperAdmin();
+    $center = makeCenter('NOVA');
+    $other = makeCenter('ACME');
+    $other->forceFill(['email' => 'acme@example.com'])->saveQuietly();
+
+    $this->actingAs($super)->post(route('centers.replace-admin', $center), ['email' => 'acme@example.com'])
+        ->assertSessionHasErrors('email');
+    $this->actingAs($super)->post(route('centers.replace-admin', $center), ['email' => $super->email])
+        ->assertSessionHasErrors('email');
+    expect($other->fresh()->email)->toBe('acme@example.com')
+        ->and($center->fresh()->email)->not->toBe('acme@example.com');
+});
+
 test('the SuperAdmin\'s own account cannot be replaced', function () {
     $super = makeSuperAdmin();
     $this->actingAs($super)->post(route('centers.replace-admin', $super), ['email' => 'x@example.com'])->assertSessionHas('error');

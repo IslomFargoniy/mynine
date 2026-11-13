@@ -14,6 +14,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
+use Illuminate\Validation\ValidationException;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -178,14 +179,33 @@ class CenterController extends Controller
         }
 
         $data = $request->validate([
-            'email' => ['required', 'email', 'max:255', Rule::unique('users', 'email')->ignore($center->id)],
+            'email' => ['required', 'email', 'max:255'],
             'name' => ['nullable', 'string', 'max:255'],
         ]);
 
         $oldEmail = $center->email;
         $newEmail = strtolower($data['email']);
 
-        DB::transaction(function () use ($center, $data, $oldEmail, $newEmail) {
+        // The email may already belong to an ordinary user (someone who signed up as a student): that account is
+        // archived (its email and sign-in links are freed, its results stay) and the person signs in to the center.
+        // Staff, other centers and the SuperAdmin keep their email.
+        $holder = User::query()->whereRaw('LOWER(email) = ?', [$newEmail])->whereKeyNot($center->id)->first();
+        if ($holder && ($holder->isStaff() || $holder->isSuperAdmin())) {
+            throw ValidationException::withMessages(['email' => __('center_replace_email_staff')]);
+        }
+
+        DB::transaction(function () use ($center, $data, $oldEmail, $newEmail, $holder) {
+            if ($holder) {
+                $holder->forceFill([
+                    'email' => 'archived+'.$holder->id.'.'.now()->timestamp.'@mynine.invalid',
+                    'google_id' => null,
+                    'github_id' => null,
+                    'telegram_id' => null,
+                    'password' => Str::random(40),
+                ])->saveQuietly();
+                UserSessions::invalidate($holder);
+            }
+
             $center->forceFill([
                 'email' => $newEmail,
                 'name' => ($data['name'] ?? null) ?: $center->name,
@@ -206,7 +226,10 @@ class CenterController extends Controller
             CenterAuditLog::record('admin_replaced', $center->id, [
                 'old_email' => $oldEmail,
                 'new_email' => $newEmail,
-                'meta' => ['center_code' => $center->centerSetting?->code],
+                'meta' => array_filter([
+                    'center_code' => $center->centerSetting?->code,
+                    'archived_user_id' => $holder?->id,
+                ]),
             ]);
         });
 

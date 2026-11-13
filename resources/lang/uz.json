@@ -1357,6 +1357,7 @@
     "center_mynine_cannot_suspend": "Mynine markazini to'xtatib bo'lmaydi.",
     "center_suspended_saved": "Markaz to'xtatildi.",
     "center_activated_saved": "Markaz faollashtirildi.",
+    "center_replace_email_staff": "Bu email xodim yoki boshqa markazga tegishli. Boshqa email kiriting.",
     "center_replace_superadmin": "Platforma egasining hisobini almashtirib bo'lmaydi.",
     "center_admin_replaced": "Markaz administratori endi :email. Avvalgi barcha kirish usullari va sessiyalar bekor qilindi.",
     "center_switched": "Endi :name markazi sifatida ishlayapsiz.",
@@ -1419,6 +1420,7 @@
             "effect_logins": "Google, GitHub va Telegram ulanishlari, telefon va parol o'chiriladi.",
             "effect_sessions": "Hisobning barcha ochiq sessiyalari tugatiladi.",
             "effect_data": "Mocklar, natijalar, kompyuterlar va xodimlar markazda qoladi.",
+            "effect_existing": "Agar email oddiy (o'quvchi) hisobga tegishli bo'lsa, o'sha hisob arxivlanadi (natijalari qoladi) va email shu markazga o'tadi.",
             "submit": "Almashtirish",
             "confirm": "\"{{name}}\" administrator hisobi {{email}} ga berilsinmi? Hozirgi administrator darhol kirish huquqini yo'qotadi."
         },

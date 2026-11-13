@@ -172,6 +172,7 @@ function ReplaceAdminDialog({ center, onClose }: { center: CenterRow; onClose: (
                         <li>{t('centers.replace.effect_logins')}</li>
                         <li>{t('centers.replace.effect_sessions')}</li>
                         <li>{t('centers.replace.effect_data')}</li>
+                        <li>{t('centers.replace.effect_existing')}</li>
                     </ul>
                 </form>
                 <DialogFooter>

@@ -1357,6 +1357,7 @@
     "center_mynine_cannot_suspend": "The Mynine center cannot be suspended.",
     "center_suspended_saved": "Center suspended.",
     "center_activated_saved": "Center activated.",
+    "center_replace_email_staff": "This email belongs to staff or another center. Use a different email.",
     "center_replace_superadmin": "The platform owner's account cannot be replaced.",
     "center_admin_replaced": "The center's admin is now :email. All previous logins and sessions were ended.",
     "center_switched": "You are now working as :name.",
@@ -1419,6 +1420,7 @@
             "effect_logins": "Google, GitHub and Telegram links, phone and password are cleared.",
             "effect_sessions": "Every open session of the account ends.",
             "effect_data": "Mocks, results, PCs and staff stay with the center.",
+            "effect_existing": "If the email already has an ordinary (student) account, that account is archived (its results stay) and the email moves here.",
             "submit": "Replace admin",
             "confirm": "Give the admin account of \"{{name}}\" to {{email}}? The current admin loses access immediately."
         },
