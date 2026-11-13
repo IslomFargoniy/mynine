@@ -2,6 +2,7 @@ import { Breadcrumbs } from '@/components/breadcrumbs';
 import { SidebarTrigger } from '@/components/ui/sidebar';
 import { type BreadcrumbItem as BreadcrumbItemType } from '@/types';
 import LanguageBar from '@/components/language';
+import CenterSwitcher from '@/components/center/center-switcher';
 import AppearanceToggleDropdown from '@/components/appearance-dropdown';
 
 /** Floating pill top bar (liquid glass): sidebar toggle + breadcrumbs, language and theme. */
@@ -16,6 +17,7 @@ export function AppSidebarHeader({ breadcrumbs = [] }: { breadcrumbs?: Breadcrum
                     </div>
                 </div>
                 <div className="flex shrink-0 items-center gap-2">
+                    <CenterSwitcher />
                     <LanguageBar />
                     <AppearanceToggleDropdown />
                 </div>

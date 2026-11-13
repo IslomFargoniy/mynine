@@ -2,6 +2,7 @@
 
 namespace App\Http\Middleware;
 
+use App\Models\CenterSetting;
 use App\Models\User\User;
 use App\Support\CurrentCenter;
 use Illuminate\Foundation\Inspiring;
@@ -51,6 +52,18 @@ class HandleInertiaRequests extends Middleware
                 // The center the staff user works for (the SuperAdmin: the one chosen on the Centers page).
                 'center' => fn () => $request->user() instanceof User && $request->user()->isStaff()
                     ? app(CurrentCenter::class)->settings($request->user()->centerId())?->summary()
+                    : null,
+                // SuperAdmin: every center, for the header's center switcher.
+                'centers' => fn () => $request->user() instanceof User && $request->user()->isSuperAdmin()
+                    ? CenterSetting::query()->orderBy('name')->get()
+                        ->sortBy(fn (CenterSetting $c) => $c->isMynine() ? 0 : 1)
+                        ->map(fn (CenterSetting $c) => [
+                            'id' => (int) $c->owner_id,
+                            'name' => $c->name,
+                            'code' => $c->code,
+                            'logo_url' => $c->logoUrl(),
+                            'suspended' => $c->isSuspended(),
+                        ])->values()
                     : null,
             ],
             'ziggy' => fn (): array => [

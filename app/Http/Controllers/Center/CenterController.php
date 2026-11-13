@@ -250,7 +250,10 @@ class CenterController extends Controller
             $request->session()->put(CurrentCenter::SESSION_KEY, (int) $center->id);
         }
 
-        return redirect()->route('mock.index')->with('success', __('center_switched', ['name' => $settings->name]));
+        // From the header switcher on a list page: stay there (a record page may not exist in the other center).
+        $back = $request->boolean('stay') ? back() : redirect()->route('mock.index');
+
+        return $back->with('success', __('center_switched', ['name' => $settings->name]));
     }
 
     private function settingsOf(User $center): CenterSetting

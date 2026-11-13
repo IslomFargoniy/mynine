@@ -610,3 +610,17 @@ test('the SuperAdmin edits the code and contract date on Center settings; MYNINE
     $settings = centerSettings($partner)->fresh();
     expect($settings->code)->toBe('GAMMA')->and($settings->contract_until)->toBeNull();
 });
+
+test('the header center switcher: the SuperAdmin gets every center; switching from a list page stays there', function () {
+    $super = makeSuperAdmin();
+    $center = makeCenter('NOVA');
+
+    $this->actingAs($super)->get(route('staff.index'))->assertOk()
+        ->assertInertia(fn ($page) => $page->where('auth.centers', fn ($centers) => collect($centers)->pluck('id')->contains($center->id)));
+    $this->actingAs($center)->get(route('staff.index'))->assertOk()
+        ->assertInertia(fn ($page) => $page->where('auth.centers', null));
+
+    $this->actingAs($super)->from(route('staff.index'))->post(route('centers.switch', $center), ['stay' => 1])
+        ->assertRedirect(route('staff.index'));
+    $this->actingAs($super)->post(route('centers.switch', $center))->assertRedirect(route('mock.index'));
+});
