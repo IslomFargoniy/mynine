@@ -175,8 +175,8 @@ export default function MockFormFields({ mock, modules, autoPick, reuseDays, mod
     };
 
     return (
-            <form onSubmit={submit} className="space-y-5">
-                <Panel className="grid gap-4 md:grid-cols-2">
+            <form onSubmit={submit} className="space-y-3">
+                <Panel className="grid gap-x-4 gap-y-3 md:grid-cols-4">
                     <div className="md:col-span-2">
                         <Label htmlFor="name">{t('exam_admin.common.name')}</Label>
                         <Input id="name" value={data.name} onChange={(e) => setData('name', e.target.value)} />
@@ -187,6 +187,8 @@ export default function MockFormFields({ mock, modules, autoPick, reuseDays, mod
                         <Input id="comment" value={data.comment ?? ''} onChange={(e) => setData('comment', e.target.value)} />
                         <InputError message={errors.comment} />
                     </div>
+
+                    {/* Left: exam window. Right: who can enter. */}
                     <div>
                         <Label htmlFor="started_at">{t('exam_admin.mock_form.starts')}</Label>
                         <DateTimeField id="started_at" value={data.started_at} onChange={(v) => setData('started_at', v)} />
@@ -197,23 +199,42 @@ export default function MockFormFields({ mock, modules, autoPick, reuseDays, mod
                         <DateTimeField id="finished_at" value={data.finished_at} onChange={(v) => setData('finished_at', v)} />
                         <InputError message={errors.finished_at} />
                     </div>
-                    <label className="glass-subtle flex cursor-pointer items-center gap-3 rounded-[18px] p-3">
-                        <input type="checkbox" className="h-4 w-4 accent-primary" checked={data.require_desktop} onChange={(e) => setData('require_desktop', e.target.checked)} />
-                        <span>
-                            <span className="flex items-center gap-1.5 text-sm font-bold">
-                                <Monitor className="h-4 w-4 text-brand" />
-                                {t('exam_admin.mock_form.require_desktop')}
-                            </span>
-                            <span className="text-[11px] text-muted-foreground">{t('exam_admin.mock_form.require_desktop_hint')}</span>
-                        </span>
+                    <label
+                        title={t('exam_admin.mock_form.require_desktop_hint')}
+                        className="flex h-9 cursor-pointer items-center gap-2 self-end rounded-xl border border-input bg-glass-subtle px-3"
+                    >
+                        <input type="checkbox" className="h-4 w-4 shrink-0 accent-primary" checked={data.require_desktop} onChange={(e) => setData('require_desktop', e.target.checked)} />
+                        <Monitor className="h-4 w-4 shrink-0 text-brand" />
+                        <span className="truncate text-sm font-bold">{t('exam_admin.mock_form.require_desktop')}</span>
                     </label>
-                    <label className="glass-subtle flex cursor-pointer items-center gap-3 rounded-[18px] p-3">
-                        <input type="checkbox" className="h-4 w-4 accent-primary" checked={data.active === 1} onChange={(e) => setData('active', e.target.checked ? 1 : 0)} />
-                        <span className="text-sm font-bold">{t('exam_admin.mock_form.active')}</span>
+                    <label className="flex h-9 cursor-pointer items-center gap-2 self-end rounded-xl border border-input bg-glass-subtle px-3">
+                        <input type="checkbox" className="h-4 w-4 shrink-0 accent-primary" checked={data.active === 1} onChange={(e) => setData('active', e.target.checked ? 1 : 0)} />
+                        <span className="truncate text-sm font-bold">{t('exam_admin.mock_form.active')}</span>
                     </label>
+
+                    <div>
+                        <Label htmlFor="speaking_starts_at">{t('exam_admin.mock_form.speaking_starts')}</Label>
+                        <DateTimeField id="speaking_starts_at" value={data.speaking_starts_at} onChange={(v) => setData('speaking_starts_at', v)} />
+                        <InputError message={errors.speaking_starts_at} />
+                    </div>
+                    <div>
+                        <Label htmlFor="speaking_slot_minutes">{t('exam_admin.mock_form.slot_minutes')}</Label>
+                        <Input
+                            id="speaking_slot_minutes"
+                            type="number"
+                            min={5}
+                            max={120}
+                            value={data.speaking_slot_minutes}
+                            onChange={(e) => setData('speaking_slot_minutes', Number(e.target.value))}
+                        />
+                        <InputError message={errors.speaking_slot_minutes} />
+                    </div>
+                    <p className="self-end pb-2 text-[11px] text-muted-foreground md:col-span-2">
+                        {data.require_desktop ? t('exam_admin.mock_form.require_desktop_hint') : ''}
+                    </p>
                 </Panel>
 
-                <Panel className="space-y-4">
+                <Panel className="space-y-3">
                     <div className="flex flex-wrap items-center justify-between gap-2">
                         <div>
                             <h2 className="text-sm font-black text-foreground">{t('exam_admin.mock_form.modules')}</h2>
@@ -226,18 +247,18 @@ export default function MockFormFields({ mock, modules, autoPick, reuseDays, mod
                     </div>
 
                     {modulesLocked && (
-                        <div className="rounded-[18px] border border-amber-500/25 bg-amber-500/15 p-3 text-xs text-amber-800 dark:text-amber-200">
+                        <div className="rounded-xl border border-amber-500/25 bg-amber-500/15 px-3 py-2 text-xs text-amber-800 dark:text-amber-200">
                             {t('exam_admin.mock_form.modules_locked')}
                         </div>
                     )}
 
                     {isLegacy && (
-                        <div className="rounded-[18px] border border-amber-500/25 bg-amber-500/15 p-3 text-xs text-amber-800 dark:text-amber-200">
+                        <div className="rounded-xl border border-amber-500/25 bg-amber-500/15 px-3 py-2 text-xs text-amber-800 dark:text-amber-200">
                             {t('exam_admin.mock_form.legacy', { test: mock?.test?.name ?? '' })}
                         </div>
                     )}
 
-                    <div className="grid gap-4 md:grid-cols-3">
+                    <div className="grid gap-x-4 gap-y-3 md:grid-cols-3">
                         {MODULE_TYPES.map((type) => {
                             const options = byType[type] ?? [];
                             const selected = options.find((m) => m.id === data[type]);
@@ -275,25 +296,6 @@ export default function MockFormFields({ mock, modules, autoPick, reuseDays, mod
                     <InputError message={(errors as Record<string, string | undefined>).modules} />
                 </Panel>
 
-                <Panel className="grid gap-4 md:grid-cols-2">
-                    <div>
-                        <Label htmlFor="speaking_starts_at">{t('exam_admin.mock_form.speaking_starts')}</Label>
-                        <DateTimeField id="speaking_starts_at" value={data.speaking_starts_at} onChange={(v) => setData('speaking_starts_at', v)} />
-                        <InputError message={errors.speaking_starts_at} />
-                    </div>
-                    <div>
-                        <Label htmlFor="speaking_slot_minutes">{t('exam_admin.mock_form.slot_minutes')}</Label>
-                        <Input
-                            id="speaking_slot_minutes"
-                            type="number"
-                            min={5}
-                            max={120}
-                            value={data.speaking_slot_minutes}
-                            onChange={(e) => setData('speaking_slot_minutes', Number(e.target.value))}
-                        />
-                        <InputError message={errors.speaking_slot_minutes} />
-                    </div>
-                </Panel>
 
                 <div className="flex justify-end gap-2">
                     {secondaryAction}

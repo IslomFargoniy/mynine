@@ -39,7 +39,7 @@ export default function MockFormModal({ open, onOpenChange, mockId }: Props) {
 
     return (
         <Dialog open={open} onOpenChange={onOpenChange}>
-            <DialogContent className="max-h-[92vh] overflow-y-auto sm:max-w-4xl">
+            <DialogContent className="max-h-[94vh] gap-3 overflow-y-auto p-5 sm:max-w-5xl">
                 <DialogTitle className="flex items-center gap-2">
                     <GraduationCap className="h-5 w-5 text-brand" />
                     {isEdit ? t('exam_admin.mock_form.edit_title') : t('exam_admin.mock_form.create_title')}
