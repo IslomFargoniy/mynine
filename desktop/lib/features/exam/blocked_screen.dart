@@ -37,6 +37,16 @@ class _BlockedScreenState extends ConsumerState<BlockedScreen> {
     final device = ref.watch(deviceRepositoryProvider);
     return Scaffold(
       body: Stack(children: [
+        Positioned(
+          top: 20,
+          right: 20,
+          child: ListenableBuilder(
+            listenable: device,
+            builder: (context, _) => device.pcNumber == null
+                ? const SizedBox.shrink()
+                : PcNumberCircle(number: device.pcNumber!),
+          ),
+        ),
         CenterCard(
           maxWidth: 560,
           child: ListenableBuilder(

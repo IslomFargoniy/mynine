@@ -5,6 +5,7 @@ namespace App\Models;
 use App\Models\Concerns\BelongsToCenterThroughMock;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Facades\DB;
 use Laravel\Sanctum\HasApiTokens;
 
 class MockStudent extends Model
@@ -68,52 +69,60 @@ class MockStudent extends Model
     }
 
     /**
-     * Candidate codes are exactly six digits (100000-999999), unique across all mocks of all centers, so a candidate types
-     * only digits on the exam PC. The unique index on mock_students.code backs this up.
+     * Candidate codes are issued in order across all mocks of all centers: 000001, 000002, … 999999, then 1000000 (a
+     * digit more). Codes still held by older (random) candidates are skipped. A candidate types only digits on the
+     * exam PC; the unique index on mock_students.code backs this up.
      */
-    public const CODE_PATTERN = '/^\d{6}$/';
+    public const CODE_PATTERN = '/^\d{6,9}$/';
 
-    public static function randomCode(): string
+    /** settings row holding the next number to issue. */
+    public const CODE_SEQUENCE_KEY = 'candidate_code_next';
+
+    public static function formatCode(int $number): string
     {
-        return (string) random_int(100000, 999999);
+        return str_pad((string) $number, 6, '0', STR_PAD_LEFT);
     }
 
     /**
-     * One unique six-digit candidate code.
+     * The next candidate code.
      */
     public static function generateUniqueCode(): string
     {
-        do {
-            $code = self::randomCode();
-        } while (static::withoutGlobalScopes()->where('code', $code)->exists());
-
-        return $code;
+        return self::generateBulkCodes(1)[0];
     }
 
     /**
-     * $count unique six-digit codes, checked against the database in batches.
+     * The next $count candidate codes, in order (the counter row is locked, so two centers never get the same ones).
      *
      * @return array<int, string>
      */
     public static function generateBulkCodes(int $count): array
     {
-        $codes = [];
-        while (count($codes) < $count) {
-            $batch = [];
-            while (count($codes) + count($batch) < $count) {
-                $code = self::randomCode();
-                if (! isset($codes[$code])) {
-                    $batch[$code] = $code;
-                }
-            }
-            $taken = static::withoutGlobalScopes()->whereIn('code', array_values($batch))->pluck('code')->flip();
-            foreach ($batch as $code) {
-                if (! isset($taken[$code])) {
-                    $codes[$code] = $code;
-                }
-            }
+        if ($count < 1) {
+            return [];
         }
 
-        return array_values($codes);
+        return DB::transaction(function () use ($count) {
+            Setting::query()->insertOrIgnore(['key' => self::CODE_SEQUENCE_KEY, 'value' => '1', 'created_at' => now(), 'updated_at' => now()]);
+            $next = max(1, (int) Setting::query()->whereKey(self::CODE_SEQUENCE_KEY)->lockForUpdate()->value('value'));
+
+            $codes = [];
+            while (count($codes) < $count) {
+                $batch = [];
+                while (count($codes) + count($batch) < $count) {
+                    $batch[] = self::formatCode($next++);
+                }
+                $taken = static::withoutGlobalScopes()->whereIn('code', $batch)->pluck('code')->flip();
+                foreach ($batch as $code) {
+                    if (! isset($taken[$code])) {
+                        $codes[] = $code;
+                    }
+                }
+            }
+
+            Setting::query()->whereKey(self::CODE_SEQUENCE_KEY)->update(['value' => (string) $next, 'updated_at' => now()]);
+
+            return $codes;
+        });
     }
 }

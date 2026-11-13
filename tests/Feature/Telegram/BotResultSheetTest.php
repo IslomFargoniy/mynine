@@ -35,6 +35,8 @@ function finishedExamStudent()
         'test_id' => $exam['testL']->id, 'started_at' => now()->subHour(), 'finished_at' => now(),
     ]);
 
+    $exam['student']->forceFill(['phone' => '+998905353059'])->save();
+
     return $exam['student']->fresh();
 }
 
@@ -54,7 +56,7 @@ test('a candidate number sends the result sheet PDF once every result is ready',
     $student = finishedExamStudent();
     $sent = [];
 
-    botWithFakeApi($sent)->sendCandidateResult(1001, $student->code);
+    botWithFakeApi($sent)->handleCommand([], $student->code.' 3059', 1001);
 
     $documents = array_values(array_filter($sent, fn ($s) => $s[0] === 'document'));
     expect($documents)->toHaveCount(1)
@@ -67,8 +69,37 @@ test('no PDF while a result is still being checked', function () {
     $student = finishedExamStudent();
     $sent = [];
 
-    botWithFakeApi($sent)->sendCandidateResult(1001, $student->code);
+    botWithFakeApi($sent)->handleCommand([], $student->code.' 3059', 1001);
 
     expect(array_filter($sent, fn ($s) => $s[0] === 'document'))->toBeEmpty()
         ->and($sent[0][1]['text'])->toContain("barcha modullar natijasi tayyor bo'lganda");
+});
+
+test('a candidate number alone asks for the last 4 phone digits, then shows the result', function () {
+    fakeResult(true);
+    $student = finishedExamStudent();
+    $sent = [];
+    $bot = botWithFakeApi($sent);
+
+    $bot->handleCommand([], $student->code, 1001);
+    expect($sent)->toHaveCount(1)->and($sent[0][1]['text'])->toContain('oxirgi 4 raqamini');
+
+    $bot->handleCommand([], '3059', 1001);
+    expect(collect($sent)->where(0, 'document'))->toHaveCount(1)
+        ->and(collect($sent)->pluck('1.text')->filter()->implode(' '))->toContain('MOCK TEST NATIJASI');
+});
+
+test('wrong phone digits or a code that does not exist get the same answer and no result', function () {
+    fakeResult(true);
+    $student = finishedExamStudent();
+    $sent = [];
+    $bot = botWithFakeApi($sent);
+
+    $bot->handleCommand([], $student->code.' 1111', 1001);
+    $bot->handleCommand([], '999998 3059', 1001);
+
+    expect(collect($sent)->where(0, 'document'))->toBeEmpty()
+        ->and($sent[0][1]['text'])->toBe($sent[1][1]['text'])
+        ->and($sent[0][1]['text'])->toContain('mos kelmadi')
+        ->and(collect($sent)->pluck('1.text')->implode(' '))->not->toContain($student->name);
 });

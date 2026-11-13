@@ -213,6 +213,12 @@ void main() {
       await tester.pumpWidget(wrap(const PcNumberBadge(number: 7, large: true)));
       expect(find.text('PC 7'), findsOneWidget);
     });
+
+    testWidgets('PC number circle shows just the number', (tester) async {
+      await tester.pumpWidget(wrap(const PcNumberCircle(number: 1)));
+      expect(find.byKey(const Key('pc-number-circle')), findsOneWidget);
+      expect(find.text('1'), findsOneWidget);
+    });
   });
 
   test('the Admin background picture is downloaded (hash-checked) and dropped when removed', () async {

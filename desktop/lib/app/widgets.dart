@@ -43,13 +43,13 @@ class IeltsBadge extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => Container(
-        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-        decoration: BoxDecoration(color: AppColors.ieltsRed, borderRadius: BorderRadius.circular(2)),
-        child: Text(
-          label,
-          style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w900, fontSize: 13, letterSpacing: -0.2),
-        ),
-      );
+    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+    decoration: BoxDecoration(color: AppColors.ieltsRed, borderRadius: BorderRadius.circular(2)),
+    child: Text(
+      label,
+      style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w900, fontSize: 13, letterSpacing: -0.2),
+    ),
+  );
 }
 
 /// Green/red dot with "Online"/"Offline".
@@ -70,13 +70,13 @@ class ConnectionIndicator extends StatelessWidget {
         final color = !online
             ? Colors.red
             : pending > 0
-                ? Colors.amber.shade700
-                : Colors.green.shade600;
+            ? Colors.amber.shade700
+            : Colors.green.shade600;
         final label = !online
             ? 'Offline – answers are saved on this computer'
             : pending > 0
-                ? 'Saving answers ($pending)…'
-                : 'Online';
+            ? 'Saving answers ($pending)…'
+            : 'Online';
         return Tooltip(
           message: label,
           child: Row(
@@ -85,8 +85,10 @@ class ConnectionIndicator extends StatelessWidget {
               Icon(online ? Icons.wifi : Icons.wifi_off, size: 18, color: color),
               if (!compact) ...[
                 const SizedBox(width: 6),
-                Text(online ? (pending > 0 ? 'Saving…' : 'Online') : 'Offline',
-                    style: TextStyle(fontSize: 12, color: color, fontWeight: FontWeight.w600)),
+                Text(
+                  online ? (pending > 0 ? 'Saving…' : 'Online') : 'Offline',
+                  style: TextStyle(fontSize: 12, color: color, fontWeight: FontWeight.w600),
+                ),
               ],
             ],
           ),
@@ -105,17 +107,22 @@ class CardHeading extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => Container(
-        padding: const EdgeInsets.only(bottom: 16),
-        margin: const EdgeInsets.only(bottom: 24),
-        decoration: const BoxDecoration(border: Border(bottom: BorderSide(color: TW.gray200, width: 2))),
-        child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-          Text(title, style: inter(30, weight: FontWeight.w700, color: TW.gray900, letterSpacing: -0.75, height: 1.2)),
-          if (subtitle != null) ...[
-            const SizedBox(height: 8),
-            Text(subtitle!, style: inter(16, color: TW.gray600)),
-          ],
-        ]),
-      );
+    padding: const EdgeInsets.only(bottom: 16),
+    margin: const EdgeInsets.only(bottom: 24),
+    decoration: const BoxDecoration(
+      border: Border(bottom: BorderSide(color: TW.gray200, width: 2)),
+    ),
+    child: Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          title,
+          style: inter(30, weight: FontWeight.w700, color: TW.gray900, letterSpacing: -0.75, height: 1.2),
+        ),
+        if (subtitle != null) ...[const SizedBox(height: 8), Text(subtitle!, style: inter(16, color: TW.gray600))],
+      ],
+    ),
+  );
 }
 
 /// index.tsx loading state: `w-12 h-12 border-4 border-black border-t-transparent
@@ -125,17 +132,22 @@ class WebSpinner extends StatelessWidget {
   final String label;
 
   @override
-  Widget build(BuildContext context) => Column(mainAxisSize: MainAxisSize.min, children: [
-        const SizedBox(
-          width: 48,
-          height: 48,
-          child: CircularProgressIndicator(strokeWidth: 4, color: TW.black, strokeCap: StrokeCap.butt),
-        ),
-        const SizedBox(height: 16),
-        Text(label.toUpperCase(),
-            textAlign: TextAlign.center,
-            style: inter(18, weight: FontWeight.w500, color: TW.gray900, letterSpacing: 1.8)),
-      ]);
+  Widget build(BuildContext context) => Column(
+    mainAxisSize: MainAxisSize.min,
+    children: [
+      const SizedBox(
+        width: 48,
+        height: 48,
+        child: CircularProgressIndicator(strokeWidth: 4, color: TW.black, strokeCap: StrokeCap.butt),
+      ),
+      const SizedBox(height: 16),
+      Text(
+        label.toUpperCase(),
+        textAlign: TextAlign.center,
+        style: inter(18, weight: FontWeight.w500, color: TW.gray900, letterSpacing: 1.8),
+      ),
+    ],
+  );
 }
 
 /// Black action button `px-6 py-2 bg-black text-white font-semibold rounded-[2px]
@@ -148,27 +160,29 @@ class BlackButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => Material(
-        color: Colors.transparent,
-        child: InkWell(
-          // Focusable: Tab + Enter/Space work like the web <button>.
-          onTap: onTap,
-          child: Opacity(
-            opacity: onTap == null ? 0.6 : 1,
-            child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 8),
-              decoration: const BoxDecoration(color: TW.black, borderRadius: WebTokens.r2),
-              child: Row(mainAxisSize: MainAxisSize.min, children: [
-                Text(label.toUpperCase(),
-                    style: inter(14, weight: FontWeight.w600, color: Colors.white, letterSpacing: 0.35)),
-                if (arrow) ...[
-                  const SizedBox(width: 8),
-                  Text('➔', style: inter(14, color: Colors.white)),
-                ],
-              ]),
-            ),
+    color: Colors.transparent,
+    child: InkWell(
+      // Focusable: Tab + Enter/Space work like the web <button>.
+      onTap: onTap,
+      child: Opacity(
+        opacity: onTap == null ? 0.6 : 1,
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 8),
+          decoration: const BoxDecoration(color: TW.black, borderRadius: WebTokens.r2),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(
+                label.toUpperCase(),
+                style: inter(14, weight: FontWeight.w600, color: Colors.white, letterSpacing: 0.35),
+              ),
+              if (arrow) ...[const SizedBox(width: 8), Text('➔', style: inter(14, color: Colors.white))],
+            ],
           ),
         ),
-      );
+      ),
+    ),
+  );
 }
 
 /// Exam-room number of this PC ("PC 7"), given by the Admin on approval.
@@ -180,21 +194,76 @@ class PcNumberBadge extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => Container(
-        key: const Key('pc-number'),
-        padding: EdgeInsets.symmetric(horizontal: large ? 18 : 8, vertical: large ? 8 : 3),
-        decoration: BoxDecoration(
-          color: AppColors.ink,
-          borderRadius: BorderRadius.circular(large ? 10 : 4),
-        ),
-        child: Text(
-          'PC $number',
-          style: TextStyle(
-            color: Colors.white,
-            fontWeight: FontWeight.w900,
-            fontSize: large ? 30 : 13,
-            letterSpacing: large ? 1 : 0.2,
-            fontFeatures: const [FontFeature.tabularFigures()],
+    key: const Key('pc-number'),
+    padding: EdgeInsets.symmetric(horizontal: large ? 18 : 8, vertical: large ? 8 : 3),
+    decoration: BoxDecoration(color: AppColors.ink, borderRadius: BorderRadius.circular(large ? 10 : 4)),
+    child: Text(
+      'PC $number',
+      style: TextStyle(
+        color: Colors.white,
+        fontWeight: FontWeight.w900,
+        fontSize: large ? 30 : 13,
+        letterSpacing: large ? 1 : 0.2,
+        fontFeatures: const [FontFeature.tabularFigures()],
+      ),
+    ),
+  );
+}
+
+/// The exam-room number in a circle, fixed in the top-right corner of the screens a candidate sees before or outside
+/// the exam (code entry, blocked), so the invigilator can read it from across the room.
+class PcNumberCircle extends StatelessWidget {
+  const PcNumberCircle({super.key, required this.number});
+
+  final int number;
+
+  @override
+  Widget build(BuildContext context) {
+    final text = '$number';
+    return Container(
+      key: const Key('pc-number-circle'),
+      width: 72,
+      height: 72,
+      alignment: Alignment.center,
+      decoration: BoxDecoration(
+        color: const Color(0xFFDBEAFE), // light blue: stands out on any background picture
+        shape: BoxShape.circle,
+        border: Border.all(color: const Color(0xFF93C5FD), width: 2),
+        boxShadow: const [BoxShadow(color: Color(0x33000000), blurRadius: 8, offset: Offset(0, 2))],
+      ),
+      child: FittedBox(
+        child: Padding(
+          padding: const EdgeInsets.all(12),
+          child: Text(
+            text,
+            style: const TextStyle(
+              color: Color(0xFF1E3A8A),
+              fontWeight: FontWeight.w900,
+              fontSize: 32,
+              fontFeatures: [FontFeature.tabularFigures()],
+            ),
           ),
         ),
-      );
+      ),
+    );
+  }
+}
+
+/// A light plate under the small status texts at the screen's edges (online, version, updates), so they stay
+/// readable over the Admin's background picture.
+class ReadablePlate extends StatelessWidget {
+  const ReadablePlate({super.key, required this.child});
+
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) => Container(
+    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+    decoration: BoxDecoration(
+      color: Colors.white.withValues(alpha: 0.9),
+      borderRadius: BorderRadius.circular(10),
+      boxShadow: const [BoxShadow(color: Color(0x22000000), blurRadius: 6, offset: Offset(0, 1))],
+    ),
+    child: child,
+  );
 }

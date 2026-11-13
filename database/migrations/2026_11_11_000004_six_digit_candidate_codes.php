@@ -29,7 +29,7 @@ return new class extends Migration
                     : null;
 
                 while ($code === null || isset($taken[$code])) {
-                    $code = MockStudent::randomCode();
+                    $code = (string) random_int(100000, 999999);
                 }
 
                 $taken[$code] = true;

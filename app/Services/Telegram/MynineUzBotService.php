@@ -8,6 +8,7 @@ use App\Models\User\User;
 use App\Services\IeltsScoreConverter;
 use App\Services\MockResultService;
 use App\Services\ResultSheetService;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\Facades\URL;
@@ -60,14 +61,12 @@ class MynineUzBotService
         }
 
         if ($command === '/result' || $command === '/natija') {
-            if (! empty($params)) {
-                if (! $this->codeLookupThrottled($chatId)) {
-                    $this->sendCandidateResult($chatId, $params);
-                }
+            if ($params !== '') {
+                $this->handleCodeInput($chatId, $params);
             } else {
                 $this->sendSafeMessage(
                     $chatId,
-                    "📊 *Imtihon Natijasini Bilish*\n\nIltimos, o'zingizga berilgan *Nomzod Kodini* yuboring.\nMasalan: `TEST1-849201` yoki `MS123456`",
+                    "📊 *Imtihon Natijasini Bilish*\n\nIltimos, kartangizdagi *Candidate Number* (nomzod kodi)ni yuboring.\nMasalan: `000123`",
                     null,
                     'Markdown'
                 );
@@ -76,21 +75,11 @@ class MynineUzBotService
             return;
         }
 
-        // 2. Check if the text matches a Candidate Code directly (e.g. TEST1-849201, MS123456)
-        $cleanCandidateCode = strtoupper(preg_replace('/[^a-zA-Z0-9-]/', '', $text));
-        if (! empty($cleanCandidateCode) && strlen($cleanCandidateCode) >= 4 && strlen($cleanCandidateCode) <= 25) {
-            if ($this->codeLookupThrottled($chatId)) {
-                return;
-            }
-            $student = MockStudent::where('code', $cleanCandidateCode)
-                ->orWhereRaw("REPLACE(code, '-', '') = ?", [str_replace('-', '', $cleanCandidateCode)])
-                ->first();
+        // 2. A candidate number ("000123"), the last 4 phone digits after it ("3059"), or both ("000123 3059").
+        if (preg_match('/^\d{4}(?:\s+\d{4})?$|^\d{6,9}(?:\s+\d{4})?$/', $text)) {
+            $this->handleCodeInput($chatId, $text);
 
-            if ($student) {
-                $this->sendCandidateResult($chatId, $student->code);
-
-                return;
-            }
+            return;
         }
 
         // 3. Fallback for unknown input
@@ -117,7 +106,72 @@ class MynineUzBotService
         return false;
     }
 
-    public function sendCandidateResult(int|string $chatId, string $rawCode): void
+    /**
+     * Candidate numbers are issued in order, so a code alone is not enough: the bot asks for the last 4 digits of the
+     * candidate's phone before it shows the result (one message "000123 3059" works too).
+     */
+    private function handleCodeInput(int|string $chatId, string $text): void
+    {
+        $parts = preg_split('/\s+/', trim($text)) ?: [];
+        $pendingKey = 'tg-pending-code:'.$chatId;
+
+        if (count($parts) === 1 && preg_match('/^\d{4}$/', $parts[0])) {
+            $code = Cache::get($pendingKey);
+            if (! $code) {
+                $this->sendSafeMessage($chatId, 'Avval kartangizdagi Candidate Number (nomzod kodi)ni yuboring. Masalan: 000123');
+
+                return;
+            }
+            $digits = $parts[0];
+        } else {
+            $code = $parts[0] ?? '';
+            $digits = $parts[1] ?? null;
+        }
+
+        if (! preg_match(MockStudent::CODE_PATTERN, $code)) {
+            $this->sendUnknownCommand($chatId);
+
+            return;
+        }
+
+        if ($digits === null) {
+            Cache::put($pendingKey, $code, now()->addMinutes(10));
+            $this->sendSafeMessage(
+                $chatId,
+                "🔐 *Tasdiqlash*\n\n`{$code}` kodi uchun ro'yxatdan o'tishda berilgan telefon raqamingizning *oxirgi 4 raqamini* yuboring.\nMasalan: `3059`",
+                null,
+                'Markdown'
+            );
+
+            return;
+        }
+
+        if ($this->codeLookupThrottled($chatId)) {
+            return;
+        }
+
+        $student = MockStudent::withoutGlobalScopes()->where('code', $code)->first();
+        $phone = preg_replace('/\D/', '', (string) $student?->phone);
+        if (! $student || strlen($phone) < 4 || ! hash_equals(substr($phone, -4), $digits)) {
+            // One answer for "no such code" and "wrong digits": the bot does not say which codes exist.
+            $this->sendSafeMessage(
+                $chatId,
+                "❌ Kod yoki telefon raqamining oxirgi 4 raqami mos kelmadi.\n\nQaytadan yuboring, masalan: `000123 3059`. Telefon raqami ro'yxatda bo'lmasa, natijani markaz qabulxonasidan oling.",
+                null,
+                'Markdown'
+            );
+
+            return;
+        }
+
+        Cache::forget($pendingKey);
+        $this->sendCandidateResult($chatId, $student->code);
+    }
+
+    /**
+     * The result of a verified candidate (see handleCodeInput).
+     */
+    protected function sendCandidateResult(int|string $chatId, string $rawCode): void
     {
         $code = strtoupper(trim($rawCode));
 
@@ -129,22 +183,10 @@ class MynineUzBotService
             ])
             ->first();
 
-        // Accept the code typed without the hyphen, but never do fuzzy matching:
-        // a partial code must not reveal somebody else's result.
-        if (! $student && ! str_contains($code, '-')) {
-            $student = MockStudent::whereRaw("REPLACE(code, '-', '') = ?", [$code])
-                ->with([
-                    'mock',
-                    'attempt.attempt_types.type',
-                    'attempt.test.folder',
-                ])
-                ->first();
-        }
-
         if (! $student) {
             $this->sendSafeMessage(
                 $chatId,
-                "❌ *Nomzod Kodi topilmadi*\n\nSiz kiritgan `{$code}` kodi bo'yicha hech qanday ma'lumot topilmadi.\n\nIltimos, kodingizni to'g'ri kiritganingizni tekshiring (masalan: `TEST1-849201`).",
+                "❌ *Nomzod Kodi topilmadi*\n\nSiz kiritgan `{$code}` kodi bo'yicha hech qanday ma'lumot topilmadi.\n\nIltimos, kodingizni to'g'ri kiritganingizni tekshiring (masalan: `000123`).",
                 null,
                 'Markdown'
             );
@@ -276,7 +318,7 @@ class MynineUzBotService
             "🔹 `/result <KOD>` - Nomzod kodi orqali natijani bilish\n".
             "🔹 `/mocks` - Faol mock testlarni ko'rish\n".
             "🔹 `/ref` - Shaxsiy taklif havolangiz\n\n".
-            "💡 *Maslahat:* Imtihon natijangizni bilish uchun shunchaki o'zingizning Nomzod Kodingizni (masalan: `TEST1-849201` yoki `MS123456`) to'g'ridan-to'g'ri yozib yuborishingiz ham mumkin!";
+            "💡 *Maslahat:* Imtihon natijangizni bilish uchun shunchaki kartangizdagi Candidate Number'ni (masalan: `000123`) yuboring, so'ng telefon raqamingizning oxirgi 4 raqamini kiriting!";
 
         $this->sendSafeMessage($chatId, $text, null, 'Markdown');
     }
@@ -287,7 +329,7 @@ class MynineUzBotService
     protected function sendUnknownCommand(int|string $chatId): void
     {
         $text = "Kechirasiz, buyruq tushunarsiz 😅.\n\n".
-            "📊 Natijani bilish uchun *Nomzod Kodingizni* yuboring (masalan: `TEST1-849201`).\n".
+            "📊 Natijani bilish uchun *Candidate Number*ni yuboring (masalan: `000123`).\n".
             "Barcha buyruqlarni ko'rish uchun /help ni bosing.";
 
         $this->sendSafeMessage($chatId, $text, null, 'Markdown');
@@ -342,7 +384,7 @@ class MynineUzBotService
             ]);
 
         $welcomeText = "👋 *Assalomu alaykum, Mynine IELTS platformasiga xush kelibsiz!*\n\n".
-            "📊 Mock imtihoni natijangizni bilish uchun o'zingizga berilgan *Nomzod Kodini* (masalan: `TEST1-849201`) yuboring.\n\n".
+            "📊 Mock imtihoni natijangizni bilish uchun kartangizdagi *Candidate Number*ni (masalan: `000123`) yuboring.\n\n".
             'Platformani ochish uchun quyidagi tugmani bosing:';
 
         $this->sendSafeMessage(

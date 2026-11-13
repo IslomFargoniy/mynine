@@ -39,8 +39,7 @@ class _CodeEntryScreenState extends ConsumerState<CodeEntryScreen> {
     super.initState();
     final updates = _updates = ref.read(updateServiceProvider);
     final exam = _exam = ref.read(examControllerProvider);
-    updates.canAutoInstall =
-        () => exam.stage == ExamStage.idle && !exam.busy && exam.attemptId == null;
+    updates.canAutoInstall = () => exam.stage == ExamStage.idle && !exam.busy && exam.attemptId == null;
     WidgetsBinding.instance.addPostFrameCallback((_) {
       updates.reportCodeScreenRendered();
       updates.startPeriodic();
@@ -168,7 +167,6 @@ class _CodeEntryScreenState extends ConsumerState<CodeEntryScreen> {
                                 style: const TextStyle(fontSize: 22, fontWeight: FontWeight.w800),
                               ),
                             ),
-                            if (device.pcNumber case final number?) PcNumberBadge(number: number, large: true),
                           ],
                         ),
                         const SizedBox(height: 24),
@@ -178,7 +176,7 @@ class _CodeEntryScreenState extends ConsumerState<CodeEntryScreen> {
                         ),
                         const SizedBox(height: 8),
                         const Text(
-                          'Enter the 6-digit code printed on your candidate card.',
+                          'Enter the Candidate Number printed on your candidate card.',
                           style: TextStyle(fontSize: 15, color: AppColors.grey),
                         ),
                         const SizedBox(height: 28),
@@ -191,10 +189,10 @@ class _CodeEntryScreenState extends ConsumerState<CodeEntryScreen> {
                           textAlign: TextAlign.center,
                           keyboardType: TextInputType.number,
                           style: const TextStyle(fontSize: 30, letterSpacing: 12, fontWeight: FontWeight.w700),
-                          // Candidate codes are exactly six digits.
+                          // Candidate numbers: six digits, a seventh (up to nine) once 999999 is used.
                           inputFormatters: [
                             FilteringTextInputFormatter.digitsOnly,
-                            LengthLimitingTextInputFormatter(6),
+                            LengthLimitingTextInputFormatter(9),
                           ],
                           decoration: const InputDecoration(
                             hintText: '000000',
@@ -211,16 +209,18 @@ class _CodeEntryScreenState extends ConsumerState<CodeEntryScreen> {
                               color: Colors.red.withValues(alpha: 0.06),
                               border: Border.all(color: Colors.red.withValues(alpha: 0.4)),
                             ),
-                            child: const Row(children: [
-                              Icon(Icons.block, color: Colors.red, size: 20),
-                              SizedBox(width: 10),
-                              Expanded(
-                                child: Text(
-                                  centerSuspendedMessage,
-                                  style: TextStyle(color: Colors.red, fontWeight: FontWeight.w600),
+                            child: const Row(
+                              children: [
+                                Icon(Icons.block, color: Colors.red, size: 20),
+                                SizedBox(width: 10),
+                                Expanded(
+                                  child: Text(
+                                    centerSuspendedMessage,
+                                    style: TextStyle(color: Colors.red, fontWeight: FontWeight.w600),
+                                  ),
                                 ),
-                              ),
-                            ]),
+                              ],
+                            ),
                           ),
                         ],
                         if (exam.error != null &&
@@ -264,23 +264,34 @@ class _CodeEntryScreenState extends ConsumerState<CodeEntryScreen> {
             ),
           ),
           Positioned(
+            top: 20,
+            right: 20,
+            child: ListenableBuilder(
+              listenable: device,
+              builder: (context, _) =>
+                  device.pcNumber == null ? const SizedBox.shrink() : PcNumberCircle(number: device.pcNumber!),
+            ),
+          ),
+          Positioned(
             left: 20,
             bottom: 16,
             child: ListenableBuilder(
               listenable: device,
-              builder: (context, _) => Row(
-                children: [
-                  ConnectionIndicator(connection: connection),
-                  const SizedBox(width: 16),
-                  Text(device.pcName, style: const TextStyle(color: AppColors.grey, fontSize: 12)),
-                  if (config.apiFake) ...[
+              builder: (context, _) => ReadablePlate(
+                child: Row(
+                  children: [
+                    ConnectionIndicator(connection: connection),
                     const SizedBox(width: 16),
-                    const Text(
-                      'DEMO MODE – center password "mynine", any code starting with DEMO',
-                      style: TextStyle(color: Colors.deepOrange, fontSize: 12, fontWeight: FontWeight.w600),
-                    ),
+                    Text(device.pcName, style: const TextStyle(color: AppColors.grey, fontSize: 12)),
+                    if (config.apiFake) ...[
+                      const SizedBox(width: 16),
+                      const Text(
+                        'DEMO MODE – center password "mynine", any code starting with DEMO',
+                        style: TextStyle(color: Colors.deepOrange, fontSize: 12, fontWeight: FontWeight.w600),
+                      ),
+                    ],
                   ],
-                ],
+                ),
               ),
             ),
           ),
@@ -289,29 +300,31 @@ class _CodeEntryScreenState extends ConsumerState<CodeEntryScreen> {
             bottom: 12,
             child: ListenableBuilder(
               listenable: updates,
-              builder: (context, _) => Row(
-                children: [
-                  if (updates.phase == UpdatePhase.downloading)
-                    Padding(
-                      padding: const EdgeInsets.only(right: 12),
-                      child: Text(
-                        'Downloading update ${(updates.progress * 100).round()}%',
-                        style: const TextStyle(fontSize: 12, color: AppColors.grey),
+              builder: (context, _) => ReadablePlate(
+                child: Row(
+                  children: [
+                    if (updates.phase == UpdatePhase.downloading)
+                      Padding(
+                        padding: const EdgeInsets.only(right: 12),
+                        child: Text(
+                          'Downloading update ${(updates.progress * 100).round()}%',
+                          style: const TextStyle(fontSize: 12, color: AppColors.grey),
+                        ),
                       ),
+                    Text(
+                      'Version ${config.appVersion}',
+                      key: const Key('version-label'),
+                      style: const TextStyle(fontSize: 12, color: AppColors.grey),
                     ),
-                  Text(
-                    'Version ${config.appVersion}',
-                    key: const Key('version-label'),
-                    style: const TextStyle(fontSize: 12, color: AppColors.grey),
-                  ),
-                  const SizedBox(width: 12),
-                  OutlinedButton.icon(
-                    key: const Key('check-updates'),
-                    onPressed: updates.busy ? null : () => checkForUpdatesInteractive(context, ref),
-                    icon: const Icon(Icons.system_update_alt, size: 16),
-                    label: const Text('Check for updates', style: TextStyle(fontSize: 12)),
-                  ),
-                ],
+                    const SizedBox(width: 12),
+                    OutlinedButton.icon(
+                      key: const Key('check-updates'),
+                      onPressed: updates.busy ? null : () => checkForUpdatesInteractive(context, ref),
+                      icon: const Icon(Icons.system_update_alt, size: 16),
+                      label: const Text('Check for updates', style: TextStyle(fontSize: 12)),
+                    ),
+                  ],
+                ),
               ),
             ),
           ),

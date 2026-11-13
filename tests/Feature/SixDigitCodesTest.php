@@ -1,6 +1,7 @@
 <?php
 
 use App\Models\MockStudent;
+use App\Models\Setting;
 use Illuminate\Support\Facades\DB;
 
 beforeEach(function () {
@@ -41,4 +42,19 @@ test('the migration keeps the printed digits for candidates who have not started
         ->and($clash->fresh()->code)->toMatch('/^\d{6}$/')->not->toBe('697100')
         ->and($started->fresh()->code)->toBe($startedCode)
         ->and(DB::table('mock_students')->count())->toBe(DB::table('mock_students')->distinct()->count('code'));
+});
+
+test('codes are issued in order from 000001, skipping codes still held', function () {
+    Setting::query()->whereKey(MockStudent::CODE_SEQUENCE_KEY)->delete();
+    MockStudent::create(['mock_id' => $this->mock->id, 'name' => 'old', 'code' => '000002', 'phone' => '+998901111113']);
+
+    expect(MockStudent::generateBulkCodes(3))->toBe(['000001', '000003', '000004'])
+        ->and(MockStudent::generateUniqueCode())->toBe('000005');
+});
+
+test('after 999999 the codes get a seventh digit', function () {
+    Setting::set(MockStudent::CODE_SEQUENCE_KEY, '999999');
+
+    expect(MockStudent::generateBulkCodes(2))->toBe(['999999', '1000000'])
+        ->and(collect(['999999', '1000000'])->every(fn ($c) => preg_match(MockStudent::CODE_PATTERN, $c) === 1))->toBeTrue();
 });
