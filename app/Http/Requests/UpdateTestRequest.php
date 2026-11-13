@@ -36,7 +36,7 @@ class UpdateTestRequest extends FormRequest
             'active' => 'nullable|boolean',
             'open' => 'nullable|boolean',
             'variant' => 'nullable|in:academic,general',
-            'audio_path' => ['nullable', 'file', 'mimes:mp3,wav,ogg,m4a,aac,mpeg,mpga', 'max:24576'],
+            'audio_path' => ['nullable', 'file', 'mimes:mp3,wav,ogg,m4a,aac,mpeg,mpga', 'max:97280'],
         ];
     }
 }

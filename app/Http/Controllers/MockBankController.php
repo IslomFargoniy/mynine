@@ -154,7 +154,8 @@ class MockBankController extends Controller
             'reading_file' => $document,
             'writing_file' => $document,
             'answers_file' => $document,
-            'listening_audio' => ['nullable', 'file', 'mimes:mp3,wav,ogg,m4a,aac,mpeg,mpga', 'max:51200'],
+            // 95 MB: the server takes 100 MB per request (nginx client_max_body_size, PHP post_max_size).
+            'listening_audio' => ['nullable', 'file', 'mimes:mp3,wav,ogg,m4a,aac,mpeg,mpga', 'max:97280'],
             'replace' => ['nullable', 'boolean'],
         ]);
 

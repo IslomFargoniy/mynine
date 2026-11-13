@@ -44,7 +44,7 @@ class StoreTestRequest extends FormRequest
             'open' => 'nullable|boolean',
             'purpose' => 'required|in:practice,mock',
             'variant' => 'nullable|in:academic,general',
-            'audio_path' => ['nullable', 'file', 'mimes:mp3,wav,ogg,m4a,aac,mpeg,mpga', 'max:24576'],
+            'audio_path' => ['nullable', 'file', 'mimes:mp3,wav,ogg,m4a,aac,mpeg,mpga', 'max:97280'],
         ];
     }
 }

@@ -159,7 +159,7 @@ function FileField({ id, label, hint, accept, error, onChange }: { id: string; l
 function ImportPdfDialog({ test }: { test: BankTestRow }) {
     const { t } = useTranslation();
     const [open, setOpen] = useState(false);
-    const { data, setData, post, processing, errors, reset, clearErrors, progress } = useForm<{
+    const { data, setData, post, processing, errors, reset, clearErrors, progress, setError } = useForm<{
         listening_file: File | null;
         reading_file: File | null;
         writing_file: File | null;
@@ -175,6 +175,18 @@ function ImportPdfDialog({ test }: { test: BankTestRow }) {
 
     const submit: FormEventHandler = (e) => {
         e.preventDefault();
+        // The server takes 100 MB per request; past that it drops the upload without a usable error.
+        const MB = 1024 * 1024;
+        const files = [data.listening_file, data.reading_file, data.writing_file, data.answers_file, data.listening_audio];
+        const total = files.reduce((sum, f) => sum + (f?.size ?? 0), 0);
+        if (data.listening_audio && data.listening_audio.size > 95 * MB) {
+            setError('listening_audio', t('exam_admin.bank.import.audio_too_big', { size: Math.ceil(data.listening_audio.size / MB) }));
+            return;
+        }
+        if (total > 98 * MB) {
+            setError('listening_audio', t('exam_admin.bank.import.total_too_big', { size: Math.ceil(total / MB) }));
+            return;
+        }
         post(route('mock-bank.import', test.id), {
             forceFormData: true,
             preserveScroll: true,
