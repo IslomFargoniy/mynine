@@ -87,7 +87,7 @@ export default function MatchingHeadings({
                                 <span className="flex h-6 min-w-[24px] shrink-0 items-center justify-center rounded-[2px] border border-black bg-white px-1.5 text-xs font-bold text-black dark:border-white dark:bg-gray-800 dark:text-white">
                                     {qNumber}
                                 </span>
-                                <span className="text-sm leading-snug font-semibold text-gray-800 dark:text-gray-200">{q.textarea}</span>
+                                <span className="text-sm leading-snug font-semibold text-gray-800 dark:text-gray-200">{(q.textarea ?? "").replace(/[\u00A0\u2007\u202F]/g, " ")}</span>
                             </div>
                         );
                     })
@@ -172,7 +172,7 @@ export default function MatchingHeadings({
                                     )}
                                 </span>
                                 <span className="text-sm leading-snug font-semibold text-gray-800 dark:text-gray-200">
-                                    {q.textarea || `Section / Paragraph ${qNumber}`}
+                                    {(q.textarea ?? "").replace(/[\u00A0\u2007\u202F]/g, " ") || `Section / Paragraph ${qNumber}`}
                                 </span>
                             </div>
 

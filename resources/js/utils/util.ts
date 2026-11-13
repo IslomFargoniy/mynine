@@ -11,7 +11,8 @@ const getImagePrefix = () => {
  *   - inline styles that break the page's typography or width go (word / letter spacing, font family / size, line
  *     height, indent, nowrap, word-break, fixed widths and heights except on images); bold, italic, colour and
  *     alignment stay;
- *   - text tokenised word by word is rejoined: "America ." → "America.", "California ' s" → "California's".
+ *   - text tokenised word by word is rejoined: "America ." → "America.", "California ' s" → "California's";
+ *   - non-breaking spaces from PDFs become normal ones, so long lines wrap.
  */
 export function normalizeContentHtml(html: string): string {
     if (!html) return '';
@@ -38,6 +39,8 @@ export function normalizeContentHtml(html: string): string {
             part.startsWith('<')
                 ? part
                 : part
+                      // Non-breaking / narrow spaces from PDFs glue whole lines together (they never wrap).
+                      .replace(/[\u00A0\u2007\u202F]/g, ' ')
                       .replace(/([\p{L}\p{N}"'”’)\]}]) +([.,;:!?%)](?=\s|$))/gu, '$1$2')
                       .replace(/(\p{L}) ?['’] ?(s|t|d|m|ll|re|ve)\b/gu, "$1'$2"),
         )

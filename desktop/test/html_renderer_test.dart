@@ -8,6 +8,8 @@ void main() {
     expect(cleanTinyMce("<p>Club of America . California ' s laws , its {24} , ok</p>"),
         "<p>Club of America. California's laws, its {24}, ok</p>");
     expect(cleanTinyMce('<p>It is 5 % of 1,000. e.g. fine</p>'), '<p>It is 5% of 1,000. e.g. fine</p>');
+    // Non-breaking spaces from PDFs would keep a whole line from wrapping.
+    expect(cleanTinyMce('<p>Wood\u00A0is\u00A0a\u202Ftraditional</p>'), '<p>Wood is a traditional</p>');
   });
 
   group('HtmlDocument', () {

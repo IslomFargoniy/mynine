@@ -94,6 +94,8 @@ String _normalizeText(String html) {
   final out = StringBuffer();
   var last = 0;
   String fix(String t) => t
+      // Non-breaking / narrow spaces from PDFs glue whole lines together (they never wrap).
+      .replaceAll(RegExp('[\u00A0\u2007\u202F]'), ' ')
       .replaceAllMapped(_spaceBeforePunct, (m) => '${m[1]}${m[2]}')
       .replaceAllMapped(_apostrophe, (m) => "${m[1]}'${m[2]}");
   for (final m in _tagSplit.allMatches(html)) {

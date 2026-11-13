@@ -665,6 +665,11 @@ mark.ielts-highlight-span:hover * {
 .ielts-gap-section table {
     table-layout: auto !important;
 }
+.ielts-gap-section td,
+.ielts-gap-section th {
+    white-space: normal !important;
+    overflow-wrap: anywhere;
+}
 
 /* Force inline flow ONLY for gap-filling paragraphs (NOT reading passage) */
 .ielts-gap-section p,
