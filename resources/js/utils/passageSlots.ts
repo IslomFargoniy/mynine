@@ -42,6 +42,24 @@ function sectionStarts(part: Part): number[] {
 }
 
 /**
+ * How a paragraph's letter is written in the passages we have:
+ *   clear: `<p><strong>A</strong> text…`, `<p><b>A.</b>…`, the letter alone on its line (`<p>A</p>`, `<h3>A</h3>`,
+ *          `<p><strong>A</strong></p>`), inside spans or not;
+ *   plain: `<p>A text…` / `<p>A. text…` (only trusted when every letter is found in order).
+ */
+export function paragraphLabelPattern(letter: string, clear: boolean): string {
+    const ws = '(?:\\s|&nbsp;)';
+    const tags = '(?:\\s|&nbsp;|<[^>]+>)';
+    const open = '<(?:p|div|h[1-6])(?:\\s[^>]*)?>';
+    if (clear) {
+        const bold = `${open}${ws}*(?:<(?:span|em)[^>]*>)*<(?:strong|b)(?:\\s[^>]*)?>${ws}*${letter}[.:)]?${ws}*</(?:strong|b)>`;
+        const alone = `${open}${tags}*${letter}[.:)]?${tags}*</(?:p|div|h[1-6])>`;
+        return `(?:${bold}|${alone})`;
+    }
+    return `<(?:p|div)(?:\\s[^>]*)?>${ws}*${letter}[.:)]?${ws}+`;
+}
+
+/**
  * Without `{n}` markers: a matching section whose questions are "Section A" … "Section F" gets a box above each
  * passage paragraph that opens with that letter (bold "A", or a plain "A " when every letter is found in order).
  */
@@ -57,9 +75,7 @@ export function insertAutoMarkers(html: string, part: Part): string {
         if (wanted.length === 0) return;
 
         const find = (letter: string, bold: boolean, from: number): number => {
-            const re = bold
-                ? new RegExp(`<p(?:\\s[^>]*)?>(?:\\s|&nbsp;)*<(strong|b)>(?:\\s|&nbsp;)*${letter}[.:)]?(?:\\s|&nbsp;)*</\\1>`, 'g')
-                : new RegExp(`<p(?:\\s[^>]*)?>(?:\\s|&nbsp;)*${letter}[.:)]?(?:\\s|&nbsp;)+`, 'g');
+            const re = new RegExp(paragraphLabelPattern(letter, bold), 'g');
             re.lastIndex = from;
             const m = re.exec(out);
             return m ? m.index : -1;
@@ -73,7 +89,8 @@ export function insertAutoMarkers(html: string, part: Part): string {
                 at.push(i);
                 from = i + 1;
             }
-            // Bold letters may be partial; plain letters only count when all are found in order.
+            // Clear labels (bold, or alone on their line) may be partial; a plain "A " opening a sentence only counts
+            // when every letter is found in order.
             if (at.length === 0 || (!bold && at.length < wanted.length)) continue;
             for (let k = at.length - 1; k >= 0; k--) out = `${out.slice(0, at[k])}<p>{${wanted[k].number}}</p>${out.slice(at[k])}`;
             return;

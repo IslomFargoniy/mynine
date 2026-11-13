@@ -13,6 +13,22 @@ String? paragraphLetter(String? questionHtml) {
   return m?.group(1)!.toUpperCase();
 }
 
+/// How a paragraph's letter is written in the passages we have (web `paragraphLabelPattern`):
+///   clear: `<p><strong>A</strong> text…`, `<p><b>A.</b>…`, the letter alone on its line (`<p>A</p>`, `<h3>A</h3>`),
+///          inside spans or not;
+///   plain: `<p>A text…` / `<p>A. text…` (only trusted when every letter is found in order).
+String paragraphLabelPattern(String letter, bool clear) {
+  const ws = r'(?:\s|&nbsp;)';
+  const tags = r'(?:\s|&nbsp;|<[^>]+>)';
+  const open = r'<(?:p|div|h[1-6])(?:\s[^>]*)?>';
+  if (clear) {
+    final bold = '$open$ws*(?:<(?:span|em)[^>]*>)*<(?:strong|b)(?:\\s[^>]*)?>$ws*$letter[.:)]?$ws*</(?:strong|b)>';
+    final alone = '$open$tags*$letter[.:)]?$tags*</(?:p|div|h[1-6])>';
+    return '(?:$bold|$alone)';
+  }
+  return '<(?:p|div)(?:\\s[^>]*)?>$ws*$letter[.:)]?$ws+';
+}
+
 /// Without `{n}` markers: a matching section whose questions are "Section A" … "Section F" gets a box above each
 /// passage paragraph that opens with that letter (bold "A", or a plain "A " when every letter is found in order).
 /// Web `insertAutoMarkers`.
@@ -27,13 +43,8 @@ String insertAutoMarkers(String html, PartPayload part) {
     ];
     if (wanted.isEmpty) continue;
 
-    int find(String letter, bool bold, int from) {
-      final re = bold
-          ? RegExp('<p(?:\\s[^>]*)?>(?:\\s|&nbsp;)*<(strong|b)>(?:\\s|&nbsp;)*$letter[.:)]?(?:\\s|&nbsp;)*</\\1>')
-          : RegExp('<p(?:\\s[^>]*)?>(?:\\s|&nbsp;)*$letter[.:)]?(?:\\s|&nbsp;)+');
-      final m = re.allMatches(out, from).firstOrNull;
-      return m?.start ?? -1;
-    }
+    int find(String letter, bool bold, int from) =>
+        RegExp(paragraphLabelPattern(letter, bold)).allMatches(out, from).firstOrNull?.start ?? -1;
 
     for (final bold in [true, false]) {
       final at = <int>[];
@@ -44,7 +55,8 @@ String insertAutoMarkers(String html, PartPayload part) {
         at.add(i);
         from = i + 1;
       }
-      // Bold letters may be partial; plain letters only count when all are found in order.
+      // Clear labels (bold, or alone on their line) may be partial; a plain "A " opening a sentence only counts when
+      // every letter is found in order.
       if (at.isEmpty || (!bold && at.length < wanted.length)) continue;
       for (var k = at.length - 1; k >= 0; k--) {
         out = '${out.substring(0, at[k])}<p>{${wanted[k].number}}</p>${out.substring(at[k])}';

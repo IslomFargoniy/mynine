@@ -135,6 +135,31 @@ void main() {
     expect(passageSlotNumber('{14}'), 14);
   });
 
+  test('paragraph letters are found however the passage writes them', () {
+    final base = PartPayload.fromJson({
+      'id': 1, 'type': 'reading', 'type_id': 2, 'name': 'P',
+      'sections': [
+        {
+          'id': 1, 'question_type': 'matching',
+          'questions': [
+            {'id': 1, 'number': 14, 'html': 'Section A'},
+            {'id': 2, 'number': 15, 'html': 'Paragraph B'},
+            {'id': 3, 'number': 16, 'html': 'C'},
+          ],
+        },
+      ],
+    });
+    String auto(String html) => passageHtml(base.copyWith(html: html));
+    expect(auto('<p>A</p><p>Palm oil</p><p>A lot</p><p>B</p><p>Many</p><p>C</p><p>However</p>'),
+        '<p>{14}</p><p>A</p><p>Palm oil</p><p>A lot</p><p>{15}</p><p>B</p><p>Many</p><p>{16}</p><p>C</p><p>However</p>');
+    expect(auto('<h3>A</h3><p>x</p><h3>B</h3><p>y</p><h3>C</h3>'), '<p>{14}</p><h3>A</h3><p>x</p><p>{15}</p><h3>B</h3><p>y</p><p>{16}</p><h3>C</h3>');
+    expect(auto('<p><strong>A.</strong> x</p><p><span><b>B</b></span> y</p><p><strong>C</strong></p>'),
+        '<p>{14}</p><p><strong>A.</strong> x</p><p>{15}</p><p><span><b>B</b></span> y</p><p>{16}</p><p><strong>C</strong></p>');
+    expect(auto('<p>A. Kenya</p><p>B. Along</p><p>C) Some</p>'), '<p>{14}</p><p>A. Kenya</p><p>{15}</p><p>B. Along</p><p>{16}</p><p>C) Some</p>');
+    // A plain "A lot" without the other letters is not a label.
+    expect(auto('<p>A lot of x</p><p>B is</p>'), '<p>A lot of x</p><p>B is</p>');
+  });
+
   testWidgets('matching in the passage: headings are dragged (or tapped) into the {n} boxes', (tester) async {
     final h = await _toModule(tester, reading: true);
     final base = h.exam.currentPart!;
