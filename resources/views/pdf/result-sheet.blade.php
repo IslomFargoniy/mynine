@@ -3,163 +3,181 @@
 <head>
     <meta charset="UTF-8">
     <title>Mock result</title>
-    {{-- Laid out like an IELTS Test Report Form, issued under the center's own name (no IELTS / partner marks). --}}
+    {{-- The IELTS Test Report Form layout, issued under the center's own name: no IELTS / partner marks or
+         validation stamp, and the note + footer say it is a mock result. Data we do not keep gets a default. --}}
     <style>
-        @page { margin: 26pt 30pt; }
-        body { font-family: 'DejaVu Sans', sans-serif; font-size: 10.5px; color: #000; margin: 0; }
+        @page { margin: 30pt 34pt 24pt; }
+        body { font-family: 'DejaVu Sans', sans-serif; font-size: 10px; color: #111; margin: 0; }
         table { border-collapse: collapse; }
         .w100 { width: 100%; }
-        .box { border: 1pt solid #000; padding: 6pt 8pt; font-size: 12px; }
-        .grey { background: #b5b5b5; }
-        .label { font-size: 12px; padding-right: 8pt; white-space: nowrap; }
-        .rule { border-top: 0.8pt solid #444; margin: 9pt 0; }
-        .h2 { font-size: 15px; font-weight: bold; margin: 0 0 7pt; }
-        .logo { max-height: 52pt; max-width: 210pt; }
-        .center-name { font-size: 26px; font-weight: bold; letter-spacing: 0.5pt; line-height: 1.1; }
-        .title { font-size: 19px; font-weight: bold; margin-top: 6pt; }
-        .note { font-size: 8px; font-style: italic; line-height: 1.35; }
-        table.gap { border-collapse: separate; border-spacing: 0 6pt; margin: -6pt 0; }
-        .score-label { font-size: 11.5px; font-weight: bold; padding-right: 5pt; white-space: nowrap; }
-        .score { border: 1pt solid #000; background: #b5b5b5; width: 32pt; height: 34pt; text-align: center; font-size: 13px; }
-        .stamp { border: 1pt solid #000; height: 108pt; text-align: center; vertical-align: top; padding-top: 5pt; font-weight: bold; font-size: 12px; }
-        .stamp-name { margin-top: 18pt; font-size: 13px; }
-        .stamp img { max-height: 58pt; max-width: 120pt; margin-top: 10pt; }
-        .comments { border: 1.4pt solid #000; height: 92pt; padding: 6pt; font-size: 11px; vertical-align: top; }
-        .footer { border-top: 0.8pt solid #444; padding-top: 6pt; font-size: 9.5px; text-align: center; }
+        .lbl { font-size: 10.5px; color: #222; white-space: nowrap; padding-right: 8pt; vertical-align: middle; line-height: 1.25; }
+        .f { border: 0.9pt solid #333; padding: 0 9pt; height: 26pt; font-size: 10.5px; vertical-align: middle; }
+        .g { background: #d9d9d9; }
+        .rule { border-top: 0.8pt solid #555; }
+        .h2 { font-size: 12.5px; font-weight: bold; }
+        .rows { border-collapse: separate; border-spacing: 0 7pt; margin: -7pt 0; }
+        .brand { font-size: 34px; font-weight: bold; letter-spacing: -0.5pt; line-height: 1; }
+        .logo { max-height: 50pt; max-width: 220pt; }
+        .note { font-size: 6.6px; font-style: italic; line-height: 1.3; }
+        .photo { width: 112pt; height: 108pt; background: #e5e5e5; border: 0.6pt solid #bbb; text-align: center; vertical-align: middle; color: #8a8a8a; font-size: 34px; font-weight: bold; }
+        .sl { font-size: 10.5px; font-weight: bold; white-space: nowrap; padding-right: 6pt; }
+        .sc { border: 0.9pt solid #333; background: #d9d9d9; width: 34pt; height: 32pt; text-align: center; font-size: 10.5px; }
+        .stamp { border: 0.9pt solid #333; height: 92pt; text-align: center; vertical-align: top; padding-top: 6pt; font-size: 10px; font-weight: bold; }
+        .stamp img { max-height: 54pt; max-width: 108pt; margin-top: 8pt; }
+        .stamp .nm { margin-top: 22pt; font-size: 12px; }
+        .comments { border: 0.9pt solid #333; height: 78pt; }
+        .footer { border-top: 0.8pt solid #555; padding-top: 5pt; font-size: 8px; text-align: center; }
         .page-break { page-break-after: always; }
     </style>
 </head>
 <body>
 @foreach ($sheets as $sheet)
-    @php($branding = $sheet['branding'] ?? null)
-    {{-- Header: center logo / name, "Test Report Form", module box --}}
+    @php
+        $branding = $sheet['branding'] ?? null;
+        $logo = $branding?->logoDataUri();
+        $initials = collect(preg_split('/\s+/u', trim((string) $sheet['name'])))->filter()->take(2)
+            ->map(fn ($w) => mb_strtoupper(mb_substr($w, 0, 1)))->implode('');
+    @endphp
+
+    {{-- Header --}}
     <table class="w100">
         <tr>
             <td style="vertical-align: bottom;">
-                @if ($branding && ($logo = $branding->logoDataUri()))
-                    <img class="logo" src="{{ $logo }}" alt=""><br>
+                @if ($logo)
+                    <img class="logo" src="{{ $logo }}" alt="">
+                @else
+                    <div class="brand"><span class="center-name">{{ $sheet['center_name'] }}</span></div>
                 @endif
-                <span class="center-name">{{ $sheet['center_name'] }}</span>
-                <div class="title">Test Report Form</div>
+                <div style="font-size: 13.5px; font-weight: bold; margin-top: 5pt;">Test Report Form</div>
             </td>
-            <td style="width: 190pt; vertical-align: bottom; padding-bottom: 3pt;">
-                <div class="box" style="text-align: center;">{{ $sheet['module'] }}</div>
+            <td style="width: 196pt; vertical-align: bottom;">
+                <table class="w100"><tr><td class="f" style="height: 18pt; text-align: center; font-size: 11.5px;">{{ $sheet['module'] }}</td></tr></table>
             </td>
         </tr>
     </table>
 
-    <table class="w100" style="margin-top: 6pt;">
+    <table class="w100" style="margin-top: 5pt;">
         <tr>
-            <td style="width: 34pt; vertical-align: top; font-weight: bold; font-size: 12px;">NOTE</td>
+            <td style="width: 40pt; vertical-align: top; font-weight: bold; font-size: 9.5px;">NOTE</td>
             <td class="note">
-                This is the result of an IELTS-format mock exam held at {{ $sheet['center_name'] }}{{ $sheet['mock'] ? ' ('.$sheet['mock'].')' : '' }}.<br>
-                It is <strong>not</strong> an official IELTS Test Report Form and cannot be used for admission, immigration or employment.<br>
-                Band scores are calculated with the official IELTS band tables and are an estimate of the candidate's current level.
+                This form reports the result of an IELTS-format mock examination held at {{ $sheet['center_name'] }}{{ $sheet['mock'] ? ' ('.$sheet['mock'].')' : '' }}. It is NOT an official IELTS Test Report Form
+                and must not be used for admission, immigration or employment. Band scores are calculated with the official IELTS band tables and estimate the candidate's current level.
             </td>
         </tr>
     </table>
 
-    <table class="w100" style="margin-top: 12pt;">
+    <table class="w100" style="margin-top: 9pt;">
         <tr>
-            <td class="label">Centre Number</td>
-            <td class="box" style="width: 92pt;">{{ $sheet['centre_number'] }}</td>
-            <td class="label" style="padding-left: 22pt;">Date</td>
-            <td class="box" style="width: 98pt;">{{ $sheet['date'] }}</td>
-            <td class="label" style="padding-left: 22pt;">Candidate Number</td>
-            <td class="box" style="width: 78pt;">{{ $sheet['code'] }}</td>
+            <td class="lbl">Centre Number</td>
+            <td class="f" style="width: 82pt;">{{ $sheet['centre_number'] }}</td>
+            <td class="lbl" style="padding-left: 18pt;">Date</td>
+            <td class="f" style="width: 104pt;">{{ $sheet['date'] }}</td>
+            <td class="lbl" style="padding-left: 14pt;">Candidate Number</td>
+            <td class="f" style="width: 74pt;">{{ $sheet['code'] }}</td>
         </tr>
     </table>
 
-    <div class="rule"></div>
+    <div class="rule" style="margin: 9pt 0 7pt;"></div>
 
-    {{-- Candidate details --}}
-    <div class="h2">Candidate Details</div>
-    <table class="w100 gap">
+    {{-- Candidate details + photo --}}
+    <table class="w100">
         <tr>
-            <td class="label" style="width: 92pt;">Candidate Name</td>
-            <td class="box grey" colspan="2">{{ mb_strtoupper($sheet['name']) }}</td>
-        </tr>
-        <tr>
-            <td class="label">Candidate ID</td>
-            <td class="box grey" style="width: 200pt;">{{ $sheet['code'] }}</td><td></td>
-        </tr>
-        <tr>
-            <td class="label">Phone</td>
-            <td class="box" style="width: 200pt;">{{ $sheet['phone'] ?: '—' }}</td><td></td>
-        </tr>
-        <tr>
-            <td class="label">Test</td>
-            <td class="box" colspan="2">{{ $sheet['mock'] ?: '—' }}</td>
+            <td style="vertical-align: top;">
+                <div class="h2" style="margin-bottom: 8pt;">Candidate Details</div>
+                <table class="w100 rows">
+                    <tr><td class="lbl" style="width: 76pt;">Family Name</td><td class="f g" colspan="2">{{ mb_strtoupper($sheet['family']) }}</td></tr>
+                    <tr><td class="lbl">First Name(s)</td><td class="f g" colspan="2">{{ mb_strtoupper($sheet['first']) }}</td></tr>
+                    <tr><td class="lbl">Candidate ID</td><td class="f g" style="width: 180pt;">{{ $sheet['code'] }}</td><td></td></tr>
+                </table>
+            </td>
+            <td style="width: 124pt; vertical-align: bottom; padding-left: 12pt;">
+                <table class="w100"><tr><td class="photo">{{ $initials ?: '—' }}</td></tr></table>
+            </td>
         </tr>
     </table>
 
-    <div class="rule"></div>
+    <div class="rule" style="margin: 9pt 0;"></div>
+
+    <table class="w100 rows">
+        <tr>
+            <td class="lbl" style="width: 76pt;">Date of Birth</td>
+            <td class="f" style="width: 96pt;">-</td>
+            <td class="lbl" style="padding-left: 16pt; text-align: right;">Sex (M/F)</td>
+            <td class="f" style="width: 22pt; text-align: center;">-</td>
+            <td class="lbl" style="padding-left: 12pt;">Scheme Code</td>
+            <td class="f" style="width: 100pt;">Private Candidate</td>
+        </tr>
+        <tr><td class="lbl">Country or<br>Region of Origin</td><td class="f" colspan="5"></td></tr>
+        <tr><td class="lbl">Country of<br>Nationality</td><td class="f" colspan="5">UZBEKISTAN</td></tr>
+        <tr><td class="lbl">First Language</td><td class="f" colspan="5">UZBEK</td></tr>
+    </table>
+
+    <div class="rule" style="margin: 9pt 0 7pt;"></div>
 
     {{-- Test results --}}
-    <div class="h2">Test Results</div>
+    <div class="h2" style="margin-bottom: 6pt;">Test Results</div>
     <table class="w100">
         <tr>
             @foreach (['listening' => 'Listening', 'reading' => 'Reading', 'writing' => 'Writing', 'speaking' => 'Speaking'] as $key => $label)
-                <td class="score-label">{{ $label }}</td>
-                <td class="score">{{ $sheet[$key] !== null ? number_format($sheet[$key], 1) : '—' }}</td>
-                <td style="width: 7pt;"></td>
+                <td class="sl">{{ $label }}</td>
+                <td class="sc">{{ $sheet[$key] !== null ? number_format($sheet[$key], 1) : '—' }}</td>
+                <td style="width: 9pt;"></td>
             @endforeach
-            <td class="score-label" style="line-height: 1.15;">Overall<br>Band<br>Score</td>
-            <td class="score">{{ number_format($sheet['overall'], 1) }}</td>
-            <td style="width: 7pt;"></td>
-            <td class="score-label" style="line-height: 1.15;">CEFR<br>Level</td>
-            <td class="score">{{ $sheet['cefr'] }}</td>
+            <td class="sl" style="text-align: center; line-height: 1.2;">Overall<br>Band<br>Score</td>
+            <td class="sc">{{ number_format($sheet['overall'], 1) }}</td>
+            <td style="width: 9pt;"></td>
+            <td class="sl" style="text-align: center; line-height: 1.2;">CEFR<br>Level</td>
+            <td class="sc">{{ $sheet['cefr'] }}</td>
         </tr>
     </table>
 
-    <div class="rule"></div>
+    <div class="rule" style="margin: 7pt 0 6pt;"></div>
 
-    {{-- Comments, center stamp, issuer --}}
+    {{-- Comments + stamps --}}
     <table class="w100">
         <tr>
-            <td style="vertical-align: top; padding-right: 16pt;">
-                <div style="font-size: 12px; font-weight: bold; margin-bottom: 8pt;">Administrator Comments</div>
+            <td style="vertical-align: top; padding-right: 14pt;">
+                <div style="font-size: 10px; font-weight: bold; margin-bottom: 6pt;">Administrator Comments</div>
                 <table class="w100"><tr><td class="comments"></td></tr></table>
             </td>
-            <td style="width: 118pt; padding-right: 8pt;">
-                <table class="w100"><tr><td class="stamp">
-                    Centre stamp
-                </td></tr></table>
+            <td style="width: 114pt; padding-right: 10pt; vertical-align: top;">
+                <table class="w100"><tr><td class="stamp">Centre stamp</td></tr></table>
             </td>
-            <td style="width: 118pt;">
+            <td style="width: 114pt; vertical-align: top;">
                 <table class="w100"><tr><td class="stamp">
                     Issued by
-                    @if ($branding && ($logo = $branding->logoDataUri()))
+                    @if ($logo)
                         <br><img src="{{ $logo }}" alt="">
                     @else
-                        <div class="stamp-name">{{ $sheet['center_name'] }}</div>
+                        <div class="nm">{{ $sheet['center_name'] }}</div>
                     @endif
                 </td></tr></table>
             </td>
         </tr>
     </table>
 
-    <table class="w100" style="margin-top: 14pt;">
+    <table class="w100" style="margin-top: 6pt;">
         <tr>
-            <td style="width: 50%;"></td>
-            <td class="label" style="vertical-align: bottom;">Administrator's<br>Signature</td>
-            <td style="border-bottom: 0.8pt solid #000; width: 200pt; height: 30pt;"></td>
+            <td style="width: 44%;"></td>
+            <td class="lbl" style="font-weight: bold; font-size: 9.5px; vertical-align: bottom; padding-bottom: 4pt;">Administrator's<br>Signature</td>
+            <td style="width: 10pt;"></td>
+            <td style="border-bottom: 0.9pt solid #333; width: 238pt; height: 30pt;"></td>
         </tr>
     </table>
 
     <table class="w100" style="margin-top: 14pt;">
         <tr>
-            <td style="width: 22%;"></td>
-            <td class="label">Date</td>
-            <td class="box" style="width: 92pt; text-align: center;">{{ $sheet['issued'] }}</td>
-            <td class="label" style="padding-left: 18pt; line-height: 1.15;">Test Report Form<br>Number</td>
-            <td class="box grey" style="text-align: center;">{{ $sheet['form_number'] }}</td>
+            <td style="width: 34%;"></td>
+            <td class="lbl">Date</td>
+            <td class="f" style="width: 94pt;">{{ $sheet['issued'] }}</td>
+            <td class="lbl" style="padding-left: 18pt;">Test Report<br>Form Number</td>
+            <td class="f g" style="width: 150pt;">{{ $sheet['form_number'] }}</td>
         </tr>
     </table>
 
-    <div style="height: 120pt;"></div>
+    <div style="height: 92pt;"></div>
     <div class="footer">
-        {{ $sheet['center_name'] }} &middot; IELTS-format mock exam result &middot; not an official IELTS Test Report Form
+        This mock examination result was issued by {{ $sheet['center_name'] }} and is not an official IELTS Test Report Form
         @if ($branding)
             &middot; Powered by Mynine
         @else

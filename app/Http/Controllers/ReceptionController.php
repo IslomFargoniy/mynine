@@ -160,7 +160,7 @@ class ReceptionController extends Controller
                 'centre_number' => $centreNumber,
                 'module' => $variant === 'general' ? 'GENERAL TRAINING' : 'ACADEMIC',
                 'name' => $student->name,
-                'phone' => $student->phone,
+                ...self::splitName((string) $student->name),
                 'code' => $student->code,
                 'mock' => $student->mock?->name,
                 'date' => $testDate ? strtoupper($testDate->format('d/M/Y')) : '',
@@ -180,6 +180,26 @@ class ReceptionController extends Controller
         abort_if($sheets === [], 422, __('results_not_ready_selected'));
 
         return Pdf::render('pdf.result-sheet', compact('sheets'), 'Results_'.now()->format('Ymd_His'));
+    }
+
+    /**
+     * Family name / first name(s) for the report form. Uzbek names are usually written "Family First"; a surname
+     * suffix (-ov, -eva, -iy …) at the end means "First Family".
+     *
+     * @return array{family: string, first: string}
+     */
+    private static function splitName(string $name): array
+    {
+        $words = preg_split('/\s+/u', trim($name), -1, PREG_SPLIT_NO_EMPTY) ?: [];
+        if (count($words) < 2) {
+            return ['family' => '-', 'first' => $words[0] ?? '-'];
+        }
+        $surname = '/(ov|ova|ev|eva|yev|yeva|iy|aya|in|ina|zoda|dze|yan|enko)$/iu';
+        if (preg_match($surname, end($words)) && ! preg_match($surname, $words[0])) {
+            return ['family' => array_pop($words), 'first' => implode(' ', $words)];
+        }
+
+        return ['family' => array_shift($words), 'first' => implode(' ', $words)];
     }
 
     /** CEFR level of an overall band (as on the web result page). */
