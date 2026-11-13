@@ -315,7 +315,7 @@ export default function PracticeSection({
                         dangerouslySetInnerHTML={{
                             __html: cleanTinyMce(
                                 // Headings dragged into the passage: the list below is the draggable one.
-                                section.question_type.type === 'matching'
+                                section.question_type.type === 'matching' && section.questions.some((q) => passageQuestionIds?.has(q.id))
                                     ? stripHeadingList(section.textarea ?? '', buildRange(section.from_option, section.to_option))
                                     : section.textarea,
                             ),

@@ -177,7 +177,8 @@ class SectionView extends StatelessWidget {
   Widget _instructions() {
     if (section.html.trim().isEmpty) return const SizedBox.shrink();
     // Headings dragged into the passage: the draggable list below replaces the static one.
-    final dragMode = section.questionType == QuestionType.matching;
+    final dragMode = section.questionType == QuestionType.matching &&
+        section.questions.any((q) => ctx.passageQuestionIds.contains(q.id));
     return ctx.html(
       dragMode ? stripHeadingList(section.html, buildRange(section.fromOption, section.toOption)) : section.html,
       inter(16, color: ctx.palette.text, height: WebTokens.sectionInstructionLineHeight),
@@ -798,8 +799,9 @@ class _MatchingViewState extends State<MatchingView> {
       child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
         // IELTS computer test: every matching task is answered by dragging an option into a box (in the passage
         // or next to the question). No options at all: the old select stays.
-        // Headings are dragged (into the passage or the box next to the question); letters A–H keep the select.
-        if (_isHeadings && headings.isNotEmpty) ...[
+        // Drag and drop only into the passage (headings over their paragraphs); every other matching task keeps
+        // the select next to the question: options may be used more than once (people, letters A–H).
+        if (headings.isNotEmpty && rows.length < widget.section.questions.length) ...[
           _dragList(headings, widget.section.questions),
           if (rows.isNotEmpty) const SizedBox(height: 24),
         ] else if (_hasTexts) ...[
@@ -811,9 +813,12 @@ class _MatchingViewState extends State<MatchingView> {
               borderRadius: BorderRadius.circular(8),
             ),
             child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
-              Text('LIST OF HEADINGS',
-                  style: inter(14, weight: FontWeight.w700, color: ctx.c(TW.gray800), letterSpacing: 0.7)),
-              const SizedBox(height: 10),
+              // The instructions usually name the list themselves ("List of People").
+              if (!RegExp('list of', caseSensitive: false).hasMatch(widget.section.html)) ...[
+                Text('LIST OF HEADINGS',
+                    style: inter(14, weight: FontWeight.w700, color: ctx.c(TW.gray800), letterSpacing: 0.7)),
+                const SizedBox(height: 10),
+              ],
               for (final h in headings)
                 Padding(
                   padding: const EdgeInsets.symmetric(vertical: 3),
@@ -834,9 +839,6 @@ class _MatchingViewState extends State<MatchingView> {
   /// Headings given as a range (i–vii) with their texts in the instructions: value → text.
   Map<String, String> get _rangeTexts =>
       _hasTexts ? const {} : headingTexts(widget.section.html, _headings);
-
-  /// Headings (with texts), as opposed to bare letters A–H.
-  bool get _isHeadings => _hasTexts || _rangeTexts.isNotEmpty;
 
   /// Headings to drag into the passage boxes. A heading in use leaves the list (letters A–H may repeat).
   Widget _dragList(List<String> headings, List<QuestionPayload> inPassage) {
@@ -921,14 +923,6 @@ class _MatchingViewState extends State<MatchingView> {
               style: inter(14, weight: FontWeight.w600, color: ctx.c(TW.gray800), height: 1.375)),
         ),
         const SizedBox(width: 12),
-        if (_isHeadings && headings.isNotEmpty)
-          PassageDropBox(
-            question: q,
-            ctx: ctx,
-            inRow: true,
-            compact: false,
-          )
-        else
         AnswerSelect(
           key: Key('select-${q.id}'),
           value: ctx.answer(q.id).text,

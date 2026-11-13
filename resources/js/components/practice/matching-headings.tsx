@@ -1,6 +1,5 @@
 import { Question, Section } from '@/types';
 import { buildRange } from '@/utils/rangeHelpers';
-import PassageDropZone from '@/components/practice/passage-drop-zone';
 import { headingPick, headingTexts, questionPick, usePickedHeading, usePickedQuestion, writeHeadingDrag, writeQuestionDrag } from '@/utils/passageSlots';
 
 interface MatchingHeadingsProps {
@@ -42,8 +41,9 @@ export default function MatchingHeadings({
     // Headings given as a range (i–vii) with their texts in the instructions: the chips show the texts.
     const rangeTexts = hasTexts ? {} : headingTexts(section.textarea, headingOptions);
     const isHeadings = hasTexts || Object.keys(rangeTexts).length > 0;
-    // Headings are dragged (into the passage or the box next to the question); letters A–H keep the select.
-    const dragMode = isHeadings && headingOptions.length > 0;
+    // Drag and drop only into the passage (headings over their paragraphs); every other matching task keeps the
+    // select next to the question: options may be used more than once (people, letters A–H).
+    const dragMode = headingOptions.length > 0 && section.questions.some((q: Question) => passageQuestionIds?.has(q.id));
     // A heading in use leaves the list (letters A–H may repeat, so they stay).
     const available = isHeadings
         ? (() => {
@@ -126,7 +126,10 @@ export default function MatchingHeadings({
 
             {!dragMode && hasTexts && (
                 <div className="rounded-lg border-2 border-gray-300 bg-gray-50 p-4 shadow-xs dark:border-gray-700 dark:bg-gray-800/80">
-                    <h4 className="mb-2.5 text-sm font-bold tracking-wider text-gray-800 uppercase dark:text-gray-200">List of Headings</h4>
+                    {/* The instructions usually name the list themselves ("List of People"). */}
+                    {!/list of/i.test(section.textarea ?? '') && (
+                        <h4 className="mb-2.5 text-sm font-bold tracking-wider text-gray-800 uppercase dark:text-gray-200">List of Headings</h4>
+                    )}
                     <ul className="space-y-1.5">
                         {headingOptions.map((heading, idx) => (
                             <li key={idx} className="text-sm leading-snug text-gray-900 dark:text-gray-100">
@@ -148,7 +151,7 @@ export default function MatchingHeadings({
 
                     return (
                         <div
-                            id={dragMode ? undefined : `question-${q.id}`}
+                            id={`question-${q.id}`}
                             key={q.id}
                             className="flex flex-col justify-between gap-3 rounded-md border border-gray-200 bg-white px-3.5 py-2.5 shadow-2xs sm:flex-row sm:items-center dark:border-gray-700/80 dark:bg-gray-900"
                         >
@@ -173,20 +176,6 @@ export default function MatchingHeadings({
                                 </span>
                             </div>
 
-                            {dragMode ? (
-                                <PassageDropZone
-                                    slot={{ number: qNumber, question: q, section, sectionIndex: 0 }}
-                                    value={currentAnswer}
-                                    display={rangeTexts[currentAnswer] ?? currentAnswer}
-                                    compact={!isHeadings}
-                                    hideNumber
-                                    onPlace={(label, fromQuestionId) => {
-                                        if (fromQuestionId && fromQuestionId !== q.id) onAnswerChange(fromQuestionId, '');
-                                        onAnswerChange(q.id, label);
-                                    }}
-                                    onClear={() => onAnswerChange(q.id, '')}
-                                />
-                            ) : (
                             <select
                                 value={currentAnswer}
                                 onChange={(e) => onAnswerChange(q.id, e.target.value)}
@@ -202,7 +191,6 @@ export default function MatchingHeadings({
                                     </option>
                                 ))}
                             </select>
-                            )}
                         </div>
                     );
                 })}
