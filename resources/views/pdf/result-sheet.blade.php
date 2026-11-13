@@ -34,14 +34,14 @@
 </head>
 <body>
 @php
-    // Mynine's own candidates (no center branding) get the Mynine mark.
+    // No uploaded logo: the Mynine mark.
     $mynineIcon = public_path('images/icons/mynine-icon.png');
     $mynineLogo = is_file($mynineIcon) ? 'data:image/png;base64,'.base64_encode((string) file_get_contents($mynineIcon)) : null;
 @endphp
 @foreach ($sheets as $sheet)
     @php
         $branding = $sheet['branding'] ?? null;
-        $logo = $branding ? $branding->logoDataUri() : ($mynineLogo ?? null);
+        $logo = ($sheet['logo'] ?? null) ?: ($branding ? $branding->logoDataUri() : null) ?: $mynineLogo;
         $initials = collect(preg_split('/\s+/u', trim((string) $sheet['name'])))->filter()->take(2)
             ->map(fn ($w) => mb_strtoupper(mb_substr($w, 0, 1)))->implode('');
     @endphp

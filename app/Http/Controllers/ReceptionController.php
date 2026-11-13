@@ -137,6 +137,7 @@ class ReceptionController extends Controller
 
         $sheets = [];
         $brandings = [];
+        $logos = [];
         foreach ($students as $student) {
             $this->authorize('operate', $student->mock);
             $result = $this->results->result($student);
@@ -147,6 +148,7 @@ class ReceptionController extends Controller
             $ownerId = (int) ($student->mock?->owner_id ?? 0);
             if (! array_key_exists($ownerId, $brandings)) {
                 $brandings[$ownerId] = CenterBranding::forCenter($ownerId ?: null);
+                $logos[$ownerId] = $brandings[$ownerId]?->logoDataUri() ?? CenterBranding::uploadedLogoDataUri($ownerId ?: null);
             }
 
             $branding = $brandings[$ownerId];
@@ -156,6 +158,7 @@ class ReceptionController extends Controller
 
             $sheets[] = [
                 'branding' => $branding,
+                'logo' => $logos[$ownerId],
                 'center_name' => $branding?->name ?: 'Mynine',
                 'centre_number' => $centreNumber,
                 'module' => $variant === 'general' ? 'GENERAL TRAINING' : 'ACADEMIC',

@@ -103,6 +103,19 @@ test('reception result sheets are branded per candidate\'s center', function () 
     expect($html)->toContain('<span class="center-name">Mynine</span>')->toContain('&middot; mynine.uz')->not->toContain('Powered by Mynine');
 });
 
+test('the Mynine center\'s uploaded logo is printed on its result sheets', function () {
+    $this->mock(MockResultService::class, fn ($mock) => $mock->shouldReceive('result')->andReturn([
+        'ready' => true, 'listening' => 7.0, 'reading' => 6.5, 'writing' => 6.0, 'speaking' => 6.0, 'overall' => 6.5, 'missing' => [],
+    ]));
+    giveLogo($this->mynine);
+
+    $box = captureView('pdf.result-sheet');
+    $this->actingAs(makeUser('Reception', $this->mynine))->get(route('reception.result-sheets', ['ids' => $this->mynineExam['student']->id]))->assertOk();
+
+    expect($box->data['sheets'][0]['logo'])->toStartWith('data:image/png;base64,')
+        ->and($box->data['sheets'][0]['branding'])->toBeNull();
+});
+
 test('the attempt result PDF of a partner mock shows the center; practice and Mynine mocks keep MYNINE.UZ', function () {
     $partnerAttempt = Attempt::create(['name' => 'Cand', 'mock_id' => $this->partnerExam['mock']->id, 'mock_student_id' => $this->partnerExam['student']->id, 'test_id' => $this->partnerExam['testL']->id, 'started_at' => now()]);
     $mynineAttempt = Attempt::create(['name' => 'Cand', 'mock_id' => $this->mynineExam['mock']->id, 'mock_student_id' => $this->mynineExam['student']->id, 'test_id' => $this->mynineExam['testL']->id, 'started_at' => now()]);

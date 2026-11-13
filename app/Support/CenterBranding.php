@@ -44,6 +44,21 @@ final class CenterBranding
     }
 
     /**
+     * The center's uploaded logo as a data: URI for PDFs, also for the Mynine center (which has no other branding).
+     */
+    public static function uploadedLogoDataUri(?int $centerId): ?string
+    {
+        if (! $centerId) {
+            return null;
+        }
+        $settings = CenterSetting::query()->where('owner_id', $centerId)->first();
+
+        return $settings?->logo_path
+            ? (new self((string) $settings->name, (string) $settings->code, $settings->logo_path))->logoDataUri()
+            : null;
+    }
+
+    /**
      * Public URL of the logo (web pages, browser print), or null when there is none.
      */
     public function logoUrl(): ?string
