@@ -9,14 +9,15 @@ use App\Http\Middleware\EnsureUserIsNotSuspended;
 use App\Http\Middleware\HandleAppearance;
 use App\Http\Middleware\HandleInertiaRequests;
 use App\Http\Middleware\SetLocale;
+use App\Support\UserFacingError;
 use Illuminate\Auth\AuthenticationException;
+use Illuminate\Database\QueryException;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
 use Illuminate\Http\Exceptions\HttpResponseException;
 use Illuminate\Http\Exceptions\ThrottleRequestsException;
 use Illuminate\Http\Middleware\AddLinkHeadersForPreloadedAssets;
-use Illuminate\Database\QueryException;
 use Illuminate\Http\Request;
 use Illuminate\Validation\ValidationException;
 use Spatie\Permission\Middleware\PermissionMiddleware;
@@ -70,7 +71,7 @@ return Application::configure(basePath: dirname(__DIR__))
             }
             report($e);
 
-            return back()->withErrors(['error' => __(\App\Support\UserFacingError::databaseKey($e))]);
+            return back()->withErrors(['error' => __(UserFacingError::databaseKey($e))]);
         });
 
         // Desktop API (docs/desktop/API.md): every error is { "message": "...", "code": "<machine_code>" }.

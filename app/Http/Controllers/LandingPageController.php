@@ -2,8 +2,8 @@
 
 namespace App\Http\Controllers;
 
-use App\Support\UserFacingError;
 use App\Models\Test;
+use App\Support\UserFacingError;
 
 class LandingPageController extends Controller
 {

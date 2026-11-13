@@ -2,10 +2,10 @@
 
 namespace App\Http\Controllers;
 
-use App\Support\UserFacingError;
 use App\Http\Requests\StoreFolderRequest;
 use App\Http\Requests\UpdateFolderRequest;
 use App\Models\Folder;
+use App\Support\UserFacingError;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
 

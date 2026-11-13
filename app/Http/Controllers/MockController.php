@@ -2,7 +2,6 @@
 
 namespace App\Http\Controllers;
 
-use App\Support\UserFacingError;
 use App\Http\Requests\StoreMockRequest;
 use App\Http\Requests\UpdateMockRequest;
 use App\Models\Attempt;
@@ -13,6 +12,7 @@ use App\Models\Test;
 use App\Services\MockBankService;
 use App\Support\DayRange;
 use App\Support\FilterOptions;
+use App\Support\UserFacingError;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;

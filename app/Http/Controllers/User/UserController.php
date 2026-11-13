@@ -2,13 +2,13 @@
 
 namespace App\Http\Controllers\User;
 
-use App\Support\UserFacingError;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\StoreUserRequest;
 use App\Http\Requests\UpdateUserRequest;
 use App\Models\Attempt;
 use App\Models\User\User;
 use App\Support\DayRange;
+use App\Support\UserFacingError;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;

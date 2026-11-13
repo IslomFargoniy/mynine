@@ -2,10 +2,10 @@
 
 namespace App\Http\Controllers;
 
-use App\Support\UserFacingError;
 use App\Http\Requests\StoreAttemptTypeRequest;
 use App\Models\Attempt;
 use App\Services\ExamService;
+use App\Support\UserFacingError;
 use Illuminate\Validation\ValidationException;
 
 class AttemptTypeController extends Controller

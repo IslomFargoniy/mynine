@@ -2,11 +2,11 @@
 
 namespace App\Http\Controllers;
 
-use App\Support\UserFacingError;
 use App\Http\Requests\StoreSectionRequest;
 use App\Http\Requests\UpdateSectionRequest;
 use App\Models\Part;
 use App\Models\Section;
+use App\Support\UserFacingError;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;

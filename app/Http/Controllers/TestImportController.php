@@ -2,7 +2,6 @@
 
 namespace App\Http\Controllers;
 
-use App\Support\UserFacingError;
 use App\Models\AiUsageLog;
 use App\Models\Option;
 use App\Models\Part;
@@ -11,6 +10,7 @@ use App\Models\QuestionType;
 use App\Models\Section;
 use App\Services\OpenAIService;
 use App\Support\AiUsage;
+use App\Support\UserFacingError;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;

@@ -2,10 +2,10 @@
 
 namespace App\Http\Controllers;
 
-use App\Support\UserFacingError;
 use App\Http\Requests\StoreQuestionTypeRequest;
 use App\Http\Requests\UpdateQuestionTypeRequest;
 use App\Models\QuestionType;
+use App\Support\UserFacingError;
 
 class QuestionTypeController extends Controller
 {

@@ -2,7 +2,6 @@
 
 namespace App\Http\Controllers;
 
-use App\Support\UserFacingError;
 use App\Http\Requests\StoreAttemptRequest;
 use App\Models\Attempt;
 use App\Models\Folder;
@@ -13,6 +12,7 @@ use App\Services\ExamService;
 use App\Services\MockResultService;
 use App\Support\DayRange;
 use App\Support\FilterOptions;
+use App\Support\UserFacingError;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;

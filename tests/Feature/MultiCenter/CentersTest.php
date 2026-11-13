@@ -1,5 +1,6 @@
 <?php
 
+use App\Models\Attempt;
 use App\Models\CenterAuditLog;
 use App\Models\CenterSetting;
 use App\Models\Device;
@@ -210,7 +211,7 @@ test('Replace admin can take the email of an ordinary user: their results move t
     $student = makeUser('Student');
     $student->forceFill(['email' => 'person@example.com', 'google_id' => 'g-person', 'telegram_id' => '555'])->saveQuietly();
     $exam = makeDesktopExam($super);
-    $attempt = \App\Models\Attempt::create(['user_id' => $student->id, 'test_id' => $exam['testL']->id, 'name' => 'Practice', 'started_at' => now()]);
+    $attempt = Attempt::create(['user_id' => $student->id, 'test_id' => $exam['testL']->id, 'name' => 'Practice', 'started_at' => now()]);
     DB::table('sessions')->insert(['id' => 'student-session', 'user_id' => $student->id, 'payload' => 'x', 'last_activity' => time()]);
 
     $this->actingAs($super)->post(route('centers.replace-admin', $center), ['email' => 'Person@Example.com'])
@@ -631,7 +632,7 @@ test('users:merge-archived folds an account archived by an older Replace admin i
     $old = makeUser('Student');
     $old->forceFill(['email' => 'archived+'.$old->id.'.1794548554@mynine.invalid'])->saveQuietly();
     $exam = makeDesktopExam($super);
-    $attempt = \App\Models\Attempt::create(['user_id' => $old->id, 'test_id' => $exam['testL']->id, 'name' => 'Old', 'started_at' => now()]);
+    $attempt = Attempt::create(['user_id' => $old->id, 'test_id' => $exam['testL']->id, 'name' => 'Old', 'started_at' => now()]);
     CenterAuditLog::record('admin_replaced', $center->id, ['old_email' => 'x@example.com', 'new_email' => 'p@example.com', 'meta' => ['archived_user_id' => $old->id]]);
 
     $this->artisan('users:merge-archived', ['--dry-run' => true])->assertSuccessful();
