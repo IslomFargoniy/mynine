@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Support\UserFacingError;
 use App\Http\Requests\StoreAttemptTypeRequest;
 use App\Models\Attempt;
 use App\Services\ExamService;
@@ -22,7 +23,7 @@ class AttemptTypeController extends Controller
 
             return back()->with('success', __('updated_successfully'));
         } catch (\Exception $e) {
-            throw ValidationException::withMessages(['error' => [$e->getMessage()]]);
+            throw ValidationException::withMessages(['error' => [UserFacingError::message($e)]]);
         }
     }
 }

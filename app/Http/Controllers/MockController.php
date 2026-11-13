@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Support\UserFacingError;
 use App\Http\Requests\StoreMockRequest;
 use App\Http\Requests\UpdateMockRequest;
 use App\Models\Attempt;
@@ -275,7 +276,7 @@ class MockController extends Controller
             return redirect()->route('mock.index')->with('success', __('success.mock_deleted'));
         } catch (\Exception $e) {
             return redirect()->route('mock.index')->withErrors([
-                'error' => $e->getMessage(),
+                'error' => UserFacingError::message($e),
             ]);
         }
     }

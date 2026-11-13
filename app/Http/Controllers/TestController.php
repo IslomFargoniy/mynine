@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Support\UserFacingError;
 use App\Http\Requests\StoreTestRequest;
 use App\Http\Requests\UpdateTestRequest;
 use App\Models\Folder;
@@ -86,7 +87,7 @@ class TestController extends Controller
         } catch (ValidationException $e) {
             throw $e;
         } catch (\Exception $e) {
-            throw ValidationException::withMessages(['error' => [$e->getMessage()]]);
+            throw ValidationException::withMessages(['error' => [UserFacingError::message($e)]]);
         }
     }
 
@@ -128,7 +129,7 @@ class TestController extends Controller
 
             return back()->with('success', __('updated_successfully'));
         } catch (\Exception $e) {
-            throw ValidationException::withMessages(['error' => [$e->getMessage()]]);
+            throw ValidationException::withMessages(['error' => [UserFacingError::message($e)]]);
         }
     }
 
@@ -161,7 +162,7 @@ class TestController extends Controller
             // Deleted from the Test Bank page: stay there.
             return back()->with('success', __('deleted_successfully'));
         } catch (\Exception $e) {
-            return back()->withErrors(['error' => $e->getMessage()]);
+            return back()->withErrors(['error' => UserFacingError::message($e)]);
         }
     }
 }

@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Support\UserFacingError;
 use App\Http\Requests\StoreFolderRequest;
 use App\Http\Requests\UpdateFolderRequest;
 use App\Models\Folder;
@@ -24,7 +25,7 @@ class FolderController extends Controller
             return back()->with('success', __('created_successfully'));
         } catch (\Exception $e) {
             throw ValidationException::withMessages([
-                'error' => [$e->getMessage()],
+                'error' => [UserFacingError::message($e)],
             ]);
         }
     }
@@ -39,7 +40,7 @@ class FolderController extends Controller
             return back()->with('success', __('updated_successfully'));
         } catch (\Exception $e) {
             throw ValidationException::withMessages([
-                'error' => [$e->getMessage()],
+                'error' => [UserFacingError::message($e)],
             ]);
         }
     }
@@ -62,7 +63,7 @@ class FolderController extends Controller
 
             return back()->with('success', __('deleted_successfully'));
         } catch (\Exception $e) {
-            return back()->withErrors(['error' => $e->getMessage()]);
+            return back()->withErrors(['error' => UserFacingError::message($e)]);
         }
     }
 }

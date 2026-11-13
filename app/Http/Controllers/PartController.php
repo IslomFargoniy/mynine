@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Support\UserFacingError;
 use App\Http\Requests\StorePartRequest;
 use App\Http\Requests\UpdatePartRequest;
 use App\Models\Part;
@@ -44,7 +45,7 @@ class PartController extends Controller
                 'tab' => $part->id,
             ]);
         } catch (\Exception $e) {
-            throw ValidationException::withMessages(['error' => [$e->getMessage()]]);
+            throw ValidationException::withMessages(['error' => [UserFacingError::message($e)]]);
         }
     }
 
@@ -75,7 +76,7 @@ class PartController extends Controller
 
             return redirect()->route('test-type.show', $part->test_type_id);
         } catch (\Exception $e) {
-            throw ValidationException::withMessages(['error' => [$e->getMessage()]]);
+            throw ValidationException::withMessages(['error' => [UserFacingError::message($e)]]);
         }
     }
 
@@ -95,7 +96,7 @@ class PartController extends Controller
 
             return back()->with('success', __('deleted_successfully'));
         } catch (\Exception $e) {
-            throw ValidationException::withMessages(['error' => [$e->getMessage()]]);
+            throw ValidationException::withMessages(['error' => [UserFacingError::message($e)]]);
         }
     }
 }

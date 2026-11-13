@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Support\UserFacingError;
 use App\Http\Requests\StoreAttemptRequest;
 use App\Models\Attempt;
 use App\Models\Folder;
@@ -186,7 +187,7 @@ class AttemptController extends Controller
         } catch (\Exception $e) {
             // Proper Inertia error response
             throw ValidationException::withMessages([
-                'error' => [$e->getMessage()],
+                'error' => [UserFacingError::message($e)],
             ]);
         }
     }
@@ -264,7 +265,7 @@ class AttemptController extends Controller
             return redirect()->route('attempt.index')->with('success', __('deleted_successfully') ?? "Natija o'chirildi");
         } catch (\Exception $e) {
             return redirect()->route('attempt.index')->withErrors([
-                'error' => $e->getMessage(),
+                'error' => UserFacingError::message($e),
             ]);
         }
     }

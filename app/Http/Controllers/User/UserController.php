@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\User;
 
+use App\Support\UserFacingError;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\StoreUserRequest;
 use App\Http\Requests\UpdateUserRequest;
@@ -98,7 +99,7 @@ class UserController extends Controller
         } catch (\Exception $e) {
             // Proper Inertia error response
             throw ValidationException::withMessages([
-                'error' => [$e->getMessage()],
+                'error' => [UserFacingError::message($e)],
             ]);
         }
 
@@ -190,7 +191,7 @@ class UserController extends Controller
         } catch (\Exception $e) {
             // Proper Inertia error response
             throw ValidationException::withMessages([
-                'error' => [$e->getMessage()],
+                'error' => [UserFacingError::message($e)],
             ]);
         }
     }
@@ -213,6 +214,12 @@ class UserController extends Controller
             ]);
         }
 
+        // Exam results belong to the attempts: an account with attempts is never deleted.
+        $attempts = DB::table('attempts')->where('user_id', $user->id)->count();
+        if ($attempts > 0) {
+            return redirect()->route('user.index')->withErrors(['error' => __('user_has_results', ['count' => $attempts])]);
+        }
+
         try {
             DB::transaction(function () use ($user) {
                 // Delete user roles/permissions
@@ -223,7 +230,7 @@ class UserController extends Controller
             return redirect()->route('user.index')->with('success', __('deleted_successfully') ?? "Foydalanuvchi o'chirildi");
         } catch (\Exception $e) {
             return redirect()->route('user.index')->withErrors([
-                'error' => $e->getMessage(),
+                'error' => UserFacingError::message($e),
             ]);
         }
     }

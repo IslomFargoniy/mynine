@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Support\UserFacingError;
 use App\Http\Requests\StoreSectionRequest;
 use App\Http\Requests\UpdateSectionRequest;
 use App\Models\Part;
@@ -51,7 +52,7 @@ class SectionController extends Controller
             DB::rollBack();
 
             throw ValidationException::withMessages([
-                'error' => [$e->getMessage()],
+                'error' => [UserFacingError::message($e)],
             ]);
         }
     }
@@ -95,7 +96,7 @@ class SectionController extends Controller
             DB::rollBack();
 
             throw ValidationException::withMessages([
-                'error' => [$e->getMessage()],
+                'error' => [UserFacingError::message($e)],
             ]);
         }
     }
@@ -121,7 +122,7 @@ class SectionController extends Controller
         } catch (\Exception $e) {
             // Proper Inertia error response
             throw ValidationException::withMessages([
-                'error' => [$e->getMessage()],
+                'error' => [UserFacingError::message($e)],
             ]);
         }
     }
@@ -198,7 +199,7 @@ class SectionController extends Controller
             DB::rollBack();
 
             throw ValidationException::withMessages([
-                'error' => [$e->getMessage()],
+                'error' => [UserFacingError::message($e)],
             ]);
         }
     }

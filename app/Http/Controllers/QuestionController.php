@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Support\UserFacingError;
 use App\Http\Requests\StoreQuestionRequest;
 use App\Http\Requests\UpdateQuestionRequest;
 use App\Models\Question;
@@ -60,7 +61,7 @@ class QuestionController extends Controller
             return back()->with('success', __('updated_successfully'));
         } catch (\Exception $e) {
             throw ValidationException::withMessages([
-                'error' => [$e->getMessage()],
+                'error' => [UserFacingError::message($e)],
             ]);
         }
     }
@@ -145,7 +146,7 @@ class QuestionController extends Controller
         } catch (\Exception $e) {
             DB::rollBack();
             throw ValidationException::withMessages([
-                'error' => [$e->getMessage()],
+                'error' => [UserFacingError::message($e)],
             ]);
         }
     }
@@ -171,7 +172,7 @@ class QuestionController extends Controller
         } catch (\Exception $e) {
             // Proper Inertia error response
             throw ValidationException::withMessages([
-                'error' => [$e->getMessage()],
+                'error' => [UserFacingError::message($e)],
             ]);
         }
     }

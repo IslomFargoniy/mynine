@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Support\UserFacingError;
 use App\Models\AiUsageLog;
 use App\Models\Option;
 use App\Models\Part;
@@ -134,7 +135,7 @@ class TestImportController extends Controller
         } catch (\Exception $e) {
             DB::rollBack();
             throw ValidationException::withMessages([
-                'error' => [__('import_failed', ['message' => $e->getMessage()])],
+                'error' => [__('import_failed', ['message' => UserFacingError::message($e)])],
             ]);
         }
     }

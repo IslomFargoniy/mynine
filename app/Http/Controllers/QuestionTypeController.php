@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Support\UserFacingError;
 use App\Http\Requests\StoreQuestionTypeRequest;
 use App\Http\Requests\UpdateQuestionTypeRequest;
 use App\Models\QuestionType;
@@ -25,7 +26,7 @@ class QuestionTypeController extends Controller
             return response()->json([
                 'data' => [],
                 'success' => false,
-                'message' => $e->getMessage(),
+                'message' => UserFacingError::message($e),
             ], 500);
         }
     }

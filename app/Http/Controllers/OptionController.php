@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Support\UserFacingError;
 use App\Http\Requests\StoreOptionRequest;
 use App\Http\Requests\UpdateOptionRequest;
 use App\Models\Option;
@@ -60,7 +61,7 @@ class OptionController extends Controller
         } catch (\Exception $e) {
             // Proper Inertia error response
             throw ValidationException::withMessages([
-                'error' => [$e->getMessage()],
+                'error' => [UserFacingError::message($e)],
             ]);
         }
 
@@ -112,7 +113,7 @@ class OptionController extends Controller
         } catch (\Exception $e) {
             // Proper Inertia error response
             throw ValidationException::withMessages([
-                'error' => [$e->getMessage()],
+                'error' => [UserFacingError::message($e)],
             ]);
         }
     }
@@ -139,7 +140,7 @@ class OptionController extends Controller
         } catch (\Exception $e) {
             // Proper Inertia error response
             throw ValidationException::withMessages([
-                'error' => [$e->getMessage()],
+                'error' => [UserFacingError::message($e)],
             ]);
         }
     }

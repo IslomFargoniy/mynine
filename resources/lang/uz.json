@@ -1,4 +1,9 @@
 {
+    "error_record_in_use": "Bu yozuv boshqa joyda ishlatilmoqda (natijalar, urinishlar, mocklar…), shuning uchun o'chirib bo'lmaydi.",
+    "error_related_record_missing": "Bog'langan yozuv endi mavjud emas. Sahifani yangilab, qayta urinib ko'ring.",
+    "error_duplicate_record": "Bunday yozuv allaqachon mavjud.",
+    "error_database": "Amalni saqlab bo'lmadi. Qayta urinib ko'ring; takrorlansa, administratorga xabar bering.",
+    "user_has_results": "Bu foydalanuvchining natijali :count ta imtihon urinishi bor, shuning uchun hisobini o'chirib bo'lmaydi (natijalar yo'qoladi).",
     ",": ",",
     "00:00:00": "00:00:00",
     "Answer": "Javob",

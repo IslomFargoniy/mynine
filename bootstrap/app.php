@@ -16,6 +16,7 @@ use Illuminate\Foundation\Configuration\Middleware;
 use Illuminate\Http\Exceptions\HttpResponseException;
 use Illuminate\Http\Exceptions\ThrottleRequestsException;
 use Illuminate\Http\Middleware\AddLinkHeadersForPreloadedAssets;
+use Illuminate\Database\QueryException;
 use Illuminate\Http\Request;
 use Illuminate\Validation\ValidationException;
 use Spatie\Permission\Middleware\PermissionMiddleware;
@@ -60,6 +61,17 @@ return Application::configure(basePath: dirname(__DIR__))
     })
     ->withExceptions(function (Exceptions $exceptions) {
         $exceptions->dontReport(ApiException::class);
+
+        // Web: a database error that no controller caught never shows its SQL; a form action goes back with a
+        // plain message (the error is still reported).
+        $exceptions->render(function (QueryException $e, Request $request) {
+            if ($request->is('api/*') || $request->isMethod('GET') || $request->expectsJson() && ! $request->header('X-Inertia')) {
+                return null;
+            }
+            report($e);
+
+            return back()->withErrors(['error' => __(\App\Support\UserFacingError::databaseKey($e))]);
+        });
 
         // Desktop API (docs/desktop/API.md): every error is { "message": "...", "code": "<machine_code>" }.
         $exceptions->render(function (Throwable $e, Request $request) {

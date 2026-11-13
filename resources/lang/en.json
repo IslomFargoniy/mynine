@@ -1,4 +1,9 @@
 {
+    "error_record_in_use": "This record is used elsewhere (results, attempts, mocks…), so it cannot be deleted.",
+    "error_related_record_missing": "A linked record no longer exists. Refresh the page and try again.",
+    "error_duplicate_record": "Such a record already exists.",
+    "error_database": "The action could not be saved. Please try again; if it repeats, tell the administrator.",
+    "user_has_results": "This user has :count exam attempt(s) with results, so the account cannot be deleted (the results would be lost).",
     ",": ",",
     "00:00:00": "00:00:00",
     "Answer": "Answer",

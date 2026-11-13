@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Support\UserFacingError;
 use App\Models\Test;
 
 class LandingPageController extends Controller
@@ -35,7 +36,7 @@ class LandingPageController extends Controller
             return response()->json([
                 'data' => [],
                 'success' => false,
-                'message' => $e->getMessage(),
+                'message' => UserFacingError::message($e),
             ], 500);
         }
     }
