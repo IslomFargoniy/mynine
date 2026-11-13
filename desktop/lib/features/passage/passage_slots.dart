@@ -69,7 +69,8 @@ String insertAutoMarkers(String html, PartPayload part) {
 }
 
 /// The passage HTML with the heading boxes' markers (written by the author, or found from "Section A"…).
-String passageHtml(PartPayload part) => insertParagraphZones(insertAutoMarkers(part.html, part), part);
+/// Letter tasks ("which paragraph contains…") are answered with a select in the questions pane: no zones.
+String passageHtml(PartPayload part) => insertAutoMarkers(part.html, part);
 
 /// Heading boxes (`{14}`) and paragraph zones (`{z<sectionId>:A}`): the blanks of the passage.
 final RegExp passageBlankPattern = RegExp(r'\{(?:\d{1,3}|z\d+:[A-Z])\}');

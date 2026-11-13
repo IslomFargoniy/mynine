@@ -103,27 +103,20 @@ void main() {
     await _done(tester, h);
   });
 
-  testWidgets('matching information (letters A–H): letters stay in the list and can be used again', (tester) async {
+  testWidgets('matching information (letters A–H): a select next to each question, no drag list', (tester) async {
     final h = await _toModule(tester, reading: true);
     final base = h.exam.currentPart!;
     final matching = base.sections.firstWhere((s) => s.questionType == QuestionType.matching);
     final section = matching.copyWith(options: const [], fromOption: 'A', toOption: 'H', html: '<p>Which section contains…</p>');
     final part = base.copyWith(sections: [for (final s in base.sections) s.id == section.id ? section : s]);
     await _pumpSection(tester, h, part, section);
-    expect(find.text('OPTIONS'), findsOneWidget);
-    final qs = section.questions;
-    for (final q in qs.take(2)) {
-      final g = await tester.startGesture(tester.getCenter(find.byKey(const Key('heading-C'))));
-      await tester.pump(const Duration(milliseconds: 50));
-      await g.moveBy(const Offset(-20, 0));
-      await tester.pump();
-      await g.moveTo(tester.getCenter(find.byKey(Key('passage-drop-${q.number}'))));
-      await tester.pump();
-      await g.up();
-      await tester.pumpAndSettle();
-      expect(h.exam.answerFor(q.id).text, 'C');
-    }
-    expect(find.byKey(const Key('heading-C')), findsOneWidget);
+    expect(find.text('OPTIONS'), findsNothing);
+    final q = section.questions.first;
+    await tester.tap(find.byKey(Key('select-${q.id}')));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('C').last);
+    await tester.pumpAndSettle();
+    expect(h.exam.answerFor(q.id).text, 'C');
     await _done(tester, h);
   });
 
@@ -327,92 +320,22 @@ void main() {
     await _done(tester, h);
   });
 
-  testWidgets('which paragraph contains…: the statements are dragged onto the passage paragraphs', (tester) async {
-    final h = await _toModule(tester, reading: true);
-    final base = h.exam.currentPart!;
-    final matching = base.sections.firstWhere((s) => s.questionType == QuestionType.matching);
-    final section = matching.copyWith(
-      options: const [],
-      fromOption: 'A',
-      toOption: 'D',
-      html: '<p>Which paragraph contains the following information?</p>',
-      questions: [
-        for (final (i, q) in matching.questions.indexed) q.copyWith(html: 'statement number ${i + 1}'),
+  test('which paragraph contains…: no boxes in the passage (answered with the select)', () {
+    final part = PartPayload.fromJson({
+      'id': 1, 'type': 'reading', 'type_id': 2, 'name': 'P',
+      'html': '<p>A</p><p>Wetlands.</p><p>B</p><p>History.</p>',
+      'sections': [
+        {
+          'id': 5, 'question_type': 'matching', 'from_option': 'A', 'to_option': 'H',
+          'questions': [
+            {'id': 1, 'number': 14, 'html': 'reference to the need'},
+          ],
+        },
       ],
-    );
-    final part = base.copyWith(
-      html: '<h2>Wetlands</h2><p>A</p><p>Wetlands are areas.</p><p>B</p><p>Throughout history.</p>'
-          '<p>C</p><p>They also serve.</p><p>D</p><p>The world.</p>',
-      sections: [for (final s in base.sections) s.id == section.id ? section : s],
-    );
-    final zones = passageZones(part);
-    expect(zones.keys, ['${section.id}:A', '${section.id}:B', '${section.id}:C', '${section.id}:D']);
-
-    tester.view.physicalSize = const Size(1600, 1200);
-    tester.view.devicePixelRatio = 1;
-    addTearDown(tester.view.reset);
-    final store = HighlightStore(h.db, 1);
-    addTearDown(store.dispose);
-    final palette = ExamPalette.of(ContrastSetting.standard);
-    final keys = <int, GlobalKey>{};
-    QuestionContext ctx() => QuestionContext(
-          exam: h.exam,
-          part: part,
-          palette: palette,
-          keys: keys,
-          zoneSectionIds: {section.id},
-        );
-    await tester.pumpWidget(MaterialApp(
-      theme: buildTheme(),
-      home: Scaffold(
-        body: ListenableBuilder(
-          listenable: h.exam,
-          builder: (_, _) => Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
-            Expanded(
-              child: PassagePane(
-                partId: part.id,
-                title: part.name,
-                html: passageHtml(part),
-                store: store,
-                palette: palette,
-                zoneKeys: zones.keys.toSet(),
-                zoneBuilder: (_, key) => ParagraphZoneBox(section: zones[key]!, letter: key.split(':').last, ctx: ctx()),
-              ),
-            ),
-            Expanded(child: SingleChildScrollView(child: SectionView(section: section, ctx: ctx()))),
-          ]),
-        ),
-      ),
-    ));
-    await tester.pumpAndSettle();
-
-    Future<void> drag(Finder from, Finder to) async {
-      final g = await tester.startGesture(tester.getCenter(from));
-      await tester.pump(const Duration(milliseconds: 50));
-      await g.moveBy(const Offset(-20, 0));
-      await tester.pump();
-      await g.moveTo(tester.getCenter(to));
-      await tester.pump();
-      await g.up();
-      await tester.pumpAndSettle();
-    }
-
-    final q = section.questions.first;
-    expect(find.text('statement number 1'), findsOneWidget);
-    await drag(find.byKey(Key('statement-${q.id}')), find.byKey(const Key('paragraph-zone-C')));
-    expect(h.exam.answerFor(q.id).text, 'C');
-    // The statement left the questions pane and shows in paragraph C.
-    expect(find.byKey(Key('statement-${q.id}')), findsNothing);
-    expect(find.text('statement number 1'), findsOneWidget);
-    // Moved to paragraph A.
-    await drag(find.text('statement number 1'), find.byKey(const Key('paragraph-zone-A')));
-    expect(h.exam.answerFor(q.id).text, 'A');
-    // × sends it back to the questions pane.
-    await tester.tap(find.byKey(Key('unplace-${q.number}')));
-    await tester.pumpAndSettle();
-    expect(h.exam.answerFor(q.id).isAnswered, isFalse);
-    expect(find.byKey(Key('statement-${q.id}')), findsOneWidget);
-    await _done(tester, h);
+    });
+    expect(passageHtml(part), part.html);
+    expect(passageSlots(part), isEmpty);
+    expect(passageZones(part), isEmpty);
   });
 
   testWidgets('multiple response: limited to number_count choices', (tester) async {

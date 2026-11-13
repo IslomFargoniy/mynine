@@ -798,7 +798,8 @@ class _MatchingViewState extends State<MatchingView> {
       child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
         // IELTS computer test: every matching task is answered by dragging an option into a box (in the passage
         // or next to the question). No options at all: the old select stays.
-        if (headings.isNotEmpty) ...[
+        // Headings are dragged (into the passage or the box next to the question); letters A–H keep the select.
+        if (_isHeadings && headings.isNotEmpty) ...[
           _dragList(headings, widget.section.questions),
           if (rows.isNotEmpty) const SizedBox(height: 24),
         ] else if (_hasTexts) ...[
@@ -833,6 +834,9 @@ class _MatchingViewState extends State<MatchingView> {
   /// Headings given as a range (i–vii) with their texts in the instructions: value → text.
   Map<String, String> get _rangeTexts =>
       _hasTexts ? const {} : headingTexts(widget.section.html, _headings);
+
+  /// Headings (with texts), as opposed to bare letters A–H.
+  bool get _isHeadings => _hasTexts || _rangeTexts.isNotEmpty;
 
   /// Headings to drag into the passage boxes. A heading in use leaves the list (letters A–H may repeat).
   Widget _dragList(List<String> headings, List<QuestionPayload> inPassage) {
@@ -917,12 +921,12 @@ class _MatchingViewState extends State<MatchingView> {
               style: inter(14, weight: FontWeight.w600, color: ctx.c(TW.gray800), height: 1.375)),
         ),
         const SizedBox(width: 12),
-        if (headings.isNotEmpty)
+        if (_isHeadings && headings.isNotEmpty)
           PassageDropBox(
             question: q,
             ctx: ctx,
             inRow: true,
-            compact: !(_hasTexts || _rangeTexts.isNotEmpty),
+            compact: false,
           )
         else
         AnswerSelect(

@@ -150,11 +150,11 @@ export function insertParagraphZones(html: string, part: Part): string {
     return html;
 }
 
-/** The passage HTML with the heading boxes' markers (written by the author, or found from "Section A"…) and the
- *  paragraph zones of a "which paragraph contains…" task. */
+/** The passage HTML with the heading boxes' markers (written by the author, or found from "Section A"…). */
 export function passageHtml(part: Part | null | undefined): string {
     if (!part) return '';
-    return insertParagraphZones(insertAutoMarkers(part.textarea ?? '', part), part);
+    // Letter tasks ("which paragraph contains…") are answered with a select in the questions pane: no zones.
+    return insertAutoMarkers(part.textarea ?? '', part);
 }
 
 export function passageZones(part: Part | null | undefined): Map<string, ParagraphZone> {

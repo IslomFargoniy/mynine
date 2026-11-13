@@ -38,13 +38,12 @@ export default function MatchingHeadings({
         section.options && section.options.length > 0 ? section.options.map((o: any) => o.textarea || o.option_text || String(o)) : [];
     const hasTexts = textOptions.length > 0;
     const headingOptions = hasTexts ? textOptions : buildRange(section.from_option, section.to_option);
-    // IELTS computer test: every matching task is answered by dragging an option into a box (in the passage when it
-    // has `{n}` / "Section A" boxes, otherwise next to the question). No options at all: the old select stays.
-    const dragMode = headingOptions.length > 0;
 
     // Headings given as a range (i–vii) with their texts in the instructions: the chips show the texts.
     const rangeTexts = hasTexts ? {} : headingTexts(section.textarea, headingOptions);
     const isHeadings = hasTexts || Object.keys(rangeTexts).length > 0;
+    // Headings are dragged (into the passage or the box next to the question); letters A–H keep the select.
+    const dragMode = isHeadings && headingOptions.length > 0;
     // A heading in use leaves the list (letters A–H may repeat, so they stay).
     const available = isHeadings
         ? (() => {
