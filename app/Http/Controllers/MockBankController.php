@@ -234,6 +234,13 @@ class MockBankController extends Controller
         return TestType::firstOrCreate(['test_id' => $test->id, 'type_id' => $type->id])->load('test');
     }
 
+    private function importModule(TestImport $import, string $typeName): ?TestType
+    {
+        return TestType::withoutEagerLoads()->where('test_id', $import->test_id)
+            ->whereHas('type', fn ($t) => $t->where('name', $typeName))
+            ->first();
+    }
+
     /**
      * Was any part / section / question / option of the import's module changed after the import finished?
      */
@@ -278,16 +285,21 @@ class MockBankController extends Controller
             'status' => $import->status,
             'created_at' => $import->created_at?->toIso8601String(),
             'finished_at' => $import->finished_at?->toIso8601String(),
-            'modules' => collect($import->modules ?? [])->map(fn ($m, $name) => [
-                'type' => $name,
-                'status' => $m['status'] ?? TestImport::QUEUED,
-                'message' => $m['message'] ?? null,
-                // The warnings describe the content as imported: once the module was edited after the import they
-                // are stale (the module card below shows what is still missing, checked live).
-                'warnings' => $this->editedAfterImport($import, (string) $name) ? [] : array_values($m['warnings'] ?? []),
-                'parts' => $m['parts'] ?? null,
-                'questions' => $m['questions'] ?? null,
-            ])->values()->all(),
+            'modules' => collect($import->modules ?? [])->map(function ($m, $name) use ($import) {
+                // The warnings and counts describe the content as imported: once the module was edited after the
+                // import the warnings are stale (the module card below checks live) and the counts are the current ones.
+                $edited = $this->editedAfterImport($import, (string) $name);
+                $module = $edited ? $this->importModule($import, (string) $name) : null;
+
+                return [
+                    'type' => $name,
+                    'status' => $m['status'] ?? TestImport::QUEUED,
+                    'message' => $m['message'] ?? null,
+                    'warnings' => $edited ? [] : array_values($m['warnings'] ?? []),
+                    'parts' => $module ? Part::withoutEagerLoads()->where('test_type_id', $module->id)->count() : ($m['parts'] ?? null),
+                    'questions' => $module ? $this->bank->questionCount($module) : ($m['questions'] ?? null),
+                ];
+            })->values()->all(),
         ];
     }
 }

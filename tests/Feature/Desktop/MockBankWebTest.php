@@ -142,16 +142,16 @@ test('import warnings of a module disappear once the module was edited after the
     $this->travel(1)->minutes(); // the import finishes after its rows were written
     TestImport::create([
         'test_id' => $test->id, 'status' => TestImport::DONE, 'finished_at' => now(),
-        'modules' => ['Listening' => ['status' => 'done', 'warnings' => [$warning]]],
+        'modules' => ['Listening' => ['status' => 'done', 'warnings' => [$warning], 'parts' => 4, 'questions' => 39]],
     ]);
 
-    $warnings = fn () => collect($this->actingAs($owner)->get(route('mock-bank.index'))->assertOk()
-        ->viewData('page')['props']['tests'])->firstWhere('id', $test->id)['import']['modules'][0]['warnings'];
+    $module = fn () => collect($this->actingAs($owner)->get(route('mock-bank.index'))->assertOk()
+        ->viewData('page')['props']['tests'])->firstWhere('id', $test->id)['import']['modules'][0];
 
-    expect($warnings())->toBe([$warning]);
+    expect($module()['warnings'])->toBe([$warning])->and($module()['questions'])->toBe(39);
 
-    // The answer key was fixed in the module editor.
+    // The answer key was fixed in the module editor: no stale warning, the current count.
     $this->travel(1)->minutes();
     $option->forceFill(['is_correct' => 1])->save();
-    expect($warnings())->toBe([]);
+    expect($module()['warnings'])->toBe([])->and($module()['questions'])->toBe(1);
 });
