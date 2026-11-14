@@ -33,7 +33,7 @@ beforeEach(function () {
     $this->emptyFolder = Folder::create(['name' => 'Empty folder', 'user_id' => $this->admin->id, 'active' => 1]);
 });
 
-test('students and reception see only active folders with active, open practice tests', function (string $role) {
+test('students see only active folders with active, open practice tests', function (string $role) {
     $user = makeUser($role);
 
     $this->actingAs($user)->get(route('test-bank.index'))
@@ -47,7 +47,7 @@ test('students and reception see only active folders with active, open practice 
                 ->and(collect($props['folder']['data'][0]['tests'][0]['types'])->pluck('id')->all())->toBe([$this->visible['testType']->id])
                 ->and(collect($props['folders'])->pluck('id')->all())->not->toContain($this->hiddenFolder->id);
         });
-})->with(['Student', 'Reception']);
+})->with(['Student']);
 
 test('admins see every practice test and folder, including inactive, closed and empty ones, but never Mock Bank tests', function () {
     $this->actingAs($this->admin)->get(route('test-bank.index'))
@@ -127,4 +127,4 @@ test('students and reception cannot use the admin actions', function (string $ro
     $this->actingAs($user)->delete(route('test.destroy', $test))->assertForbidden();
 
     expect($folder->fresh())->not->toBeNull()->and($test->fresh()->name)->toBe('Visible')->and((int) $test->fresh()->active)->toBe(1);
-})->with(['Student', 'Reception']);
+})->with(['Student']);

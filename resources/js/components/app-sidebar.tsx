@@ -71,7 +71,6 @@ export function AppSidebar() {
                     items: [
                         { title: t('exam_admin.nav.reception'), href: '/reception', icon: ConciergeBell },
                         { title: t('exam_admin.nav.monitor'), href: '/monitor', icon: Activity },
-                        { title: t('sidebar.test_bank'), href: '/test-bank', icon: ClipboardList },
                     ],
                 },
             ];
@@ -81,7 +80,8 @@ export function AppSidebar() {
             { title: t('sidebar.dashboard'), href: '/dashboard', icon: LayoutDashboard },
             // The website's users (students) are the platform's: SuperAdmin only.
             ...(manageContent ? [{ title: t('sidebar.user'), href: '/user', icon: Users }] : []),
-            { title: t('sidebar.test_bank'), href: '/test-bank', icon: ClipboardList },
+            // Practice tests are for students; center staff run mocks (the content owner keeps it to manage it).
+            ...(!isAdmin || manageContent ? [{ title: t('sidebar.test_bank'), href: '/test-bank', icon: ClipboardList }] : []),
             { title: t('sidebar.my_result'), href: '/attempt', icon: BarChart3 },
         ];
 

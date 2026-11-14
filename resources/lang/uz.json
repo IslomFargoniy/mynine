@@ -582,7 +582,7 @@
         "folder": "Papka",
         "groups": "Guruhlar",
         "mock": "Mock",
-        "my_result": "Mening natijam",
+        "my_result": "Natijalar",
         "platform": "Platforma",
         "profile": "Profil",
         "report": "Hisobot",
@@ -1525,5 +1525,6 @@
             "failed": "Ro'yxatni yuklab bo'lmadi.",
             "open": "Hisoblangan nomzodlarni ko'rsatish"
         }
-    }
+    },
+    "error_forbidden": "Bu amalni bajarishga ruxsatingiz yo'q."
 }

@@ -61,8 +61,15 @@ class AttemptPolicy
         return $this->manages($user, $attempt);
     }
 
+    /**
+     * The center's Admin, or the user themself for their own practice attempt (a test-bank test, no mock).
+     */
     public function delete(User $user, Attempt $attempt): bool
     {
+        if ($attempt->mock_id === null && $attempt->user_id !== null && (int) $attempt->user_id === (int) $user->id) {
+            return true;
+        }
+
         return $this->manages($user, $attempt);
     }
 

@@ -196,3 +196,22 @@ test('a candidate code session is bound to its own attempt', function () {
     $this->withSession(['mock_student_id' => $me->id])
         ->getJson(route('practice-part', ['part' => $this->part->id, 'attempt_id' => $otherAttempt->id]))->assertForbidden();
 });
+
+test('a user deletes their own finished practice attempt; someone else\'s is refused with a message, not a 403 page', function () {
+    $this->attempt->forceFill(['finished_at' => now()])->save();
+    // Inertia form request: a plain message instead of the error page.
+    $this->actingAs($this->reception)->withHeader('X-Inertia', 'true')
+        ->delete(route('attempt.destroy', $this->attempt->id))
+        ->assertRedirect()->assertSessionHas('error', __('error_forbidden'));
+    $this->assertDatabaseHas('attempts', ['id' => $this->attempt->id]);
+
+    $this->actingAs($this->student)->delete(route('attempt.destroy', $this->attempt->id))->assertRedirect(route('attempt.index'));
+    $this->assertDatabaseMissing('attempts', ['id' => $this->attempt->id]);
+});
+
+test('center staff do not get the practice test bank; students and the content owner do', function () {
+    $this->actingAs(makeCenter('NOVA'))->get(route('test-bank.index'))->assertRedirect(route('dashboard'));
+    $this->actingAs($this->reception)->get(route('test-bank.index'))->assertRedirect(route('dashboard'));
+    $this->actingAs($this->student)->get(route('test-bank.index'))->assertOk();
+    $this->actingAs($this->admin)->get(route('test-bank.index'))->assertOk();
+});

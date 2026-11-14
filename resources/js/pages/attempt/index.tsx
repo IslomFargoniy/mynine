@@ -23,8 +23,8 @@ export default function Attempt() {
 
     const breadcrumbs: BreadcrumbItem[] = [
         {
-            title: t('attempt'),
-            href: '/dashboard'
+            title: t('sidebar.my_result'),
+            href: '/attempt'
         }
     ];
 
@@ -100,7 +100,7 @@ export default function Attempt() {
 
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
-            <Head title={t('page_titles.attempts')} />
+            <Head title={t('sidebar.my_result')} />
             <div className="mx-auto w-full max-w-7xl p-4 md:p-6 flex h-full flex-1 flex-col gap-4">
                 {/* Search and Per-Page Selection */}
                 <div className="flex justify-end items-center mb-2">

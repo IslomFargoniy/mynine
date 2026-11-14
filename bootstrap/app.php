@@ -10,6 +10,7 @@ use App\Http\Middleware\HandleAppearance;
 use App\Http\Middleware\HandleInertiaRequests;
 use App\Http\Middleware\SetLocale;
 use App\Support\UserFacingError;
+use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Auth\AuthenticationException;
 use Illuminate\Database\QueryException;
 use Illuminate\Foundation\Application;
@@ -72,6 +73,17 @@ return Application::configure(basePath: dirname(__DIR__))
             report($e);
 
             return back()->withErrors(['error' => __(UserFacingError::databaseKey($e))]);
+        });
+
+        // Web: a form action the user may not do (403) goes back with a plain message instead of an error page.
+        $exceptions->render(function (Throwable $e, Request $request) {
+            $forbidden = $e instanceof AuthorizationException
+                || ($e instanceof HttpExceptionInterface && $e->getStatusCode() === 403);
+            if (! $forbidden || $request->is('api/*') || $request->isMethod('GET') || ! $request->header('X-Inertia')) {
+                return null;
+            }
+
+            return back()->with('error', __('error_forbidden'));
         });
 
         // Desktop API (docs/desktop/API.md): every error is { "message": "...", "code": "<machine_code>" }.

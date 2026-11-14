@@ -582,7 +582,7 @@
         "folder": "Folder",
         "groups": "Groups",
         "mock": "Mock",
-        "my_result": "My result",
+        "my_result": "Results",
         "platform": "Platform",
         "profile": "Profile",
         "report": "Report",
@@ -1525,5 +1525,6 @@
             "failed": "The list could not be loaded.",
             "open": "Show the counted candidates"
         }
-    }
+    },
+    "error_forbidden": "You are not allowed to do this."
 }

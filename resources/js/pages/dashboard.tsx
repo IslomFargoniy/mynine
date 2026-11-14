@@ -80,6 +80,10 @@ export default function Dashboard() {
     const readingAvg = calculateAverage('Reading');
     const listeningAvg = calculateAverage('Listening');
 
+    // Center staff run mocks; practice tests (Quick start) are for students and the content owner.
+    const access = (usePage().props as { auth?: { access?: { centerAdmin?: boolean; reception?: boolean; manageContent?: boolean } } }).auth?.access;
+    const isStaff = !!(access?.centerAdmin || access?.reception) && !access?.manageContent;
+
     const isAdmin = Array.isArray(user.roles) 
         ? user.roles.some((r: any) => r.name.toLowerCase() === 'admin') 
         : false;
@@ -101,6 +105,7 @@ export default function Dashboard() {
                                 {t('ready_to_practice')} {t('performance_overview')}
                             </p>
                         </div>
+{!isStaff && (
                         <Link 
                             href="/test-bank"
                             className="btn-glass-primary inline-flex items-center justify-center gap-2 px-6 py-3 rounded-full font-semibold hover:brightness-110 transition-all hover:scale-[1.02] active:scale-[0.98]"
@@ -108,6 +113,7 @@ export default function Dashboard() {
                             <Zap className="size-5 fill-current" />
                             {t('quick_start')}
                         </Link>
+                        )}
                     </div>
                     
                     {/* Decorative Elements */}

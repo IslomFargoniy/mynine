@@ -21,6 +21,10 @@ class AllTestController extends Controller
     {
         // Practice content is managed by the platform owner (SuperAdmin); everyone else browses it.
         $isAdmin = Gate::allows('manage-content');
+        // Center staff (Admin, Reception) run mocks, they do not take practice tests.
+        if (! $isAdmin && $request->user()?->isStaff()) {
+            return redirect()->route('dashboard');
+        }
         $per_page = $request->per_page === 'all' ? 100 : max(1, min((int) ($request->per_page ?? 10), 100));
 
         $folder = Folder::with([
