@@ -44,6 +44,17 @@ interface PageProps {
     [key: string]: unknown;
 }
 
+/** Readable violation detail ("chrome.exe — closed", "2 monitors") instead of raw JSON. */
+function violationDetail(detail: Record<string, unknown>, t: (key: string, options?: Record<string, unknown>) => string): string {
+    const parts: string[] = [];
+    if (typeof detail.process === 'string') parts.push(detail.process);
+    if (typeof detail.terminated === 'boolean') parts.push(detail.terminated ? t('exam_admin.violation_detail.closed') : t('exam_admin.violation_detail.not_closed'));
+    if (typeof detail.count === 'number') parts.push(t('exam_admin.violation_detail.monitors', { count: detail.count }));
+    const rest = Object.entries(detail).filter(([k]) => !['process', 'terminated', 'count'].includes(k));
+    if (rest.length > 0) parts.push(rest.map(([k, v]) => `${k}: ${String(v)}`).join(', '));
+    return parts.join(' — ');
+}
+
 export default function MonitorIndex() {
     const { mocks, mock, attempts, canControl } = usePage<PageProps>().props;
     const { t } = useTranslation();
@@ -186,7 +197,7 @@ export default function MonitorIndex() {
                                                 <li key={v.id} className="flex gap-2 border-b border-divider pb-1">
                                                     <span className="font-mono text-muted-foreground">{fmtDateTime(v.occurred_at, 'HH:mm:ss')}</span>
                                                     <span className="font-semibold">{t(`exam_admin.violation.${v.type}`, { defaultValue: v.type })}</span>
-                                                    {v.detail && <span className="truncate text-muted-foreground">{JSON.stringify(v.detail)}</span>}
+                                                    {v.detail && <span className="truncate text-muted-foreground">{violationDetail(v.detail, t)}</span>}
                                                 </li>
                                             ))}
                                         </ul>

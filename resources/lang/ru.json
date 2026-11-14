@@ -1073,6 +1073,11 @@
             "hint": "JPG, PNG или WebP, до 8 МБ. Лучше всего 1920×1080.",
             "remove": "Удалить",
             "save": "Загрузить"
+        },
+        "violation_detail": {
+            "closed": "закрыта",
+            "not_closed": "не удалось закрыть",
+            "monitors": "мониторов: {{count}}"
         }
     },
     "Upload a Listening, Reading or Writing file.": "Загрузите файл Listening, Reading или Writing.",

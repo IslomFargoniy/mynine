@@ -152,7 +152,7 @@ void main() {
   });
 
   group('exam monitor', () {
-    test('closes banned apps on start and on every scan, reporting each with terminated', () async {
+    test('closes banned apps on start (quietly) and on every scan (reported, with terminated)', () async {
       var now = DateTime(2026, 11, 12, 9);
       final lockdown = FakeLockdown(['chrome.exe', 'anydesk.exe', 'explorer.exe'])..unkillable.add('anydesk.exe');
       final reports = <List<Object?>>[];
@@ -163,25 +163,30 @@ void main() {
         now: () => now,
       );
 
+      // Left open before the candidate sat down: closed without a violation; one that cannot be closed is reported.
       await monitor.start();
       expect(reports, [
-        ['banned_process', {'process': 'chrome.exe', 'terminated': true}],
         ['banned_process', {'process': 'anydesk.exe', 'terminated': false}],
       ]);
       expect(lockdown.running, containsAll(['explorer.exe', 'anydesk.exe']));
       expect(lockdown.running, isNot(contains('chrome.exe')));
 
-      // Re-opened: closed again; reported again only after a minute.
+      // Opened during the exam: closed and reported.
       lockdown.running.add('chrome.exe');
       await monitor.scan();
       expect(lockdown.running, isNot(contains('chrome.exe')));
+      expect(reports.length, 2);
+      expect(reports[1], ['banned_process', {'process': 'chrome.exe', 'terminated': true}]);
+
+      // Re-opened within a minute: closed again, not reported again yet.
+      lockdown.running.add('chrome.exe');
+      await monitor.scan();
       expect(reports.length, 2);
 
       now = now.add(const Duration(minutes: 2));
       lockdown.running.add('chrome.exe');
       await monitor.scan();
       expect(reports.length, 4); // chrome (closed) + anydesk (still running)
-      expect(reports[2], ['banned_process', {'process': 'chrome.exe', 'terminated': true}]);
       monitor.stop();
     });
 

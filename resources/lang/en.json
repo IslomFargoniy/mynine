@@ -1073,6 +1073,11 @@
             "hint": "JPG, PNG or WebP, up to 8 MB. 1920×1080 looks best.",
             "remove": "Remove",
             "save": "Upload"
+        },
+        "violation_detail": {
+            "closed": "closed",
+            "not_closed": "could not be closed",
+            "monitors": "{{count}} monitors"
         }
     },
     "Upload a Listening, Reading or Writing file.": "Upload a Listening, Reading or Writing file.",

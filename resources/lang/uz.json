@@ -1073,6 +1073,11 @@
             "hint": "JPG, PNG yoki WebP, 8 MB gacha. 1920×1080 eng yaxshi.",
             "remove": "O'chirish",
             "save": "Yuklash"
+        },
+        "violation_detail": {
+            "closed": "yopildi",
+            "not_closed": "yopib bo'lmadi",
+            "monitors": "{{count}} ta monitor"
         }
     },
     "Upload a Listening, Reading or Writing file.": "Listening, Reading yoki Writing faylini yuklang.",

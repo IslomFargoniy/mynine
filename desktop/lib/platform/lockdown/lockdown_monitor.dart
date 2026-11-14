@@ -43,7 +43,7 @@ class LockdownMonitor {
     if (await lockdown.isVirtualMachine()) {
       await report(ViolationType.vmDetected);
     }
-    await scan();
+    await scan(startOfExam: true);
   }
 
   void stop() {
@@ -73,8 +73,9 @@ class LockdownMonitor {
     }
   }
 
-  /// One scan pass (exposed for tests).
-  Future<void> scan() async {
+  /// One scan pass (exposed for tests). [startOfExam]: programs left open on the PC before the candidate sat
+  /// down are closed quietly (not the candidate's doing); only one that cannot be closed is reported.
+  Future<void> scan({bool startOfExam = false}) async {
     final monitors = await lockdown.monitorCount();
     if (monitors > 1 && !_multiMonitorReported) {
       _multiMonitorReported = true;
@@ -82,14 +83,14 @@ class LockdownMonitor {
     } else if (monitors <= 1) {
       _multiMonitorReported = false;
     }
-    await closeBannedProcesses();
+    await closeBannedProcesses(reportClosed: !startOfExam);
     // The clipboard is cleared once when the exam starts (nothing comes in from outside); it is not cleared on
     // every scan any more, so Ctrl+C / Ctrl+V between the passage, questions and answers work.
   }
 
   /// Finds running banned apps, closes them and reports each one
   /// (`banned_process` with `{process, terminated}`). Returns the results.
-  Future<List<ProcessKillResult>> closeBannedProcesses() async {
+  Future<List<ProcessKillResult>> closeBannedProcesses({bool reportClosed = true}) async {
     final banned = effectiveBannedProcesses(bannedProcesses());
     if (banned.isEmpty) return const [];
     final found = await lockdown.scanProcesses(banned);
@@ -98,6 +99,7 @@ class LockdownMonitor {
     final results = [for (final name in found) ProcessKillResult(name, terminated: killed[name] ?? false)];
     final now = _now();
     for (final r in results) {
+      if (!reportClosed && r.terminated) continue;
       final last = _reportedProcesses[r.process];
       if (last == null || now.difference(last) >= bannedReportInterval) {
         _reportedProcesses[r.process] = now;
