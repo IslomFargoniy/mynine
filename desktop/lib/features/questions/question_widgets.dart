@@ -498,10 +498,17 @@ class _GapInputState extends State<GapInput> {
   Widget build(BuildContext context) {
     final p = widget.palette;
     final line = p.standard ? WebTokens.gapBorder : p.text;
+    // 1.25 px: a 1 px frame that lands between two screen pixels (inline boxes sit at fractional heights) was drawn
+    // as two light-grey half rows and looked dotted; this one always covers a full dark pixel row.
+    const frame = 1.25;
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 4), // margin 0 4px
-      child: SizedBox(
-        width: widget.fontSize * WebTokens.gapWidthEm,
+      // 10em, but never wider than the room it is in (a narrow table cell): no box sticks out of its cell.
+      child: LayoutBuilder(builder: (context, c) {
+        final full = widget.fontSize * WebTokens.gapWidthEm;
+        final width = c.maxWidth.isFinite ? full.clamp(48.0, c.maxWidth < 48 ? 48.0 : c.maxWidth) : full;
+        return SizedBox(
+        width: width,
         child: TextField(
           controller: _c,
           enabled: widget.enabled,
@@ -518,17 +525,20 @@ class _GapInputState extends State<GapInput> {
             contentPadding: const EdgeInsets.fromLTRB(6, 3, 6, 3),
             filled: p.standard,
             fillColor: TW.white,
-            border: OutlineInputBorder(borderRadius: BorderRadius.zero, borderSide: BorderSide(color: line)),
-            enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.zero, borderSide: BorderSide(color: line)),
+            border: OutlineInputBorder(borderRadius: BorderRadius.zero, borderSide: BorderSide(color: line, width: frame)),
+            enabledBorder:
+                OutlineInputBorder(borderRadius: BorderRadius.zero, borderSide: BorderSide(color: line, width: frame)),
             disabledBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.zero, borderSide: BorderSide(color: line.withValues(alpha: 0.5))),
+                borderRadius: BorderRadius.zero,
+                borderSide: BorderSide(color: line.withValues(alpha: 0.5), width: frame)),
             focusedBorder: OutlineInputBorder(
               borderRadius: BorderRadius.zero,
               borderSide: BorderSide(color: p.standard ? WebTokens.gapFocus : p.text, width: 2),
             ),
           ),
         ),
-      ),
+        );
+      }),
     );
   }
 }
@@ -554,13 +564,16 @@ class CompleteSectionView extends StatelessWidget {
         final q = section.questions[blank.index];
         return Row(key: ctx.keyFor(q.id), mainAxisSize: MainAxisSize.min, children: [
           _BlankNumber(q: q, ctx: ctx),
-          GapInput(
-            key: ValueKey('gap-${q.id}'),
-            initial: ctx.answer(q.id).text ?? '',
-            enabled: !ctx.locked,
-            fontSize: WebTokens.sectionFontSize,
-            palette: ctx.palette,
-            onChanged: (v) => ctx.setText(q.id, v),
+          // Takes what is left of the line (a narrow table cell) up to its 10em.
+          Flexible(
+            child: GapInput(
+              key: ValueKey('gap-${q.id}'),
+              initial: ctx.answer(q.id).text ?? '',
+              enabled: !ctx.locked,
+              fontSize: WebTokens.sectionFontSize,
+              palette: ctx.palette,
+              onChanged: (v) => ctx.setText(q.id, v),
+            ),
           ),
         ]);
       },

@@ -370,4 +370,23 @@ void main() {
     await tester.pump(const Duration(milliseconds: 700)); // debounce
     await _done(tester, h);
   });
+
+  testWidgets('gaps in a narrow table cell shrink to fit (no box sticks out of its cell)', (tester) async {
+    final h = await _toModule(tester);
+    final part = h.exam.currentPart!;
+    final first = part.sections.first;
+    final n = first.questions.length;
+    final cells = [for (var i = 0; i < n; i++) '<td>the {x}</td>'].join();
+    final section = first.copyWith(html: '<table><tbody><tr>$cells</tr></tbody></table>');
+    await _pumpSection(tester, h, part, section);
+    tester.view.physicalSize = const Size(700, 900);
+    await tester.pumpAndSettle();
+    expect(tester.takeException(), isNull);
+    final table = tester.getRect(find.byType(Table).first);
+    for (final q in section.questions) {
+      final gap = tester.getRect(find.byKey(ValueKey('gap-${q.id}')));
+      expect(gap.right, lessThanOrEqualTo(table.right + 0.5), reason: 'gap ${q.id} sticks out');
+    }
+    await _done(tester, h);
+  });
 }
