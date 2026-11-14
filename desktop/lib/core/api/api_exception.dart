@@ -23,6 +23,9 @@ enum ApiErrorCode {
   /// 403 on register / `/exam/login` (center suspended by the platform owner).
   invalidCenterCode('invalid_center_code'),
   centerSuspended('center_suspended'),
+
+  /// 409 on `/device/register`: this PC is still registered to another center (it must be removed there first).
+  deviceOtherCenter('device_other_center'),
   forbidden('forbidden'),
   notFound('not_found'),
   methodNotAllowed('method_not_allowed'),
@@ -127,6 +130,8 @@ class ApiException implements Exception {
             ? message!
             : 'The center password is not set on the server yet. Set it in Desktop settings first.',
         ApiErrorCode.invalidCenterCode => 'Unknown center code. Check it with your center.',
+        ApiErrorCode.deviceOtherCenter =>
+          'This PC is still registered to another center. Remove it there (Exam PCs → Delete), then set it up here again.',
         ApiErrorCode.centerSuspended => centerSuspendedMessage,
         ApiErrorCode.forbidden => 'Access denied.',
         ApiErrorCode.notFound => 'Not found on the server.',

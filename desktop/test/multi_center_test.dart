@@ -101,6 +101,13 @@ void main() {
       expect(suspended.userMessage, 'This center is not active. Please contact the center administration.');
       expect(setupErrorMessage(suspended), suspended.userMessage);
     });
+
+    test('device_other_center says to remove the PC in the other center first', () {
+      final e = ApiException(code: ApiErrorCode.fromWire('device_other_center', 409), statusCode: 409);
+      expect(e.code, ApiErrorCode.deviceOtherCenter);
+      expect(setupErrorMessage(e), contains('registered to another center'));
+      expect(setupErrorMessage(e), isNot(contains('Something went wrong')));
+    });
   });
 
   group('registration with a center code', () {
