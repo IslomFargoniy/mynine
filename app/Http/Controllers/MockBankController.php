@@ -4,6 +4,10 @@ namespace App\Http\Controllers;
 
 use App\Jobs\ImportMockModuleJob;
 use App\Models\Folder;
+use App\Models\Option;
+use App\Models\Part;
+use App\Models\Question;
+use App\Models\Section;
 use App\Models\Test;
 use App\Models\TestImport;
 use App\Models\TestType;
@@ -231,6 +235,36 @@ class MockBankController extends Controller
     }
 
     /**
+     * Was any part / section / question / option of the import's module changed after the import finished?
+     */
+    private function editedAfterImport(TestImport $import, string $typeName): bool
+    {
+        if (! $import->finished_at || ! $import->test_id) {
+            return false;
+        }
+
+        $since = $import->finished_at;
+        $parts = Part::withoutEagerLoads()
+            ->whereHas('test_type', fn ($q) => $q->withoutEagerLoads()->where('test_id', $import->test_id)
+                ->whereHas('type', fn ($t) => $t->where('name', $typeName)));
+        $partIds = (clone $parts)->pluck('id');
+        if ($partIds->isEmpty()) {
+            return false;
+        }
+        if ((clone $parts)->where('updated_at', '>', $since)->exists()) {
+            return true;
+        }
+
+        $sectionIds = Section::withoutEagerLoads()->whereIn('part_id', $partIds)->pluck('id');
+        $questionIds = Question::withoutEagerLoads()->whereIn('section_id', $sectionIds)->pluck('id');
+
+        return Section::withoutEagerLoads()->whereIn('id', $sectionIds)->where('updated_at', '>', $since)->exists()
+            || Question::withoutEagerLoads()->whereIn('id', $questionIds)->where('updated_at', '>', $since)->exists()
+            || Option::withoutEagerLoads()->where(fn ($q) => $q->whereIn('question_id', $questionIds)->orWhereIn('section_id', $sectionIds))
+                ->where('updated_at', '>', $since)->exists();
+    }
+
+    /**
      * @return array<string, mixed>|null
      */
     private function importSummary(?TestImport $import): ?array
@@ -248,7 +282,9 @@ class MockBankController extends Controller
                 'type' => $name,
                 'status' => $m['status'] ?? TestImport::QUEUED,
                 'message' => $m['message'] ?? null,
-                'warnings' => array_values($m['warnings'] ?? []),
+                // The warnings describe the content as imported: once the module was edited after the import they
+                // are stale (the module card below shows what is still missing, checked live).
+                'warnings' => $this->editedAfterImport($import, (string) $name) ? [] : array_values($m['warnings'] ?? []),
                 'parts' => $m['parts'] ?? null,
                 'questions' => $m['questions'] ?? null,
             ])->values()->all(),

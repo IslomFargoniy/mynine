@@ -2,7 +2,10 @@
 
 use App\Models\Attempt;
 use App\Models\Folder;
+use App\Models\Option;
+use App\Models\Question;
 use App\Models\Test as ExamTest;
+use App\Models\TestImport;
 use App\Models\TestType;
 use App\Services\MockBankService;
 
@@ -127,4 +130,28 @@ test('Move to practice is the platform owner\'s, only while working as the Mynin
     // Refused (403, or 404: the Mynine test is not in the partner's bank).
     $status = $this->actingAs($owner)->post(route('mock-bank.to-practice', $test), ['folder_id' => $test->folder_id])->status();
     expect($status)->toBeIn([403, 404])->and($test->fresh()->purpose)->toBe('mock');
+});
+
+test('import warnings of a module disappear once the module was edited after the import', function () {
+    $owner = makeSuperAdmin();
+    ['test' => $test, 'part' => $part] = makeTestContent($owner, 'Listening', ['purpose' => 'mock', 'open' => 0]);
+    $section = makeSection($part, 'multiple_response', 'Choose THREE');
+    $question = Question::create(['section_id' => $section->id, 'order' => 1, 'textarea' => 'Which?']);
+    $option = Option::create(['question_id' => $question->id, 'textarea' => 'A', 'is_correct' => 0]);
+    $warning = 'Part 1: questions 18-20 need 3 correct options, the key gives 2.';
+    $this->travel(1)->minutes(); // the import finishes after its rows were written
+    TestImport::create([
+        'test_id' => $test->id, 'status' => TestImport::DONE, 'finished_at' => now(),
+        'modules' => ['Listening' => ['status' => 'done', 'warnings' => [$warning]]],
+    ]);
+
+    $warnings = fn () => collect($this->actingAs($owner)->get(route('mock-bank.index'))->assertOk()
+        ->viewData('page')['props']['tests'])->firstWhere('id', $test->id)['import']['modules'][0]['warnings'];
+
+    expect($warnings())->toBe([$warning]);
+
+    // The answer key was fixed in the module editor.
+    $this->travel(1)->minutes();
+    $option->forceFill(['is_correct' => 1])->save();
+    expect($warnings())->toBe([]);
 });
