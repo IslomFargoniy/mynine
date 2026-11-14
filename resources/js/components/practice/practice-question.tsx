@@ -22,6 +22,10 @@ interface SectionUpdateProps {
     hideText?: boolean;
 }
 
+
+/** Same cap as the desktop (and the server): longer answers are cut. */
+const MAX_ANSWER_CHARS = 20000;
+
 export default function PracticeQuestion({
                                              order,
                                              attempt,
@@ -44,24 +48,36 @@ export default function PracticeQuestion({
         return saved !== null ? saved : (question.attempt_answer?.answer_text ?? '');
     });
 
+    const gapInput = () => (
+        <input
+            type="text"
+            className="ielts-gap-input"
+            maxLength={MAX_ANSWER_CHARS}
+            value={answer_text ?? (question.attempt_answer?.answer_text || '')}
+            onChange={(e) => handleChange(question.id, e.target.value)}
+            spellCheck={false}
+            autoCorrect="off"
+            autoCapitalize="off"
+            autoComplete="off"
+            data-gramm="false"
+        />
+    );
+
     const renderWithBlanks = (text: string) => {
-        const parts = text.split(/\{\}/g);
+        const parts = (text ?? '').split(/\{\}/g);
+        // A gap-fill question without a {} marker still needs its gap: under the text (as on the desktop).
+        if (section.question_type.type === 'fill_blank' && parts.length === 1) {
+            return (
+                <>
+                    {text}
+                    <div className="mt-2">{gapInput()}</div>
+                </>
+            );
+        }
         return parts.map((part, i) => (
             <React.Fragment key={i}>
                 {part}
-                {i < parts.length - 1 && (
-                    <input
-                        type="text"
-                        className="ielts-gap-input"
-                        value={answer_text ?? (question.attempt_answer?.answer_text || '')}
-                        onChange={(e) => handleChange(question.id, e.target.value)}
-                        spellCheck={false}
-                        autoCorrect="off"
-                        autoCapitalize="off"
-                        autoComplete="off"
-                        data-gramm="false"
-                    />
-                )}
+                {i < parts.length - 1 && gapInput()}
             </React.Fragment>
         ));
     };
@@ -176,96 +192,64 @@ export default function PracticeQuestion({
         }
     }, [attempt.id, question.id]);
 
-    // 🚀 Option toggle (fetch bilan)
-    const toggleOption = async (optionId: number) => {
-        setSelectedOptionIds((prev) => {
-            let updated: number[];
+    // "Choose TWO" and the like: multi-select when the type says so or the section uses checkboxes (as on the desktop).
+    const isMulti = section.question_type.type === 'multiple_response' || section.question_type.input_type === 'checkbox';
+    const maxSelections = Number(question.is_correct_count) || Infinity;
 
-            if (section.question_type.type === 'multiple_response') {
-                if (prev.includes(optionId)) {
-                    updated = prev.filter((id) => id !== optionId);
-                } else {
-                    if (prev.length >= (question.is_correct_count ?? Infinity)) return prev;
-                    updated = [...prev, optionId];
-                }
+    /** Option answers go through the same offline-safe queue as text answers. */
+    const toggleOption = (optionId: number) => {
+        let updated: number[];
+        if (isMulti) {
+            if (selectedOptionIds.includes(optionId)) {
+                updated = selectedOptionIds.filter((id) => id !== optionId);
             } else {
-                updated = [optionId];
+                if (selectedOptionIds.length >= maxSelections) return;
+                updated = [...selectedOptionIds, optionId];
             }
+        } else {
+            updated = [optionId];
+        }
 
-            // Save to LocalStorage immediately
-            localStorage.setItem(`unsaved-opt-${attempt.id}-${question.id}`, JSON.stringify(updated));
+        setSelectedOptionIds(updated);
+        localStorage.setItem(`unsaved-opt-${attempt.id}-${question.id}`, JSON.stringify(updated));
 
-            // 🔄 Backendga yuborish
-            fetch(route('attempt-answer.store', {
-                part_id: section.part_id,
-                attempt_id: attempt.id
-            }), {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'X-CSRF-TOKEN': (document.querySelector('meta[name="csrf-token"]') as HTMLMetaElement).content
-                },
-                body: JSON.stringify({
-                    question_id: question.id,
-                    options: updated
-                })
-            })
-                .then(async (response) => {
-                    const data = await response.json(); // ✅ await the JSON
-                    if (!data.success) throw new Error(data?.error || t('error.submission_failed'));
-                    return data; // ✅ pass parsed data to next .then()
-                })
-                .then(() => {
-                    // Clear from LocalStorage on success
-                    localStorage.removeItem(`unsaved-opt-${attempt.id}-${question.id}`);
+        syncQueue
+            .saveAnswer({ attemptId: attempt.id, partId: section.part_id, questionId: question.id, options: updated })
+            .then((res) => {
+                if (res.error && !res.offline) throw new Error(res.error);
+                if (!res.offline) localStorage.removeItem(`unsaved-opt-${attempt.id}-${question.id}`);
 
-                    setSelectedPart((prev: Part | null) => {
-                        if (!prev) return null;
-
-                        const updatedSections = prev.sections.map((s) => {
-                            if (s.id !== question.section_id) return s;
-
-                            return {
-                                ...s,
-                                questions: s.questions.map((q) => {
-                                    if (q.id !== question.id) return q;
-
-                                    if (updated.length === 0) {
-                                        return { ...q, attempt_answer: undefined };
-                                    }
-
-                                    return {
-                                        ...q,
-                                        attempt_answer: {
-                                            ...(q.attempt_answer ?? {
-                                                id: Date.now(),
-                                                question_id: q.id,
-                                                answer_text: null,
-                                                attempt_answer_options: []
-                                            }),
-                                            attempt_answer_options: updated
-                                        } as any
-                                    };
-                                })
-                            };
-                        });
-
-                        return { ...prev, sections: updatedSections };
-                    });
-                })
-                .catch((error) => {
-                    const message =
-                        error instanceof Error
-                            ? error.message
-                            : typeof error === 'string'
-                                ? error
-                                : t('error_occurred');
-
-                    toast.error(message);
+                setSelectedPart((prev: Part | null) => {
+                    if (!prev) return null;
+                    return {
+                        ...prev,
+                        sections: prev.sections.map((s) =>
+                            s.id !== question.section_id
+                                ? s
+                                : {
+                                      ...s,
+                                      questions: s.questions.map((q) => {
+                                          if (q.id !== question.id) return q;
+                                          if (updated.length === 0) return { ...q, attempt_answer: undefined };
+                                          return {
+                                              ...q,
+                                              attempt_answer: {
+                                                  ...(q.attempt_answer ?? {
+                                                      id: Date.now(),
+                                                      question_id: q.id,
+                                                      answer_text: null,
+                                                      attempt_answer_options: [],
+                                                  }),
+                                                  attempt_answer_options: updated,
+                                              } as unknown as Question['attempt_answer'],
+                                          };
+                                      }),
+                                  },
+                        ),
+                    };
                 });
-
-            return updated;
-        });
+            })
+            .catch((error) => toast.error(error instanceof Error ? error.message : t('error_occurred')));
     };
 
     return (
@@ -302,13 +286,11 @@ export default function PracticeQuestion({
                 const wordsCount = matchingAnswer.trim() === '' ? 0 : matchingAnswer.trim().split(/\s+/).length;
                 const targetWords = Number(order) === 1 || question.textarea?.toLowerCase().includes('task 1') ? 150 : 250;
                 const progressPercent = Math.min(100, Math.round((wordsCount / targetWords) * 100));
-                const charCount = matchingAnswer.length;
-                const paragraphCount = matchingAnswer.trim() ? matchingAnswer.trim().split(/\n+/).filter(Boolean).length : 0;
                 const isTargetMet = wordsCount >= targetWords;
 
                 return (
                     <div className="relative mt-4 space-y-3">
-                        {/* Word Target Progress Bar */}
+                        {/* Word count only (as on the desktop): characters, paragraphs, reading time and "N words needed" were noise */}
                         <div className="p-3 bg-gray-50 dark:bg-gray-800/80 rounded-lg border border-gray-200 dark:border-gray-700 space-y-2">
                             <div className="flex flex-wrap items-center justify-between gap-2 text-xs">
                                 <div className="flex items-center gap-2">
@@ -317,18 +299,6 @@ export default function PracticeQuestion({
                                     </span>
                                     <span className="font-mono font-extrabold text-sm text-gray-900 dark:text-white">
                                         {wordsCount} / {targetWords} {t('words') || 'soʻz'}
-                                    </span>
-                                </div>
-
-                                <div className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-bold ${
-                                    isTargetMet
-                                        ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-950/60 dark:text-emerald-300 border border-emerald-300 dark:border-emerald-800'
-                                        : 'bg-amber-100 text-amber-800 dark:bg-amber-950/60 dark:text-amber-300 border border-amber-300 dark:border-amber-800'
-                                }`}>
-                                    <span>
-                                        {isTargetMet
-                                            ? (t('target_reached') || 'Minimal talab bajarildi ✅')
-                                            : `${t('words_needed') || 'Yana'} ${targetWords - wordsCount} ${t('words') || 'soʻz kerak'}`}
                                     </span>
                                 </div>
                             </div>
@@ -343,18 +313,11 @@ export default function PracticeQuestion({
                                 />
                             </div>
 
-                            {/* Secondary Metrics */}
-                            <div className="flex items-center gap-4 text-[11px] text-gray-500 dark:text-gray-400 pt-1">
-                                <span>{t('characters') || 'Belgilar'}: <strong>{charCount}</strong></span>
-                                <span>•</span>
-                                <span>{t('paragraphs') || 'Xatboshilar'}: <strong>{paragraphCount}</strong></span>
-                                <span>•</span>
-                                <span>{t('est_reading_time') || 'Oʻqish vaqti'}: <strong>{Math.max(1, Math.ceil(wordsCount / 130))} {t('min') || 'daq'}</strong></span>
-                            </div>
                         </div>
 
                         <textarea
                             id="answer_text"
+                            maxLength={MAX_ANSWER_CHARS}
                             value={matchingAnswer}
                             onChange={(e) => {
                                 setMatchingAnswer(e.target.value);
@@ -389,6 +352,8 @@ export default function PracticeQuestion({
                                 index={oIndex}
                                 selectedOptionIds={selectedOptionIds}
                                 toggleOption={toggleOption}
+                                multi={isMulti}
+                                limitReached={selectedOptionIds.length >= maxSelections}
                                 key={oIndex}
                             />
                         ))}

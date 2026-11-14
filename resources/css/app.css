@@ -621,7 +621,8 @@ mark.ielts-highlight-span:hover * {
     display: inline-block !important;
     vertical-align: middle !important;
     white-space: nowrap !important;
-    width: 120px !important;
+    width: 10em !important;
+    max-width: 100% !important;
     border: 1px solid #000 !important;
     border-radius: 0 !important;
     background: #fff !important;

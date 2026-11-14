@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { CountdownTimer } from './countdown-timer';
 import { Eye, EyeOff, Wifi, WifiOff, Loader2, Bell, Menu, Edit3, X, CheckCircle, Settings, Maximize2, Minimize2, Keyboard, AlertTriangle } from 'lucide-react';
@@ -60,11 +60,23 @@ export default function InsperaHeader({
         return () => unsubscribe();
     }, []);
 
-    const toggleTimerHidden = () => {
-        const next = !isTimerHidden;
-        setIsTimerHidden(next);
-        localStorage.setItem('ielts_timer_hidden', String(next));
-    };
+    const toggleTimerHidden = useCallback(() => {
+        setIsTimerHidden((prev) => {
+            const next = !prev;
+            try {
+                localStorage.setItem('ielts_timer_hidden', String(next));
+            } catch {
+                /* storage unavailable */
+            }
+            return next;
+        });
+    }, []);
+
+    // Alt + T (useExamHotkeys) toggles the timer from anywhere in the exam room.
+    useEffect(() => {
+        window.addEventListener('exam:toggle-timer', toggleTimerHidden);
+        return () => window.removeEventListener('exam:toggle-timer', toggleTimerHidden);
+    }, [toggleTimerHidden]);
 
     const cycleTextSize = () => {
         if (textSize === 'normal') setTextSize('large');
@@ -317,9 +329,8 @@ export default function InsperaHeader({
                                         { key: 'Alt + N / →', label: t('hotkey_next') || 'Keyingi savolga oʻtish' },
                                         { key: 'Alt + P / ←', label: t('hotkey_prev') || 'Oldingi savolga qaytish' },
                                         { key: 'Alt + F', label: t('hotkey_flag') || 'Savolga bayroqcha (Flag) qoʻyish' },
-                                        { key: 'Alt + H', label: t('hotkey_highlight') || 'Belgilangan matnni sariq bilan belgilash' },
+                                        // Only the shortcuts that work (as on the desktop).
                                         { key: 'Alt + T', label: t('hotkey_timer') || 'Taymerni koʻrsatish / yashirish' },
-                                        { key: 'Alt + / (F1)', label: t('hotkey_help') || 'Ushbu yordam oynasini ochish' },
                                     ].map((item, idx) => (
                                         <div key={idx} className="flex justify-between items-center py-2 px-3 bg-gray-50 rounded border border-gray-100">
                                             <span className="text-gray-700 font-medium">{item.label}</span>

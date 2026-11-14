@@ -9,38 +9,42 @@ interface PracticeOptionProps {
     index: number;
     selectedOptionIds: number[];
     toggleOption: (optionId: number) => void;
+    /** Checkbox ("Choose TWO") instead of a radio. */
+    multi: boolean;
+    /** The "Choose N" limit is reached: unticked options are dimmed and cannot be ticked. */
+    limitReached: boolean;
 }
 
 export default function PracticeOption({
-    section,
     question,
     option,
     index,
     selectedOptionIds,
-    toggleOption
+    toggleOption,
+    multi,
+    limitReached
 }: PracticeOptionProps) {
 
     const isChecked = selectedOptionIds.includes(option.id);
     const textLower = (option.textarea || '').toLowerCase().trim();
     const isStandardTFN = ['true', 'false', 'not given', 'yes', 'no'].includes(textLower);
+    const blocked = multi && limitReached && !isChecked;
 
     return (
-        <label className={`flex items-center gap-3 cursor-pointer px-3 py-1.5 transition-colors rounded-[2px] select-none ${
-            isChecked
-                ? 'bg-[#e5e7eb] text-black font-semibold'
-                : 'bg-transparent text-gray-900 hover:bg-gray-100/70'
+        <label className={`flex items-center gap-3 px-3 py-1.5 transition-colors rounded-[2px] select-none ${
+            blocked
+                ? 'cursor-default opacity-50 text-gray-900'
+                : isChecked
+                  ? 'cursor-pointer bg-[#e5e7eb] text-black font-semibold'
+                  : 'cursor-pointer bg-transparent text-gray-900 hover:bg-gray-100/70'
         }`}>
             <input
                 className="w-4 h-4 cursor-pointer accent-black focus:ring-0 border-gray-400"
-                type={section.question_type.input_type}
-                name={`question-${question.id}${section.question_type.type === 'multiple_response' ? '[]' : ''}`}
+                type={multi ? 'checkbox' : 'radio'}
+                name={`question-${question.id}${multi ? '[]' : ''}`}
                 value={option.id}
                 checked={isChecked}
-                disabled={
-                    section.question_type.type === 'multiple_response' &&
-                    !isChecked &&
-                    selectedOptionIds.length >= (question.is_correct_count ?? 1)
-                }
+                disabled={blocked}
                 onChange={() => toggleOption(option.id)}
             />
 

@@ -29,7 +29,15 @@ export default function Practice() {
     const [testType, setTestType] = useState<TestType | null>(null);
     const [selectedPart, setSelectedPart] = useState<Part | null>(null);
     const [isTimeUp, setIsTimeUp] = useState<boolean>(false);
-    const [flaggedIds, setFlaggedIds] = useState<Set<number>>(new Set());
+    // Flags survive a reload (as on the desktop): kept per attempt in this browser.
+    const flagsKey = `mynine_flags_${attempt.id}`;
+    const [flaggedIds, setFlaggedIds] = useState<Set<number>>(() => {
+        try {
+            return new Set<number>(JSON.parse(localStorage.getItem(flagsKey) ?? '[]'));
+        } catch {
+            return new Set<number>();
+        }
+    });
     const [serverTimeOffset, setServerTimeOffset] = useState<number>(0);
     const [isLoading, setIsLoading] = useState<boolean>(false);
     const [leftWidth, setLeftWidth] = useState<number>(50); // percentage
@@ -129,9 +137,14 @@ export default function Practice() {
             const next = new Set(prev);
             if (next.has(id)) next.delete(id);
             else next.add(id);
+            try {
+                localStorage.setItem(flagsKey, JSON.stringify([...next]));
+            } catch {
+                /* storage unavailable */
+            }
             return next;
         });
-    }, []);
+    }, [flagsKey]);
 
     // Flatten all questions in the current part for keyboard navigation
     const allQuestions = useMemo(() => {
@@ -143,9 +156,17 @@ export default function Practice() {
     }, [selectedPart]);
 
     // Matching headings answered inside the passage (`{14}` boxes).
-    const passageQuestionIds = useMemo(() => passageSlotQuestionIds(passageSlots(selectedPart)), [selectedPart]);
+    // Listening has no passage pane: no heading boxes / zones there (as on the desktop).
+    const isListeningPart = selectedPart?.test_type?.type?.name === 'Listening';
+    const passageQuestionIds = useMemo(
+        () => (isListeningPart ? new Set<number>() : passageSlotQuestionIds(passageSlots(selectedPart))),
+        [selectedPart, isListeningPart],
+    );
     // "Which paragraph contains…" sections whose question numbers are dragged onto the passage's paragraphs.
-    const zoneSectionIds = useMemo(() => new Set(Array.from(passageZones(selectedPart).values(), (z) => z.section.id)), [selectedPart]);
+    const zoneSectionIds = useMemo(
+        () => (isListeningPart ? new Set<number>() : new Set(Array.from(passageZones(selectedPart).values(), (z) => z.section.id))),
+        [selectedPart, isListeningPart],
+    );
 
     const navigateToQuestion = useCallback((qId: number) => {
         setActiveQuestionId(qId);
@@ -202,6 +223,7 @@ export default function Practice() {
         onNextQuestion: handleNextQuestion,
         onPrevQuestion: handlePrevQuestion,
         onToggleFlag: handleToggleCurrentFlag,
+        onToggleTimer: () => window.dispatchEvent(new Event('exam:toggle-timer')),
         enabled: !!selectedPart,
     });
 
@@ -230,7 +252,7 @@ export default function Practice() {
     /** Remove per-question drafts of this attempt once it has been handed in. */
     const clearLocalDrafts = () => {
         try {
-            const prefixes = [`unsaved-q-${attempt.id}-`, `unsaved-opt-${attempt.id}-`, `mynine_attempt_draft_${attempt.id}`];
+            const prefixes = [`unsaved-q-${attempt.id}-`, `unsaved-opt-${attempt.id}-`, `mynine_attempt_draft_${attempt.id}`, `mynine_flags_${attempt.id}`];
             Object.keys(localStorage)
                 .filter((key) => prefixes.some((prefix) => key.startsWith(prefix)))
                 .forEach((key) => localStorage.removeItem(key));
@@ -547,26 +569,10 @@ export default function Practice() {
                 return (
                     <div className={`flex-1 overflow-hidden flex flex-col ${themeClass} ${sizeClass}`}>
                         <style>{`
-                            .text-size-large,
-                            .text-size-large p,
-                            .text-size-large span,
-                            .text-size-large div,
-                            .text-size-large label,
-                            .text-size-large input,
-                            .text-size-large button:not(.header-btn) {
-                                font-size: 1.15rem !important;
-                                line-height: 1.6 !important;
-                            }
-                            .text-size-xlarge,
-                            .text-size-xlarge p,
-                            .text-size-xlarge span,
-                            .text-size-xlarge div,
-                            .text-size-xlarge label,
-                            .text-size-xlarge input,
-                            .text-size-xlarge button:not(.header-btn) {
-                                font-size: 1.3rem !important;
-                                line-height: 1.7 !important;
-                            }
+                            /* Larger text scales everything in proportion (as the desktop's text scaler): headings,
+                               badges and passage keep their relative sizes. */
+                            .text-size-large { zoom: 1.15; }
+                            .text-size-xlarge { zoom: 1.3; }
                             .theme-yellow-black,
                             .theme-yellow-black *:not(mark):not(button):not(input):not(select):not(textarea) {
                                 background-color: #000000 !important;
@@ -710,7 +716,7 @@ export default function Practice() {
                                         part={selectedPart}
                                         attempt={attempt}
                                         setSelectedPart={setSelectedPart}
-                                        isFlagged={flaggedIds.has(selectedPart.sections[0]?.questions[0]?.id)}
+                                        flaggedIds={flaggedIds}
                                         toggleFlag={toggleFlag}
                                     />
                                 </div>

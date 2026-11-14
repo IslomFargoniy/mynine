@@ -1,6 +1,6 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { DndContext, DragEndEvent, useDraggable, useDroppable } from '@dnd-kit/core';
+import { DndContext, DragEndEvent, PointerSensor, useDraggable, useDroppable, useSensor, useSensors } from '@dnd-kit/core';
 import { Attempt, Part, Question, Section } from '@/types';
 import parse, { Text } from 'html-react-parser';
 import { debounce } from 'lodash';
@@ -87,10 +87,12 @@ export default function PracticeSection({
         setSelectedAnswers(selected);
     }, [allOptions, section.questions]);
 
-    /** ✅ Debounced save (works even for long deletes) */
-    const debouncedSave = useMemo(
-        () =>
-            debounce(async (qId: number, value: string) => {
+    /**
+     * Save one question's answer. Typing is debounced per question (one shared debounce dropped the earlier
+     * question when two were answered within 600 ms); drops, picks and × clears save at once, as on the desktop.
+     */
+    const saveNow = useCallback(
+        async (qId: number, value: string) => {
                 try {
                     const res = await syncQueue.saveAnswer({
                         attemptId: attempt.id,
@@ -139,9 +141,30 @@ export default function PracticeSection({
 
                     toast.error(message);
                 }
-            }, 600),
+        },
         [attempt.id, section.part_id, sectionIndex, setSelectedPart, t]
     );
+
+    const pendingSaves = useRef(new Map<number, ReturnType<typeof debounce<(value: string) => void>>>());
+    useEffect(() => {
+        const pending = pendingSaves.current;
+        // Leaving the section (part switch): send what is still waiting.
+        return () => pending.forEach((fn) => fn.flush());
+    }, []);
+
+    const debouncedSave = (qId: number, value: string) => {
+        let fn = pendingSaves.current.get(qId);
+        if (!fn) {
+            fn = debounce((v: string) => void saveNow(qId, v), 600);
+            pendingSaves.current.set(qId, fn);
+        }
+        fn(value);
+    };
+
+    const saveImmediately = (qId: number, value: string) => {
+        pendingSaves.current.get(qId)?.cancel();
+        void saveNow(qId, value);
+    };
 
     const handleInputChange = (slotId: number, text: string) => {
         setSelectedAnswers((prev) => ({
@@ -157,7 +180,19 @@ export default function PracticeSection({
             delete copy[slotId];
             return copy;
         });
-        debouncedSave(slotId, '');
+        saveImmediately(slotId, '');
+    };
+
+    /** Tap-to-place (as on the desktop): tap a chip, then tap a box. */
+    const [pickedOptionId, setPickedOptionId] = useState<string | number | null>(null);
+    // A drag starts only after the pointer moved a little, so a plain tap stays a tap.
+    const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 5 } }));
+
+    const placeOption = (slotId: number, opt: DragOption) => {
+        setSelectedAnswers((prev) => ({ ...prev, [slotId]: { optionId: opt.id, text: opt.label } }));
+        setAvailableOptions((prev) => prev.filter((o) => o.id !== opt.id));
+        setPickedOptionId(null);
+        saveImmediately(slotId, opt.label);
     };
 
     const handleDragEnd = (event: DragEndEvent) => {
@@ -173,13 +208,7 @@ export default function PracticeSection({
         const draggedOpt = allOptions.find((o) => String(o.id) === draggedId);
         if (!draggedOpt) return;
 
-        setSelectedAnswers((prev) => ({
-            ...prev,
-            [slotId]: { optionId: draggedOpt.id, text: draggedOpt.label }
-        }));
-
-        setAvailableOptions((prev) => prev.filter((o) => o.id !== draggedOpt.id));
-        debouncedSave(slotId, draggedOpt.label);
+        placeOption(slotId, draggedOpt);
     };
 
     const DraggableOption = ({ opt }: { opt: DragOption }) => {
@@ -195,9 +224,11 @@ export default function PracticeSection({
                 {...listeners}
                 {...attributes}
                 style={style}
-                className={`cursor-grab border border-gray-400 bg-white px-3 py-1 text-sm text-gray-900 select-none hover:border-black active:cursor-grabbing dark:border-gray-600 dark:bg-gray-900 dark:text-gray-100 ${
-                    isDragging ? 'opacity-50' : ''
-                }`}
+                onClick={() => setPickedOptionId((prev) => (prev === opt.id ? null : opt.id))}
+                aria-pressed={pickedOptionId === opt.id}
+                className={`cursor-grab border bg-white px-3 py-1 text-sm text-gray-900 select-none hover:border-black active:cursor-grabbing dark:bg-gray-900 dark:text-gray-100 ${
+                    pickedOptionId === opt.id ? 'border-blue-600 ring-1 ring-blue-600' : 'border-gray-400 dark:border-gray-600'
+                } ${isDragging ? 'opacity-50' : ''}`}
             >
                 {opt.label}
             </div>
@@ -214,19 +245,28 @@ export default function PracticeSection({
             <span
                 ref={setNodeRef}
                 id={`question-${slotQuestion.id}`}
-                className={`mx-1 inline-flex min-w-[140px] max-w-full items-center gap-2 border-2 px-2 py-0.5 align-middle text-sm ${
-                    isOver
-                        ? 'border-dashed border-blue-600 bg-blue-50 dark:bg-blue-950/40'
+                onClick={() => {
+                    const picked = allOptions.find((o) => o.id === pickedOptionId);
+                    if (picked) placeOption(slotQuestion.id, picked);
+                }}
+                className={`mx-1 inline-flex min-w-[140px] max-w-full items-center gap-2 px-2 py-0.5 align-middle text-sm ${
+                    pickedOptionId !== null ? 'cursor-pointer' : ''
+                } ${
+                    isOver || pickedOptionId !== null
+                        ? 'border-2 border-dashed border-blue-600 bg-blue-50 dark:bg-blue-950/40'
                         : displayText
-                          ? 'border-solid border-black bg-white dark:border-white dark:bg-gray-900'
-                          : 'border-dashed border-gray-500 bg-white dark:bg-gray-900'
+                          ? 'border-2 border-solid border-black bg-white dark:border-white dark:bg-gray-900'
+                          : 'border border-dashed border-gray-500 bg-white dark:bg-gray-900'
                 }`}
             >
                 <span className="shrink-0 font-bold text-black dark:text-white">{number}</span>
                 {displayText && <span className="min-w-0 flex-1 font-semibold break-words">{displayText}</span>}
                 {displayText && (
                     <button
-                        onClick={() => handleRemove(slotQuestion.id)}
+                        onClick={(e) => {
+                            e.stopPropagation();
+                            handleRemove(slotQuestion.id);
+                        }}
                         type="button"
                         aria-label={`Clear ${number}`}
                         className="shrink-0 px-1 text-base leading-none text-gray-500 hover:text-red-600"
@@ -267,9 +307,21 @@ export default function PracticeSection({
                                             );
                                         return (
                                             <span key={question.id} className="inline-block whitespace-nowrap align-middle">
-                                                <span className="mr-1 font-bold text-black dark:text-white">{number}.</span>
+                                                {/* The number flags the question for review (as on the desktop): "N.★" in orange. */}
+                                                <button
+                                                    type="button"
+                                                    onClick={() => toggleFlag(question.id)}
+                                                    aria-pressed={flaggedIds.has(question.id)}
+                                                    title={t('flag_for_review')}
+                                                    className={`mr-1 cursor-pointer font-bold ${
+                                                        flaggedIds.has(question.id) ? 'text-orange-600' : 'text-black dark:text-white'
+                                                    }`}
+                                                >
+                                                    {number}.{flaggedIds.has(question.id) ? '★' : ''}
+                                                </button>
                                                 <input
                                                     type="text"
+                                                    maxLength={20000}
                                                     className="ielts-gap-input"
                                                     value={
                                                         selectedAnswers[question.id]?.text ??
@@ -301,7 +353,7 @@ export default function PracticeSection({
         <div key={section.id} className="p-1 mb-6">
             <div className="prose dark:prose-invert text-[16px] leading-[1.7] break-words max-w-full prose-p:my-1.5 prose-ul:my-1.5 prose-li:my-0 prose-headings:my-2 prose-table:my-2">
                 {section.question_type.type === 'drag_and_drop' ? (
-                    <DndContext onDragEnd={handleDragEnd}>
+                    <DndContext sensors={sensors} onDragEnd={handleDragEnd}>
                         <div className="max-w-full break-words">{parsedContent}</div>
                         <div className="mt-4 flex flex-wrap gap-2">
                             {availableOptions.map((opt) => (
@@ -339,7 +391,9 @@ export default function PracticeSection({
                             ])
                         )}
                         onAnswerChange={(qId, val) => {
-                            handleInputChange(qId, val);
+                            // A pick from a select (or a dropped statement) is saved at once.
+                            setSelectedAnswers((prev) => ({ ...prev, [qId]: { optionId: null, text: val } }));
+                            saveImmediately(qId, val);
                         }}
                         flaggedIds={flaggedIds}
                         toggleFlag={toggleFlag}
