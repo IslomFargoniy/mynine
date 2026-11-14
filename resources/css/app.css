@@ -489,6 +489,18 @@ mark.highlight {
     .dark {
         color-scheme: dark;
     }
+
+    /* Windows Chrome draws the option list on a white background but takes the text colour from the select
+       (light in dark mode): give the options their own dark colours everywhere. */
+    .dark select option,
+    .dark select optgroup {
+        background-color: #0f172a;
+        color: #e5e7eb;
+    }
+
+    .dark select option:disabled {
+        color: #94a3b8;
+    }
 }
 
 /* Fix TinyMCE inline styles in dark mode */
