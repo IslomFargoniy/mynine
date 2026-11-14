@@ -127,6 +127,11 @@ const AttemptTable = ({ searchData, hidePagination, ...attempt }: AttemptTablePr
                                 <TableCell label={`${t('test')} / ${t('mock')}`}>
                                     <TruncatedText className="max-w-[14rem] font-semibold text-brand">{item?.mock?.name || item?.test?.folder?.name || '—'}</TruncatedText>
                                     <TruncatedText className="max-w-[14rem] text-[11px] text-muted-foreground">{item?.test?.name}</TruncatedText>
+                                    {item?.module && !item?.mock_id && (
+                                        <span className="mt-1 inline-flex rounded-full border border-glass-edge bg-muted px-2 py-0.5 text-[10px] font-bold text-foreground">
+                                            {t(`practice_module.${item.module}`)}
+                                        </span>
+                                    )}
                                 </TableCell>
 
                                 <TableCell className="hidden lg:table-cell">{statusBadge(isFinished)}</TableCell>

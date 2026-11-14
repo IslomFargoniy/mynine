@@ -148,6 +148,11 @@ class ExamService
             EvaluateEssayJob::dispatch($answer->id);
         }
 
+        // Single-module practice: the module is the whole attempt.
+        if ($attempt->isModulePractice()) {
+            $this->finishAttempt($attempt->fresh() ?? $attempt);
+        }
+
         return true;
     }
 

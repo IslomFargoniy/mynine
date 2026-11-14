@@ -113,3 +113,18 @@ test('a Listening or Reading module with fewer than 40 question numbers is not r
     $issues = app(MockBankService::class)->moduleIssues($module->fresh());
     expect(collect($issues)->first(fn ($i) => str_starts_with($i, 'question_count:')))->toBeNull();
 });
+
+test('Move to practice is the platform owner\'s, only while working as the Mynine center', function () {
+    $owner = makeSuperAdmin();
+    ['test' => $test] = makeTestContent($owner, 'Reading', ['purpose' => 'mock', 'open' => 0]);
+    $partner = makeCenter('ALPHA');
+
+    $this->actingAs($owner)->get(route('mock-bank.index'))->assertInertia(fn ($page) => $page->where('canMoveToPractice', true));
+
+    // Acting as a partner center: the button and the action are gone.
+    $this->actingAs($owner)->post(route('centers.switch', $partner))->assertRedirect();
+    $this->actingAs($owner)->get(route('mock-bank.index'))->assertInertia(fn ($page) => $page->where('canMoveToPractice', false));
+    // Refused (403, or 404: the Mynine test is not in the partner's bank).
+    $status = $this->actingAs($owner)->post(route('mock-bank.to-practice', $test), ['folder_id' => $test->folder_id])->status();
+    expect($status)->toBeIn([403, 404])->and($test->fresh()->purpose)->toBe('mock');
+});

@@ -25,6 +25,7 @@ class Attempt extends Model
         'mock_student_id',
         'user_id',
         'test_id',
+        'module',
         'started_at',
         'finished_at',
         'status',
@@ -45,6 +46,11 @@ class Attempt extends Model
      * Desktop exam modules in the fixed order (Speaking is never part of the desktop exam).
      */
     public const DESKTOP_MODULE_ORDER = ['Listening', 'Reading', 'Writing'];
+
+    /**
+     * Single-module practice: attempts.module → the module's type name. Null module = the whole test.
+     */
+    public const PRACTICE_MODULES = ['listening' => 'Listening', 'reading' => 'Reading', 'writing' => 'Writing'];
 
     /** @var array<int>|null|false false = not resolved yet */
     private array|null|false $cachedModuleTestTypeIds = false;
@@ -179,11 +185,27 @@ class Attempt extends Model
             return $this->cachedModuleTestTypeIds;
         }
 
-        $ids = $this->mock_id
-            ? MockModule::where('mock_id', $this->mock_id)->pluck('test_type_id')
-            : collect();
+        $ids = match (true) {
+            (bool) $this->mock_id => MockModule::where('mock_id', $this->mock_id)->pluck('test_type_id'),
+            // Single-module practice: only that module of the test.
+            $this->isModulePractice() => TestType::withoutEagerLoads()
+                ->where('test_id', $this->test_id)
+                ->whereHas('type', fn ($q) => $q->where('name', self::PRACTICE_MODULES[$this->module]))
+                ->pluck('id'),
+            default => collect(),
+        };
+        if ($ids->isEmpty() && $this->isModulePractice()) {
+            // The module is gone from the test: nothing may be opened (never the whole test).
+            return $this->cachedModuleTestTypeIds = [0];
+        }
 
         return $this->cachedModuleTestTypeIds = $ids->isEmpty() ? null : $ids->map(fn ($id) => (int) $id)->all();
+    }
+
+    /** A practice attempt of one module (no mock). */
+    public function isModulePractice(): bool
+    {
+        return ! $this->mock_id && isset(self::PRACTICE_MODULES[(string) $this->module]);
     }
 
     public function allowsTestType(TestType $testType): bool

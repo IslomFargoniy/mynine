@@ -1526,5 +1526,23 @@
             "open": "Показать учтённых кандидатов"
         }
     },
-    "error_forbidden": "У вас нет прав на это действие."
+    "error_forbidden": "У вас нет прав на это действие.",
+    "practice_module_not_in_test": "В этом тесте нет такого модуля.",
+    "practice_module": {
+        "group": "Практика по модулям",
+        "listening": "Listening",
+        "reading": "Reading",
+        "writing": "Writing",
+        "subtitle": "Практикуйте {{module}} отдельно: выберите любой тест, откроется только этот модуль.",
+        "attempts": "Попытки",
+        "best": "Лучший",
+        "average": "Средний",
+        "recent": "Ваши последние результаты",
+        "empty": "Пока нет тестов с этим модулем.",
+        "minutes": "{{count}} мин",
+        "not_tried": "Ещё не пробовали",
+        "filter_all": "Все",
+        "filter_full": "Полный тест",
+        "badge": "Модуль"
+    }
 }

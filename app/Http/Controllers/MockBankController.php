@@ -12,6 +12,7 @@ use App\Services\AudioUploadService;
 use App\Services\Import\MockTestImporter;
 use App\Services\Import\MockTestPdfParser;
 use App\Services\MockBankService;
+use App\Support\CurrentCenter;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Gate;
@@ -87,7 +88,8 @@ class MockBankController extends Controller
             'tests' => $rows,
             // Moving a test to the public practice Test Bank is the platform owner's decision.
             'folders' => Gate::allows('manage-content') ? Folder::query()->select('id', 'name')->orderBy('name')->get() : [],
-            'canMoveToPractice' => Gate::allows('manage-content'),
+            // Only while the platform owner works as the Mynine center (not when acting as a partner center).
+            'canMoveToPractice' => Gate::allows('manage-content') && app(CurrentCenter::class)->isMynine(app(CurrentCenter::class)->id()),
             'reuseDays' => $this->bank->reuseDays(),
             'filters' => ['status' => $status, 'search' => $search],
         ]);
@@ -120,6 +122,8 @@ class MockBankController extends Controller
     {
         $this->authorize('manageBank', Test::class);
         Gate::authorize('manage-content');
+        $current = app(CurrentCenter::class);
+        abort_unless($current->isMynine($current->id()), 403);
         if (! $test->isMock()) {
             // Already a practice test (e.g. a double click): nothing to do.
             return back()->with('success', __('test_already_practice'));

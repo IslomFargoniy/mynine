@@ -1526,5 +1526,23 @@
             "open": "Hisoblangan nomzodlarni ko'rsatish"
         }
     },
-    "error_forbidden": "Bu amalni bajarishga ruxsatingiz yo'q."
+    "error_forbidden": "Bu amalni bajarishga ruxsatingiz yo'q.",
+    "practice_module_not_in_test": "Bu testda bunday modul yo'q.",
+    "practice_module": {
+        "group": "Modul bo'yicha mashq",
+        "listening": "Listening",
+        "reading": "Reading",
+        "writing": "Writing",
+        "subtitle": "{{module}}ni alohida mashq qiling: istalgan testni tanlang, faqat shu modul ochiladi.",
+        "attempts": "Urinishlar",
+        "best": "Eng yaxshi",
+        "average": "O'rtacha",
+        "recent": "Oxirgi natijalaringiz",
+        "empty": "Hozircha bu modulli testlar yo'q.",
+        "minutes": "{{count}} daqiqa",
+        "not_tried": "Hali ishlanmagan",
+        "filter_all": "Hammasi",
+        "filter_full": "To'liq test",
+        "badge": "Modul"
+    }
 }

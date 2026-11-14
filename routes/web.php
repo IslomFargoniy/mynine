@@ -27,6 +27,7 @@ use App\Http\Controllers\MonitorController;
 use App\Http\Controllers\OptionController;
 use App\Http\Controllers\PartController;
 use App\Http\Controllers\PracticeController;
+use App\Http\Controllers\PracticeModuleController;
 use App\Http\Controllers\QuestionController;
 use App\Http\Controllers\QuestionTypeController;
 use App\Http\Controllers\ReceptionController;
@@ -44,6 +45,7 @@ use App\Http\Controllers\WritingReviewController;
 use App\Http\Middleware\EnsureCandidateOrAuthenticated;
 use App\Http\Middleware\SetLocale;
 use App\Http\Middleware\VerifyTelegramWebhook;
+use App\Models\Attempt;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
@@ -103,6 +105,10 @@ Route::middleware(['auth', 'verified', 'center.active'])->group(function () {
     Route::get('folder/{folder}', fn (int $folder) => redirect()->route('test-bank.index', ['folder_id' => $folder]))
         ->whereNumber('folder')
         ->name('folder.show');
+    // Listening / Reading / Writing practised on their own.
+    Route::get('practice-module/{module}', [PracticeModuleController::class, 'index'])
+        ->whereIn('module', array_keys(Attempt::PRACTICE_MODULES))
+        ->name('practice-module.index');
     Route::resource('attempt', AttemptController::class)->only(['index', 'store', 'show', 'destroy']);
 
     /*

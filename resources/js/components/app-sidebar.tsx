@@ -18,10 +18,12 @@ import {
     BarChart3,
     Building2,
     ClipboardList,
+    BookOpen,
     ConciergeBell,
     FileBarChart,
     GithubIcon as Github,
     GraduationCap,
+    Headphones,
     LayoutDashboard,
     Library,
     Mic,
@@ -86,7 +88,18 @@ export function AppSidebar() {
         ];
 
         if (!isAdmin) {
-            return [{ items: platform }];
+            // Regular users: each module on its own (Test Bank keeps the whole test).
+            return [
+                { items: platform },
+                {
+                    label: t('practice_module.group'),
+                    items: [
+                        { title: t('practice_module.listening'), href: '/practice-module/listening', icon: Headphones },
+                        { title: t('practice_module.reading'), href: '/practice-module/reading', icon: BookOpen },
+                        { title: t('practice_module.writing'), href: '/practice-module/writing', icon: PenLine },
+                    ],
+                },
+            ];
         }
 
         return [

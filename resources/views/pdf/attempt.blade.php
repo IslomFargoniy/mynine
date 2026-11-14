@@ -533,7 +533,8 @@
         </tbody>
     </table>
 
-    <!-- Overall Score Box -->
+    @unless ($attempt->isModulePractice())
+    <!-- Overall Score Box (not for a single-module practice) -->
     <div class="overall-banner">
         <table>
             <tr>
@@ -569,6 +570,7 @@
             <td style="font-weight: bold; color: #1e1b4b;">{{ explode(' ', $cefrLevel)[0] }}</td>
         </tr>
     </table>
+    @endunless
 
     <!-- Writing Task Detailed AI Feedback (If Available) -->
     @php $hasFeedbackSection = false; @endphp

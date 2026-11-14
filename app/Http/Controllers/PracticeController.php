@@ -74,6 +74,11 @@ class PracticeController extends Controller
             return redirect('/')->with('success', __('success.test_submitted'));
         }
 
+        // Single-module practice: straight to that module's result.
+        if ($attempt->isModulePractice()) {
+            return redirect()->route('attempt.show', $attempt->id)->with('success', __('success.test_submitted'));
+        }
+
         return redirect()->route('attempt.index')->with('success', __('success.test_submitted'));
     }
 

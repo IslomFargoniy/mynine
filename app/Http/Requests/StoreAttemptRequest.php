@@ -2,6 +2,7 @@
 
 namespace App\Http\Requests;
 
+use App\Models\Attempt;
 use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Foundation\Http\FormRequest;
 
@@ -26,6 +27,8 @@ class StoreAttemptRequest extends FormRequest
             'name' => 'required_with:mock_id|nullable|string|max:255',
             'mock_id' => 'nullable|exists:mocks,id',
             'test_id' => 'required|exists:tests,id',
+            // Single-module practice (website Test Bank only, never with a mock).
+            'module' => 'nullable|prohibits:mock_id|in:'.implode(',', array_keys(Attempt::PRACTICE_MODULES)),
         ];
     }
 }

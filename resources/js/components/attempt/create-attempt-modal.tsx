@@ -14,16 +14,18 @@ import {
     DialogTitle,
     DialogTrigger
 } from '@/components/ui/dialog';
-import { Mock, Test } from '@/types';
+import { Mock, PracticeModule, Test } from '@/types';
 
 import { FaCirclePlay } from 'react-icons/fa6';
 
 interface AttemptUpdateProps {
     test: Test;
     mock?: Mock;
+    /** Practise one module of the test only. */
+    module?: PracticeModule;
 }
 
-export default function CreateAttemptModal({ test, mock }: AttemptUpdateProps) {
+export default function CreateAttemptModal({ test, mock, module }: AttemptUpdateProps) {
     const { t } = useTranslation();
     const [open, setOpen] = useState(false);
     const audioRef = useRef<HTMLAudioElement | null>(null);
@@ -31,11 +33,13 @@ export default function CreateAttemptModal({ test, mock }: AttemptUpdateProps) {
     const { data, setData, post, processing, reset, clearErrors, errors } = useForm<{
         name: string,
         test_id: number,
-        mock_id?: number
+        mock_id?: number,
+        module?: PracticeModule
     }>({
         name: '',
         test_id: test.id,
-        mock_id: mock?.id
+        mock_id: mock?.id,
+        module
     });
 
     const submit: FormEventHandler = (e) => {
@@ -88,7 +92,10 @@ export default function CreateAttemptModal({ test, mock }: AttemptUpdateProps) {
             </DialogTrigger>
 
             <DialogContent className="max-h-[90vh] overflow-y-auto">
-                <DialogTitle>{t('start_with_name', { name: test.name })}</DialogTitle>
+                <DialogTitle>
+                    {t('start_with_name', { name: test.name })}
+                    {module && ` · ${t(`practice_module.${module}`)}`}
+                </DialogTitle>
                 <DialogDescription className="space-y-2 text-foreground/80" asChild>
                     <div className="space-y-2 text-foreground/80 text-sm">
                         <p>{t('begin_test_warning')}</p>
@@ -98,7 +105,8 @@ export default function CreateAttemptModal({ test, mock }: AttemptUpdateProps) {
                     </div>
                 </DialogDescription>
 
-                {/* Check headset buttons */}
+                {/* Check headset buttons (not needed for Reading / Writing alone) */}
+                {(!module || module === 'listening') && (
                 <div className="mt-4 flex gap-2">
                     <Button type="button" variant="outline" onClick={handleCheckHeadset}>
                         🎧 {t('check_headset')}
@@ -109,6 +117,7 @@ export default function CreateAttemptModal({ test, mock }: AttemptUpdateProps) {
                     {/* Hidden audio tag */}
                     <audio ref={audioRef} src="/audio/test-sound.mp3" preload="auto" />
                 </div>
+                )}
 
                 <form onSubmit={submit} className="space-y-4">
                     {mock && (

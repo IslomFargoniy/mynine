@@ -35,6 +35,7 @@ export default function Attempt() {
         mock_id: filters?.mock_id || '',
         test_id: filters?.test_id || '',
         folder_id: filters?.folder_id || '',
+        module: filters?.module || '',
         from: filters?.from || '',
         to: filters?.to || '',
         per_page: filters?.per_page || attempt.per_page,
@@ -128,6 +129,30 @@ export default function Attempt() {
                             isAdmin={isAdmin}
                         />
                     </div>
+                </div>
+
+                {/* Whole tests or one module practised alone */}
+                <div className="flex flex-wrap gap-2" role="group" aria-label={t('practice_module.badge')}>
+                    {(['', 'full', 'listening', 'reading', 'writing'] as const).map((m) => {
+                        const active = (data.module ?? '') === m;
+                        return (
+                            <button
+                                key={m || 'all'}
+                                type="button"
+                                aria-pressed={active}
+                                onClick={() => {
+                                    setData('module', m);
+                                    setAttemptsList([]);
+                                    router.get(route('attempt.index'), { ...data, module: m, page: 1 });
+                                }}
+                                className={`rounded-full border px-3 py-1 text-xs font-bold transition-colors ${
+                                    active ? 'border-transparent bg-primary text-primary-foreground' : 'border-glass-edge bg-card text-foreground hover:border-ring'
+                                }`}
+                            >
+                                {m === '' ? t('practice_module.filter_all') : m === 'full' ? t('practice_module.filter_full') : t(`practice_module.${m}`)}
+                            </button>
+                        );
+                    })}
                 </div>
 
                 {/* Table */}

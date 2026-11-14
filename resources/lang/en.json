@@ -1526,5 +1526,23 @@
             "open": "Show the counted candidates"
         }
     },
-    "error_forbidden": "You are not allowed to do this."
+    "error_forbidden": "You are not allowed to do this.",
+    "practice_module_not_in_test": "This test has no such module.",
+    "practice_module": {
+        "group": "Practice by module",
+        "listening": "Listening",
+        "reading": "Reading",
+        "writing": "Writing",
+        "subtitle": "Practise {{module}} on its own: pick any test, only this module opens.",
+        "attempts": "Attempts",
+        "best": "Best",
+        "average": "Average",
+        "recent": "Your recent results",
+        "empty": "No tests with this module yet.",
+        "minutes": "{{count}} min",
+        "not_tried": "Not tried yet",
+        "filter_all": "All",
+        "filter_full": "Full test",
+        "badge": "Module"
+    }
 }

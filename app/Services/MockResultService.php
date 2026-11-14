@@ -163,7 +163,10 @@ class MockResultService
             [$result['listening'], $result['reading'], $result['writing'], $result['speaking']],
             fn ($band) => $band !== null,
         ));
-        $result['overall'] = $present !== [] ? IeltsScoreConverter::calculateOverallBand($present) : null;
+        // A single-module practice has the band of that module only: no overall.
+        $result['overall'] = $present !== [] && ! $attempt->isModulePractice()
+            ? IeltsScoreConverter::calculateOverallBand($present)
+            : null;
 
         return $result;
     }

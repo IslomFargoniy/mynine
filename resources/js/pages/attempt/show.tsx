@@ -48,6 +48,7 @@ export default function AttemptShow() {
     };
 
     const overallBand = bands?.overall ?? 0;
+    const isModulePractice = !!attempt.module && !attempt.mock_id;
 
     const cefr = (() => {
         if (overallBand >= 8.5) return { level: 'C2', title: t('attempt_result.cefr.c2'), color: 'bg-violet-500/12 text-violet-800 border-violet-500/25 dark:bg-violet-400/15 dark:text-violet-200 dark:border-violet-300/25' };
@@ -131,7 +132,8 @@ export default function AttemptShow() {
 
                 {/* Summary: overall band + four modules in one row */}
                 {resultsVisible !== false && (
-                <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
+                <div className={isModulePractice ? 'grid max-w-xs grid-cols-1 gap-3' : 'grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5'}>
+                    {!isModulePractice && (
                     <div className="glass-strong col-span-2 flex items-center gap-4 rounded-[22px] p-4 sm:col-span-3 lg:col-span-1 lg:flex-col lg:items-start lg:gap-2">
                         <div>
                             <span className="block text-[10px] font-bold tracking-widest text-muted-foreground uppercase">{t('attempt_result.overall')}</span>
@@ -144,6 +146,7 @@ export default function AttemptShow() {
                             </div>
                         )}
                     </div>
+                    )}
 
                     {(
                         [
@@ -152,7 +155,10 @@ export default function AttemptShow() {
                             ['Writing', writing],
                             ['Speaking', speaking],
                         ] as const
-                    ).map(([name, type]) => {
+                    )
+                        // A single-module practice shows that module only (no overall band).
+                        .filter(([name]) => !isModulePractice || name.toLowerCase() === attempt.module)
+                        .map(([name, type]) => {
                         const band = type ? calculateModuleBand(type) : 0;
                         const objectiveModule = name === 'Listening' || name === 'Reading';
                         return (

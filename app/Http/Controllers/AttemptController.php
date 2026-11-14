@@ -67,6 +67,13 @@ class AttemptController extends Controller
             $data->where('test_id', $request->test_id);
         }
 
+        // module=full: whole tests (and mocks); module=listening|reading|writing: that module practised alone.
+        if ($request->module === 'full') {
+            $data->whereNull('module');
+        } elseif (isset(Attempt::PRACTICE_MODULES[(string) $request->module])) {
+            $data->whereNull('mock_id')->where('module', $request->module);
+        }
+
         if ($request->folder_id) {
             $data->whereHas('test', function ($q) use ($request) {
                 $q->where('folder_id', $request->folder_id);
@@ -125,7 +132,7 @@ class AttemptController extends Controller
             'tests' => FilterOptions::keep($tests_query, $request->integer('test_id')),
             'folders' => FilterOptions::keep($folders_query, $request->integer('folder_id')),
             'isAdmin' => Auth::user()->isCenterAdmin(),
-            'filters' => $request->only(['search', 'user_id', 'mock_id', 'test_id', 'folder_id', 'from', 'to', 'per_page']),
+            'filters' => $request->only(['search', 'user_id', 'mock_id', 'test_id', 'folder_id', 'from', 'to', 'per_page', 'module']),
         ]);
     }
 
@@ -173,6 +180,14 @@ class AttemptController extends Controller
             }
 
             $data = $request->validated();
+            if (! empty($data['module'])) {
+                $hasModule = $test->types()->whereHas('parts')
+                    ->whereHas('type', fn ($q) => $q->where('name', Attempt::PRACTICE_MODULES[$data['module']]))
+                    ->exists();
+                if (! $hasModule) {
+                    throw new \Exception(__('practice_module_not_in_test'));
+                }
+            }
             $data['user_id'] = Auth::id();
             if (empty($data['name']) && Auth::check()) {
                 $data['name'] = Auth::user()->name;

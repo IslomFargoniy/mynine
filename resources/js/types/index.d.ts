@@ -83,6 +83,8 @@ export interface SearchData {
     mock_id?: number | string;
     test_id?: number | string;
     folder_id?: number | string;
+    /** Results: 'full' | 'listening' | 'reading' | 'writing' ('' = all). */
+    module?: string;
     role?: string;
     status?: string;
 
@@ -340,12 +342,16 @@ export interface MockPaginate {
 }
 
 
+export type PracticeModule = 'listening' | 'reading' | 'writing';
+
 export interface Attempt {
     id: number;
     name: string;
     mock_id: number;
     user_id: number;
     test_id: number;
+    /** Single-module practice ('listening' | 'reading' | 'writing'); null = the whole test. */
+    module?: PracticeModule | null;
     started_at: string;
     finished_at: string;
     status: number;

@@ -346,6 +346,12 @@ export default function Practice() {
             .then((res) => {
                 setIsSubmitting(false);
                 setIsFinishModalOpen(false);
+                if (res.success && attempt.module) {
+                    // Single-module practice: the module was the whole attempt (finished on the server).
+                    clearLocalDrafts();
+                    router.post(route('practice-attempt-submit', attempt.id));
+                    return;
+                }
                 if (res.success) {
                     setTestType(null);
                     setSelectedPart(null);
@@ -407,7 +413,15 @@ export default function Practice() {
                 audioPath={testType?.test?.audio_path}
                 isTimeUp={isTimeUp}
                 onExpire={() => {
-                    console.log('⏰ Time is up! Returning to menu...');
+                    if (attempt.module) {
+                        // Single-module practice: time up = the attempt is over, go to its result.
+                        setIsTimeUp(true);
+                        syncQueue.flushAttempt(attempt.id).finally(() => {
+                            clearLocalDrafts();
+                            router.post(route('practice-attempt-submit', attempt.id));
+                        });
+                        return;
+                    }
                     setIsTimeUp(true);
                     setTestType(null);
                     setSelectedPart(null);
