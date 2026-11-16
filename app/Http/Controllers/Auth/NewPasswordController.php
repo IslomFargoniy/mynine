@@ -24,7 +24,7 @@ class NewPasswordController extends Controller
         return Inertia::render('auth/reset-password', [
             'email' => $request->email,
             'token' => $request->route('token'),
-        ]);
+        ])->withViewData(['seo' => ['title' => 'Yangi parol — Mynine', 'robots' => 'noindex, nofollow']]);
     }
 
     /**

@@ -19,7 +19,7 @@ class PasswordResetLinkController extends Controller
     {
         return Inertia::render('auth/forgot-password', [
             'status' => $request->session()->get('status'),
-        ]);
+        ])->withViewData(['seo' => ['title' => 'Parolni tiklash — Mynine', 'robots' => 'noindex, follow']]);
     }
 
     /**
