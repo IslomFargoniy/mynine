@@ -103,6 +103,10 @@ abstract class Lockdown {
   /// Stable machine id (Windows `MachineGuid`). Null if unavailable.
   Future<String?> machineId();
 
+  /// The board's SMBIOS UUID (`Win32_ComputerSystemProduct.UUID`), unique per physical PC even when the Windows
+  /// image was cloned (then `MachineGuid` is the same on every PC). Null if unavailable.
+  Future<String?> hardwareUuid();
+
   /// True if the BIOS vendor looks like a virtual machine.
   Future<bool> isVirtualMachine();
 
@@ -129,6 +133,8 @@ class NoopLockdown implements Lockdown {
   Future<void> clearClipboard() async {}
   @override
   Future<String?> machineId() async => null;
+  @override
+  Future<String?> hardwareUuid() async => null;
   @override
   Future<bool> isVirtualMachine() async => false;
   @override
@@ -211,6 +217,21 @@ class MethodChannelLockdown implements Lockdown {
 
   @override
   Future<String?> machineId() => _call<String>('machineId');
+
+  @override
+  Future<String?> hardwareUuid() async {
+    if (!Platform.isWindows) return null;
+    try {
+      final r = await Process.run(
+        'powershell',
+        ['-NoProfile', '-NonInteractive', '-Command', '(Get-CimInstance Win32_ComputerSystemProduct).UUID'],
+      ).timeout(const Duration(seconds: 8));
+      final out = r.stdout.toString().trim();
+      return out.isEmpty ? null : out;
+    } catch (_) {
+      return null;
+    }
+  }
 
   @override
   Future<bool> isVirtualMachine() async =>

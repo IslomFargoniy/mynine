@@ -149,15 +149,22 @@ class DeviceRepository extends ChangeNotifier {
     if (cachedBg != null && cachedBg.existsSync()) _background = cachedBg;
     final cachedLogo = _logoTarget();
     if (cachedLogo != null && cachedLogo.existsSync()) _logo = cachedLogo;
-    _machineId = await lockdown.machineId();
-    if (_machineId == null || _machineId!.isEmpty) {
-      _machineId = await store.read(SettingsKeys.machineIdFallback);
-      if (_machineId == null) {
-        _machineId = const Uuid().v4();
-        await store.write(SettingsKeys.machineIdFallback, _machineId);
-      }
-    }
+    _machineId = composeMachineId(
+      machineGuid: await lockdown.machineId(),
+      hardwareUuid: await lockdown.hardwareUuid(),
+      installId: await _installId(),
+    );
     notifyListeners();
+  }
+
+  /// A random id kept by this installation (also the old fallback when Windows gave no MachineGuid).
+  Future<String> _installId() async {
+    var id = await store.read(SettingsKeys.machineIdFallback);
+    if (id == null || id.isEmpty) {
+      id = const Uuid().v4();
+      await store.write(SettingsKeys.machineIdFallback, id);
+    }
+    return id;
   }
 
   /// Registers this PC with the center [password] (Setup screen, or
@@ -429,4 +436,24 @@ class DeviceRepository extends ChangeNotifier {
     final v = Platform.operatingSystemVersion;
     return '${Platform.operatingSystem} $v'.trim();
   }
+}
+
+/// Board UUIDs that firmware vendors ship unchanged on many boards: they do not tell PCs apart.
+const _placeholderHardwareUuids = {
+  '00000000-0000-0000-0000-000000000000',
+  'FFFFFFFF-FFFF-FFFF-FFFF-FFFFFFFFFFFF',
+  '03000200-0400-0500-0006-000700080009',
+};
+
+/// The PC's id for registration. PCs set up from one cloned Windows image share `MachineGuid`, so on their own
+/// they overwrote each other's registration (the newest PC took over the record and the others dropped out).
+/// The board's SMBIOS UUID tells them apart; when it is missing or a vendor placeholder, this installation's
+/// random id does. Only used when registering (a registered PC works with its token), so PCs already
+/// registered keep working.
+String composeMachineId({String? machineGuid, String? hardwareUuid, required String installId}) {
+  final guid = (machineGuid ?? '').trim();
+  final hw = (hardwareUuid ?? '').trim().toUpperCase();
+  final hwUsable = RegExp(r'^[0-9A-F]{8}(-[0-9A-F]{4}){3}-[0-9A-F]{12}$').hasMatch(hw) && !_placeholderHardwareUuids.contains(hw);
+  final second = hwUsable ? hw : 'i-$installId';
+  return guid.isEmpty ? second : '$guid:$second';
 }
