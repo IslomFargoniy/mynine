@@ -20,6 +20,8 @@ class PasswordController extends Controller
     {
         return Inertia::render('settings/password', [
             'mustVerifyEmail' => $request->user() instanceof MustVerifyEmail,
+            // Signed up with Google / Telegram / GitHub (or a handed-over center account): no current password to ask.
+            'hasPassword' => $request->user()->hasOwnPassword(),
             'status' => $request->session()->get('status'),
         ]);
     }
@@ -30,7 +32,7 @@ class PasswordController extends Controller
     public function update(Request $request): RedirectResponse
     {
         $validated = $request->validate([
-            'current_password' => ['required', 'current_password'],
+            'current_password' => $request->user()->hasOwnPassword() ? ['required', 'current_password'] : ['nullable'],
             'password' => ['required', Password::defaults(), 'confirmed'],
         ]);
 

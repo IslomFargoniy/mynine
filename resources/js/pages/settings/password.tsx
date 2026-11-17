@@ -3,7 +3,7 @@ import AppLayout from '@/layouts/app-layout';
 import SettingsLayout from '@/layouts/settings/layout';
 import { type BreadcrumbItem } from '@/types';
 import { Transition } from '@headlessui/react';
-import { Head, useForm } from '@inertiajs/react';
+import { Head, useForm, usePage } from '@inertiajs/react';
 import { FormEventHandler, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 
@@ -30,6 +30,8 @@ export default function Password() {
     });
 
     const { t } = useTranslation();  // Using the translation hook
+    // Signed up with Google / Telegram / GitHub (or a handed-over center account): no current password to ask for.
+    const { hasPassword = true } = usePage<{ hasPassword?: boolean }>().props;
 
     const updatePassword: FormEventHandler = (e) => {
         e.preventDefault();
@@ -58,11 +60,12 @@ export default function Password() {
             <SettingsLayout>
                 <div className="space-y-6">
                     <HeadingSmall
-                        title={t('password_settings.heading')}
-                        description={t('password_settings.description')}
+                        title={hasPassword ? t('password_settings.heading') : t('password_settings.set_heading')}
+                        description={hasPassword ? t('password_settings.description') : t('password_settings.set_description')}
                     />
 
                     <form onSubmit={updatePassword} className="space-y-6">
+                        {hasPassword && (
                         <div className="grid gap-2">
                             <Label htmlFor="current_password">{t('password_settings.current_password')}</Label>
 
@@ -79,6 +82,7 @@ export default function Password() {
 
                             <InputError message={errors.current_password} />
                         </div>
+                        )}
 
                         <div className="grid gap-2">
                             <Label htmlFor="password">{t('password_settings.new_password')}</Label>

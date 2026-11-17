@@ -95,7 +95,8 @@ class CenterController extends Controller
                 // Without a password the Admin signs in with Google (same email) or resets it by email.
                 'password' => $data['password'] ?? Str::random(40),
             ]);
-            $admin->forceFill(['email_verified_at' => now()])->saveQuietly();
+            // A random placeholder is not a password anybody knows: Settings → Password sets one without it.
+            $admin->forceFill(['email_verified_at' => now(), 'password_set_at' => empty($data['password']) ? null : now()])->saveQuietly();
             $admin->assignRole('Admin');
 
             CenterSetting::create([
@@ -216,6 +217,8 @@ class CenterController extends Controller
                 'phone' => null,
                 // The old person may know the password: the new Admin signs in with Google or resets it.
                 'password' => Str::random(40),
+                // Nobody knows that one: the new Admin sets a password in Settings without the current one.
+                'password_set_at' => null,
             ])->saveQuietly();
 
             UserSessions::invalidate($center);

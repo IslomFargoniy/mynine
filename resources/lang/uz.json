@@ -476,7 +476,9 @@
         "new_password": "Yangi parol",
         "save_password": "Parolni saqlash",
         "saved": "Saqlandi",
-        "title": "Parol sozlamalari"
+        "title": "Parol sozlamalari",
+        "set_heading": "Parol o'rnatish",
+        "set_description": "Siz Google (yoki boshqa akkaunt) orqali kirgansiz, joriy parolingiz yo'q: email bilan ham kirish uchun parol o'rnating."
     },
     "paste_test_placeholder": "Savollarni bu yerga joylashtiring...",
     "paste_test_text": "Test matnini joylashtiring",

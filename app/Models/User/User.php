@@ -93,10 +93,30 @@ class User extends Authenticatable
      *
      * @return array<string, string>
      */
+    /**
+     * Any password saved through the model is one the person chose or was given (register, reset, settings, staff
+     * created with a password). A random placeholder (center created without one, Replace admin) clears it.
+     */
+    protected static function booted(): void
+    {
+        static::saving(function (User $user) {
+            if ($user->isDirty('password') && ! $user->isDirty('password_set_at')) {
+                $user->password_set_at = $user->password ? now() : null;
+            }
+        });
+    }
+
+    /** Has the person a password of their own (else Settings → Password sets one without the current one)? */
+    public function hasOwnPassword(): bool
+    {
+        return $this->password_set_at !== null && ! empty($this->password);
+    }
+
     protected function casts(): array
     {
         return [
             'email_verified_at' => 'datetime',
+            'password_set_at' => 'datetime',
             'password' => 'hashed',
             'suspended_at' => 'datetime',
         ];

@@ -476,7 +476,9 @@
         "new_password": "New password",
         "save_password": "Save password",
         "saved": "Saved",
-        "title": "Password settings"
+        "title": "Password settings",
+        "set_heading": "Set a password",
+        "set_description": "You signed in with Google (or another account), so there is no current password: choose one to sign in with your email too."
     },
     "paste_test_placeholder": "Paste questions here...",
     "paste_test_text": "Paste Test Text",
