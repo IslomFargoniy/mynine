@@ -171,7 +171,7 @@ export default function MatchingHeadings({
                                         </span>
                                     )}
                                 </span>
-                                <span className="text-sm leading-snug font-semibold text-gray-800 dark:text-gray-200">
+                                <span className="text-sm leading-snug font-semibold text-gray-800 dark:text-gray-200" data-hl={`q-${q.id}`}>
                                     {(q.textarea ?? "").replace(/[\u00A0\u2007\u202F]/g, " ") || `Section / Paragraph ${qNumber}`}
                                 </span>
                             </div>

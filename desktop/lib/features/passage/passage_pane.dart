@@ -90,6 +90,9 @@ class HighlightStore extends ChangeNotifier {
 int questionDocId({int? sectionId, int? questionId}) =>
     sectionId != null ? -(sectionId * 2 + 1) : -(questionId! * 2 + 2);
 
+/// Highlight document id of an option's text (A/B/C… rows). Far below the question / section ids.
+int optionDocId(int optionId) => -(1000000000 + optionId);
+
 /// practice-part.tsx: part title, "Candidate Notes (n)" button, passage with
 /// the Inspera floating toolbar (Note|Clear / Highlight) and the note dialog.
 /// Highlights are stored as character offsets.
@@ -621,6 +624,7 @@ class SelectableHtml extends StatefulWidget {
     required this.highlightColor,
     required this.noteColor,
     this.blankBuilder,
+    this.onTap,
     this.imageResolver,
     this.inlineParagraphs = false,
     this.blockSpacing = 6,
@@ -636,6 +640,9 @@ class SelectableHtml extends StatefulWidget {
   final Color highlightColor;
   final Color noteColor;
   final BlankBuilder? blankBuilder;
+
+  /// A plain tap on the text (no drag): e.g. an option row ticks its option.
+  final VoidCallback? onTap;
   final ImageResolver? imageResolver;
   final bool inlineParagraphs;
   final double blockSpacing;
@@ -756,6 +763,7 @@ class _SelectableHtmlState extends State<SelectableHtml> {
             highlightColor: widget.highlightColor,
             noteColor: widget.noteColor,
             onSelectionChanged: _onSelection,
+            onTap: widget.onTap,
             blankBuilder: widget.blankBuilder,
             imageResolver: widget.imageResolver,
             inlineParagraphs: widget.inlineParagraphs,

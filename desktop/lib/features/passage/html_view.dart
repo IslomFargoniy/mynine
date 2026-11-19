@@ -32,8 +32,8 @@ typedef ImageResolver = ImageProvider? Function(String src);
 
 /// Renders an [HtmlDocument] with Flutter widgets (no webview).
 ///
-/// * Text blocks are `SelectableText.rich` when [selectable] (and the block has
-///   no inline widgets); selections are reported as document offsets.
+/// * Text blocks are `SelectableText.rich` when [selectable], also those with inline gaps (a gap is one
+///   placeholder character there and none in the document); selections are reported as document offsets.
 /// * [highlights] paint background colours over offset ranges.
 /// * Blanks are rendered inline with [blankBuilder].
 class HtmlView extends StatefulWidget {
@@ -44,6 +44,7 @@ class HtmlView extends StatefulWidget {
     this.highlights = const [],
     this.selectable = false,
     this.onSelectionChanged,
+    this.onTap,
     this.blankBuilder,
     this.imageResolver,
     this.highlightColor = const Color(0x80FDE047),
@@ -59,6 +60,9 @@ class HtmlView extends StatefulWidget {
   final List<HighlightRange> highlights;
   final bool selectable;
   final ValueChanged<HtmlSelection?>? onSelectionChanged;
+
+  /// A plain tap on selectable text (no drag): e.g. an option row ticks its option.
+  final VoidCallback? onTap;
   final BlankBuilder? blankBuilder;
   final ImageResolver? imageResolver;
   final Color highlightColor;
@@ -227,11 +231,12 @@ class HtmlViewState extends State<HtmlView> {
     final style = _blockStyle(b, base);
     final span = buildSpan(context, b, style);
     final Widget text;
-    if (widget.selectable && !b.hasBlanks) {
+    if (widget.selectable) {
       text = SelectableText.rich(
         span as TextSpan,
         key: ValueKey('blk-${b.start}-$_generation'),
         textAlign: b.align,
+        onTap: widget.onTap,
         onSelectionChanged: (sel, cause) => _onBlockSelection(b, sel),
       );
     } else {
@@ -277,9 +282,33 @@ class HtmlViewState extends State<HtmlView> {
       cb(null);
       return;
     }
-    final s = b.start + sel.start;
-    final e = b.start + sel.end;
+    final s = _docOffset(b, sel.start);
+    final e = _docOffset(b, sel.end);
+    if (e <= s) {
+      cb(null);
+      return;
+    }
     cb(HtmlSelection(s, e, widget.document.textInRange(s, e)));
+  }
+
+  /// Selection index in the block's text (each inline gap is one placeholder character there) → document
+  /// offset (gaps take none).
+  int _docOffset(TextBlock b, int index) {
+    var at = 0;
+    var doc = b.start;
+    for (final node in b.inlines) {
+      switch (node) {
+        case TextRun():
+          final len = node.text.length;
+          if (index <= at + len) return node.start + (index - at);
+          at += len;
+          doc = node.end;
+        case BlankRun():
+          if (index <= at) return doc;
+          at += 1;
+      }
+    }
+    return doc;
   }
 
   Widget _table(BuildContext context, TableBlock t, TextStyle base) {

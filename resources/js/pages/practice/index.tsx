@@ -5,6 +5,7 @@ import React, { ReactElement, useEffect, useLayoutEffect, useState, useMemo, use
 import PracticePart from '@/components/practice/practice-part';
 import PracticeSection from '@/components/practice/practice-section';
 import PracticeEssay from '@/components/practice/practice-essay';
+import QuestionHighlighter from '@/components/practice/question-highlighter';
 import PracticeNumberBar from '@/components/practice/practice-number-bar';
 import InsperaHeader from '@/components/practice/inspera-header';
 
@@ -669,6 +670,7 @@ export default function Practice() {
                                     }`}
                                     style={{ width: isSplit && typeof window !== 'undefined' && window.innerWidth >= 640 ? `${100 - leftWidth}%` : undefined }}
                                 >
+                                    <QuestionHighlighter attemptId={attempt.id} partId={selectedPart.id}>
                                     <div className="max-w-3xl mx-auto">
                                         {selectedPart?.sections?.reduce((acc: ReactElement[], section: Section, sectionIndex: number) => {
                                             const sectionSum = section.questions.reduce(
@@ -699,6 +701,7 @@ export default function Practice() {
                                             return acc;
                                         }, [])}
                                     </div>
+                                    </QuestionHighlighter>
                                 </div>
                             )}
 

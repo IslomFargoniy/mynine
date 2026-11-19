@@ -334,7 +334,22 @@ export default function PracticePart({ attempt, part, setSelectedPart }: PartUpd
         const updated = savedNotes.filter(n => n.id !== noteId);
         setSavedNotes(updated);
         localStorage.setItem(notesStorageKey, JSON.stringify(updated));
+        // The questions pane drops the highlight of a note deleted here.
+        window.dispatchEvent(new Event('practice-notes-changed'));
     };
+
+    // Notes added from the questions pane (QuestionHighlighter) join this list.
+    useEffect(() => {
+        const reload = () => {
+            try {
+                setSavedNotes(JSON.parse(localStorage.getItem(notesStorageKey) ?? '[]'));
+            } catch {
+                /* storage unavailable */
+            }
+        };
+        window.addEventListener('practice-notes-changed', reload);
+        return () => window.removeEventListener('practice-notes-changed', reload);
+    }, [notesStorageKey]);
 
     const saveHighlights = () => {
         if (!textRef.current) return;

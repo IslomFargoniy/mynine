@@ -1,3 +1,4 @@
+import 'dart:convert' show htmlEscape;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart' show LengthLimitingTextInputFormatter;
 import 'package:lucide_icons_flutter/lucide_icons.dart';
@@ -9,7 +10,7 @@ import '../../data/repositories/answer_queue.dart' show kMaxAnswerChars;
 import '../exam/exam_controller.dart';
 import '../passage/html_document.dart';
 import '../passage/html_view.dart';
-import '../passage/passage_pane.dart' show HighlightStore, SelectableHtml, questionDocId;
+import '../passage/passage_pane.dart' show HighlightStore, SelectableHtml, optionDocId, questionDocId;
 import '../passage/passage_slots.dart' show headingTexts, stripHeadingList;
 import 'range.dart';
 
@@ -82,7 +83,7 @@ class QuestionContext {
   /// [docId]: highlight document of this text ([questionDocId]); with a [store] the text gets the
   /// Highlight / Note toolbar like the passage.
   Widget html(String html, TextStyle style,
-      {RegExp? blanks, BlankBuilder? blankBuilder, bool inline = false, int? docId}) {
+      {RegExp? blanks, BlankBuilder? blankBuilder, bool inline = false, int? docId, VoidCallback? onTap}) {
     final doc = parseHtmlCached(html, blankPattern: blanks);
     final headerColor = palette.standard ? WebTokens.tableHeaderBg : null;
     final borderColor = palette.standard ? WebTokens.tableBorder : palette.text;
@@ -97,6 +98,7 @@ class QuestionContext {
         highlightColor: palette.highlight,
         noteColor: palette.note,
         blankBuilder: blankBuilder,
+        onTap: onTap,
         imageResolver: images,
         inlineParagraphs: inline,
         tableHeaderColor: headerColor,
@@ -403,16 +405,14 @@ class _OptionRowState extends State<OptionRow> {
                   : NativeRadio(checked: checked, color: p.standard ? TW.black : p.text),
             ),
             const SizedBox(width: 12), // gap-3
+            // The option text can be highlighted / noted like the question (drag); a plain tap still ticks it.
             Expanded(
-              child: Text.rich(
-                TextSpan(children: [
-                  if (!standard)
-                    TextSpan(
-                      text: '${String.fromCharCode(65 + widget.index)}) ',
-                      style: style.copyWith(fontWeight: FontWeight.w700),
-                    ),
-                  TextSpan(text: text.toUpperCase(), style: style),
-                ]),
+              child: ctx.html(
+                '${standard ? '' : '<strong>${String.fromCharCode(65 + widget.index)})</strong> '}${htmlEscape.convert(text.toUpperCase())}',
+                style,
+                inline: true,
+                docId: optionDocId(o.id),
+                onTap: disabled && !checked ? null : toggle,
               ),
             ),
           ]),

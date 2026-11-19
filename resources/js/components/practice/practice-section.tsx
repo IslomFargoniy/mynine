@@ -245,6 +245,7 @@ export default function PracticeSection({
             <span
                 ref={setNodeRef}
                 id={`question-${slotQuestion.id}`}
+                data-hl-skip=""
                 onClick={() => {
                     const picked = allOptions.find((o) => o.id === pickedOptionId);
                     if (picked) placeOption(slotQuestion.id, picked);
@@ -354,7 +355,7 @@ export default function PracticeSection({
             <div className="prose dark:prose-invert text-[16px] leading-[1.7] break-words max-w-full prose-p:my-1.5 prose-ul:my-1.5 prose-li:my-0 prose-headings:my-2 prose-table:my-2">
                 {section.question_type.type === 'drag_and_drop' ? (
                     <DndContext sensors={sensors} onDragEnd={handleDragEnd}>
-                        <div className="max-w-full break-words">{parsedContent}</div>
+                        <div className="max-w-full break-words" data-hl={`s-${section.id}`}>{parsedContent}</div>
                         <div className="mt-4 flex flex-wrap gap-2">
                             {availableOptions.map((opt) => (
                                 <DraggableOption key={opt.id} opt={opt} />
@@ -362,10 +363,11 @@ export default function PracticeSection({
                         </div>
                     </DndContext>
                 ) : section.question_type.type === 'complete_section' ? (
-                    <div className="ielts-gap-section">{parsedContent}</div>
+                    <div className="ielts-gap-section" data-hl={`s-${section.id}`}>{parsedContent}</div>
                 ) : (
                     <div
                         className="text-base/8"
+                        data-hl={`s-${section.id}`}
                         dangerouslySetInnerHTML={{
                             __html: cleanTinyMce(
                                 // Headings dragged into the passage: the list below is the draggable one.

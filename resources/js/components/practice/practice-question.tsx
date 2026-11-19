@@ -274,7 +274,7 @@ export default function PracticeQuestion({
                     )}
                 </span>
                 {!hideText && (
-                    <div className="flex-1 font-normal text-sm leading-relaxed text-black font-sans">
+                    <div className="flex-1 font-normal text-sm leading-relaxed text-black font-sans" data-hl={`q-${question.id}`}>
                         {renderWithBlanks(question.textarea)}
                     </div>
                 )}

@@ -31,7 +31,12 @@ export default function PracticeOption({
     const blocked = multi && limitReached && !isChecked;
 
     return (
-        <label className={`flex items-center gap-3 px-3 py-1.5 transition-colors rounded-[2px] select-none ${
+        <label
+            // Dragging over the text to highlight it must not tick the option.
+            onClick={(e) => {
+                if (!(window.getSelection()?.isCollapsed ?? true)) e.preventDefault();
+            }}
+            className={`flex items-center gap-3 px-3 py-1.5 transition-colors rounded-[2px] select-none ${
             blocked
                 ? 'cursor-default opacity-50 text-gray-900'
                 : isChecked
@@ -48,7 +53,7 @@ export default function PracticeOption({
                 onChange={() => toggleOption(option.id)}
             />
 
-            <span className="flex-1 text-sm font-sans uppercase tracking-tight leading-relaxed">
+            <span className="flex-1 text-sm font-sans uppercase tracking-tight leading-relaxed" data-hl={`o-${option.id}`}>
                 {!isStandardTFN && (
                     <span className="font-bold mr-1.5">{String.fromCharCode(65 + index)})</span>
                 )}
