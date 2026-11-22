@@ -1,1 +1,10 @@
-{"version":"1.0.37","file":"mynine-setup-1.0.37.exe","sha256":"e07461b4c9623d9a93b238d067b30152f07fb6bc1fe7789c5f91dac7f29cf5ce","size":19667803,"mandatory":true,"min_version":"1.0.0","notes":"Backspace and Delete work in answer boxes again.","published_at":"2026-11-22T04:29:07Z"}
+{
+  "version": "1.0.38",
+  "file": "mynine-setup-1.0.38.exe",
+  "sha256": "5a5e2e70d6f16ee5a85f06b3af04fe6fb2b818f8750a53a696af9b6ed94f8c9e",
+  "size": 19668578,
+  "mandatory": true,
+  "min_version": "1.0.0",
+  "notes": "Staff can install an update during an exam from the admin menu; the exam resumes after the restart.",
+  "published_at": "2026-11-22T07:44:44Z"
+}
