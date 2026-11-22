@@ -220,7 +220,9 @@ class HtmlViewState extends State<HtmlView> {
             alignment: PlaceholderAlignment.middle,
             child: builder == null
                 ? Text(node.marker, style: style)
-                : builder(context, node),
+                // Inside a selectable (read-only) text the gap's editing actions (Backspace, Delete, arrows,
+                // paste…) would be overridden by that text's read-only ones: hand them back to the gap.
+                : Actions(actions: _gapActions, child: builder(context, node)),
           ));
       }
     }
@@ -408,4 +410,50 @@ TextStyle applyInlineStyle(TextStyle base, InlineStyle s) {
     );
   }
   return out;
+}
+
+/// A text field's editing actions are overridable: Flutter looks for an override among its ancestors and finds the
+/// read-only selectable text the gap sits in, whose actions do nothing (Backspace did not delete). These hand
+/// each action back to the field's own default one.
+final Map<Type, Action<Intent>> _gapActions = <Type, Action<Intent>>{
+  CopySelectionTextIntent: _ToCallingAction<CopySelectionTextIntent>(),
+  DeleteCharacterIntent: _ToCallingAction<DeleteCharacterIntent>(),
+  DeleteToLineBreakIntent: _ToCallingAction<DeleteToLineBreakIntent>(),
+  DeleteToNextWordBoundaryIntent: _ToCallingAction<DeleteToNextWordBoundaryIntent>(),
+  ExpandSelectionToDocumentBoundaryIntent: _ToCallingAction<ExpandSelectionToDocumentBoundaryIntent>(),
+  ExpandSelectionToLineBreakIntent: _ToCallingAction<ExpandSelectionToLineBreakIntent>(),
+  ExtendSelectionByCharacterIntent: _ToCallingAction<ExtendSelectionByCharacterIntent>(),
+  ExtendSelectionToDocumentBoundaryIntent: _ToCallingAction<ExtendSelectionToDocumentBoundaryIntent>(),
+  ExtendSelectionToLineBreakIntent: _ToCallingAction<ExtendSelectionToLineBreakIntent>(),
+  ExtendSelectionToNextParagraphBoundaryIntent: _ToCallingAction<ExtendSelectionToNextParagraphBoundaryIntent>(),
+  ExtendSelectionToNextParagraphBoundaryOrCaretLocationIntent: _ToCallingAction<ExtendSelectionToNextParagraphBoundaryOrCaretLocationIntent>(),
+  ExtendSelectionToNextWordBoundaryIntent: _ToCallingAction<ExtendSelectionToNextWordBoundaryIntent>(),
+  ExtendSelectionToNextWordBoundaryOrCaretLocationIntent: _ToCallingAction<ExtendSelectionToNextWordBoundaryOrCaretLocationIntent>(),
+  ExtendSelectionVerticallyToAdjacentLineIntent: _ToCallingAction<ExtendSelectionVerticallyToAdjacentLineIntent>(),
+  ExtendSelectionVerticallyToAdjacentPageIntent: _ToCallingAction<ExtendSelectionVerticallyToAdjacentPageIntent>(),
+  PasteTextIntent: _ToCallingAction<PasteTextIntent>(),
+  ScrollToDocumentBoundaryIntent: _ToCallingAction<ScrollToDocumentBoundaryIntent>(),
+  SelectAllTextIntent: _ToCallingAction<SelectAllTextIntent>(),
+  TransposeCharactersIntent: _ToCallingAction<TransposeCharactersIntent>(),
+  UndoTextIntent: _ToCallingAction<UndoTextIntent>(),
+  RedoTextIntent: _ToCallingAction<RedoTextIntent>(),
+};
+
+class _ToCallingAction<T extends Intent> extends ContextAction<T> {
+  @override
+  bool isEnabled(T intent, [BuildContext? context]) {
+    final calling = callingAction;
+    if (calling == null) return false;
+    return calling is ContextAction<T> ? calling.isEnabled(intent, context) : calling.isEnabled(intent);
+  }
+
+  @override
+  bool consumesKey(T intent) => callingAction?.consumesKey(intent) ?? false;
+
+  @override
+  Object? invoke(T intent, [BuildContext? context]) {
+    final calling = callingAction;
+    if (calling == null) return null;
+    return calling is ContextAction<T> ? calling.invoke(intent, context) : calling.invoke(intent);
+  }
 }
