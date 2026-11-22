@@ -352,6 +352,29 @@ void main() {
     expect(runner.ran, ['mynine-setup-1.0.1.exe']);
   });
 
+  test('staff may install during an exam: the exam is saved first, then the installer runs', () async {
+    final runner = RecordingRunner();
+    final svc = UpdateService(api: TamperApi(), paths: paths, currentVersion: '1.0.0', runner: runner)
+      ..isExamSessionActive = (() => true)
+      ..hasUnfinishedSession = (() async => true);
+    var saved = 0;
+    svc.beforeExamInstall = () async => saved++;
+    await svc.check(manual: true);
+    final file = (await svc.download())!;
+
+    // Without the staff confirmation it still waits for the exam to end.
+    expect(await svc.install(file), isFalse);
+    expect(saved, 0);
+    // An automatic install never gets the override.
+    expect(await svc.install(file, auto: true, duringExam: true), isFalse);
+    expect(runner.ran, isEmpty);
+
+    expect(await svc.install(file, duringExam: true), isTrue);
+    expect(saved, 1);
+    expect(runner.ran, ['mynine-setup-1.0.1.exe']);
+    expect((await svc.readState())!.pendingVerify, isTrue);
+  });
+
   test('a manual install declined by an unfinished session shows a message', () async {
     final runner = RecordingRunner();
     final svc = UpdateService(api: TamperApi(), paths: paths, currentVersion: '1.0.0', runner: runner)

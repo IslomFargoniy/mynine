@@ -14,6 +14,7 @@ Future<void> checkForUpdatesInteractive(
   BuildContext context,
   WidgetRef ref, {
   bool passwordChecked = false,
+  bool duringExam = false,
 }) async {
   final kiosk = ref.read(kioskControllerProvider);
   if (kiosk.kioskLocked && !passwordChecked) {
@@ -26,14 +27,18 @@ Future<void> checkForUpdatesInteractive(
   await showDialog<void>(
     context: context,
     barrierDismissible: false,
-    builder: (_) => UpdateDialog(service: updates),
+    builder: (_) => UpdateDialog(service: updates, duringExam: duringExam),
   );
 }
 
 class UpdateDialog extends StatelessWidget {
-  const UpdateDialog({super.key, required this.service});
+  const UpdateDialog({super.key, required this.service, this.duringExam = false});
 
   final UpdateService service;
+
+  /// Opened by staff while an exam runs (confirmed in the admin menu): the
+  /// install is allowed and the app restarts into the same exam.
+  final bool duringExam;
 
   @override
   Widget build(BuildContext context) {
@@ -92,6 +97,14 @@ class UpdateDialog extends StatelessWidget {
                   const SizedBox(height: 4),
                   Text('${(service.progress * 100).round()}%'),
                 ],
+                if (duringExam && phase != UpdatePhase.upToDate) ...[
+                  const SizedBox(height: 12),
+                  const Text(
+                    'An exam is running: after the update the exam opens again where it stopped. '
+                    'The answers are saved. Add the lost minutes in the Live monitor if needed.',
+                    style: TextStyle(color: Colors.red),
+                  ),
+                ],
                 if (phase == UpdatePhase.installing) ...[
                   const SizedBox(height: 16),
                   const LinearProgressIndicator(),
@@ -117,7 +130,7 @@ class UpdateDialog extends StatelessWidget {
               FilledButton(
                 onPressed: () async {
                   final file = await service.download();
-                  if (file != null) await service.install(file);
+                  if (file != null) await service.install(file, duringExam: duringExam);
                 },
                 child: const Text('Install now'),
               ),

@@ -416,11 +416,18 @@ class UpdateService extends ChangeNotifier {
     }
   }
 
+  /// Saves what the exam has not stored yet (debounced edits) before a staff
+  /// install during an exam replaces the app. Wired in bootstrap.
+  Future<void> Function() beforeExamInstall = () async {};
+
   /// Installs [installer] and exits. With [auto] (background update) the
   /// install is abandoned when [canAutoInstall] no longer holds right before
   /// the installer starts; any install is abandoned while an exam session is
-  /// active. Returns false when nothing was started.
-  Future<bool> install(File installer, {bool auto = false}) async {
+  /// active, unless staff confirmed it from the admin menu ([duringExam]):
+  /// the answers stay on this PC and on the server, and the candidate goes on
+  /// after entering the same code again. Returns false when nothing was started.
+  Future<bool> install(File installer, {bool auto = false, bool duringExam = false}) async {
+    final staffOverride = duringExam && !auto;
     final release = _release;
     if (release == null) return false;
     if (!runner.canInstall) {
@@ -429,7 +436,7 @@ class UpdateService extends ChangeNotifier {
       return false;
     }
     if (auto && !canAutoInstall()) return false;
-    if (!await safeToInterrupt()) {
+    if (!staffOverride && !await safeToInterrupt()) {
       if (!auto) _set(_phase, error: sessionBlocksInstallMessage);
       return false;
     }
@@ -453,10 +460,17 @@ class UpdateService extends ChangeNotifier {
       stateWritten = true;
       // Re-check right before the app goes away (a login may have started
       // while the previous installer was downloaded).
-      if ((auto && !canAutoInstall()) || !await safeToInterrupt()) {
+      if (!staffOverride && ((auto && !canAutoInstall()) || !await safeToInterrupt())) {
         await writeState(previousState);
         _set(UpdatePhase.available, error: auto ? null : sessionBlocksInstallMessage);
         return false;
+      }
+      if (staffOverride) {
+        try {
+          await beforeExamInstall();
+        } catch (e) {
+          debugPrint('Saving the exam before the update failed: $e');
+        }
       }
       await runner.runSilentAndExit(installer);
       return true;

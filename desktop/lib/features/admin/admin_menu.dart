@@ -263,11 +263,15 @@ class _AdminMenuDialogState extends ConsumerState<_AdminMenuDialog> {
             Wrap(spacing: 8, runSpacing: 8, children: [
               OutlinedButton.icon(
                 icon: const Icon(Icons.system_update),
-                onPressed: _saving || exam.examActive
+                onPressed: _saving
                     ? null
-                    : () {
+                    : () async {
+                        final duringExam = exam.examActive;
+                        if (duringExam && !await _confirmUpdateDuringExam(context)) return;
+                        if (!context.mounted) return;
                         Navigator.of(context).pop();
-                        unawaited(checkForUpdatesInteractive(context, ref, passwordChecked: true));
+                        unawaited(checkForUpdatesInteractive(context, ref,
+                            passwordChecked: true, duringExam: duringExam));
                       },
                 label: const Text('Check for updates'),
               ),
@@ -308,4 +312,32 @@ class _AdminMenuDialogState extends ConsumerState<_AdminMenuDialog> {
       ],
     );
   }
+}
+
+/// Staff confirms an update while a candidate's exam runs on this PC.
+Future<bool> _confirmUpdateDuringExam(BuildContext context) async {
+  final ok = await showDialog<bool>(
+    context: context,
+    builder: (context) => AlertDialog(
+      title: const Text('Update during the exam?'),
+      content: const SizedBox(
+        width: 440,
+        child: Text(
+          'The app closes for about a minute while the update is installed, then opens again.\n\n'
+          'The answers are saved on this PC and on the server. The exam opens again where it stopped '
+          '(if the code screen shows, the candidate enters the same code). The exam time keeps running: '
+          'add the lost minutes in the Live monitor if needed.',
+        ),
+      ),
+      actions: [
+        TextButton(onPressed: () => Navigator.of(context).pop(false), child: const Text('Cancel')),
+        FilledButton(
+          key: const Key('admin-update-during-exam'),
+          onPressed: () => Navigator.of(context).pop(true),
+          child: const Text('Update now'),
+        ),
+      ],
+    ),
+  );
+  return ok ?? false;
 }

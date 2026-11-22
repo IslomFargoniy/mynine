@@ -107,6 +107,7 @@ Future<List<Override>> bootstrap() async {
   if (api is HttpMynineApi) api.onApiSuccess = updates.reportApiReachable;
   updates.isExamSessionActive = () => exam.examActive || exam.busy || exam.attemptId != null;
   updates.hasUnfinishedSession = () async => await db.activeSession() != null;
+  updates.beforeExamInstall = exam.flushPending;
 
   // Old exam files (audio, images, cached payloads) of finished sessions.
   try {
