@@ -22,7 +22,7 @@ Errors: `{ "message": "...", "code": "<machine_code>" }` with HTTP status. Codes
 v1.1: `session_revoked` 401, `session_expired` 401, `session_active_elsewhere` 409.
 Multi-center (2026-11): `invalid_center_code` 422, `center_suspended` 403 — see "Multi-center" below.
 
-Server rejects exam requests whose `X-Mynine-Client` version is lower than `min_version` of `desktop/version.json` with 426.
+`POST /exam/login` for a new start answers 426 when the `X-Mynine-Client` version is lower than `min_version` of `desktop/version.json`. A candidate whose exam already runs on a PC (resume) is never refused for the version.
 All timestamps are ISO-8601 with offset (server timezone). Every exam response includes `server_time`.
 
 ---
@@ -52,8 +52,8 @@ The `t` query only busts caches. No auth headers are needed (the app sends no de
   `size: 0`, a missing `file`, an invalid body or a 404 mean "no update", never an error that blocks an exam.
 - Mandatory (update dialog cannot be dismissed) when `mandatory` is `true` **or** the installed version is below
   `min_version`.
-- `min_version` (`x.y.z` or `null`) is also read by the server: `/exam/*` answers 426 `client_outdated` to older clients
-  (`null` → no check).
+- `min_version` (`x.y.z` or `null`) is also read by the server: a new `/exam/login` answers 426 `client_outdated` to older
+  clients (`null` → no check). Keep it at an old version (1.0.0): a release must never strand a running exam.
 - The CI workflow generates this file next to the installer (see `desktop/README.md`).
 
 ### GET {site}/desktop/{file}
@@ -298,7 +298,7 @@ Additive clarifications of the contract above, as implemented on branch `feat/de
   `server_error` 500. `validation_failed` also carries Laravel's `errors` object.
 - Throttles: `/device/register` 30/min per IP; `/exam/login` 10/min per device **and** 60/min per IP; `/device/unlock`
   5/min per device; every other device/exam endpoint 300/min per device.
-- The `X-Mynine-Client` check (426 `client_outdated`) runs on `/exam/*` only (login included). `/device/*` never
+- The `X-Mynine-Client` check (426 `client_outdated`) runs on `POST /exam/login` only, and only for a new start (not a resume). `/device/*` never
   returns 426 and updates are static files, so an outdated PC can still heartbeat and update. A missing or malformed
   header counts as outdated while `version.json` has a `min_version`. `min_version` comes from
   `public/desktop/version.json` (`App\Services\Desktop\ReleaseManifest`, cached per file mtime; a missing or invalid

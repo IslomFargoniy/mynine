@@ -5,6 +5,7 @@ use App\Models\AttemptAnswer;
 use App\Models\AttemptPart;
 use App\Models\AttemptType;
 use App\Models\Device;
+use App\Models\MockStudent;
 use App\Models\Option;
 use App\Models\Question;
 use App\Models\TestType;
@@ -157,8 +158,18 @@ test('f) the version gate applies to login only, never to a running exam', funct
 
     desktopApi('GET', 'exam', [], $this->device, $this->token, '1.0.0')->assertOk();
     desktopApi('POST', 'exam/heartbeat', [], $this->device, $this->token, '1.0.0')->assertOk();
-    desktopApi('POST', 'exam/login', ['code' => 'MOCK-100001'], $this->device, null, '1.0.0')
-        ->assertStatus(426)->assertJsonPath('code', 'client_outdated');
+    // A candidate whose exam already runs signs in again (lost token, restart) on the old version too.
+    $relogin = desktopApi('POST', 'exam/login', ['code' => 'MOCK-100001'], $this->device, null, '1.0.0')->assertOk();
+    desktopApi('POST', 'exam/answers', ['answers' => [v11Item()]], $this->device, $relogin->json('token'), '1.0.0')->assertOk();
+});
+
+test('f) a new start on an outdated app is refused with 426', function () {
+    $other = MockStudent::create(['mock_id' => $this->exam['mock']->id, 'name' => 'Other', 'code' => 'MOCK-100002', 'phone' => '+998901234568']);
+    useReleaseManifest(releaseManifestData(['min_version' => '2.0.0']));
+
+    desktopApi('POST', 'exam/login', ['code' => $other->code], $this->device, null, '1.0.0')
+        ->assertStatus(426)->assertJsonPath('code', 'client_outdated')->assertJsonPath('min_version', '2.0.0');
+    desktopApi('POST', 'exam/login', ['code' => $other->code], $this->device, null, '2.0.0')->assertOk();
 });
 
 test('h) login on another PC is refused while the bound PC is alive, until the invigilator releases it', function () {

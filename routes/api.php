@@ -33,10 +33,10 @@ Route::prefix('v1')->name('api.v1.')->group(function () {
         Route::get('device/config', [DeviceController::class, 'config'])->name('device.config');
         Route::get('device/background', [DeviceController::class, 'background'])->name('device.background');
 
-        // v1.1: the version gate (426) runs on login only; a running exam is never interrupted by it.
+        // The version gate (426) runs in login, for a new start only; a running exam is never interrupted by it.
         Route::prefix('exam')->name('exam.')->group(function () {
             Route::post('login', [ExamAuthController::class, 'login'])
-                ->middleware(['desktop.client', 'throttle:desktop-login'])
+                ->middleware('throttle:desktop-login')
                 ->name('login');
 
             Route::middleware('desktop.candidate')->group(function () {

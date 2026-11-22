@@ -135,16 +135,10 @@ test('device heartbeat marks the PC online', function () {
     desktopApi('POST', 'device/heartbeat', ['state' => 'sleeping'], $token)->assertStatus(422);
 });
 
-test('exam endpoints reject outdated clients with 426', function () {
+test('a new exam login on an outdated client is refused with 426', function () {
     $admin = makeUser('Admin');
     makeDesktopExam($admin);
     $token = registerDesktopDevice();
-
-    // No manifest / no min_version → no check.
-    useReleaseManifest(null);
-    desktopApi('POST', 'exam/login', ['code' => 'MOCK-100001'], $token, null, '0.0.1')->assertOk();
-    useReleaseManifest(releaseManifestData(['min_version' => null]));
-    desktopApi('POST', 'exam/login', ['code' => 'MOCK-100001'], $token, null, '0.0.1')->assertOk();
 
     // The 426 is driven by min_version of version.json (mandatory alone does not block the exam).
     useReleaseManifest(releaseManifestData(['version' => '1.2.0', 'mandatory' => true, 'min_version' => '1.1.0']));
@@ -154,14 +148,28 @@ test('exam endpoints reject outdated clients with 426', function () {
         ->assertJsonPath('code', 'client_outdated')
         ->assertJsonPath('min_version', '1.1.0');
 
+    app('auth')->forgetGuards();
+    $this->postJson('/api/v1/exam/login', ['code' => 'MOCK-100001'], ['X-Device-Token' => $token])
+        ->assertStatus(426);
+
     // Device endpoints stay reachable so the PC can update itself.
     desktopApi('POST', 'device/heartbeat', ['state' => 'updating'], $token, null, '1.0.9')->assertOk();
 
     desktopApi('POST', 'exam/login', ['code' => 'MOCK-100001'], $token, null, '1.1.0')->assertOk();
 
-    app('auth')->forgetGuards();
-    $this->postJson('/api/v1/exam/login', ['code' => 'MOCK-100001'], ['X-Device-Token' => $token])
-        ->assertStatus(426);
+    // Once the exam runs on this PC, signing in again never meets the gate (a release must not strand it).
+    desktopApi('POST', 'exam/login', ['code' => 'MOCK-100001'], $token, null, '1.0.9')->assertOk();
+});
+
+test('no manifest or no min_version means no version check', function () {
+    $admin = makeUser('Admin');
+    makeDesktopExam($admin);
+    $token = registerDesktopDevice();
+
+    useReleaseManifest(null);
+    desktopApi('POST', 'exam/login', ['code' => 'MOCK-100001'], $token, null, '0.0.1')->assertOk();
+    useReleaseManifest(releaseManifestData(['min_version' => null]));
+    desktopApi('POST', 'exam/login', ['code' => 'MOCK-100001'], $token, null, '0.0.1')->assertOk();
 });
 
 test('release manifest is parsed and validated', function () {

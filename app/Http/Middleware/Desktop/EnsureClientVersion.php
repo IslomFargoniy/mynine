@@ -9,8 +9,11 @@ use Illuminate\Http\Request;
 use Symfony\Component\HttpFoundation\Response;
 
 /**
- * Rejects exam requests from desktop clients older than `min_version` of public/desktop/version.json (426).
+ * Rejects desktop clients older than `min_version` of public/desktop/version.json (426).
  * No manifest or no min_version → no check.
+ *
+ * Used by POST /exam/login for a new start only (ExamAuthController): a candidate whose exam already runs on a PC
+ * signs in again (lost token, app restart) whatever the app version, so a release never strands a running exam.
  */
 class EnsureClientVersion
 {
@@ -18,9 +21,19 @@ class EnsureClientVersion
 
     public function handle(Request $request, Closure $next): Response
     {
+        $this->check($request);
+
+        return $next($request);
+    }
+
+    /**
+     * @throws ApiException 426 client_outdated
+     */
+    public function check(Request $request): void
+    {
         $minVersion = $this->manifest->minVersion();
         if ($minVersion === null) {
-            return $next($request);
+            return;
         }
 
         $clientVersion = self::clientVersion($request);
@@ -30,8 +43,6 @@ class EnsureClientVersion
                 'min_version' => $minVersion,
             ]);
         }
-
-        return $next($request);
     }
 
     /**

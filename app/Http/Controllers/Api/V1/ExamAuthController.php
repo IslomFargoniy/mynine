@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api\V1;
 
 use App\Exceptions\ApiException;
 use App\Http\Controllers\Controller;
+use App\Http\Middleware\Desktop\EnsureClientVersion;
 use App\Models\AttemptAnswer;
 use App\Models\Device;
 use App\Models\Mock;
@@ -59,6 +60,11 @@ class ExamAuthController extends Controller
         // the exam on a PC, so the active / start / end checks do not apply. An attempt created only by a
         // Speaking band (no PC, no written module yet) is not a resume.
         $resuming = $existing !== null && ($existing->device_id !== null || $existing->hasStartedWrittenModule());
+
+        // The version gate (426) stops a new start only: a running exam always comes back, on any app version.
+        if (! $resuming) {
+            app(EnsureClientVersion::class)->check($request);
+        }
 
         if (! $resuming && (int) $mock->active !== 1) {
             throw ApiException::unprocessable('mock_not_active', 'This mock exam is not active.');
