@@ -41,7 +41,8 @@ class AppGoogleController extends Controller
             $params['error'] = 'google';
         }
 
-        return response()->view('auth.app-return', ['url' => 'mynine://auth?'.http_build_query($params)]);
+        // A plain redirect to the app's scheme: Custom Tabs / browsers hand it to the app and close the tab.
+        return redirect()->away('mynine://auth?'.http_build_query($params));
     }
 
     private function driver()

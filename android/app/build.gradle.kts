@@ -136,6 +136,7 @@ dependencies {
     debugImplementation(libs.androidx.ui.tooling)
 
     implementation(libs.androidx.credentials)
+    implementation(libs.androidx.browser)
     implementation(libs.androidx.credentials.play.services.auth)
     implementation(libs.google.id)
 

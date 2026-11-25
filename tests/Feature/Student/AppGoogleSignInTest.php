@@ -30,8 +30,9 @@ function fakeAppGoogle(string $id, string $email): void
 
 function appReturnUrl(TestResponse $response): array
 {
-    preg_match('/href="(mynine:\/\/auth\?[^"]+)"/', $response->getContent(), $m);
-    parse_str(parse_url(html_entity_decode($m[1] ?? ''), PHP_URL_QUERY) ?? '', $query);
+    $location = (string) $response->headers->get('Location');
+    expect($location)->toStartWith('mynine://auth?');
+    parse_str(parse_url($location, PHP_URL_QUERY) ?? '', $query);
 
     return $query;
 }
@@ -42,7 +43,7 @@ test('a student signs in with Google in the browser and the app swaps the token 
     fakeAppGoogle('g-123', $student->email);
 
     $this->get('/app/google?state=abcdefghijklmnop1234')->assertRedirect();
-    $query = appReturnUrl($this->get('/app/google/callback?code=x')->assertOk());
+    $query = appReturnUrl($this->get('/app/google/callback?code=x')->assertRedirect());
 
     expect($query['state'])->toBe('abcdefghijklmnop1234')->and($query['token'])->toHaveLength(48);
 

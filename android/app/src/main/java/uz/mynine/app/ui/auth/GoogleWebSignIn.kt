@@ -1,8 +1,11 @@
 package uz.mynine.app.ui.auth
 
+import android.app.Activity
+import android.content.ActivityNotFoundException
 import android.content.Context
 import android.content.Intent
 import android.net.Uri
+import androidx.browser.customtabs.CustomTabsIntent
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import uz.mynine.app.BuildConfig
@@ -34,7 +37,15 @@ object GoogleWebSignIn {
         val state = bytes.joinToString("") { "%02x".format(it) }
         prefs(context).edit().putString(KEY_STATE, state).apply()
         val url = Uri.parse(BuildConfig.BASE_URL.trimEnd('/') + "/app/google").buildUpon().appendQueryParameter("state", state).build()
-        context.startActivity(Intent(Intent.ACTION_VIEW, url).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))
+        // A Custom Tab keeps the sign-in inside the app's task; mynine://auth brings the singleTask
+        // MainActivity back and closes the tab. Falls back to the browser if no browser supports tabs.
+        try {
+            CustomTabsIntent.Builder().setShowTitle(true).setUrlBarHidingEnabled(true).build().apply {
+                if (context !is Activity) intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+            }.launchUrl(context, url)
+        } catch (e: ActivityNotFoundException) {
+            context.startActivity(Intent(Intent.ACTION_VIEW, url).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))
+        }
     }
 
     /** Called with every intent's data; ignores anything that is not our mynine://auth return. */
