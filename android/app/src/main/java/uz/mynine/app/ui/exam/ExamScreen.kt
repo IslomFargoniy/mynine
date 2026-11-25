@@ -167,7 +167,7 @@ fun ExamScreen(attemptId: Int, onExit: () -> Unit, onFinished: () -> Unit) {
         val done = ui.navQuestions.count { ui.answered(it.question.id) }
         AlertDialog(
             onDismissRequest = { confirmSubmit = false },
-            title = { Text("${ui.module?.title ?: "Modul"}ni yakunlaysizmi?") },
+            title = { Text("${ui.module?.title ?: "Modul"} modulini yakunlaysizmi?") },
             text = { Text("$total savoldan $done tasiga javob berdingiz. Yakunlangandan keyin javoblarni o'zgartirib bo'lmaydi.") },
             confirmButton = { TextButton(onClick = { confirmSubmit = false; vm.submitModule() }) { Text("Yakunlash") } },
             dismissButton = { TextButton(onClick = { confirmSubmit = false }) { Text("Bekor qilish") } },
@@ -299,11 +299,17 @@ private fun RoomView(ui: ExamUi, vm: ExamViewModel, onFinish: () -> Unit, onBack
         if (!pageReady || part == null) return@LaunchedEffect
         val start = if (part.payload.type == "listening") "questions" else "passage"
         view = start
-        vm.renderConfig(start, if (split) "split" else "phone")?.let { js("ExamRoom.render($it)") }
+        val config = vm.renderConfig(start, if (split) "split" else "phone") ?: return@LaunchedEffect
+        // The page answers every render with "ready"; render again if it did not (WebView still busy).
+        repeat(3) {
+            js("window.ExamRoom && ExamRoom.render($config)")
+            kotlinx.coroutines.delay(1500)
+            if (hasPassage.containsKey(part.payload.id)) return@LaunchedEffect
+        }
     }
-    LaunchedEffect(view) { js("ExamRoom.setView('$view')") }
-    LaunchedEffect(ui.phase) { if (ui.phase != Phase.Running) js("ExamRoom.flush(); ExamRoom.setLocked(true)") }
-    LaunchedEffect(ui.flagged) { js("ExamRoom.setFlagged(${ui.flagged.toList()})") }
+    LaunchedEffect(view) { js("window.ExamRoom && ExamRoom.setView('$view')") }
+    LaunchedEffect(ui.phase) { if (ui.phase != Phase.Running) js("window.ExamRoom && (ExamRoom.flush(), ExamRoom.setLocked(true))") }
+    LaunchedEffect(ui.flagged) { js("window.ExamRoom && ExamRoom.setFlagged(${ui.flagged.toList()})") }
 
     Column(Modifier.fillMaxSize()) {
         // Header: IELTS · module · timer · finish
@@ -385,6 +391,12 @@ private fun RoomView(ui: ExamUi, vm: ExamViewModel, onFinish: () -> Unit, onBack
                         // The page never navigates anywhere (links in passages are inert).
                         override fun shouldOverrideUrlLoading(view: WebView, request: WebResourceRequest): Boolean = true
                     }
+                    webChromeClient = object : android.webkit.WebChromeClient() {
+                        override fun onConsoleMessage(m: android.webkit.ConsoleMessage): Boolean {
+                            android.util.Log.d("ExamRoom", "${m.messageLevel()} ${m.message()} @${m.lineNumber()}")
+                            return true
+                        }
+                    }
                     addJavascriptInterface(ExamBridge { message -> handleMessage(message, vm, hasPassage) { pageReady = true } }, "AndroidBridge")
                     loadUrl("file:///android_asset/exam-room/index.html")
                     webView = this
@@ -408,6 +420,7 @@ private fun RoomView(ui: ExamUi, vm: ExamViewModel, onFinish: () -> Unit, onBack
 }
 
 private fun handleMessage(message: String, vm: ExamViewModel, hasPassage: MutableMap<Int, Boolean>, onLoaded: () -> Unit) {
+    if (BuildConfig.DEBUG) android.util.Log.d("ExamRoom", "bridge: ${message.take(200)}")
     val obj = runCatching { AppJson.parseToJsonElement(message).jsonObject }.getOrNull() ?: return
     val type = obj["type"]?.jsonPrimitive?.contentOrNull
     val data = obj["data"] as? JsonObject

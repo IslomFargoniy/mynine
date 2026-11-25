@@ -559,7 +559,7 @@
       state.view = 'questions';
       applyClasses();
     }
-    node.scrollIntoView({ block: 'center', behavior: 'smooth' });
+    node.scrollIntoView({ block: 'start', behavior: 'auto' });
     node.classList.remove('flash');
     void node.offsetWidth;
     node.classList.add('flash');

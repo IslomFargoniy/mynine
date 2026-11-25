@@ -35,7 +35,7 @@ body {
   height: 100%;
   overflow-y: auto;
   -webkit-overflow-scrolling: touch;
-  padding: 16px 16px 120px;
+  padding: 16px 16px 60vh;
   flex: 1 1 0;
   min-width: 0;
 }
