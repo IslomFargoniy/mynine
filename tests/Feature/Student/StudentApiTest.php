@@ -232,3 +232,7 @@ test('listening audio started late extends the module by the reported lag (once,
     studentApi('POST', "attempts/{$attempt['id']}/modules/{$typeId}/audio-lag", ['lag_seconds' => 6], $this->token)
         ->assertOk()->assertJsonPath('finished_at', $after['finished_at']);
 });
+
+test('the account deletion instructions page is public', function () {
+    $this->get('/delete-account')->assertOk()->assertSee('Hisobni o');
+});
