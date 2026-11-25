@@ -24,3 +24,6 @@ yarn-error.log
 /.zed
 /public/desktop/*.exe
 /public/desktop/*.exe.sha256
+
+# Android / iOS release builds (CLAUDE.md: only the newest, never in git)
+/releases/

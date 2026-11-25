@@ -1,0 +1,155 @@
+/*
+ * Mynine exam room (Android WebView + iOS WKWebView). Looks like the web practice room
+ * (resources/js/components/practice) — the official computer-delivered IELTS style.
+ */
+@font-face { font-family: 'Inter'; src: url('fonts/Inter-Regular.ttf'); font-weight: 400; }
+@font-face { font-family: 'Inter'; src: url('fonts/Inter-SemiBold.ttf'); font-weight: 600; }
+@font-face { font-family: 'Inter'; src: url('fonts/Inter-Bold.ttf'); font-weight: 700; }
+
+:root {
+  --text: #111827;
+  --muted: #4b5563;
+  --line: #d1d5db;
+  --panel: #f3f4f6;
+  --accent: #2563eb;
+  --accent-bg: #eff6ff;
+  --checked: #e5e7eb;
+  --flag: #f97316;
+  --flag-bg: #fff7ed;
+  --table-border: #555555;
+  --font-scale: 1;
+}
+
+* { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+html, body { margin: 0; padding: 0; height: 100%; background: #fff; color: var(--text); }
+body {
+  font-family: 'Inter', -apple-system, system-ui, Roboto, sans-serif;
+  font-size: calc(16px * var(--font-scale));
+  line-height: 1.5;
+  -webkit-text-size-adjust: 100%;
+  overflow: hidden;
+}
+
+#root { height: 100%; display: flex; }
+.pane {
+  height: 100%;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  padding: 16px 16px 120px;
+  flex: 1 1 0;
+  min-width: 0;
+}
+/* Phone: one pane at a time (the app's Passage | Questions tabs). Tablet: side by side. */
+.layout-phone.view-passage #questions, .layout-phone.view-questions #passage { display: none; }
+.layout-split #passage { border-right: 1px solid var(--line); }
+.no-passage #passage { display: none !important; }
+.no-passage #questions { display: block !important; }
+
+/* Rich text from the editor (TinyMCE) */
+.html p { margin: 6px 0; }
+.html h1, .html h2, .html h3, .html h4 { line-height: 1.3; margin: 12px 0 8px; }
+.html h1 { font-size: 1.35em; } .html h2 { font-size: 1.25em; } .html h3 { font-size: 1.12em; }
+.html img { max-width: 100%; height: auto; display: block; margin: 8px 0; }
+.html ul, .html ol { padding-left: 22px; margin: 6px 0; }
+.html table { border-collapse: collapse; margin: 8px 0; max-width: 100%; display: block; overflow-x: auto; }
+.html td, .html th { border: 1px solid var(--table-border); padding: 6px 8px; vertical-align: top; }
+.html th { background: var(--panel); }
+#passage .html { font-size: 1em; line-height: 1.7; }
+
+/* Passage slots ("{14}": a heading goes here) */
+.slot {
+  display: inline-flex; align-items: center; gap: 6px; min-width: 60px;
+  border: 1px dashed #6b7280; padding: 2px 8px; margin: 2px 0; font-size: 0.9em;
+}
+.slot b { color: var(--text); }
+.slot.filled { border: 2px solid #000; }
+
+/* Sections and questions */
+.section { margin-bottom: 28px; }
+.section > .instructions { margin-bottom: 12px; }
+.question { display: flex; gap: 10px; align-items: flex-start; padding: 6px 0; margin-bottom: 10px; scroll-margin: 24px; }
+.question .body { flex: 1; min-width: 0; }
+.qtext { font-size: 0.875em; line-height: 1.625; }
+.qtext p { margin: 0 0 4px; }
+.badge {
+  flex: none; min-width: 26px; height: 26px; padding: 0 6px; margin-top: 1px;
+  display: inline-flex; align-items: center; justify-content: center;
+  border: 1px solid #000; border-radius: 2px; background: #fff;
+  font-size: 12px; font-weight: 700; position: relative;
+}
+.badge.flagged { background: var(--flag-bg); border-color: var(--flag); color: #ea580c; }
+.badge.flagged::after {
+  content: '★'; position: absolute; top: -7px; right: -7px; width: 13px; height: 13px; border-radius: 50%;
+  background: var(--flag); color: #fff; font-size: 8px; line-height: 13px; text-align: center;
+}
+.flash { animation: flash 1.2s ease-out; }
+@keyframes flash { 0% { background: #dbeafe; } 100% { background: transparent; } }
+
+/* Options (radio / checkbox) */
+.options { margin-top: 10px; display: flex; flex-direction: column; gap: 6px; }
+.option {
+  display: flex; align-items: center; gap: 12px; padding: 9px 12px; border-radius: 2px; min-height: 44px;
+  font-size: 0.875em; letter-spacing: -0.01em; cursor: pointer; user-select: none;
+}
+.option.checked { background: var(--checked); font-weight: 600; }
+.option.disabled { opacity: 0.5; }
+.mark { flex: none; width: 18px; height: 18px; border: 1px solid #767676; background: #fff; display: inline-flex; align-items: center; justify-content: center; }
+.mark.radio { border-radius: 50%; }
+.mark.box { border-radius: 3px; }
+.option.checked .mark { background: #000; border-color: #000; }
+.option.checked .mark.radio::after { content: ''; width: 7px; height: 7px; border-radius: 50%; background: #fff; }
+.option.checked .mark.box::after { content: '✓'; color: #fff; font-size: 13px; line-height: 1; }
+
+/* Gap inputs */
+input.gap {
+  font: inherit; font-size: 1em; width: 9em; max-width: 100%; height: 34px; padding: 3px 6px; margin: 2px 4px;
+  border: 1.25px solid #000; border-radius: 0; background: #fff; color: var(--text); vertical-align: middle;
+  -webkit-appearance: none;
+}
+input.gap:focus { outline: none; border: 2px solid var(--accent); }
+input.gap:disabled { opacity: 0.6; }
+.gapnum { font-weight: 700; margin-left: 2px; }
+.gapnum.flagged { color: var(--flag); }
+.gapwrap { white-space: nowrap; scroll-margin: 24px; }
+
+/* Drag and drop (tap a word, then tap a box) */
+.drop {
+  display: inline-flex; align-items: center; gap: 8px; min-width: 120px; min-height: 34px; padding: 3px 8px; margin: 2px 2px;
+  border: 1px dashed #6b7280; background: #fff; vertical-align: middle; cursor: pointer; scroll-margin: 24px;
+}
+.drop.filled { border: 2px solid #000; }
+.drop.target { border-color: #60a5fa; background: #dbeafe; }
+.drop .clear { color: #6b7280; font-size: 18px; padding: 0 4px; }
+.bank { margin-top: 16px; display: flex; flex-wrap: wrap; gap: 8px; }
+.chip { padding: 8px 12px; border: 1px solid #9ca3af; background: #fff; font-size: 0.875em; cursor: pointer; user-select: none; }
+.chip.picked { border-color: #60a5fa; background: var(--accent-bg); }
+
+/* Matching */
+.list-box { padding: 14px 16px; background: #f9fafb; border: 2px solid var(--line); border-radius: 8px; margin: 10px 0 18px; }
+.list-box .title { font-size: 0.875em; font-weight: 700; letter-spacing: 0.05em; margin-bottom: 8px; color: #1f2937; }
+.list-box div.item { font-size: 0.875em; padding: 3px 0; }
+.match-row {
+  display: flex; align-items: center; gap: 10px; padding: 10px 12px; margin-bottom: 10px;
+  border: 1px solid #e5e7eb; border-radius: 6px; scroll-margin: 24px;
+}
+.match-row .title { flex: 1; min-width: 0; font-size: 0.875em; font-weight: 600; color: #1f2937; }
+select.match {
+  font: inherit; font-size: 0.875em; font-weight: 600; height: 40px; min-width: 76px; max-width: 46%;
+  border: 1px solid #000; border-radius: 0; background: #fff; padding: 0 8px; color: var(--text);
+}
+select.match.wide { min-width: 140px; }
+
+/* Writing */
+.essay textarea {
+  width: 100%; min-height: 320px; padding: 12px; font: inherit; font-size: 1em; line-height: 1.6;
+  border: 1px solid #9ca3af; border-radius: 2px; resize: vertical; background: #fff; color: var(--text);
+}
+.essay textarea:focus { outline: none; border: 2px solid var(--accent); }
+.progress { padding: 10px 12px; background: #f9fafb; border: 1px solid #e5e7eb; border-radius: 8px; margin: 12px 0 10px; }
+.progress .row { display: flex; justify-content: space-between; font-size: 12px; font-weight: 700; color: #374151; }
+.progress .bar { height: 8px; border-radius: 999px; background: #e5e7eb; margin-top: 8px; overflow: hidden; }
+.progress .bar i { display: block; height: 100%; background: #f59e0b; }
+.progress .bar i.mid { background: #3b82f6; }
+.progress .bar i.met { background: #10b981; }
+
+.empty { color: var(--muted); font-style: italic; padding: 24px 0; text-align: center; }

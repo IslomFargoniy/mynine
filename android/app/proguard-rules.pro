@@ -1,0 +1,12 @@
+-keepattributes *Annotation*,Signature,InnerClasses,EnclosingMethod
+-dontwarn okhttp3.**
+-dontwarn okio.**
+-dontwarn retrofit2.**
+-keep class retrofit2.** { *; }
+-keepclasseswithmembers class * { @retrofit2.http.* <methods>; }
+-dontnote kotlinx.serialization.SerializationKt
+-keepclassmembers class * { *** Companion; }
+-keepclasseswithmembers class * { kotlinx.serialization.KSerializer serializer(...); }
+-keep class uz.mynine.app.data.** { *; }
+# WebView bridge
+-keepclassmembers class uz.mynine.app.ui.exam.ExamBridge { @android.webkit.JavascriptInterface <methods>; }

@@ -215,3 +215,7 @@ test('the version endpoint is public', function () {
     studentApi('GET', 'app/version?platform=ios')->assertOk()->assertJsonPath('platform', 'ios')
         ->assertJsonStructure(['latest', 'min_supported', 'store_url']);
 });
+
+test('the privacy policy page is public', function () {
+    $this->get('/privacy')->assertOk()->assertSee('Maxfiylik siyosati')->assertSee('Hisobni o');
+});

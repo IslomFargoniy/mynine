@@ -61,6 +61,7 @@ Route::get('/sitemap.xml', [SitemapController::class, 'index'])->name('sitemap')
 // SEO content (server-rendered Blade)
 Route::get('/blog', [BlogController::class, 'index'])->name('blog.index');
 Route::get('/blog/{slug}', [BlogController::class, 'show'])->where('slug', '[a-z0-9-]+')->name('blog.show');
+Route::view('/privacy', 'legal.privacy')->name('privacy');
 Route::get('/{page}', [SeoPageController::class, 'show'])
     ->whereIn('page', array_keys(SeoPageController::PAGES))
     ->name('seo.page');
