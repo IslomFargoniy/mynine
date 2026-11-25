@@ -380,7 +380,7 @@ private fun RoomView(ui: ExamUi, vm: ExamViewModel, onFinish: () -> Unit, onBack
         AndroidView(
             modifier = Modifier.weight(1f).fillMaxWidth(),
             factory = { context ->
-                WebView(context).apply {
+                ExamWebView(context).apply {
                     layoutParams = ViewGroup.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT)
                     settings.javaScriptEnabled = true
                     settings.domStorageEnabled = false
@@ -397,7 +397,7 @@ private fun RoomView(ui: ExamUi, vm: ExamViewModel, onFinish: () -> Unit, onBack
                             return true
                         }
                     }
-                    addJavascriptInterface(ExamBridge { message -> handleMessage(message, vm, hasPassage) { pageReady = true } }, "AndroidBridge")
+                    addJavascriptInterface(ExamBridge { message -> handleMessage(message, vm, hasPassage, onView = { view = it }) { pageReady = true } }, "AndroidBridge")
                     loadUrl("file:///android_asset/exam-room/index.html")
                     webView = this
                 }
@@ -419,7 +419,13 @@ private fun RoomView(ui: ExamUi, vm: ExamViewModel, onFinish: () -> Unit, onBack
     }
 }
 
-private fun handleMessage(message: String, vm: ExamViewModel, hasPassage: MutableMap<Int, Boolean>, onLoaded: () -> Unit) {
+private fun handleMessage(
+    message: String,
+    vm: ExamViewModel,
+    hasPassage: MutableMap<Int, Boolean>,
+    onView: (String) -> Unit,
+    onLoaded: () -> Unit,
+) {
     if (BuildConfig.DEBUG) android.util.Log.d("ExamRoom", "bridge: ${message.take(200)}")
     val obj = runCatching { AppJson.parseToJsonElement(message).jsonObject }.getOrNull() ?: return
     val type = obj["type"]?.jsonPrimitive?.contentOrNull
@@ -441,6 +447,11 @@ private fun handleMessage(message: String, vm: ExamViewModel, hasPassage: Mutabl
             vm.onAnswer(partId, questionId, text, options, hasText, hasOptions)
         }
         "flag" -> data?.get("question_id")?.jsonPrimitive?.intOrNull?.let(vm::toggleFlag)
+        "marks" -> {
+            val partId = data?.get("part_id")?.jsonPrimitive?.intOrNull ?: return
+            vm.saveMarks(partId, data.toString())
+        }
+        "view" -> data?.get("view")?.jsonPrimitive?.contentOrNull?.let(onView)
         "log" -> android.util.Log.w("ExamRoom", obj["data"].toString())
     }
 }
@@ -538,5 +549,39 @@ private fun NavArrow(icon: androidx.compose.ui.graphics.vector.ImageVector, labe
         contentAlignment = Alignment.Center,
     ) {
         Icon(icon, label, tint = if (!enabled) Color(0xFF9CA3AF) else if (dark) Color.White else Mn.ExamText)
+    }
+}
+
+/**
+ * The exam room shows its own Highlight · Note · Clear toolbar for selected text; the system's Copy / Select all
+ * menu would cover it (and copying the passage is not part of the IELTS room), so its items are removed.
+ */
+class ExamWebView(context: android.content.Context) : WebView(context) {
+    override fun startActionMode(callback: android.view.ActionMode.Callback, type: Int): android.view.ActionMode? =
+        super.startActionMode(EmptyMenu(callback), type)
+
+    override fun startActionMode(callback: android.view.ActionMode.Callback): android.view.ActionMode? =
+        super.startActionMode(EmptyMenu(callback))
+
+    private class EmptyMenu(private val wrapped: android.view.ActionMode.Callback) : android.view.ActionMode.Callback2() {
+        override fun onCreateActionMode(mode: android.view.ActionMode, menu: android.view.Menu): Boolean {
+            wrapped.onCreateActionMode(mode, menu)
+            menu.clear()
+            return true
+        }
+
+        override fun onPrepareActionMode(mode: android.view.ActionMode, menu: android.view.Menu): Boolean {
+            wrapped.onPrepareActionMode(mode, menu)
+            menu.clear()
+            return true
+        }
+
+        override fun onActionItemClicked(mode: android.view.ActionMode, item: android.view.MenuItem): Boolean = false
+
+        override fun onDestroyActionMode(mode: android.view.ActionMode) = wrapped.onDestroyActionMode(mode)
+
+        override fun onGetContentRect(mode: android.view.ActionMode, view: android.view.View, outRect: android.graphics.Rect) {
+            if (wrapped is android.view.ActionMode.Callback2) wrapped.onGetContentRect(mode, view, outRect) else super.onGetContentRect(mode, view, outRect)
+        }
     }
 }

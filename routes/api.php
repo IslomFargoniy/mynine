@@ -100,6 +100,7 @@ Route::prefix('v1/student')->name('api.v1.student.')->group(function () {
             Route::get('parts/{part}', [StudentAttemptController::class, 'part'])->whereNumber('part')->name('part');
             Route::post('modules/{typeId}/start', [ModuleController::class, 'start'])->whereNumber('typeId')->name('modules.start');
             Route::post('modules/{typeId}/submit', [ModuleController::class, 'submit'])->whereNumber('typeId')->name('modules.submit');
+            Route::post('modules/{typeId}/audio-lag', [ModuleController::class, 'audioLag'])->whereNumber('typeId')->name('modules.audio-lag');
             Route::post('answers', [AnswerController::class, 'store'])->name('answers');
             Route::post('submit', [StudentAttemptController::class, 'submit'])->name('submit');
             Route::get('result', [StudentAttemptController::class, 'result'])->name('result');

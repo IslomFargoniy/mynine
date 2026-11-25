@@ -101,6 +101,7 @@ data class ExamModule(
     val status: String = "not_started",
     @SerialName("started_at") val startedAt: String? = null,
     @SerialName("finished_at") val finishedAt: String? = null,
+    @SerialName("audio_lag_seconds") val audioLagSeconds: Int = 0,
     val audio: ModuleAudio? = null,
     val parts: List<PartRef> = emptyList(),
 )
@@ -125,11 +126,15 @@ data class AttemptEnvelope(val attempt: AttemptState, val resumed: Boolean = fal
 data class StartAttemptBody(@SerialName("test_id") val testId: Int, val module: String? = null)
 
 @Serializable
+data class LagBody(@SerialName("lag_seconds") val lagSeconds: Int)
+
+@Serializable
 data class ModuleTimer(
     @SerialName("type_id") val typeId: Int,
     val status: String,
     @SerialName("started_at") val startedAt: String? = null,
     @SerialName("finished_at") val finishedAt: String? = null,
+    @SerialName("audio_lag_seconds") val audioLagSeconds: Int = 0,
     @SerialName("server_time") val serverTime: String? = null,
 )
 

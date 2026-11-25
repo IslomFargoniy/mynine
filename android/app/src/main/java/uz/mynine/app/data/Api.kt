@@ -46,6 +46,7 @@ interface StudentApi {
     @GET("attempts/{id}/parts/{part}") suspend fun part(@Path("id") id: Int, @Path("part") part: Int): JsonObject
     @POST("attempts/{id}/modules/{type}/start") suspend fun startModule(@Path("id") id: Int, @Path("type") typeId: Int): ModuleTimer
     @POST("attempts/{id}/modules/{type}/submit") suspend fun submitModule(@Path("id") id: Int, @Path("type") typeId: Int): JsonObject
+    @POST("attempts/{id}/modules/{type}/audio-lag") suspend fun audioLag(@Path("id") id: Int, @Path("type") typeId: Int, @Body body: LagBody): ModuleTimer
     @POST("attempts/{id}/answers") suspend fun answers(@Path("id") id: Int, @Body body: AnswersBody): AnswersResponse
     @POST("attempts/{id}/submit") suspend fun submitAttempt(@Path("id") id: Int): SummaryEnvelope
     @GET("attempts/{id}/result") suspend fun result(@Path("id") id: Int): ResultResponse

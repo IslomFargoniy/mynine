@@ -158,3 +158,32 @@ select.match.wide { min-width: 140px; }
 .progress .bar i.met { background: #10b981; }
 
 .empty { color: var(--muted); font-style: italic; padding: 24px 0; text-align: center; }
+
+/* Highlights and notes (web Inspera toolbar) */
+mark.hl { background: #fde047; color: inherit; padding: 0; border-radius: 1px; }
+mark.hl.note { background: #fde68a; border-bottom: 2px solid #f59e0b; }
+.hl-toolbar {
+  position: fixed; z-index: 50; display: none; align-items: center; gap: 2px; padding: 4px;
+  background: #fff; border: 1px solid #d1d5db; border-radius: 6px; box-shadow: 0 8px 24px rgba(0,0,0,.18);
+}
+.hl-toolbar button { font: inherit; font-size: 14px; font-weight: 600; border: none; background: transparent; color: #111827; padding: 10px 14px; border-radius: 4px; }
+.hl-toolbar button.primary { background: #fef08a; }
+.hl-toolbar .sep { width: 1px; height: 22px; background: #e5e7eb; margin: 0 2px; }
+.notes-btn {
+  font: inherit; font-size: 12px; font-weight: 600; margin: 0 0 12px; padding: 6px 10px; border-radius: 4px;
+  background: #fffbeb; border: 1px solid #fcd34d; color: #78350f;
+}
+/* Top of the screen: the on-screen keyboard never covers Save. */
+.hl-overlay { position: fixed; inset: 0; z-index: 60; background: rgba(17,24,39,.45); display: flex; align-items: flex-start; justify-content: center; padding: 10px; box-sizing: border-box; }
+.hl-card { background: #fff; width: 100%; max-width: 560px; max-height: 100%; overflow-y: auto; border-radius: 12px; padding: 16px; box-sizing: border-box; }
+.hl-title { font-size: 17px; font-weight: 700; margin-bottom: 12px; }
+.hl-quote { margin: 0 0 10px; padding: 8px 10px; background: #fefce8; border-left: 3px solid #facc15; font-size: 14px; color: #374151; }
+.hl-text { width: 100%; min-height: 120px; font: inherit; font-size: 15px; padding: 10px; border: 1px solid #9ca3af; border-radius: 4px; box-sizing: border-box; }
+.hl-text:focus { outline: none; border: 2px solid var(--accent); }
+.hl-actions { display: flex; justify-content: flex-end; gap: 8px; margin-top: 12px; }
+.hl-actions button { font: inherit; font-size: 14px; font-weight: 600; padding: 10px 16px; border-radius: 4px; border: 1px solid #d1d5db; background: #f3f4f6; color: #111827; }
+.hl-actions button.primary { background: #111827; border-color: #111827; color: #fff; }
+.hl-actions button.danger { color: #b91c1c; }
+.hl-note { border: 1px solid #e5e7eb; border-radius: 8px; padding: 10px; margin-bottom: 10px; }
+.hl-note.focus { border-color: #f59e0b; }
+.hl-body { font-size: 15px; white-space: pre-wrap; }

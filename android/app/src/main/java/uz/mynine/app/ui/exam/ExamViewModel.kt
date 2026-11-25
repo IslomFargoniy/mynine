@@ -74,6 +74,13 @@ class ExamViewModel(app: Application, private val attemptId: Int) : AndroidViewM
     val ui: StateFlow<ExamUi> = _ui.asStateFlow()
 
     private val queue = AnswerQueue(app, attemptId, viewModelScope)
+
+    /** Highlights and notes per part (exam room page format), kept on the device like the desktop app. */
+    private val marksPrefs = app.getSharedPreferences("marks-$attemptId", android.content.Context.MODE_PRIVATE)
+
+    fun saveMarks(partId: Int, json: String) {
+        marksPrefs.edit().putString(partId.toString(), json).apply()
+    }
     private var serverOffsetMs = 0L
     private var finishedAtMs = 0L
     private var ticker: Job? = null
@@ -118,7 +125,7 @@ class ExamViewModel(app: Application, private val attemptId: Int) : AndroidViewM
         val module = attempt.modules[index]
         _ui.update { it.copy(attempt = attempt, module = module, moduleIndex = index, parts = emptyList(), partIndex = 0, autoSubmitted = false) }
         if (module.status == "in_progress" && module.finishedAt != null) {
-            enterModule(module, module.startedAt, module.finishedAt)
+            enterModule(module, module.startedAt, module.finishedAt, fresh = false, knownLagSeconds = module.audioLagSeconds)
         } else {
             _ui.update { it.copy(phase = Phase.Intro) }
         }
@@ -131,14 +138,14 @@ class ExamViewModel(app: Application, private val attemptId: Int) : AndroidViewM
             try {
                 val timer = call { startModule(attemptId, module.typeId) }
                 syncClock(timer.serverTime)
-                enterModule(module, timer.startedAt, timer.finishedAt ?: return@launch)
+                enterModule(module, timer.startedAt, timer.finishedAt ?: return@launch, fresh = true, knownLagSeconds = timer.audioLagSeconds)
             } catch (e: Exception) {
                 _ui.update { it.copy(phase = Phase.Intro, error = e.userMessage()) }
             }
         }
     }
 
-    private suspend fun enterModule(module: ExamModule, startedAt: String?, finishedAt: String) {
+    private suspend fun enterModule(module: ExamModule, startedAt: String?, finishedAt: String, fresh: Boolean, knownLagSeconds: Int) {
         finishedAtMs = parseMs(finishedAt)
         val parts = module.parts.sortedBy { it.order }.map { ref ->
             val raw = call { part(attemptId, ref.id) }
@@ -154,7 +161,7 @@ class ExamViewModel(app: Application, private val attemptId: Int) : AndroidViewM
         _ui.update { it.copy(phase = Phase.Running, module = module, parts = parts, partIndex = 0, answers = answers, remainingMs = remaining()) }
         queue.start()
         startTicker()
-        if (module.type == "listening") startAudio(module, parts, startedAt)
+        if (module.type == "listening") startAudio(module, parts, startedAt, fresh, knownLagSeconds)
     }
 
     private fun startTicker() {
@@ -260,6 +267,9 @@ class ExamViewModel(app: Application, private val attemptId: Int) : AndroidViewM
             put("view", view)
             put("layout", layout)
             put("baseUrl", ApiClient.baseUrl)
+            marksPrefs.getString(part.payload.id.toString(), null)
+                ?.let { runCatching { AppJson.parseToJsonElement(it) }.getOrNull() }
+                ?.let { put("marks", it) }
         }
         return config.toString()
     }
@@ -267,7 +277,7 @@ class ExamViewModel(app: Application, private val attemptId: Int) : AndroidViewM
     // ------------------------------------------------------------ audio (Listening plays once, never paused)
 
     @OptIn(UnstableApi::class)
-    private fun startAudio(module: ExamModule, parts: List<LoadedPart>, startedAt: String?) {
+    private fun startAudio(module: ExamModule, parts: List<LoadedPart>, startedAt: String?, fresh: Boolean, knownLagSeconds: Int) {
         stopAudio()
         val urls = module.audio?.let { listOf(it.url) }
             ?: parts.filter { p -> p.raw["audio_key"].let { it != null && it !is JsonNull } }
@@ -278,17 +288,38 @@ class ExamViewModel(app: Application, private val attemptId: Int) : AndroidViewM
         val exo = ExoPlayer.Builder(getApplication()).setMediaSourceFactory(factory).build()
         exo.setMediaItems(urls.map { MediaItem.fromUri(it) })
         exo.volume = _ui.value.volume
+        val startedAtMs = startedAt?.let { parseMs(it) } ?: now()
+        var reported = false
         exo.addListener(object : Player.Listener {
             override fun onIsPlayingChanged(isPlaying: Boolean) {
                 _ui.update { it.copy(audioPlaying = isPlaying) }
+                // The recording started later than the module clock (parts loading, buffering, app closed):
+                // the module ends that much later, like the desktop app (total lag, the server never shortens).
+                if (isPlaying && !reported && urls.size == 1) {
+                    reported = true
+                    val lagSeconds = ((now() - startedAtMs - exo.currentPosition) / 1000).toInt()
+                    if (lagSeconds > knownLagSeconds) reportAudioLag(module.typeId, lagSeconds)
+                }
             }
         })
-        // Resumed module: continue the recording where the clock is (one file only).
-        val elapsed = startedAt?.let { now() - parseMs(it) } ?: 0L
-        if (urls.size == 1 && elapsed > 1500) exo.seekTo(elapsed)
+        // A new module always plays from 0:00. A resumed one continues where the recording is now: the time since
+        // the start minus the lag already added to the clock.
+        if (!fresh && urls.size == 1) {
+            val position = now() - startedAtMs - knownLagSeconds * 1000L
+            if (position > 1500) exo.seekTo(position)
+        }
         exo.prepare()
         exo.playWhenReady = true
         player = exo
+    }
+
+    private fun reportAudioLag(typeId: Int, lagSeconds: Int) {
+        viewModelScope.launch {
+            runCatching { call { audioLag(attemptId, typeId, uz.mynine.app.data.LagBody(lagSeconds)) } }.getOrNull()?.let { timer ->
+                syncClock(timer.serverTime)
+                timer.finishedAt?.let { finishedAtMs = parseMs(it) }
+            }
+        }
     }
 
     private fun stopAudio() {

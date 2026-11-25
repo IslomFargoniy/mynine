@@ -19,6 +19,8 @@
     part: null,
     answers: {},
     flagged: {},
+    marks: [], // highlights + note marks: {id, doc, start, end, kind, note_id}
+    notes: [], // candidate notes: {id, doc, quote, note}
     locked: false,
     view: 'questions',
     layout: 'phone',
@@ -254,9 +256,11 @@
     if (!has) return false;
 
     html = html.replace(PASSAGE_ZONE, '').replace(PASSAGE_SLOT, function (_, n) {
-      return '<span class="slot" data-slot="' + n + '"><b>' + n + '</b><span class="slot-val"></span></span>';
+      return '<span class="slot" data-nomark="1" data-slot="' + n + '"><b>' + n + '</b><span class="slot-val"></span></span>';
     });
     var body = el('div', 'html', sanitize(html));
+    body.dataset.doc = 'p';
+    pane.appendChild(notesButton());
     pane.appendChild(body);
     var slots = body.querySelectorAll('.slot');
     for (var i = 0; i < slots.length; i++) {
@@ -286,6 +290,7 @@
   function renderQuestions() {
     var pane = document.getElementById('questions');
     pane.innerHTML = '';
+    pane.appendChild(notesButton());
     var sections = state.part.sections || [];
     if (!sections.length) {
       pane.appendChild(el('div', 'empty', 'No questions in this part.'));
@@ -307,7 +312,9 @@
 
   function instructions(section) {
     if (!plainText(section.html) && !/<img/i.test(section.html || '')) return null;
-    return el('div', 'instructions html', sanitize(section.html));
+    var node = el('div', 'instructions html', sanitize(section.html));
+    node.dataset.doc = 's' + section.id;
+    return node;
   }
 
   function gapInput(q, fontEm) {
@@ -347,10 +354,11 @@
   }
 
   function renderCompleteSection(box, section) {
-    box.appendChild(withBlanks(section.html, SECTION_BLANK, function (i) {
+    box.appendChild(docRoot('s' + section.id, withBlanks(section.html, SECTION_BLANK, function (i) {
       var q = section.questions[i];
       if (!q) return null;
       var wrap = el('span', 'gapwrap');
+      wrap.dataset.nomark = '1';
       wrap.id = 'q-' + q.id;
       var num = el('b', 'gapnum', escapeHtml(q.number) + '.');
       num.dataset.flag = q.id;
@@ -358,14 +366,15 @@
       wrap.appendChild(num);
       wrap.appendChild(gapInput(q));
       return wrap;
-    }));
+    })));
   }
 
   function renderDragDrop(box, section) {
-    box.appendChild(withBlanks(section.html, SECTION_BLANK, function (i) {
+    box.appendChild(docRoot('s' + section.id, withBlanks(section.html, SECTION_BLANK, function (i) {
       var q = section.questions[i];
       if (!q) return null;
       var drop = el('span', 'drop');
+      drop.dataset.nomark = '1';
       drop.id = 'q-' + q.id;
       drop.dataset.drop = q.id;
       drop.addEventListener('click', function (e) {
@@ -381,7 +390,7 @@
         refreshDragDrop(section, box);
       });
       return drop;
-    }));
+    })));
     var bank = el('div', 'bank');
     bank.dataset.bank = section.id;
     box.appendChild(bank);
@@ -522,6 +531,7 @@
       var blanks = (String(q.html || '').match(EMPTY_BLANK) || []).length;
       var text = withBlanks(q.html, EMPTY_BLANK, function () { return gapInput(q); });
       text.classList.add('qtext');
+      text.dataset.doc = 'q' + q.id;
       body.appendChild(text);
       if (type === 'fill_blank' && blanks === 0) body.appendChild(gapInput(q));
 
@@ -567,6 +577,355 @@
     });
   }
 
+
+  // ---------------------------------------------------------------- highlights and notes
+  //
+  // Like the web / desktop exam room (Inspera toolbar): select text → Highlight · Note · Clear. Marks are stored
+  // as character offsets in a "document" (the passage, a section text, a question text), counting only static
+  // text (nodes inside [data-nomark] — answer boxes, slots, numbers — change and are skipped). The app keeps them
+  // per attempt and part ({type:'marks'}) and passes them back in render({marks}).
+
+  function docRoot(docId, node) {
+    node.dataset.doc = docId;
+    return node;
+  }
+
+  function markTextNodes(root) {
+    var out = [];
+    var walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT, {
+      acceptNode: function (node) {
+        var p = node.parentNode;
+        while (p && p !== root) {
+          if (p.dataset && p.dataset.nomark) return NodeFilter.FILTER_REJECT;
+          if (p.tagName === 'SCRIPT' || p.tagName === 'STYLE') return NodeFilter.FILTER_REJECT;
+          p = p.parentNode;
+        }
+        return NodeFilter.FILTER_ACCEPT;
+      },
+    });
+    var n;
+    while ((n = walker.nextNode())) out.push(n);
+    return out;
+  }
+
+  /** Character offset of a DOM point (container, offset) inside root. */
+  function pointOffset(root, container, offset) {
+    var point = document.createRange();
+    point.setStart(container, offset);
+    point.collapse(true);
+    var total = 0;
+    var nodes = markTextNodes(root);
+    for (var i = 0; i < nodes.length; i++) {
+      var t = nodes[i];
+      if (t === container) return total + Math.min(offset, t.length);
+      // Text node entirely before the point: count it whole.
+      if (point.comparePoint(t, t.length) <= 0) { total += t.length; continue; }
+      break;
+    }
+    return total;
+  }
+
+  function docOf(node) {
+    while (node && node !== document.body) {
+      if (node.dataset && node.dataset.doc) return node;
+      node = node.parentNode;
+    }
+    return null;
+  }
+
+  function wrapRange(root, start, end, mark) {
+    var nodes = markTextNodes(root);
+    var pos = 0;
+    for (var i = 0; i < nodes.length; i++) {
+      var t = nodes[i];
+      var from = pos, to = pos + t.length;
+      pos = to;
+      if (to <= start || from >= end) continue;
+      var a = Math.max(start, from) - from;
+      var b = Math.min(end, to) - from;
+      if (b <= a) continue;
+      var target = t;
+      if (a > 0) target = target.splitText(a);
+      if (b - a < target.length) target.splitText(b - a);
+      var m = document.createElement('mark');
+      m.className = 'hl' + (mark.kind === 'note' ? ' note' : '');
+      m.dataset.mark = mark.id;
+      target.parentNode.insertBefore(m, target);
+      m.appendChild(target);
+    }
+  }
+
+  function applyMarks() {
+    var roots = document.querySelectorAll('[data-doc]');
+    var byDoc = {};
+    for (var i = 0; i < roots.length; i++) byDoc[roots[i].dataset.doc] = roots[i];
+    // Offsets are computed on the unmarked text, so wrap the later marks first (splits never move earlier text).
+    state.marks.slice().sort(function (x, y) { return y.start - x.start; }).forEach(function (mark) {
+      var root = byDoc[mark.doc];
+      if (root) wrapRange(root, mark.start, mark.end, mark);
+    });
+    var marks = document.querySelectorAll('mark.hl');
+    for (var j = 0; j < marks.length; j++) {
+      marks[j].addEventListener('click', onMarkTap);
+    }
+    refreshNotesButton();
+  }
+
+  function rerenderMarks() {
+    // Unwrap every mark, merge the text back, wrap again.
+    var marks = document.querySelectorAll('mark.hl');
+    for (var i = 0; i < marks.length; i++) {
+      var m = marks[i];
+      var parent = m.parentNode;
+      while (m.firstChild) parent.insertBefore(m.firstChild, m);
+      parent.removeChild(m);
+      parent.normalize();
+    }
+    applyMarks();
+  }
+
+  function saveMarks() {
+    send('marks', { part_id: state.part.id, marks: state.marks, notes: state.notes });
+  }
+
+  function uid() {
+    return 'm' + Date.now().toString(36) + Math.random().toString(36).slice(2, 7);
+  }
+
+  var toolbar = null;
+  var toolbarSel = null; // {doc, start, end, text} or {markId}
+  var selTimer = null;
+
+  function ensureToolbar() {
+    if (toolbar) return toolbar;
+    toolbar = el('div', 'hl-toolbar');
+    toolbar.setAttribute('role', 'toolbar');
+    toolbar.innerHTML =
+      '<button type="button" data-act="note">Note</button>' +
+      '<button type="button" data-act="clear">Clear</button>' +
+      '<span class="sep"></span>' +
+      '<button type="button" data-act="highlight" class="primary">Highlight</button>';
+    var keep = function (e) { e.preventDefault(); };
+    toolbar.addEventListener('mousedown', keep);
+    toolbar.addEventListener('touchstart', keep, { passive: false });
+    toolbar.addEventListener('pointerdown', keep);
+    toolbar.addEventListener('touchend', function (e) {
+      var btn = e.target.closest('button');
+      if (!btn) return;
+      e.preventDefault();
+      act(btn.dataset.act);
+    });
+    toolbar.addEventListener('click', function (e) {
+      var btn = e.target.closest('button');
+      if (btn) act(btn.dataset.act);
+    });
+    document.body.appendChild(toolbar);
+    return toolbar;
+  }
+
+  function showToolbar(rect, mode) {
+    var bar = ensureToolbar();
+    bar.querySelector('[data-act="highlight"]').style.display = mode === 'mark' ? 'none' : '';
+    bar.querySelector('[data-act="note"]').style.display = mode === 'mark' ? 'none' : '';
+    bar.querySelector('.sep').style.display = mode === 'mark' ? 'none' : '';
+    bar.style.display = 'flex';
+    var w = bar.offsetWidth || 240, h = bar.offsetHeight || 44;
+    // Below the selection: the system's own selection menu sits above it.
+    var top = rect.bottom + 34; // clear of the selection handles
+    if (top + h > window.innerHeight - 8) top = Math.max(8, rect.top - h - 12);
+    var left = Math.min(Math.max(8, rect.left + rect.width / 2 - w / 2), window.innerWidth - w - 8);
+    bar.style.top = top + 'px';
+    bar.style.left = left + 'px';
+  }
+
+  function hideToolbar() {
+    if (toolbar) toolbar.style.display = 'none';
+    toolbarSel = null;
+  }
+
+  function currentSelection() {
+    var sel = window.getSelection();
+    if (!sel || sel.rangeCount === 0 || sel.isCollapsed) return null;
+    var range = sel.getRangeAt(0);
+    var doc = docOf(range.startContainer);
+    if (!doc || doc !== docOf(range.endContainer)) return null;
+    var start = pointOffset(doc, range.startContainer, range.startOffset);
+    var end = pointOffset(doc, range.endContainer, range.endOffset);
+    if (end <= start) return null;
+    var text = sel.toString().replace(/\s+/g, ' ').trim();
+    if (!text) return null;
+    return { doc: doc.dataset.doc, start: start, end: end, text: text, rect: range.getBoundingClientRect() };
+  }
+
+  document.addEventListener('selectionchange', function () {
+    clearTimeout(selTimer);
+    selTimer = setTimeout(function () {
+      var s = currentSelection();
+      if (!s) {
+        if (toolbarSel && !toolbarSel.markId) hideToolbar();
+        return;
+      }
+      toolbarSel = s;
+      showToolbar(s.rect, 'select');
+    }, 250);
+  });
+
+  function onMarkTap(e) {
+    var sel = window.getSelection();
+    if (sel && !sel.isCollapsed) return;
+    e.stopPropagation();
+    var id = e.currentTarget.dataset.mark;
+    var mark = state.marks.filter(function (m) { return m.id === id; })[0];
+    if (!mark) return;
+    if (mark.kind === 'note') {
+      var note = state.notes.filter(function (n) { return n.id === mark.note_id; })[0];
+      if (note) { openNotes(note.id); return; }
+    }
+    toolbarSel = { markId: id };
+    showToolbar(e.currentTarget.getBoundingClientRect(), 'mark');
+  }
+
+  document.addEventListener('click', function (e) {
+    if (toolbar && toolbar.contains(e.target)) return;
+    if (e.target.closest && e.target.closest('mark.hl')) return;
+    var sel = window.getSelection();
+    if (toolbarSel && toolbarSel.markId && (!sel || sel.isCollapsed)) hideToolbar();
+  });
+
+  function act(action) {
+    var s = toolbarSel;
+    if (!s) return;
+    if (action === 'clear') {
+      if (s.markId) {
+        removeMarks(function (m) { return m.id === s.markId; });
+      } else {
+        removeMarks(function (m) { return m.doc === s.doc && m.start < s.end && m.end > s.start; });
+      }
+    } else if (action === 'highlight' && !s.markId) {
+      state.marks.push({ id: uid(), doc: s.doc, start: s.start, end: s.end, kind: 'highlight' });
+      saveMarks();
+      rerenderMarks();
+    } else if (action === 'note' && !s.markId) {
+      var picked = { doc: s.doc, start: s.start, end: s.end, text: s.text };
+      clearSelection();
+      hideToolbar();
+      openNoteEditor(picked);
+      return;
+    }
+    clearSelection();
+    hideToolbar();
+  }
+
+  /** Remove marks (a note mark keeps its note, like the web Clear). */
+  function removeMarks(test) {
+    var before = state.marks.length;
+    state.marks = state.marks.filter(function (m) { return !test(m); });
+    if (state.marks.length !== before) {
+      saveMarks();
+      rerenderMarks();
+    }
+  }
+
+  function clearSelection() {
+    var sel = window.getSelection();
+    if (sel) sel.removeAllRanges();
+  }
+
+  // ------------------------------------------- note editor and the "Candidate Notes" list
+
+  function overlay(content) {
+    var back = el('div', 'hl-overlay');
+    var card = el('div', 'hl-card');
+    card.appendChild(content);
+    back.appendChild(card);
+    back.addEventListener('click', function (e) { if (e.target === back) close(); });
+    function close() { if (back.parentNode) back.parentNode.removeChild(back); }
+    document.body.appendChild(back);
+    return close;
+  }
+
+  function openNoteEditor(picked) {
+    var box = el('div');
+    box.innerHTML = '<div class="hl-title">Add note</div><blockquote class="hl-quote"></blockquote>' +
+      '<textarea class="hl-text" placeholder="Write your note…" maxlength="2000"></textarea>' +
+      '<div class="hl-actions"><button type="button" data-a="cancel">Cancel</button><button type="button" class="primary" data-a="save">Save</button></div>';
+    box.querySelector('.hl-quote').textContent = picked.text.length > 160 ? picked.text.slice(0, 160) + '…' : picked.text;
+    var close = overlay(box);
+    var area = box.querySelector('textarea');
+    setTimeout(function () { area.focus(); }, 50);
+    box.querySelector('[data-a="cancel"]').addEventListener('click', close);
+    box.querySelector('[data-a="save"]').addEventListener('click', function () {
+      var text = area.value.trim();
+      if (!text) { area.focus(); return; }
+      var id = uid();
+      state.notes.push({ id: id, doc: picked.doc, quote: picked.text, note: text });
+      state.marks.push({ id: uid(), doc: picked.doc, start: picked.start, end: picked.end, kind: 'note', note_id: id });
+      saveMarks();
+      rerenderMarks();
+      close();
+    });
+  }
+
+  function openNotes(focusId) {
+    var box = el('div');
+    var render = function () {
+      box.innerHTML = '<div class="hl-title">Candidate Notes (' + state.notes.length + ')</div>';
+      if (!state.notes.length) box.appendChild(el('div', 'empty', 'No notes yet. Select text and tap Note.'));
+      state.notes.forEach(function (n) {
+        var item = el('div', 'hl-note' + (n.id === focusId ? ' focus' : ''));
+        item.innerHTML = '<blockquote class="hl-quote"></blockquote><div class="hl-body"></div>' +
+          '<div class="hl-actions"><button type="button" data-a="go">Show</button><button type="button" data-a="del" class="danger">Delete</button></div>';
+        item.querySelector('.hl-quote').textContent = n.quote;
+        item.querySelector('.hl-body').textContent = n.note;
+        item.querySelector('[data-a="del"]').addEventListener('click', function () {
+          state.notes = state.notes.filter(function (x) { return x.id !== n.id; });
+          state.marks = state.marks.filter(function (m) { return m.note_id !== n.id; });
+          saveMarks();
+          rerenderMarks();
+          render();
+        });
+        item.querySelector('[data-a="go"]').addEventListener('click', function () {
+          close();
+          var mark = state.marks.filter(function (m) { return m.note_id === n.id; })[0];
+          var node = mark && document.querySelector('mark[data-mark="' + mark.id + '"]');
+          if (!node) return;
+          if (state.layout !== 'split') {
+            state.view = mark.doc === 'p' ? 'passage' : 'questions';
+            applyClasses();
+            send('view', { view: state.view });
+          }
+          node.scrollIntoView({ block: 'center' });
+          node.classList.remove('flash');
+          void node.offsetWidth;
+          node.classList.add('flash');
+        });
+        box.appendChild(item);
+      });
+      var done = el('div', 'hl-actions');
+      done.innerHTML = '<button type="button" class="primary">Close</button>';
+      done.querySelector('button').addEventListener('click', function () { close(); });
+      box.appendChild(done);
+    };
+    render();
+    var close = overlay(box);
+  }
+
+  function notesButton() {
+    var btn = el('button', 'notes-btn');
+    btn.type = 'button';
+    btn.addEventListener('click', function () { openNotes(null); });
+    return btn;
+  }
+
+  function refreshNotesButton() {
+    var count = state.notes.length;
+    var buttons = document.querySelectorAll('.notes-btn');
+    for (var i = 0; i < buttons.length; i++) {
+      buttons[i].textContent = '✎ Candidate Notes (' + count + ')';
+      buttons[i].style.display = count ? '' : 'none';
+    }
+  }
+
   // ---------------------------------------------------------------- public API
 
   function applyClasses() {
@@ -610,10 +969,15 @@
       state.layout = config.layout || 'phone';
       state.baseUrl = config.baseUrl || '';
       state.picked = null;
+      var saved = config.marks || {};
+      state.marks = (saved.marks || []).slice();
+      state.notes = (saved.notes || []).slice();
+      hideToolbar();
       applyClasses();
       var hasPassage = renderPassage();
       renderQuestions();
       refreshFlags();
+      applyMarks();
       document.getElementById('passage').scrollTop = 0;
       document.getElementById('questions').scrollTop = 0;
       send('ready', { hasPassage: hasPassage, part_id: state.part.id });
