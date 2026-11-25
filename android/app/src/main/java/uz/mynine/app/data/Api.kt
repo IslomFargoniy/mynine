@@ -24,6 +24,7 @@ interface StudentApi {
     @POST("auth/telegram") suspend fun loginTelegram(@Body body: CodeBody): AuthResponse
     @POST("auth/password") suspend fun loginPassword(@Body body: PasswordBody): AuthResponse
     @POST("auth/google") suspend fun loginGoogle(@Body body: GoogleBody): AuthResponse
+    @POST("auth/google/exchange") suspend fun googleExchange(@Body body: TokenBody): AuthResponse
     @POST("auth/logout") suspend fun logout(): JsonObject
     @GET("app/version") suspend fun version(@Query("platform") platform: String = "android"): VersionInfo
 
@@ -119,6 +120,7 @@ suspend fun <T> call(block: suspend StudentApi.() -> T): T = try {
 fun Throwable.userMessage(): String = when (this) {
     is ApiException -> when (code) {
         "invalid_code" -> "Kod noto'g'ri yoki muddati o'tgan. Botdan yangi kod oling."
+        "invalid_token" -> "Google orqali kirish muddati o'tdi. Qayta urinib ko'ring."
         "invalid_credentials" -> "Login yoki parol noto'g'ri."
         "staff_account" -> "Bu xodim akkaunti. Xodimlar mynine.uz saytidan foydalanadi."
         "account_suspended" -> "Akkaunt bloklangan."

@@ -80,6 +80,7 @@ Route::prefix('v1/student')->name('api.v1.student.')->group(function () {
         Route::post('telegram', [StudentAuthController::class, 'telegram'])->name('telegram');
         Route::post('password', [StudentAuthController::class, 'password'])->name('password');
         Route::post('google', [StudentAuthController::class, 'google'])->name('google');
+        Route::post('google/exchange', [StudentAuthController::class, 'googleExchange'])->name('google.exchange');
         Route::post('apple', [StudentAuthController::class, 'apple'])->name('apple');
     });
 

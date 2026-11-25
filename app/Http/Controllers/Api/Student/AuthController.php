@@ -3,15 +3,15 @@
 namespace App\Http\Controllers\Api\Student;
 
 use App\Exceptions\ApiException;
-use App\Http\Controllers\Auth\SocialUsername;
 use App\Http\Controllers\Controller;
 use App\Models\User\User;
 use App\Services\Student\AppLoginCodes;
+use App\Services\Student\GoogleWebSignIn;
 use App\Services\Student\SocialTokenVerifier;
+use App\Services\Student\StudentAccounts;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
-use Illuminate\Support\Str;
 
 /**
  * Mobile sign-in: Telegram bot code, email/username + password, Google and Apple identity tokens.
@@ -19,7 +19,10 @@ use Illuminate\Support\Str;
  */
 class AuthController extends Controller
 {
-    public function __construct(private readonly SocialTokenVerifier $verifier) {}
+    public function __construct(
+        private readonly SocialTokenVerifier $verifier,
+        private readonly StudentAccounts $accounts,
+    ) {}
 
     /**
      * POST /student/auth/telegram {code} — the 6-digit code @MynineUzBot sent (or the store reviewer code).
@@ -74,19 +77,7 @@ class AuthController extends Controller
             throw ApiException::unprocessable('invalid_token', 'Google sign-in failed. Try again.');
         }
 
-        $byGoogle = User::where('google_id', $claims['sub'])->first();
-        $byEmail = User::where('email', $claims['email'])->first();
-        $user = $byGoogle ?? $byEmail;
-
-        if (! $user) {
-            $user = $this->createStudent($claims['name'] ?: 'Google user', $claims['email'], ['google_id' => $claims['sub'], 'avatar' => $claims['picture']]);
-        } else {
-            $user->forceFill([
-                'google_id' => $user->google_id ?: $claims['sub'],
-                'avatar' => $user->avatar ?: $claims['picture'],
-                'email_verified_at' => $user->email_verified_at ?? now(),
-            ])->saveQuietly();
-        }
+        $user = $this->accounts->fromGoogle($claims['sub'], $claims['email'], $claims['name'] ?: null, $claims['picture'] ?: null);
 
         return $this->issue($request, $user);
     }
@@ -165,17 +156,24 @@ class AuthController extends Controller
         return response()->json(config('mobile.'.$platform) + ['platform' => $platform]);
     }
 
+    /**
+     * POST /student/auth/google/exchange {token} — the one-time token the browser sign-in
+     * (GET /app/google → Google → /app/google/callback) handed back to the app in mynine://auth.
+     */
+    public function googleExchange(Request $request, GoogleWebSignIn $signIn): JsonResponse
+    {
+        $data = $request->validate(['token' => ['required', 'string', 'max:128']]);
+        $user = $signIn->consume($data['token']);
+        if (! $user) {
+            throw ApiException::unprocessable('invalid_token', 'Google sign-in expired. Try again.');
+        }
+
+        return $this->issue($request, $user);
+    }
+
     private function createStudent(string $name, ?string $email, array $attributes): User
     {
-        $user = User::create([
-            'name' => $name,
-            'email' => $email,
-            'username' => SocialUsername::unique($email ? explode('@', $email)[0] : 'user'.Str::lower(Str::random(6))),
-        ]);
-        $user->forceFill($attributes + ['email_verified_at' => $email ? now() : null])->saveQuietly();
-        $user->assignRole('Student');
-
-        return $user;
+        return $this->accounts->create($name, $email, $attributes);
     }
 
     private function issue(Request $request, User $user): JsonResponse

@@ -5,6 +5,7 @@ use App\Http\Controllers\AttemptAnswerController;
 use App\Http\Controllers\AttemptController;
 use App\Http\Controllers\AttemptPartController;
 use App\Http\Controllers\AttemptTypeController;
+use App\Http\Controllers\Auth\AppGoogleController;
 use App\Http\Controllers\Auth\GithubAuthController;
 use App\Http\Controllers\Auth\GoogleAuthController;
 use App\Http\Controllers\Auth\TelegramAuthController;
@@ -286,6 +287,10 @@ require __DIR__.'/auth.php';
 
 Route::get('/auth/google', [GoogleAuthController::class, 'redirect'])->name('google.redirect');
 Route::get('/auth/google/callback', [GoogleAuthController::class, 'callback'])->name('google.callback');
+
+// Mobile apps: Google sign-in through the browser, back to the app at mynine://auth
+Route::get('/app/google', [AppGoogleController::class, 'redirect'])->middleware('throttle:30,1')->name('app.google');
+Route::get('/app/google/callback', [AppGoogleController::class, 'callback'])->name('app.google.callback');
 
 Route::get('/auth/github', [GithubAuthController::class, 'redirect'])->name('github.redirect');
 Route::get('/auth/github/callback', [GithubAuthController::class, 'callback'])->name('github.callback');

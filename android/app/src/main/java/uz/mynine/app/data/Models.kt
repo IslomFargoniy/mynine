@@ -284,4 +284,7 @@ data class PasswordBody(val login: String, val password: String)
 data class GoogleBody(@SerialName("id_token") val idToken: String)
 
 @Serializable
+data class TokenBody(val token: String)
+
+@Serializable
 data class NameBody(val name: String)

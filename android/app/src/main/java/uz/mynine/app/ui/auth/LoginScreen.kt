@@ -34,6 +34,8 @@ import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -69,6 +71,7 @@ import uz.mynine.app.data.CodeBody
 import uz.mynine.app.data.GoogleBody
 import uz.mynine.app.data.PasswordBody
 import uz.mynine.app.data.Session
+import uz.mynine.app.data.TokenBody
 import uz.mynine.app.data.call
 import uz.mynine.app.data.userMessage
 import uz.mynine.app.ui.theme.GlassBackground
@@ -104,6 +107,22 @@ fun LoginScreen(onSignedIn: () -> Unit) {
             } finally {
                 busy = false
             }
+        }
+    }
+
+    // Back from the browser sign-in (mynine://auth).
+    val webResult by GoogleWebSignIn.result.collectAsState()
+    LaunchedEffect(webResult) {
+        when (val r = webResult) {
+            is GoogleWebSignIn.Result.Token -> {
+                GoogleWebSignIn.consumed()
+                submit { Session.signIn(call { googleExchange(TokenBody(r.token)) }) }
+            }
+            GoogleWebSignIn.Result.Failed -> {
+                GoogleWebSignIn.consumed()
+                error = "Google orqali kirib bo'lmadi. Telegram kodi bilan kiring."
+            }
+            null -> Unit
         }
     }
 
@@ -143,9 +162,16 @@ fun LoginScreen(onSignedIn: () -> Unit) {
             ) {
                 if (BuildConfig.GOOGLE_WEB_CLIENT_ID.isNotBlank()) {
                     SecondaryButton("Google bilan kirish", Modifier.fillMaxWidth(), painter = painterResource(R.drawable.ic_google), enabled = !busy) {
-                        submit {
-                            val token = googleIdToken(context) ?: throw IllegalStateException("Google orqali kirish bekor qilindi")
-                            Session.signIn(call { loginGoogle(GoogleBody(token)) })
+                        if (!busy) {
+                            busy = true
+                            error = null
+                            scope.launch {
+                                // No token from the account sheet (closed, or the sheet failed): sign in through the browser.
+                                val token = googleIdToken(context)
+                                busy = false
+                                if (token == null) GoogleWebSignIn.start(context)
+                                else submit { Session.signIn(call { loginGoogle(GoogleBody(token)) }) }
+                            }
                         }
                     }
                     Divider("yoki Telegram kodi")
@@ -284,6 +310,6 @@ private suspend fun googleIdToken(context: Context): String? {
         null
     } catch (e: GetCredentialException) {
         Log.w("GoogleSignIn", "getCredential failed: ${e.type}", e)
-        throw IllegalStateException("Google orqali kirib bo'lmadi. Telegram kodi bilan kiring.")
+        null
     }
 }

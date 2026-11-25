@@ -1,6 +1,7 @@
 package uz.mynine.app
 
 import android.app.Application
+import android.content.Intent
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -15,6 +16,7 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
 import uz.mynine.app.data.Session
+import uz.mynine.app.ui.auth.GoogleWebSignIn
 import uz.mynine.app.ui.auth.LoginScreen
 import uz.mynine.app.ui.exam.ExamScreen
 import uz.mynine.app.ui.main.MainScreen
@@ -33,7 +35,13 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
+        GoogleWebSignIn.deliver(intent?.data, this)
         setContent { MynineTheme { AppNav() } }
+    }
+
+    override fun onNewIntent(intent: Intent) {
+        super.onNewIntent(intent)
+        GoogleWebSignIn.deliver(intent.data, this)
     }
 }
 
