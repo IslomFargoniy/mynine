@@ -137,7 +137,7 @@ struct HomeView: View {
                         HStack {
                             VStack(alignment: .leading, spacing: 3) {
                                 Text(t.name).font(.system(size: 15, weight: .bold)).foregroundStyle(Mn.ink)
-                                Text(t.modules.map { String($0.title.prefix(1)) }.joined(separator: " · ") + " · " + Fmt.minutes(t.modules.reduce(0) { $0 + ($1.durationSeconds ?? 0) }))
+                                Text([t.folder?.name.trimmingCharacters(in: .whitespaces), t.modules.map { String($0.title.prefix(1)) }.joined(separator: " · "), Fmt.minutes(t.modules.reduce(0) { $0 + ($1.durationSeconds ?? 0) })].compactMap { $0 }.joined(separator: " · "))
                                     .font(.system(size: 13)).foregroundStyle(Mn.subtle)
                             }
                             Spacer()

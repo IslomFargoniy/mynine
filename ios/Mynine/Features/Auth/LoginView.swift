@@ -41,7 +41,7 @@ struct LoginView: View {
                         .frame(height: 52)
                         .clipShape(Capsule())
 
-                        SecondaryButton(title: "Google bilan kirish", systemImage: "person.crop.circle", enabled: !busy) {
+                        SecondaryButton(title: "Google bilan kirish", image: "GoogleLogo", enabled: !busy) {
                             run {
                                 guard let token = try await google.idToken() else { throw CancellationError() }
                                 session.signIn(try await API.shared.send(.post, "auth/google", body: ["id_token": token]))

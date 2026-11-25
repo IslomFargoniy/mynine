@@ -132,7 +132,7 @@ fun HomeTab(
                 Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(3.dp)) {
                     Text(t.name, fontSize = 15.sp, fontWeight = FontWeight.Bold, color = Mn.Ink)
                     Text(
-                        t.modules.joinToString(" · ") { it.title.take(1) } + " · " + minutes(t.modules.sumOf { it.durationSeconds }),
+                        listOfNotNull(t.folder?.name?.trim(), t.modules.joinToString(" · ") { it.title.take(1) }, minutes(t.modules.sumOf { it.durationSeconds })).joinToString(" · "),
                         fontSize = 13.sp, color = Mn.Subtle,
                     )
                 }

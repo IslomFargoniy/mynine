@@ -27,7 +27,6 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.outlined.Send
-import androidx.compose.material.icons.outlined.AccountCircle
 import androidx.compose.material.icons.outlined.Lock
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
@@ -143,7 +142,7 @@ fun LoginScreen(onSignedIn: () -> Unit) {
                 verticalArrangement = Arrangement.spacedBy(12.dp),
             ) {
                 if (BuildConfig.GOOGLE_WEB_CLIENT_ID.isNotBlank()) {
-                    SecondaryButton("Google bilan kirish", Modifier.fillMaxWidth(), icon = Icons.Outlined.AccountCircle, enabled = !busy) {
+                    SecondaryButton("Google bilan kirish", Modifier.fillMaxWidth(), painter = painterResource(R.drawable.ic_google), enabled = !busy) {
                         submit {
                             val token = googleIdToken(context) ?: throw IllegalStateException("Google orqali kirish bekor qilindi")
                             Session.signIn(call { loginGoogle(GoogleBody(token)) })

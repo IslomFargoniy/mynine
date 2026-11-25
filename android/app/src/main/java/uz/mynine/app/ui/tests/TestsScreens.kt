@@ -11,6 +11,7 @@ import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -127,7 +128,7 @@ fun TestsTab(initialModule: String?, openTest: (Int) -> Unit) {
             }
         }
         item {
-            FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+            Row(Modifier.horizontalScroll(rememberScrollState()), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 Filters.forEach { (id, label) ->
                     val on = module == id
                     Text(
@@ -232,6 +233,7 @@ fun TestDetailScreen(testId: Int, onBack: () -> Unit, openExam: (Int) -> Unit, o
                             Text(t.name, fontSize = 28.sp, fontWeight = FontWeight.ExtraBold, color = Mn.Ink, lineHeight = 32.sp)
                             Text(
                                 listOfNotNull(
+                                    t.folder?.name?.trim(),
                                     t.variant?.let { if (it == "general") "General Training" else "Academic" },
                                     "${t.modules.size} modul",
                                     minutes(t.modules.sumOf { it.durationSeconds }),

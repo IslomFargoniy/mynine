@@ -148,7 +148,14 @@ fun PrimaryButton(text: String, modifier: Modifier = Modifier, enabled: Boolean 
 }
 
 @Composable
-fun SecondaryButton(text: String, modifier: Modifier = Modifier, icon: ImageVector? = null, enabled: Boolean = true, onClick: () -> Unit) {
+fun SecondaryButton(
+    text: String,
+    modifier: Modifier = Modifier,
+    icon: ImageVector? = null,
+    painter: androidx.compose.ui.graphics.painter.Painter? = null,
+    enabled: Boolean = true,
+    onClick: () -> Unit,
+) {
     OutlinedButton(
         onClick = onClick,
         enabled = enabled,
@@ -157,7 +164,11 @@ fun SecondaryButton(text: String, modifier: Modifier = Modifier, icon: ImageVect
         border = BorderStroke(1.dp, Color(0xFFE2E8F0)),
         colors = ButtonDefaults.outlinedButtonColors(containerColor = Color.White, contentColor = Mn.Ink),
     ) {
-        if (icon != null) {
+        if (painter != null) {
+            // Brand marks keep their own colours.
+            androidx.compose.foundation.Image(painter, null, Modifier.size(20.dp))
+            Spacer(Modifier.width(10.dp))
+        } else if (icon != null) {
             Icon(icon, null, Modifier.size(20.dp))
             Spacer(Modifier.width(10.dp))
         }

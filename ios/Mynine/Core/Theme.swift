@@ -101,13 +101,15 @@ struct PrimaryButton: View {
 struct SecondaryButton: View {
     let title: String
     var systemImage: String?
+    /// Asset catalog image kept in its own colours (brand marks).
+    var image: String?
     var enabled = true
     let action: () -> Void
 
     var body: some View {
         Button(action: action) {
             HStack(spacing: 10) {
-                if let systemImage { Image(systemName: systemImage) }
+                if let image { Image(image).resizable().scaledToFit().frame(width: 20, height: 20) } else if let systemImage { Image(systemName: systemImage) }
                 Text(title).font(.system(size: 15, weight: .semibold))
             }
             .frame(maxWidth: .infinity, minHeight: 52)

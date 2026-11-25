@@ -135,7 +135,7 @@ struct TestDetailView: View {
                         if let t = test {
                             VStack(alignment: .leading, spacing: 6) {
                                 Text(t.name).font(.system(size: 28, weight: .heavy)).foregroundStyle(Mn.ink)
-                                Text([t.variant == "general" ? "General Training" : "Academic", "\(t.modules.count) modul", Fmt.minutes(t.modules.reduce(0) { $0 + ($1.durationSeconds ?? 0) })].joined(separator: " · "))
+                                Text([t.folder?.name.trimmingCharacters(in: .whitespaces) ?? "", t.variant == "general" ? "General Training" : "Academic", "\(t.modules.count) modul", Fmt.minutes(t.modules.reduce(0) { $0 + ($1.durationSeconds ?? 0) })].filter { !$0.isEmpty }.joined(separator: " · "))
                                     .font(.system(size: 15)).foregroundStyle(Mn.muted)
                             }
                             VStack(alignment: .leading, spacing: 4) {
