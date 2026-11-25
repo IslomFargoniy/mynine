@@ -76,6 +76,14 @@
     t.innerHTML = String(html || '');
     var bad = t.content.querySelectorAll('script,iframe,object,embed,link,meta,style,base,form,frame,frameset');
     for (var i = 0; i < bad.length; i++) bad[i].parentNode.removeChild(bad[i]);
+    // Editor text often joins words with &nbsp; — a phone could never wrap those lines (desktop does the same).
+    var walker = document.createTreeWalker(t.content, NodeFilter.SHOW_TEXT, null);
+    var textNode;
+    while ((textNode = walker.nextNode())) {
+      if (/[\u00A0\u2007\u202F]/.test(textNode.nodeValue)) {
+        textNode.nodeValue = textNode.nodeValue.replace(/[\u00A0\u2007\u202F]/g, ' ');
+      }
+    }
     var all = t.content.querySelectorAll('*');
     for (var j = 0; j < all.length; j++) {
       var node = all[j];
@@ -83,6 +91,15 @@
         var name = node.attributes[k].name.toLowerCase();
         var value = node.attributes[k].value || '';
         if (name.indexOf('on') === 0 || /^\s*javascript:/i.test(value)) node.removeAttribute(node.attributes[k].name);
+      }
+      // Fixed widths and no-wrap from the desktop editor do not fit a phone screen.
+      if (node.style && node.tagName !== 'IMG') {
+        ['width', 'min-width', 'white-space', 'height'].forEach(function (prop) { node.style.removeProperty(prop); });
+        if (node.style.marginLeft && parseFloat(node.style.marginLeft) > 40) node.style.marginLeft = '0';
+        if (node.style.paddingLeft && parseFloat(node.style.paddingLeft) > 40) node.style.paddingLeft = '0';
+      }
+      if (node.tagName === 'TABLE' || node.tagName === 'TD' || node.tagName === 'TH' || node.tagName === 'COL') {
+        node.removeAttribute('width');
       }
       if (node.tagName === 'IMG') {
         var src = node.getAttribute('src') || '';
@@ -92,6 +109,14 @@
       if (node.tagName === 'A') {
         node.removeAttribute('href');
       }
+    }
+    // Tables scroll sideways inside their own box when they still do not fit.
+    var tables = t.content.querySelectorAll('table');
+    for (var n = 0; n < tables.length; n++) {
+      var wrap = document.createElement('div');
+      wrap.className = 'table-wrap';
+      tables[n].parentNode.insertBefore(wrap, tables[n]);
+      wrap.appendChild(tables[n]);
     }
     return t.innerHTML;
   }
