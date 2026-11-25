@@ -1,0 +1,4 @@
+// Mynine iOS versioning. Bump CURRENT_PROJECT_VERSION on every TestFlight upload,
+// MARKETING_VERSION on every App Store release (see README.md).
+MARKETING_VERSION = 1.0.0
+CURRENT_PROJECT_VERSION = 1
