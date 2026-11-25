@@ -2,12 +2,14 @@
 
 namespace App\Services\Telegram;
 
+use App\Http\Controllers\Auth\SocialUsername;
 use App\Models\Mock;
 use App\Models\MockStudent;
 use App\Models\User\User;
 use App\Services\IeltsScoreConverter;
 use App\Services\MockResultService;
 use App\Services\ResultSheetService;
+use App\Services\Student\AppLoginCodes;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\RateLimiter;
@@ -36,6 +38,13 @@ class MynineUzBotService
         $params = trim(implode(' ', array_slice($parts, 1)));
 
         // 1. Direct Command matching
+        // Mobile app sign-in: the app opens t.me/MynineUzBot?start=app; "/code" or the button asks again.
+        if ($text === '/start app' || $command === '/code' || $command === '/kod' || $text === self::APP_CODE_BUTTON) {
+            $this->sendAppLoginCode($update, $chatId);
+
+            return;
+        }
+
         if ($command === '/start' || str_starts_with($text, '/start')) {
             $this->sendWelcomeMessage($update, $chatId);
 
@@ -97,7 +106,7 @@ class MynineUzBotService
     {
         $key = 'tg-code-lookup:'.$chatId;
         if (RateLimiter::tooManyAttempts($key, 5)) {
-            $this->sendMessage($chatId, "Juda ko'p urinish. Iltimos, 10 daqiqadan keyin qayta urinib ko'ring.");
+            $this->sendSafeMessage($chatId, "Juda ko'p urinish. Iltimos, 10 daqiqadan keyin qayta urinib ko'ring.");
 
             return true;
         }
@@ -497,6 +506,57 @@ class MynineUzBotService
         } catch (\Exception $e) {
             Log::error('Telegram sendMessage error: '.$e->getMessage());
         }
+    }
+
+    public const APP_CODE_BUTTON = '🔑 Ilovaga kirish kodi';
+
+    /**
+     * One-time code for signing in to the Mynine mobile app (private chats only: the chat id is the user's
+     * Telegram id). A Telegram user without an account gets a Student account, as with /start.
+     */
+    public function sendAppLoginCode(array $update, int|string $chatId): void
+    {
+        $chat = $update['message']['chat'] ?? $update['callback_query']['message']['chat'] ?? [];
+        if (($chat['type'] ?? 'private') !== 'private') {
+            return;
+        }
+
+        $key = 'tg-app-code:'.$chatId;
+        if (RateLimiter::tooManyAttempts($key, 5)) {
+            $this->sendSafeMessage($chatId, "Juda ko'p so'rov. Iltimos, birozdan keyin qayta urinib ko'ring.");
+
+            return;
+        }
+        RateLimiter::hit($key, 600);
+
+        $from = $update['message']['from'] ?? $update['callback_query']['from'] ?? [];
+        $user = User::where('telegram_id', $chatId)->first();
+        if (! $user) {
+            $user = User::create([
+                'telegram_id' => $chatId,
+                'name' => trim(($from['first_name'] ?? '').' '.($from['last_name'] ?? '')) ?: 'Telegram user',
+                'username' => SocialUsername::unique($from['username'] ?? null),
+            ]);
+            $user->assignRole('Student');
+        }
+
+        if ($user->isStaff()) {
+            $this->sendSafeMessage($chatId, 'Bu akkaunt xodim akkaunti. Xodimlar mynine.uz saytidan foydalanadi.');
+
+            return;
+        }
+
+        $code = app(AppLoginCodes::class)->issue($user);
+        $minutes = intdiv(AppLoginCodes::TTL_SECONDS, 60);
+
+        $keyboard = Keyboard::make()->setResizeKeyboard(true)->row([Keyboard::button(['text' => self::APP_CODE_BUTTON])]);
+
+        $this->sendSafeMessage(
+            $chatId,
+            "🔐 *Mynine ilovasiga kirish kodi*\n\n👉 `{$code}`\n\n⏳ Kod {$minutes} daqiqa amal qiladi va faqat bir marta ishlaydi. Uni hech kimga bermang.",
+            $keyboard,
+            'Markdown'
+        );
     }
 
     /**

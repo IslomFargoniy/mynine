@@ -15,12 +15,13 @@ use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Illuminate\Support\Collection;
+use Laravel\Sanctum\HasApiTokens;
 use Spatie\Permission\Traits\HasRoles;
 
 class User extends Authenticatable
 {
     /** @use HasFactory<UserFactory> */
-    use HasFactory, HasRoles, Notifiable;
+    use HasApiTokens, HasFactory, HasRoles, Notifiable;
 
     /**
      * Users whose phone is the same number as $phone, whatever the stored format ("901234567",
@@ -84,6 +85,7 @@ class User extends Authenticatable
         'password',
         'remember_token',
         'google_id',
+        'apple_id',
         'github_id',
         'ref_telegram_id',
     ];

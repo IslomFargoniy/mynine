@@ -28,6 +28,34 @@ class ExamPayloadBuilder
         private readonly AudioUploadService $audio,
     ) {}
 
+    /** Mobile student API: audio URLs point to the attempt's student routes instead of the desktop ones. */
+    private ?int $studentAttemptId = null;
+
+    public function forStudent(Attempt $attempt): static
+    {
+        $copy = clone $this;
+        $copy->studentAttemptId = (int) $attempt->id;
+
+        return $copy;
+    }
+
+    private function audioUrl(string $kind, int $id): string
+    {
+        return $this->studentAttemptId !== null
+            ? route('api.v1.student.attempts.audio.'.$kind, ['attempt' => $this->studentAttemptId, $kind => $id])
+            : route('api.v1.exam.audio.'.$kind, $id);
+    }
+
+    /**
+     * PartPayloads of every part of the given modules (mobile result review uses the numbering).
+     *
+     * @param  Collection<int, TestType>  $modules
+     */
+    public function allParts(Attempt $attempt, Collection $modules): array
+    {
+        return $this->parts($attempt, $this->loadParts($modules->pluck('id')->all()), $modules);
+    }
+
     /**
      * @param  Collection<int, TestType>  $modules  exam modules in order (Attempt::examModules)
      */
@@ -103,12 +131,12 @@ class ExamPayloadBuilder
 
         $audio = [];
         foreach ($modules as $testType) {
-            if ($this->isListening($testType) && ($entry = $this->audioEntry('test-'.$testType->test_id, $testType->test?->audio_path, route('api.v1.exam.audio.test', $testType->test_id)))) {
+            if ($this->isListening($testType) && ($entry = $this->audioEntry('test-'.$testType->test_id, $testType->test?->audio_path, $this->audioUrl('test', (int) $testType->test_id)))) {
                 $audio[$entry['key']] = $entry;
             }
         }
         foreach ($parts as $part) {
-            if ($entry = $this->audioEntry('part-'.$part->id, $part->audio_path, route('api.v1.exam.audio.part', $part->id))) {
+            if ($entry = $this->audioEntry('part-'.$part->id, $part->audio_path, $this->audioUrl('part', (int) $part->id))) {
                 $audio[$entry['key']] = $entry;
             }
         }
@@ -339,7 +367,7 @@ class ExamPayloadBuilder
         $playtime = $testType->test->playtime_seconds;
 
         return [
-            'url' => route('api.v1.exam.audio.test', $testType->test_id),
+            'url' => $this->audioUrl('test', (int) $testType->test_id),
             'duration_seconds' => $playtime ? (int) round((float) $playtime) : null,
         ];
     }

@@ -82,6 +82,13 @@ class AppServiceProvider extends ServiceProvider
             Limit::perMinute(60)->by('desktop-login-ip:'.$request->ip()),
         ]);
 
+        // Mobile student API: sign-in by IP (6-digit bot codes), everything else per user.
+        RateLimiter::for('student-auth', fn (Request $request) => [
+            Limit::perMinute(10)->by('student-auth:'.$request->ip()),
+            Limit::perHour(60)->by('student-auth-h:'.$request->ip()),
+        ]);
+        RateLimiter::for('student', fn (Request $request) => Limit::perMinute(240)->by('student:'.($request->user()?->getAuthIdentifier() ?? $request->ip())));
+
         RateLimiter::for('desktop-unlock', fn (Request $request) => Limit::perMinute(5)->by('desktop-unlock:'.$deviceKey($request)));
 
         // Web exam audio: per listener (user, candidate session), not per IP — a whole exam hall can share one IP.

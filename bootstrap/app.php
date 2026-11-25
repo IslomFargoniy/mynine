@@ -9,6 +9,8 @@ use App\Http\Middleware\EnsureUserIsNotSuspended;
 use App\Http\Middleware\HandleAppearance;
 use App\Http\Middleware\HandleInertiaRequests;
 use App\Http\Middleware\SetLocale;
+use App\Http\Middleware\Student\AuthenticateStudent;
+use App\Http\Middleware\Student\ResolveStudentAttempt;
 use App\Support\UserFacingError;
 use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Auth\AuthenticationException;
@@ -51,6 +53,8 @@ return Application::configure(basePath: dirname(__DIR__))
             'desktop.device' => AuthenticateDevice::class,
             'desktop.client' => EnsureClientVersion::class,
             'desktop.candidate' => AuthenticateCandidate::class,
+            'student' => AuthenticateStudent::class,
+            'student.attempt' => ResolveStudentAttempt::class,
             'center.active' => EnsureCenterIsActive::class,
         ]);
 
