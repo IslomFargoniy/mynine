@@ -178,7 +178,10 @@ private fun Summary(r: ResultResponse) {
     val main = b.overall ?: r.modules.singleOrNull()?.band
     GlassCard(Modifier.fillMaxWidth(), radius = 28.dp) {
         Column(Modifier.fillMaxWidth(), horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(16.dp)) {
-            BandRing(main, 150, label = if (b.overall != null) "OVERALL" else r.modules.singleOrNull()?.title?.uppercase())
+            // Several modules without a full test have no overall band: show only the module bands.
+            if (main != null || r.modules.size <= 1) {
+                BandRing(main, 150, label = if (b.overall != null) "OVERALL" else r.modules.singleOrNull()?.title?.uppercase())
+            }
             Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 r.modules.forEach { m -> ModuleBand(m, Modifier.weight(1f)) }
             }
@@ -219,9 +222,9 @@ private fun ReviewRow(q: ReviewQuestion) {
                 if (q.isCorrect) {
                     append(q.yourAnswer ?: "")
                 } else {
-                    append(str(R.string.yours))
+                    append(str(R.string.yours) + " ")
                     if (q.yourAnswer.isNullOrBlank()) append("—") else withStyle(SpanStyle(textDecoration = TextDecoration.LineThrough)) { append(q.yourAnswer) }
-                    append(str(R.string.correct_sep))
+                    append("  ·  " + str(R.string.correct_sep) + " ")
                     withStyle(SpanStyle(fontWeight = FontWeight.Bold, color = Mn.Ink)) { append(q.correctAnswer) }
                 }
             },

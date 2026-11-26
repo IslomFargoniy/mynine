@@ -96,8 +96,8 @@
     <string name="ai_grade">AI baho</string>
     <string name="correct">To\'g\'ri</string>
     <string name="wrong">Xato</string>
-    <string name="yours">Sizniki: </string>
-    <string name="correct_sep">  ·  To\'g\'ri: </string>
+    <string name="yours">Sizniki:</string>
+    <string name="correct_sep">To\'g\'ri:</string>
     <string name="error">Xatolik</string>
     <string name="time_up_submitting">Vaqt tugadi. Javoblar topshirilmoqda…</string>
     <string name="submitting">Javoblar topshirilmoqda…</string>

@@ -95,8 +95,8 @@
     <string name="ai_grade">Оценка AI</string>
     <string name="correct">Верно</string>
     <string name="wrong">Неверно</string>
-    <string name="yours">Ваш: </string>
-    <string name="correct_sep">  ·  Верно: </string>
+    <string name="yours">Ваш:</string>
+    <string name="correct_sep">Верно:</string>
     <string name="error">Ошибка</string>
     <string name="time_up_submitting">Время вышло. Ответы отправляются…</string>
     <string name="submitting">Ответы отправляются…</string>

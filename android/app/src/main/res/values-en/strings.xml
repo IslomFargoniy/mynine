@@ -95,8 +95,8 @@
     <string name="ai_grade">AI grade</string>
     <string name="correct">Correct</string>
     <string name="wrong">Wrong</string>
-    <string name="yours">Yours: </string>
-    <string name="correct_sep">  ·  Correct: </string>
+    <string name="yours">Yours:</string>
+    <string name="correct_sep">Correct:</string>
     <string name="error">Error</string>
     <string name="time_up_submitting">Time is up. Submitting answers…</string>
     <string name="submitting">Submitting answers…</string>
