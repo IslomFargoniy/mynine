@@ -37,6 +37,7 @@ import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.asPaddingValues
 import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -187,7 +188,15 @@ private fun BottomBar(current: Tab, modifier: Modifier, onSelect: (Tab) -> Unit)
 }
 
 /** Space the floating bottom bar covers. */
-val BottomBarSpace = PaddingValues(start = 20.dp, end = 20.dp, top = 16.dp, bottom = 120.dp)
+/**
+ * List padding under the floating tab bar: bar (62) + its margin (12) + a gap (24), plus the system navigation
+ * bar, which the tab bar sits on (3-button navigation is ~48 dp, so a fixed 120 dp hid the last card).
+ */
+val BottomBarSpace: PaddingValues
+    @Composable get() = PaddingValues(
+        start = 20.dp, end = 20.dp, top = 16.dp,
+        bottom = 98.dp + WindowInsets.navigationBars.asPaddingValues().calculateBottomPadding(),
+    )
 
 @Composable
 fun Avatar(name: String, size: Int = 44) {
