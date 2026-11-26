@@ -54,6 +54,7 @@ import uz.mynine.app.data.ResultModule
 import uz.mynine.app.data.ResultResponse
 import uz.mynine.app.data.ReviewQuestion
 import uz.mynine.app.data.call
+import uz.mynine.app.data.cachedCall
 import uz.mynine.app.data.userMessage
 import uz.mynine.app.ui.main.BandRing
 import uz.mynine.app.ui.main.shortDate
@@ -76,8 +77,10 @@ fun ResultScreen(attemptId: Int, onBack: () -> Unit) {
     LaunchedEffect(reload) {
         error = null
         try {
-            result = call { result(attemptId) }
-            if (selected == null) selected = result?.modules?.firstOrNull()?.type
+            cachedCall("result-$attemptId", ResultResponse.serializer(), { r ->
+                result = r
+                if (selected == null) selected = r.modules.firstOrNull()?.type
+            }) { result(attemptId) }
         } catch (e: Exception) {
             error = e.userMessage()
         }

@@ -37,6 +37,7 @@ object Session {
 
     fun clear() {
         prefs.edit().clear().apply()
+        ApiCache.clear()
         ApiClient.token = null
         _user.value = null
     }

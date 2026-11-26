@@ -15,6 +15,7 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
+import uz.mynine.app.data.ApiCache
 import uz.mynine.app.data.AppLanguage
 import uz.mynine.app.data.Session
 import uz.mynine.app.ui.auth.GoogleWebSignIn
@@ -30,6 +31,7 @@ class MynineApp : Application() {
         super.onCreate()
         AppLanguage.init(this)
         uz.mynine.app.ui.theme.ThemeMode.init(this)
+        ApiCache.init(this)
         Session.init(this)
     }
 }

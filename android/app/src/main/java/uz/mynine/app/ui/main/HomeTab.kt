@@ -49,6 +49,11 @@ import uz.mynine.app.data.AttemptSummary
 import uz.mynine.app.data.Session
 import uz.mynine.app.data.TestItem
 import uz.mynine.app.data.call
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.coroutineScope
+import uz.mynine.app.data.TestsResponse
+import uz.mynine.app.data.AttemptsResponse
+import uz.mynine.app.data.cachedCall
 import uz.mynine.app.data.userMessage
 import uz.mynine.app.ui.theme.ErrorBox
 import uz.mynine.app.ui.theme.GlassCard
@@ -78,10 +83,13 @@ fun HomeTab(
 
     LaunchedEffect(reload) {
         error = null
+        // In parallel, each from the cache first (the network is the slow part on phones).
         try {
-            attempts = call { attempts(1) }.data
-            tests = call { tests(full = 1) }.data.filter { it.modules.size >= 3 }.take(4)
-            runCatching { call { me() }.user }.getOrNull()?.let { Session.update(it) }
+            coroutineScope {
+                launch { cachedCall("attempts-1", AttemptsResponse.serializer(), { attempts = it.data }) { attempts(1) } }
+                launch { cachedCall("tests-full", TestsResponse.serializer(), { r -> tests = r.data.filter { it.modules.size >= 3 }.take(4) }) { tests(full = 1) } }
+                launch { runCatching { call { me() }.user }.getOrNull()?.let { Session.update(it) } }
+            }
         } catch (e: Exception) {
             error = e.userMessage()
         }

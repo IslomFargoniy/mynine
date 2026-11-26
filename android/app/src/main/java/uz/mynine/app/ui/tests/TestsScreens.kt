@@ -66,6 +66,10 @@ import kotlinx.coroutines.launch
 import uz.mynine.app.data.StartAttemptBody
 import uz.mynine.app.data.TestItem
 import uz.mynine.app.data.call
+import uz.mynine.app.data.StudentApi
+import uz.mynine.app.data.TestResponse
+import uz.mynine.app.data.TestsResponse
+import uz.mynine.app.data.cachedCall
 import uz.mynine.app.data.userMessage
 import uz.mynine.app.ui.main.BottomBarSpace
 import uz.mynine.app.ui.theme.ErrorBox
@@ -98,11 +102,16 @@ fun TestsTab(title: String, module: String?, full: Boolean, openTest: (Int) -> U
     LaunchedEffect(module, query, page, reload) {
         error = null
         try {
-            val r = call { tests(search = query.ifBlank { null }, module = module, full = if (full) 1 else null, page = page) }
             // A full test has content in all three skills (the server also checks; empty modules are not listed).
-            val data = if (full) r.data.filter { it.modules.size >= 3 } else r.data
-            items = if (page == 1) data else items.orEmpty() + data
-            lastPage = r.meta.lastPage
+            fun show(r: TestsResponse) {
+                val data = if (full) r.data.filter { it.modules.size >= 3 } else r.data
+                items = if (page == 1) data else items.orEmpty() + data
+                lastPage = r.meta.lastPage
+            }
+            val fetch: suspend StudentApi.() -> TestsResponse = { tests(search = query.ifBlank { null }, module = module, full = if (full) 1 else null, page = page) }
+            // The first page without a search comes from the cache at once, then from the network.
+            if (page == 1 && query.isBlank()) cachedCall("tests-${module ?: if (full) "full" else "all"}", TestsResponse.serializer(), ::show, fetch)
+            else show(call(fetch))
         } catch (e: Exception) {
             error = e.userMessage()
         }
@@ -194,10 +203,14 @@ fun TestDetailScreen(testId: Int, skill: String? = null, onBack: () -> Unit, ope
         error = null
         try {
             // All modules are listed; opened from a skill tab only that skill is ticked, the student may tick the rest.
-            val t = call { test(testId) }.test
-            test = t
-            fullCount = t.modules.size
-            selected = if (skill != null && t.modules.any { it.type == skill }) setOf(skill) else t.modules.map { it.type }.toSet()
+            // Cached copy first, then the fresh one (its running / finished attempt ids decide the button).
+            cachedCall("test-$testId", TestResponse.serializer(), { r ->
+                val t = r.test
+                val first = test == null
+                test = t
+                fullCount = t.modules.size
+                if (first) selected = if (skill != null && t.modules.any { it.type == skill }) setOf(skill) else t.modules.map { it.type }.toSet()
+            }) { test(testId) }
         } catch (e: Exception) {
             error = e.userMessage()
         }

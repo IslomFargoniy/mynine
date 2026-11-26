@@ -74,6 +74,8 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import uz.mynine.app.data.AttemptSummary
 import uz.mynine.app.data.call
+import uz.mynine.app.data.AttemptsResponse
+import uz.mynine.app.data.cachedCall
 import uz.mynine.app.data.userMessage
 import uz.mynine.app.ui.theme.ErrorBox
 import uz.mynine.app.ui.theme.GlassCard
@@ -254,9 +256,13 @@ fun HistoryTab(openExam: (Int) -> Unit, openResult: (Int) -> Unit) {
     LaunchedEffect(page, reload) {
         error = null
         try {
-            val r = call { attempts(page) }
-            items = if (page == 1) r.data else (items.orEmpty() + r.data)
-            lastPage = r.meta.lastPage
+            if (page == 1) {
+                cachedCall("attempts-1", AttemptsResponse.serializer(), { r -> items = r.data; lastPage = r.meta.lastPage }) { attempts(1) }
+            } else {
+                val r = call { attempts(page) }
+                items = items.orEmpty() + r.data
+                lastPage = r.meta.lastPage
+            }
         } catch (e: Exception) {
             error = e.userMessage()
         }
