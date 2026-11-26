@@ -24,7 +24,8 @@ class TestController extends Controller
     public function __construct(private readonly ExamService $exam) {}
 
     /**
-     * GET /student/tests?search=&module=listening|reading|writing&folder_id=&page=
+     * GET /student/tests?search=&module=listening|reading|writing&full=1&folder_id=&page=
+     * full=1: only full tests (every practice module has content).
      */
     public function index(Request $request): JsonResponse
     {
@@ -32,6 +33,7 @@ class TestController extends Controller
             'search' => ['nullable', 'string', 'max:100'],
             'module' => ['nullable', 'in:'.implode(',', array_keys(Attempt::PRACTICE_MODULES))],
             'folder_id' => ['nullable', 'integer'],
+            'full' => ['nullable', 'boolean'],
         ]);
 
         $query = $this->visibleTests()->with('folder:id,name')->orderByDesc('id');
@@ -43,6 +45,12 @@ class TestController extends Controller
         if ($module = $request->query('module')) {
             $query->whereHas('types', fn ($t) => $t->whereHas('parts')
                 ->whereHas('type', fn ($ty) => $ty->where('name', Attempt::PRACTICE_MODULES[$module])));
+        }
+        if ($request->boolean('full')) {
+            foreach (Attempt::PRACTICE_MODULES as $name) {
+                $query->whereHas('types', fn ($t) => $t->whereHas('parts')
+                    ->whereHas('type', fn ($ty) => $ty->where('name', $name)));
+            }
         }
         if ($request->filled('folder_id')) {
             $query->where('folder_id', $request->integer('folder_id'));

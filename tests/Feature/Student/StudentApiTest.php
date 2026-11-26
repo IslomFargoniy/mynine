@@ -127,6 +127,12 @@ test('the test bank lists open practice tests with their modules and hides mock 
 
     expect(studentApi('GET', 'tests?module=listening', [], $this->token)->json('data'))->toHaveCount(1);
     expect(studentApi('GET', 'tests?module=writing', [], $this->token)->json('data'))->toHaveCount(0);
+    expect(studentApi('GET', 'tests?full=1', [], $this->token)->json('data'))->toHaveCount(0);
+
+    // With Writing too the test is a full test.
+    $writing = TestType::create(['test_id' => $this->test->id, 'type_id' => makeType('Writing', 60)->id]);
+    Part::create(['test_type_id' => $writing->id, 'name' => 'Task 1', 'minute' => 20]);
+    expect(collect(studentApi('GET', 'tests?full=1', [], $this->token)->json('data'))->pluck('id')->all())->toBe([$this->test->id]);
     studentApi('GET', 'tests/'.$closed->id, [], $this->token)->assertNotFound();
 });
 
