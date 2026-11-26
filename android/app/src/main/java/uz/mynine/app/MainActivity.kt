@@ -29,6 +29,7 @@ class MynineApp : Application() {
     override fun onCreate() {
         super.onCreate()
         AppLanguage.init(this)
+        uz.mynine.app.ui.theme.ThemeMode.init(this)
         Session.init(this)
     }
 }
@@ -96,13 +97,16 @@ fun AppNav() {
         }
         composable(Routes.EXAM, arguments = listOf(navArgument("id") { type = NavType.IntType })) { entry ->
             val id = entry.arguments?.getInt("id") ?: 0
-            ExamScreen(
-                attemptId = id,
-                onExit = { nav.popBackStack() },
-                onFinished = {
-                    nav.navigate(Routes.result(id)) { popUpTo(Routes.MAIN) }
-                },
-            )
+            // The exam room is the white IELTS UI in both themes, its dialogs included.
+            androidx.compose.material3.MaterialTheme(colorScheme = androidx.compose.material3.lightColorScheme(primary = uz.mynine.app.ui.theme.Mn.ExamBlue)) {
+                ExamScreen(
+                    attemptId = id,
+                    onExit = { nav.popBackStack() },
+                    onFinished = {
+                        nav.navigate(Routes.result(id)) { popUpTo(Routes.MAIN) }
+                    },
+                )
+            }
         }
         composable(Routes.RESULT, arguments = listOf(navArgument("id") { type = NavType.IntType })) { entry ->
             ResultScreen(attemptId = entry.arguments?.getInt("id") ?: 0, onBack = { nav.popBackStack() })

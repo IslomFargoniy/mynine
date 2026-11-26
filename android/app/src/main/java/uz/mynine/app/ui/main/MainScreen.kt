@@ -145,8 +145,8 @@ private fun BottomBar(current: Tab, modifier: Modifier, onSelect: (Tab) -> Unit)
             .height(62.dp)
             .shadow(14.dp, shape, ambientColor = Color.Black.copy(alpha = 0.10f), spotColor = Color.Black.copy(alpha = 0.16f))
             .clip(shape)
-            .background(Color.White)
-            .border(1.dp, Color(0xFFE2E8F0), shape),
+            .background(Mn.Surface)
+            .border(1.dp, Mn.Line, shape),
     ) {
         BoxWithConstraints(Modifier.fillMaxSize().padding(4.dp)) {
             val itemWidth = maxWidth / Tab.entries.size

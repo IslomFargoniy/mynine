@@ -123,6 +123,19 @@ fun ExamScreen(attemptId: Int, onExit: () -> Unit, onFinished: () -> Unit) {
         onDispose { lifecycle.removeObserver(observer) }
     }
 
+    // The exam room is white in both themes: dark status bar icons while it is open.
+    val view = androidx.compose.ui.platform.LocalView.current
+    DisposableEffect(view) {
+        val window = (view.context as? android.app.Activity)?.window
+        val bars = window?.let { androidx.core.view.WindowCompat.getInsetsController(it, view) }
+        bars?.isAppearanceLightStatusBars = true
+        bars?.isAppearanceLightNavigationBars = true
+        onDispose {
+            bars?.isAppearanceLightStatusBars = !Mn.dark
+            bars?.isAppearanceLightNavigationBars = !Mn.dark
+        }
+    }
+
     BackHandler { confirmExit = true }
 
     Box(

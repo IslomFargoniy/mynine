@@ -127,4 +127,8 @@
     <string name="offline_submit">Нет интернета: модуль не завершён. Нажмите ещё раз, когда связь вернётся.</string>
     <string name="nav_home">Главная</string>
     <string name="attempts">Попытки</string>
+    <string name="theme">Тема</string>
+    <string name="theme_system">Как в телефоне</string>
+    <string name="theme_light">Светлая</string>
+    <string name="theme_dark">Тёмная</string>
 </resources>

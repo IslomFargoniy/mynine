@@ -128,4 +128,8 @@
     <string name="offline_submit">Internet yo\'q: modul yakunlanmadi. Aloqa tiklangach yana bosing.</string>
     <string name="nav_home">Home</string>
     <string name="attempts">Attempts</string>
+    <string name="theme">Mavzu</string>
+    <string name="theme_system">Telefon bo\'yicha</string>
+    <string name="theme_light">Yorug\'</string>
+    <string name="theme_dark">Qorong\'i</string>
 </resources>

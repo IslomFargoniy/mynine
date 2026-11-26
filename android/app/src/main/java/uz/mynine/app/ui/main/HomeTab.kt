@@ -120,9 +120,9 @@ fun HomeTab(
             Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
                 SectionHeader(str(R.string.modules))
                 Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                    ModuleTile("Listening", Icons.Outlined.Headphones, Color(0x2E38BDF8), Color(0xFF0369A1), Modifier.weight(1f)) { openSkill("listening") }
+                    ModuleTile("Listening", Icons.Outlined.Headphones, Color(0x2E38BDF8), if (Mn.dark) Color(0xFF7DD3FC) else Color(0xFF0369A1), Modifier.weight(1f)) { openSkill("listening") }
                     ModuleTile("Reading", Icons.AutoMirrored.Outlined.MenuBook, Color(0x244F46E5), Mn.AccentDark, Modifier.weight(1f)) { openSkill("reading") }
-                    ModuleTile("Writing", Icons.Outlined.Edit, Color(0x24EC4899), Color(0xFFBE185D), Modifier.weight(1f)) { openSkill("writing") }
+                    ModuleTile("Writing", Icons.Outlined.Edit, Color(0x24EC4899), if (Mn.dark) Color(0xFFF9A8D4) else Color(0xFFBE185D), Modifier.weight(1f)) { openSkill("writing") }
                 }
             }
         }
@@ -179,7 +179,7 @@ fun BandRing(value: Double?, sizeDp: Int, label: String? = null) {
             val stroke = size.minDimension * 0.11f
             val arc = Size(size.width - stroke, size.height - stroke)
             val topLeft = Offset(stroke / 2, stroke / 2)
-            drawArc(Color(0x264F46E5), 0f, 360f, false, topLeft, arc, style = Stroke(stroke))
+            drawArc(Mn.AccentSoft, 0f, 360f, false, topLeft, arc, style = Stroke(stroke))
             drawArc(Mn.Accent, -90f, 360f * ((value ?: 0.0) / 9.0).toFloat(), false, topLeft, arc, style = Stroke(stroke, cap = StrokeCap.Round))
         }
         Column(horizontalAlignment = Alignment.CenterHorizontally) {
@@ -209,7 +209,7 @@ private fun ContinueCard(item: AttemptSummary, onClick: () -> Unit) {
         Text(
             str(R.string.continue_),
             Modifier.clip(RoundedCornerShape(999.dp)).background(Color.White).padding(horizontal = 18.dp, vertical = 10.dp),
-            color = Mn.AccentDark, fontWeight = FontWeight.Bold, fontSize = 14.sp,
+            color = Color(0xFF4338CA), fontWeight = FontWeight.Bold, fontSize = 14.sp,
         )
     }
 }

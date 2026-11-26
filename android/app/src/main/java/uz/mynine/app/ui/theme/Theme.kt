@@ -37,6 +37,16 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import android.app.Activity
+import android.content.Context
+import androidx.compose.foundation.isSystemInDarkTheme
+import androidx.compose.material3.darkColorScheme
+import androidx.compose.runtime.SideEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.platform.LocalView
+import androidx.core.view.WindowCompat
 import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.TextStyle
@@ -45,29 +55,64 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 
-/** Liquid glass tokens (web resources/css/app.css, design canvas "Mynine Mobile"). */
-object Mn {
-    val Bg = Color(0xFFEEF1F8)
-    val Ink = Color(0xFF0F172A)
-    val Ink2 = Color(0xFF1E293B)
-    val Muted = Color(0xFF334155)
-    val Subtle = Color(0xFF475569)
-    val Accent = Color(0xFF4F46E5)
-    val AccentDark = Color(0xFF4338CA)
-    val AccentSoft = Color(0x1A4F46E5)
-    val Indigo = Color(0xFF818CF8)
-    val Sky = Color(0xFF38BDF8)
-    val Pink = Color(0xFFF472B6)
-    val Green = Color(0xFF047857)
-    val GreenSoft = Color(0x2610B981)
-    val Orange = Color(0xFFC2410C)
-    val OrangeSoft = Color(0x24EA580C)
-    val Red = Color(0xFFB91C1C)
-    val Glass = Color(0x8CFFFFFF)
-    val GlassStrong = Color(0xD9FFFFFF)
-    val GlassEdge = Color(0xBFFFFFFF)
+/** Light, dark or the phone's setting; chosen in Profile and kept in prefs. */
+enum class ThemeMode { System, Light, Dark;
+    companion object {
+        private const val PREFS = "ui"
+        var current by mutableStateOf(System)
+            private set
 
-    // Exam room (official IELTS white UI, web practice room)
+        fun init(context: Context) {
+            val saved = context.getSharedPreferences(PREFS, Context.MODE_PRIVATE).getString("theme", null)
+            current = entries.firstOrNull { it.name == saved } ?: System
+        }
+
+        fun set(context: Context, mode: ThemeMode) {
+            current = mode
+            context.getSharedPreferences(PREFS, Context.MODE_PRIVATE).edit().putString("theme", mode.name).apply()
+        }
+    }
+}
+
+/**
+ * Liquid glass tokens (web resources/css/app.css, design canvas "Mynine Mobile"), light and dark.
+ * They are read through [dark] (Compose state), so a theme switch recomposes every screen.
+ */
+object Mn {
+    var dark by mutableStateOf(false)
+
+    private fun pick(light: Long, night: Long) = Color(if (dark) night else light)
+
+    val Bg get() = pick(0xFFEEF1F8, 0xFF0B1020)
+    val Ink get() = pick(0xFF0F172A, 0xFFF1F5F9)
+    val Ink2 get() = pick(0xFF1E293B, 0xFFE2E8F0)
+    val Muted get() = pick(0xFF334155, 0xFFCBD5E1)
+    val Subtle get() = pick(0xFF475569, 0xFF94A3B8)
+    val Accent get() = pick(0xFF4F46E5, 0xFF6366F1)
+    val AccentDark get() = pick(0xFF4338CA, 0xFFA5B4FC)
+    val AccentSoft get() = pick(0x1A4F46E5, 0x336366F1)
+    val Indigo get() = pick(0xFF818CF8, 0xFF4F46E5)
+    val Sky get() = pick(0xFF38BDF8, 0xFF0369A1)
+    val Pink get() = pick(0xFFF472B6, 0xFF9D174D)
+    val Green get() = pick(0xFF047857, 0xFF34D399)
+    val GreenSoft get() = pick(0x2610B981, 0x2934D399)
+    val Orange get() = pick(0xFFC2410C, 0xFFFB923C)
+    val OrangeSoft get() = pick(0x24EA580C, 0x29FB923C)
+    val Red get() = pick(0xFFB91C1C, 0xFFF87171)
+    val Glass get() = pick(0x8CFFFFFF, 0xB3161E33)
+    val GlassStrong get() = pick(0xD9FFFFFF, 0xE61A2340)
+    val GlassEdge get() = pick(0xBFFFFFFF, 0x24FFFFFF)
+
+    /** Opaque card (tab bar, inputs, checkboxes) and its hairline. */
+    val Surface get() = pick(0xFFFFFFFF, 0xFF161E33)
+    val Line get() = pick(0xFFE2E8F0, 0xFF2A3550)
+    val Divider get() = pick(0x120F172A, 0x14FFFFFF)
+    val FieldBorder get() = pick(0xFFCBD5E1, 0xFF3B4766)
+    /** A row that stands out on glass (chosen module, band tile, pill). */
+    val Raised get() = pick(0xD9FFFFFF, 0xFF222C48)
+    val OrbAlpha get() = if (dark) 0.28f else 0.45f
+
+    // Exam room (official IELTS white UI, web practice room): the same in both themes.
     val ExamRed = Color(0xFFE11D48)
     val ExamBlue = Color(0xFF2563EB)
     val ExamLine = Color(0xFFD1D5DB)
@@ -76,19 +121,36 @@ object Mn {
     val ExamTimer = Color(0xFFDC2626)
 }
 
-private val Scheme = lightColorScheme(
-    primary = Mn.Accent,
-    onPrimary = Color.White,
-    background = Mn.Bg,
-    surface = Color.White,
-    onSurface = Mn.Ink,
-    onBackground = Mn.Ink,
-    error = Mn.Red,
-)
-
 @Composable
 fun MynineTheme(content: @Composable () -> Unit) {
-    MaterialTheme(colorScheme = Scheme, content = content)
+    val dark = when (ThemeMode.current) {
+        ThemeMode.System -> isSystemInDarkTheme()
+        ThemeMode.Light -> false
+        ThemeMode.Dark -> true
+    }
+    Mn.dark = dark
+    val scheme = if (dark) {
+        darkColorScheme(
+            primary = Mn.Accent, onPrimary = Color.White, background = Mn.Bg, surface = Mn.Surface,
+            onSurface = Mn.Ink, onBackground = Mn.Ink, error = Mn.Red, surfaceContainerHigh = Mn.Surface,
+        )
+    } else {
+        lightColorScheme(
+            primary = Mn.Accent, onPrimary = Color.White, background = Mn.Bg, surface = Color.White,
+            onSurface = Mn.Ink, onBackground = Mn.Ink, error = Mn.Red,
+        )
+    }
+    val view = LocalView.current
+    if (!view.isInEditMode) {
+        SideEffect {
+            val window = (view.context as? Activity)?.window ?: return@SideEffect
+            WindowCompat.getInsetsController(window, view).apply {
+                isAppearanceLightStatusBars = !dark
+                isAppearanceLightNavigationBars = !dark
+            }
+        }
+    }
+    MaterialTheme(colorScheme = scheme, content = content)
 }
 
 /** Soft coloured orbs behind the glass (variant changes their placement per screen). */
@@ -105,7 +167,7 @@ fun GlassBackground(variant: Int = 0, content: @Composable BoxScope.() -> Unit) 
                 Modifier
                     .offset(pos.first.dp, pos.second.dp)
                     .size(size.dp)
-                    .background(Brush.radialGradient(listOf(color.copy(alpha = 0.45f), color.copy(alpha = 0f))), CircleShape),
+                    .background(Brush.radialGradient(listOf(color.copy(alpha = Mn.OrbAlpha), color.copy(alpha = 0f))), CircleShape),
             )
         }
         content()
@@ -164,8 +226,8 @@ fun SecondaryButton(
         enabled = enabled,
         modifier = modifier.height(52.dp),
         shape = RoundedCornerShape(999.dp),
-        border = BorderStroke(1.dp, Color(0xFFE2E8F0)),
-        colors = ButtonDefaults.outlinedButtonColors(containerColor = Color.White, contentColor = Mn.Ink),
+        border = BorderStroke(1.dp, Mn.Line),
+        colors = ButtonDefaults.outlinedButtonColors(containerColor = Mn.Surface, contentColor = Mn.Ink),
     ) {
         if (painter != null) {
             // Brand marks keep their own colours.
@@ -180,7 +242,7 @@ fun SecondaryButton(
 }
 
 @Composable
-fun Pill(text: String, bg: Color = Color(0xD9FFFFFF), fg: Color = Mn.Ink2, modifier: Modifier = Modifier) {
+fun Pill(text: String, bg: Color = Mn.Raised, fg: Color = Mn.Ink2, modifier: Modifier = Modifier) {
     Text(
         text,
         modifier.clip(RoundedCornerShape(999.dp)).background(bg).padding(horizontal = 10.dp, vertical = 5.dp),

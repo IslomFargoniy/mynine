@@ -246,7 +246,7 @@ fun TestDetailScreen(testId: Int, skill: String? = null, onBack: () -> Unit, ope
                                     Modifier
                                         .fillMaxWidth()
                                         .clip(RoundedCornerShape(22.dp))
-                                        .background(if (on) Color(0xD9FFFFFF) else Color.Transparent)
+                                        .background(if (on) Mn.Raised else Color.Transparent)
                                         .clickable { selected = if (on) selected - m.type else selected + m.type }
                                         .padding(horizontal = 12.dp, vertical = 14.dp),
                                     verticalAlignment = Alignment.CenterVertically,
@@ -256,8 +256,8 @@ fun TestDetailScreen(testId: Int, skill: String? = null, onBack: () -> Unit, ope
                                         Modifier
                                             .size(26.dp)
                                             .clip(RoundedCornerShape(9.dp))
-                                            .background(if (on) Mn.Accent else Color.White)
-                                            .border(if (on) 0.dp else 1.5.dp, Color(0xFF94A3B8), RoundedCornerShape(9.dp)),
+                                            .background(if (on) Mn.Accent else Mn.Surface)
+                                            .border(if (on) 0.dp else 1.5.dp, Mn.FieldBorder, RoundedCornerShape(9.dp)),
                                         contentAlignment = Alignment.Center,
                                     ) { if (on) Icon(Icons.Outlined.Check, null, tint = Color.White, modifier = Modifier.size(16.dp)) }
                                     Column(Modifier.weight(1f)) {

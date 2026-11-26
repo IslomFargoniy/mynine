@@ -232,9 +232,9 @@ fun LoginScreen(onSignedIn: () -> Unit) {
 @Composable
 private fun Divider(label: String) {
     Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-        HorizontalDivider(Modifier.weight(1f), color = Color(0x1F0F172A))
+        HorizontalDivider(Modifier.weight(1f), color = Mn.Divider)
         Text(label, fontSize = 13.sp, color = Mn.Subtle, fontWeight = FontWeight.Medium)
-        HorizontalDivider(Modifier.weight(1f), color = Color(0x1F0F172A))
+        HorizontalDivider(Modifier.weight(1f), color = Mn.Divider)
     }
 }
 
@@ -256,8 +256,8 @@ private fun OtpField(value: String, onChange: (String) -> Unit, focus: FocusRequ
                             .weight(1f)
                             .height(54.dp)
                             .clip(RoundedCornerShape(16.dp))
-                            .background(Color.White)
-                            .border(1.5.dp, if (ch.isNotEmpty() || active) Mn.Accent else Color(0xFFCBD5E1), RoundedCornerShape(16.dp)),
+                            .background(Mn.Surface)
+                            .border(1.5.dp, if (ch.isNotEmpty() || active) Mn.Accent else Mn.FieldBorder, RoundedCornerShape(16.dp)),
                         contentAlignment = Alignment.Center,
                     ) {
                         Text(ch, style = TextStyle(fontSize = 22.sp, fontWeight = FontWeight.Bold, color = Mn.Ink))
@@ -281,9 +281,9 @@ private fun Field(value: String, onChange: (String) -> Unit, label: String, type
         visualTransformation = if (secret) PasswordVisualTransformation() else androidx.compose.ui.text.input.VisualTransformation.None,
         colors = OutlinedTextFieldDefaults.colors(
             focusedBorderColor = Mn.Accent,
-            unfocusedBorderColor = Color(0xFFCBD5E1),
-            focusedContainerColor = Color.White,
-            unfocusedContainerColor = Color.White,
+            unfocusedBorderColor = Mn.FieldBorder,
+            focusedContainerColor = Mn.Surface,
+            unfocusedContainerColor = Mn.Surface,
         ),
     )
 }

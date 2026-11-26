@@ -141,10 +141,10 @@ fun ResultScreen(attemptId: Int, onBack: () -> Unit) {
                                 Text(e.answer.ifBlank { str(R.string.no_answer) }, fontSize = 14.sp, lineHeight = 21.sp, color = Mn.Muted, maxLines = 12)
                                 e.feedback?.takeIf { it.isNotBlank() }?.let { fb ->
                                     Spacer(Modifier.height(12.dp))
-                                    Column(Modifier.fillMaxWidth().clip(RoundedCornerShape(18.dp)).background(Color(0x144F46E5)).padding(14.dp)) {
+                                    Column(Modifier.fillMaxWidth().clip(RoundedCornerShape(18.dp)).background(Mn.AccentSoft).padding(14.dp)) {
                                         Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                                            Icon(Icons.Outlined.AutoAwesome, null, tint = Color(0xFF3730A3), modifier = Modifier.size(18.dp))
-                                            Text(str(R.string.ai_feedback), fontWeight = FontWeight.Bold, color = Color(0xFF3730A3))
+                                            Icon(Icons.Outlined.AutoAwesome, null, tint = Mn.AccentDark, modifier = Modifier.size(18.dp))
+                                            Text(str(R.string.ai_feedback), fontWeight = FontWeight.Bold, color = Mn.AccentDark)
                                         }
                                         Spacer(Modifier.height(6.dp))
                                         Text(plainMarkdown(fb), fontSize = 14.sp, lineHeight = 21.sp, color = Mn.Muted)
@@ -193,7 +193,7 @@ private fun Summary(r: ResultResponse) {
 @Composable
 private fun ModuleBand(m: ResultModule, modifier: Modifier) {
     Column(
-        modifier.clip(RoundedCornerShape(20.dp)).background(Color(0xCCFFFFFF)).padding(vertical = 12.dp, horizontal = 8.dp),
+        modifier.clip(RoundedCornerShape(20.dp)).background(Mn.Raised).padding(vertical = 12.dp, horizontal = 8.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.spacedBy(2.dp),
     ) {

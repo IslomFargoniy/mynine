@@ -127,4 +127,8 @@
     <string name="offline_submit">No internet: the module wasn\'t finished. Tap again once you\'re back online.</string>
     <string name="nav_home">Home</string>
     <string name="attempts">Attempts</string>
+    <string name="theme">Theme</string>
+    <string name="theme_system">Same as phone</string>
+    <string name="theme_light">Light</string>
+    <string name="theme_dark">Dark</string>
 </resources>

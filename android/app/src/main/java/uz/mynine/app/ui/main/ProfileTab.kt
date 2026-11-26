@@ -3,6 +3,8 @@ package uz.mynine.app.ui.main
 import uz.mynine.app.R
 import uz.mynine.app.data.str
 import uz.mynine.app.data.AppLanguage
+import uz.mynine.app.ui.theme.ThemeMode
+import androidx.compose.material.icons.outlined.DarkMode
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.automirrored.outlined.ArrowBack
@@ -75,6 +77,7 @@ fun ProfileTab(openHistory: () -> Unit, onBack: () -> Unit) {
     var editName by remember { mutableStateOf(false) }
     var confirmDelete by remember { mutableStateOf(false) }
     var pickLanguage by remember { mutableStateOf(false) }
+    var pickTheme by remember { mutableStateOf(false) }
     var error by remember { mutableStateOf<String?>(null) }
 
     Column(
@@ -101,12 +104,14 @@ fun ProfileTab(openHistory: () -> Unit, onBack: () -> Unit) {
 
         Column(Modifier.fillMaxWidth().glass(RoundedCornerShape(24.dp))) {
             SettingRow(Icons.Outlined.Badge, str(R.string.change_name), null) { editName = true }
-            HorizontalDivider(color = Color(0x120F172A))
+            HorizontalDivider(color = Mn.Divider)
             SettingRow(Icons.AutoMirrored.Outlined.Send, "Telegram", if (user?.telegramConnected == true) str(R.string.connected) else str(R.string.not_connected), valueColor = if (user?.telegramConnected == true) Mn.Green else Mn.Subtle)
-            HorizontalDivider(color = Color(0x120F172A))
+            HorizontalDivider(color = Mn.Divider)
             SettingRow(Icons.Outlined.AccessTime, str(R.string.history), "›", onClick = openHistory)
-            HorizontalDivider(color = Color(0x120F172A))
+            HorizontalDivider(color = Mn.Divider)
             SettingRow(Icons.Outlined.Language, str(R.string.language), languageName(AppLanguage.selected())) { pickLanguage = true }
+            HorizontalDivider(color = Mn.Divider)
+            SettingRow(Icons.Outlined.DarkMode, str(R.string.theme), themeName(ThemeMode.current)) { pickTheme = true }
         }
 
         Column(Modifier.fillMaxWidth().glass(RoundedCornerShape(24.dp))) {
@@ -116,7 +121,7 @@ fun ProfileTab(openHistory: () -> Unit, onBack: () -> Unit) {
                     Session.clear()
                 }
             }
-            HorizontalDivider(color = Color(0x120F172A))
+            HorizontalDivider(color = Mn.Divider)
             SettingRow(Icons.Outlined.DeleteOutline, str(R.string.delete_account), null, tint = Mn.Red) { confirmDelete = true }
         }
 
@@ -181,6 +186,16 @@ fun ProfileTab(openHistory: () -> Unit, onBack: () -> Unit) {
         )
     }
 
+    if (pickTheme) {
+        ChoiceDialog(
+            title = str(R.string.theme),
+            options = ThemeMode.entries.map { it to themeName(it) },
+            selected = ThemeMode.current,
+            onPick = { ThemeMode.set(context, it); pickTheme = false },
+            onDismiss = { pickTheme = false },
+        )
+    }
+
     if (confirmDelete) {
         AlertDialog(
             onDismissRequest = { confirmDelete = false },
@@ -226,6 +241,35 @@ private fun SettingRow(
         Text(title, Modifier.weight(1f), fontSize = 15.sp, fontWeight = FontWeight.SemiBold, color = if (tint == Mn.Red) Mn.Red else Mn.Ink)
         value?.let { Text(it, fontSize = 15.sp, color = valueColor, fontWeight = FontWeight.Medium) }
     }
+}
+
+private fun themeName(mode: ThemeMode): String = when (mode) {
+    ThemeMode.System -> str(R.string.theme_system)
+    ThemeMode.Light -> str(R.string.theme_light)
+    ThemeMode.Dark -> str(R.string.theme_dark)
+}
+
+@Composable
+private fun <T> ChoiceDialog(title: String, options: List<Pair<T, String>>, selected: T, onPick: (T) -> Unit, onDismiss: () -> Unit) {
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text(title) },
+        text = {
+            Column {
+                options.forEach { (value, label) ->
+                    Row(
+                        Modifier.fillMaxWidth().clip(RoundedCornerShape(14.dp)).clickable { onPick(value) }.padding(vertical = 12.dp, horizontal = 8.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(12.dp),
+                    ) {
+                        RadioButton(selected = value == selected, onClick = null)
+                        Text(label, fontSize = 16.sp, color = Mn.Ink)
+                    }
+                }
+            }
+        },
+        confirmButton = { TextButton(onClick = onDismiss) { Text(str(R.string.cancel)) } },
+    )
 }
 
 /** Each language is named in itself, so it can be found whatever the current language is. */
