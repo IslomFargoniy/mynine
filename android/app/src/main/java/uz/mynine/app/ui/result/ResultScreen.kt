@@ -1,5 +1,8 @@
 package uz.mynine.app.ui.result
 
+import uz.mynine.app.R
+import uz.mynine.app.data.str
+
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -96,10 +99,10 @@ fun ResultScreen(attemptId: Int, onBack: () -> Unit) {
             item {
                 Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                     Box(Modifier.size(44.dp).glass(CircleShape).clickable(onClick = onBack), contentAlignment = Alignment.Center) {
-                        Icon(Icons.AutoMirrored.Outlined.ArrowBack, "Orqaga", tint = Mn.Ink2)
+                        Icon(Icons.AutoMirrored.Outlined.ArrowBack, str(R.string.back), tint = Mn.Ink2)
                     }
                     Column {
-                        Text(result?.attempt?.test?.name ?: "Natija", fontSize = 17.sp, fontWeight = FontWeight.Bold, color = Mn.Ink)
+                        Text(result?.attempt?.test?.name ?: str(R.string.result), fontSize = 17.sp, fontWeight = FontWeight.Bold, color = Mn.Ink)
                         result?.attempt?.let { Text(shortDate(it.finishedAt ?: it.startedAt), fontSize = 13.sp, color = Mn.Subtle) }
                     }
                 }
@@ -130,18 +133,18 @@ fun ResultScreen(attemptId: Int, onBack: () -> Unit) {
                             GlassCard(Modifier.fillMaxWidth()) {
                                 Row(verticalAlignment = Alignment.CenterVertically) {
                                     Text("Task ${e.task}", Modifier.weight(1f), fontWeight = FontWeight.Bold, fontSize = 16.sp, color = Mn.Ink)
-                                    Pill(if (e.band != null) "Band ${band(e.band)}" else "Baholanmoqda…", bg = if (e.band != null) Mn.GreenSoft else Mn.AccentSoft, fg = if (e.band != null) Mn.Green else Mn.AccentDark)
+                                    Pill(if (e.band != null) "Band ${band(e.band)}" else str(R.string.grading), bg = if (e.band != null) Mn.GreenSoft else Mn.AccentSoft, fg = if (e.band != null) Mn.Green else Mn.AccentDark)
                                 }
                                 Spacer(Modifier.height(6.dp))
-                                Text("${e.words} so'z", fontSize = 13.sp, color = Mn.Subtle)
+                                Text(str(R.string.words, e.words), fontSize = 13.sp, color = Mn.Subtle)
                                 Spacer(Modifier.height(10.dp))
-                                Text(e.answer.ifBlank { "Javob yozilmagan." }, fontSize = 14.sp, lineHeight = 21.sp, color = Mn.Muted, maxLines = 12)
+                                Text(e.answer.ifBlank { str(R.string.no_answer) }, fontSize = 14.sp, lineHeight = 21.sp, color = Mn.Muted, maxLines = 12)
                                 e.feedback?.takeIf { it.isNotBlank() }?.let { fb ->
                                     Spacer(Modifier.height(12.dp))
                                     Column(Modifier.fillMaxWidth().clip(RoundedCornerShape(18.dp)).background(Color(0x144F46E5)).padding(14.dp)) {
                                         Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                                             Icon(Icons.Outlined.AutoAwesome, null, tint = Color(0xFF3730A3), modifier = Modifier.size(18.dp))
-                                            Text("AI izohi", fontWeight = FontWeight.Bold, color = Color(0xFF3730A3))
+                                            Text(str(R.string.ai_feedback), fontWeight = FontWeight.Bold, color = Color(0xFF3730A3))
                                         }
                                         Spacer(Modifier.height(6.dp))
                                         Text(plainMarkdown(fb), fontSize = 14.sp, lineHeight = 21.sp, color = Mn.Muted)
@@ -152,14 +155,14 @@ fun ResultScreen(attemptId: Int, onBack: () -> Unit) {
                     } else {
                         item {
                             Text(
-                                "${module.title} javoblari" + (module.correct?.let { " · ${it.toInt()} / ${module.questions.sumOf { q -> q.maxPoints }}" } ?: ""),
+                                str(R.string.answers_of, module.title) + (module.correct?.let { " · ${it.toInt()} / ${module.questions.sumOf { q -> q.maxPoints }}" } ?: ""),
                                 fontSize = 15.sp, fontWeight = FontWeight.Bold, color = Mn.Ink,
                             )
                         }
                         item {
                             Column(Modifier.fillMaxWidth().glass(RoundedCornerShape(24.dp)).padding(vertical = 6.dp)) {
                                 module.questions.forEach { ReviewRow(it) }
-                                if (module.questions.isEmpty()) Text("Savollar yo'q.", Modifier.padding(16.dp), color = Mn.Subtle)
+                                if (module.questions.isEmpty()) Text(str(R.string.no_questions), Modifier.padding(16.dp), color = Mn.Subtle)
                             }
                         }
                     }
@@ -179,7 +182,7 @@ private fun Summary(r: ResultResponse) {
             Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 r.modules.forEach { m -> ModuleBand(m, Modifier.weight(1f)) }
             }
-            if (b.writingPending) Text("Writing AI tomonidan baholanmoqda — natija bir necha daqiqada chiqadi.", fontSize = 13.sp, color = Mn.Subtle)
+            if (b.writingPending) Text(str(R.string.writing_pending), fontSize = 13.sp, color = Mn.Subtle)
         }
     }
 }
@@ -194,7 +197,7 @@ private fun ModuleBand(m: ResultModule, modifier: Modifier) {
         Text(m.title, fontSize = 12.sp, fontWeight = FontWeight.SemiBold, color = Mn.Subtle)
         Text(band(m.band), fontSize = 22.sp, fontWeight = FontWeight.ExtraBold, color = Mn.Ink)
         val total = m.questions.sumOf { it.maxPoints }
-        Text(if (m.type == "writing") "AI baho" else "${m.correct?.toInt() ?: 0}/$total", fontSize = 12.sp, color = Mn.Subtle)
+        Text(if (m.type == "writing") str(R.string.ai_grade) else "${m.correct?.toInt() ?: 0}/$total", fontSize = 12.sp, color = Mn.Subtle)
     }
 }
 
@@ -205,7 +208,7 @@ private fun ReviewRow(q: ReviewQuestion) {
             Modifier.size(26.dp).clip(CircleShape).background(if (q.isCorrect) Mn.GreenSoft else Mn.OrangeSoft),
             contentAlignment = Alignment.Center,
         ) {
-            Icon(if (q.isCorrect) Icons.Outlined.Check else Icons.Outlined.Close, if (q.isCorrect) "To'g'ri" else "Xato", tint = if (q.isCorrect) Mn.Green else Mn.Orange, modifier = Modifier.size(15.dp))
+            Icon(if (q.isCorrect) Icons.Outlined.Check else Icons.Outlined.Close, if (q.isCorrect) str(R.string.correct) else str(R.string.wrong), tint = if (q.isCorrect) Mn.Green else Mn.Orange, modifier = Modifier.size(15.dp))
         }
         Text(
             if (q.numberCount > 1) "${q.number}–${q.number + q.numberCount - 1}" else "${q.number}",
@@ -216,9 +219,9 @@ private fun ReviewRow(q: ReviewQuestion) {
                 if (q.isCorrect) {
                     append(q.yourAnswer ?: "")
                 } else {
-                    append("Sizniki: ")
+                    append(str(R.string.yours))
                     if (q.yourAnswer.isNullOrBlank()) append("—") else withStyle(SpanStyle(textDecoration = TextDecoration.LineThrough)) { append(q.yourAnswer) }
-                    append("  ·  To'g'ri: ")
+                    append(str(R.string.correct_sep))
                     withStyle(SpanStyle(fontWeight = FontWeight.Bold, color = Mn.Ink)) { append(q.correctAnswer) }
                 }
             },

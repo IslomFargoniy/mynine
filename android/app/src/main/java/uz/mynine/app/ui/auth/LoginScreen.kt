@@ -67,6 +67,7 @@ import com.google.android.libraries.identity.googleid.GoogleIdTokenCredential
 import kotlinx.coroutines.launch
 import uz.mynine.app.BuildConfig
 import uz.mynine.app.R
+import uz.mynine.app.data.str
 import uz.mynine.app.data.CodeBody
 import uz.mynine.app.data.GoogleBody
 import uz.mynine.app.data.PasswordBody
@@ -120,7 +121,7 @@ fun LoginScreen(onSignedIn: () -> Unit) {
             }
             GoogleWebSignIn.Result.Failed -> {
                 GoogleWebSignIn.consumed()
-                error = "Google orqali kirib bo'lmadi. Telegram kodi bilan kiring."
+                error = str(R.string.google_failed)
             }
             null -> Unit
         }
@@ -147,11 +148,11 @@ fun LoginScreen(onSignedIn: () -> Unit) {
 
             Column(verticalArrangement = Arrangement.spacedBy(10.dp), modifier = Modifier.padding(top = 12.dp)) {
                 Text(
-                    "IELTS'ga har kuni\ntayyorlaning",
+                    str(R.string.login_title),
                     fontSize = 32.sp, lineHeight = 36.sp, fontWeight = FontWeight.ExtraBold, color = Mn.Ink, letterSpacing = (-0.8).sp,
                 )
                 Text(
-                    "Listening, Reading va Writing testlari — web'dagi imtihon xonasi bilan bir xil.",
+                    str(R.string.login_subtitle),
                     fontSize = 16.sp, lineHeight = 23.sp, color = Mn.Muted,
                 )
             }
@@ -161,7 +162,7 @@ fun LoginScreen(onSignedIn: () -> Unit) {
                 verticalArrangement = Arrangement.spacedBy(12.dp),
             ) {
                 if (BuildConfig.GOOGLE_WEB_CLIENT_ID.isNotBlank()) {
-                    SecondaryButton("Google bilan kirish", Modifier.fillMaxWidth(), painter = painterResource(R.drawable.ic_google), enabled = !busy) {
+                    SecondaryButton(str(R.string.google_sign_in), Modifier.fillMaxWidth(), painter = painterResource(R.drawable.ic_google), enabled = !busy) {
                         if (!busy) {
                             busy = true
                             error = null
@@ -174,7 +175,7 @@ fun LoginScreen(onSignedIn: () -> Unit) {
                             }
                         }
                     }
-                    Divider("yoki Telegram kodi")
+                    Divider(str(R.string.or_telegram))
                 }
 
                 Row(
@@ -189,30 +190,30 @@ fun LoginScreen(onSignedIn: () -> Unit) {
                 ) {
                     Icon(Icons.AutoMirrored.Outlined.Send, null, tint = Mn.AccentDark, modifier = Modifier.size(18.dp))
                     Spacer(Modifier.size(8.dp))
-                    Text("@$BOT'dan kod olish", color = Mn.AccentDark, fontWeight = FontWeight.SemiBold, fontSize = 15.sp)
+                    Text(str(R.string.get_code, BOT), color = Mn.AccentDark, fontWeight = FontWeight.SemiBold, fontSize = 15.sp)
                 }
 
-                Text("6 xonali kod", fontSize = 13.sp, fontWeight = FontWeight.SemiBold, color = Mn.Muted)
+                Text(str(R.string.code_6), fontSize = 13.sp, fontWeight = FontWeight.SemiBold, color = Mn.Muted)
                 OtpField(code, onChange = {
                     code = it
                     if (it.length == 6) submit { Session.signIn(call { loginTelegram(CodeBody(it)) }) }
                 }, focus = codeFocus)
 
-                PrimaryButton("Kirish", Modifier.fillMaxWidth(), enabled = code.length == 6, loading = busy && !showPassword) {
+                PrimaryButton(str(R.string.sign_in), Modifier.fillMaxWidth(), enabled = code.length == 6, loading = busy && !showPassword) {
                     submit { Session.signIn(call { loginTelegram(CodeBody(code)) }) }
                 }
 
                 if (!showPassword) {
                     Text(
-                        "Login va parol bilan kirish",
+                        str(R.string.with_password),
                         Modifier.fillMaxWidth().clip(RoundedCornerShape(8.dp)).clickable { showPassword = true }.padding(8.dp),
                         textAlign = TextAlign.Center, color = Mn.Accent, fontWeight = FontWeight.SemiBold, fontSize = 14.sp,
                     )
                 } else {
-                    Divider("login va parol")
-                    Field(login, { login = it }, "Email yoki login", KeyboardType.Email)
-                    Field(password, { password = it }, "Parol", KeyboardType.Password, secret = true)
-                    SecondaryButton("Parol bilan kirish", Modifier.fillMaxWidth(), icon = Icons.Outlined.Lock, enabled = !busy && login.isNotBlank() && password.isNotBlank()) {
+                    Divider(str(R.string.login_password))
+                    Field(login, { login = it }, str(R.string.email_or_login), KeyboardType.Email)
+                    Field(password, { password = it }, str(R.string.password), KeyboardType.Password, secret = true)
+                    SecondaryButton(str(R.string.sign_in_password), Modifier.fillMaxWidth(), icon = Icons.Outlined.Lock, enabled = !busy && login.isNotBlank() && password.isNotBlank()) {
                         submit { Session.signIn(call { loginPassword(PasswordBody(login.trim(), password)) }) }
                     }
                 }
@@ -221,7 +222,7 @@ fun LoginScreen(onSignedIn: () -> Unit) {
             }
 
             Text(
-                "Faqat Mynine o'quv markazi talabalari uchun.\nKirish orqali foydalanish shartlariga rozilik bildirasiz.",
+                str(R.string.login_footer),
                 Modifier.fillMaxWidth(), textAlign = TextAlign.Center, fontSize = 13.sp, lineHeight = 19.sp, color = Mn.Subtle,
             )
         }

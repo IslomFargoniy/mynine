@@ -1,5 +1,8 @@
 package uz.mynine.app.ui.exam
 
+import uz.mynine.app.R
+import uz.mynine.app.data.str
+
 import android.app.Application
 import androidx.annotation.OptIn
 import androidx.lifecycle.AndroidViewModel
@@ -216,7 +219,7 @@ class ExamViewModel(app: Application, private val attemptId: Int) : AndroidViewM
                 call { submitModule(attemptId, module.typeId) }
             } catch (e: ApiException) {
                 if (e.offline) {
-                    _ui.update { it.copy(phase = Phase.Running, error = "Internet yo'q: modul yakunlanmadi. Aloqa tiklangach yana bosing.") }
+                    _ui.update { it.copy(phase = Phase.Running, error = str(R.string.offline_submit)) }
                     startTicker()
                     return@launch
                 }

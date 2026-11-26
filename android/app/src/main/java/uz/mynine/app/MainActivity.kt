@@ -3,7 +3,7 @@ package uz.mynine.app
 import android.app.Application
 import android.content.Intent
 import android.os.Bundle
-import androidx.activity.ComponentActivity
+import androidx.appcompat.app.AppCompatActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.compose.runtime.Composable
@@ -15,6 +15,7 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
+import uz.mynine.app.data.AppLanguage
 import uz.mynine.app.data.Session
 import uz.mynine.app.ui.auth.GoogleWebSignIn
 import uz.mynine.app.ui.auth.LoginScreen
@@ -27,11 +28,13 @@ import uz.mynine.app.ui.theme.MynineTheme
 class MynineApp : Application() {
     override fun onCreate() {
         super.onCreate()
+        AppLanguage.init(this)
         Session.init(this)
     }
 }
 
-class MainActivity : ComponentActivity() {
+/** AppCompatActivity (not ComponentActivity) so the per-app language from Profile applies. */
+class MainActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
@@ -48,7 +51,7 @@ class MainActivity : ComponentActivity() {
 object Routes {
     const val LOGIN = "login"
     const val MAIN = "main"
-    fun test(id: Int) = "test/$id"
+    fun test(id: Int, module: String? = null) = "test/$id" + (module?.let { "?module=$it" } ?: "")
     fun exam(attemptId: Int) = "exam/$attemptId"
     fun result(attemptId: Int) = "result/$attemptId"
 }
@@ -71,14 +74,21 @@ fun AppNav() {
         }
         composable(Routes.MAIN) {
             MainScreen(
-                openTest = { nav.navigate(Routes.test(it)) },
+                openTest = { id, module -> nav.navigate(Routes.test(id, module)) },
                 openExam = { nav.navigate(Routes.exam(it)) },
                 openResult = { nav.navigate(Routes.result(it)) },
             )
         }
-        composable(Routes.TEST, arguments = listOf(navArgument("id") { type = NavType.IntType })) { entry ->
+        composable(
+            Routes.TEST,
+            arguments = listOf(
+                navArgument("id") { type = NavType.IntType },
+                navArgument("module") { type = NavType.StringType; nullable = true; defaultValue = null },
+            ),
+        ) { entry ->
             TestDetailScreen(
                 testId = entry.arguments?.getInt("id") ?: 0,
+                skill = entry.arguments?.getString("module"),
                 onBack = { nav.popBackStack() },
                 openExam = { nav.navigate(Routes.exam(it)) },
                 openResult = { nav.navigate(Routes.result(it)) },
@@ -100,6 +110,6 @@ fun AppNav() {
     }
 }
 
-private val Routes.TEST get() = "test/{id}"
+private val Routes.TEST get() = "test/{id}?module={module}"
 private val Routes.EXAM get() = "exam/{id}"
 private val Routes.RESULT get() = "result/{id}"

@@ -1,5 +1,8 @@
 package uz.mynine.app.ui.exam
 
+import uz.mynine.app.R
+import uz.mynine.app.data.str
+
 import android.annotation.SuppressLint
 import android.app.Application
 import android.os.Handler
@@ -134,9 +137,9 @@ fun ExamScreen(attemptId: Int, onExit: () -> Unit, onFinished: () -> Unit) {
             Phase.Loading, Phase.Done -> Center { CircularProgressIndicator(color = Mn.ExamBlue) }
             Phase.Error -> Center {
                 Column(horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(14.dp), modifier = Modifier.padding(32.dp)) {
-                    Text(ui.error ?: "Xatolik", textAlign = TextAlign.Center, color = Mn.ExamText)
-                    ExamButton("Qayta urinish", dark = true) { vm.load() }
-                    ExamButton("Chiqish") { onExit() }
+                    Text(ui.error ?: str(R.string.error), textAlign = TextAlign.Center, color = Mn.ExamText)
+                    ExamButton(str(R.string.retry), dark = true) { vm.load() }
+                    ExamButton(str(R.string.exit)) { onExit() }
                 }
             }
             Phase.Intro -> IntroView(ui, onBack = { confirmExit = true }, onStart = vm::startModule)
@@ -147,7 +150,7 @@ fun ExamScreen(attemptId: Int, onExit: () -> Unit, onFinished: () -> Unit) {
             Box(Modifier.fillMaxSize().background(Color(0x99FFFFFF)), contentAlignment = Alignment.Center) {
                 Column(horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(12.dp)) {
                     CircularProgressIndicator(color = Mn.ExamBlue)
-                    Text(if (ui.autoSubmitted) "Vaqt tugadi. Javoblar topshirilmoqda…" else "Javoblar topshirilmoqda…", color = Mn.ExamText, fontWeight = FontWeight.SemiBold)
+                    Text(if (ui.autoSubmitted) str(R.string.time_up_submitting) else str(R.string.submitting), color = Mn.ExamText, fontWeight = FontWeight.SemiBold)
                 }
             }
         }
@@ -156,10 +159,10 @@ fun ExamScreen(attemptId: Int, onExit: () -> Unit, onFinished: () -> Unit) {
     if (confirmExit) {
         AlertDialog(
             onDismissRequest = { confirmExit = false },
-            title = { Text("Testdan chiqasizmi?") },
-            text = { Text("Javoblaringiz saqlangan. Vaqt to'xtamaydi — keyin \"Davom etish\" orqali qaytishingiz mumkin.") },
-            confirmButton = { TextButton(onClick = { confirmExit = false; onExit() }) { Text("Chiqish") } },
-            dismissButton = { TextButton(onClick = { confirmExit = false }) { Text("Qolish") } },
+            title = { Text(str(R.string.leave_q)) },
+            text = { Text(str(R.string.leave_text)) },
+            confirmButton = { TextButton(onClick = { confirmExit = false; onExit() }) { Text(str(R.string.exit)) } },
+            dismissButton = { TextButton(onClick = { confirmExit = false }) { Text(str(R.string.stay)) } },
         )
     }
     if (confirmSubmit) {
@@ -167,10 +170,10 @@ fun ExamScreen(attemptId: Int, onExit: () -> Unit, onFinished: () -> Unit) {
         val done = ui.navQuestions.count { ui.answered(it.question.id) }
         AlertDialog(
             onDismissRequest = { confirmSubmit = false },
-            title = { Text("${ui.module?.title ?: "Modul"} modulini yakunlaysizmi?") },
-            text = { Text("$total savoldan $done tasiga javob berdingiz. Yakunlangandan keyin javoblarni o'zgartirib bo'lmaydi.") },
-            confirmButton = { TextButton(onClick = { confirmSubmit = false; vm.submitModule() }) { Text("Yakunlash") } },
-            dismissButton = { TextButton(onClick = { confirmSubmit = false }) { Text("Bekor qilish") } },
+            title = { Text(str(R.string.finish_module_q, ui.module?.title ?: str(R.string.module))) },
+            text = { Text(str(R.string.answered_of, total, done)) },
+            confirmButton = { TextButton(onClick = { confirmSubmit = false; vm.submitModule() }) { Text(str(R.string.finish)) } },
+            dismissButton = { TextButton(onClick = { confirmSubmit = false }) { Text(str(R.string.cancel)) } },
         )
     }
     ui.error?.takeIf { ui.phase == Phase.Running || ui.phase == Phase.Intro }?.let { msg ->
@@ -222,7 +225,7 @@ private fun IntroView(ui: ExamUi, onBack: () -> Unit, onStart: () -> Unit) {
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(10.dp),
         ) {
-            Icon(Icons.AutoMirrored.Outlined.ArrowBack, "Orqaga", Modifier.clickable(onClick = onBack).padding(4.dp), tint = Mn.ExamText)
+            Icon(Icons.AutoMirrored.Outlined.ArrowBack, str(R.string.back), Modifier.clickable(onClick = onBack).padding(4.dp), tint = Mn.ExamText)
             IeltsBadge()
             Text(ui.attempt?.test?.name ?: "", fontWeight = FontWeight.Bold, color = Mn.ExamText, maxLines = 1)
         }
@@ -231,11 +234,11 @@ private fun IntroView(ui: ExamUi, onBack: () -> Unit, onStart: () -> Unit) {
             Modifier.weight(1f).verticalScroll(rememberScrollState()).padding(24.dp).widthIn(max = 640.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp),
         ) {
-            Text("Modul ${ui.moduleIndex + 1} / $total", color = Color(0xFF4B5563), fontSize = 14.sp, fontWeight = FontWeight.SemiBold)
+            Text(str(R.string.module_n_of, ui.moduleIndex + 1, total), color = Color(0xFF4B5563), fontSize = 14.sp, fontWeight = FontWeight.SemiBold)
             Text(module.title, fontSize = 32.sp, fontWeight = FontWeight.ExtraBold, color = Mn.ExamText)
             Row(horizontalArrangement = Arrangement.spacedBy(16.dp)) {
                 Fact(Icons.Outlined.Timer, minutes(module.durationSeconds))
-                Fact(null, "${module.parts.size} part · ${module.parts.sumOf { it.questionCount }} savol")
+                Fact(null, str(R.string.parts_questions_short, module.parts.size, module.parts.sumOf { it.questionCount }))
             }
             Column(
                 Modifier.fillMaxWidth().background(Mn.ExamPanel).border(1.dp, Color(0xFFE5E7EB)).padding(16.dp),
@@ -244,28 +247,28 @@ private fun IntroView(ui: ExamUi, onBack: () -> Unit, onStart: () -> Unit) {
                 Text("INSTRUCTIONS TO CANDIDATES", fontWeight = FontWeight.Bold, fontSize = 13.sp, color = Mn.ExamText, letterSpacing = 0.5.sp)
                 val lines = when (module.type) {
                     "listening" -> listOf(
-                        "Quloqchinni taqing va ovozni sozlang.",
-                        "Audio faqat bir marta ijro etiladi, to'xtatib bo'lmaydi.",
-                        "Javoblarni audio davomida yozing.",
+                        str(R.string.ins_l1),
+                        str(R.string.ins_l2),
+                        str(R.string.ins_l3),
                     )
                     "writing" -> listOf(
-                        "Task 1 uchun kamida 150, Task 2 uchun kamida 250 so'z yozing.",
-                        "Matn avtomatik saqlanadi.",
-                        "Natija AI tomonidan baholanadi.",
+                        str(R.string.ins_w1),
+                        str(R.string.ins_w2),
+                        str(R.string.ins_w3),
                     )
                     else -> listOf(
-                        "Barcha savollarga javob bering.",
-                        "Passage va savollar orasida yuqoridagi tablar bilan o'ting.",
-                        "Savol raqamini bosib, belgilab qo'yishingiz mumkin.",
+                        str(R.string.ins_r1),
+                        str(R.string.ins_r2),
+                        str(R.string.ins_r3),
                     )
                 }
                 lines.forEach { Text("•  $it", fontSize = 15.sp, color = Color(0xFF1F2937), lineHeight = 21.sp) }
             }
-            Text("Vaqt \"Boshlash\" bosilganda boshlanadi va server bo'yicha hisoblanadi.", fontSize = 13.sp, color = Color(0xFF4B5563))
+            Text(str(R.string.timer_starts), fontSize = 13.sp, color = Color(0xFF4B5563))
         }
         Box(Modifier.fillMaxWidth().padding(20.dp)) {
             Text(
-                "Boshlash",
+                str(R.string.start),
                 Modifier.fillMaxWidth().clip(RoundedCornerShape(2.dp)).background(Mn.ExamText).clickable(onClick = onStart).padding(vertical = 16.dp),
                 color = Color.White, fontWeight = FontWeight.Bold, fontSize = 16.sp, textAlign = TextAlign.Center,
             )
@@ -318,12 +321,12 @@ private fun RoomView(ui: ExamUi, vm: ExamViewModel, onFinish: () -> Unit, onBack
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(8.dp),
         ) {
-            Icon(Icons.AutoMirrored.Outlined.ArrowBack, "Chiqish", Modifier.clip(RoundedCornerShape(4.dp)).clickable(onClick = onBack).padding(4.dp), tint = Mn.ExamText)
+            Icon(Icons.AutoMirrored.Outlined.ArrowBack, str(R.string.exit), Modifier.clip(RoundedCornerShape(4.dp)).clickable(onClick = onBack).padding(4.dp), tint = Mn.ExamText)
             IeltsBadge()
             Text(ui.module?.title ?: "", fontWeight = FontWeight.Bold, fontSize = 15.sp, color = Mn.ExamText)
             Spacer(Modifier.weight(1f))
             if (ui.offline || ui.pending > 3) {
-                Icon(Icons.Outlined.CloudOff, "Oflayn: javoblar telefonda saqlanmoqda", tint = Color(0xFFD97706), modifier = Modifier.size(20.dp))
+                Icon(Icons.Outlined.CloudOff, str(R.string.offline_saving), tint = Color(0xFFD97706), modifier = Modifier.size(20.dp))
             }
             Timer(ui.remainingMs)
             Text(
@@ -482,9 +485,9 @@ private fun AudioBar(ui: ExamUi, vm: ExamViewModel) {
         horizontalArrangement = Arrangement.spacedBy(10.dp),
     ) {
         Icon(Icons.Outlined.Headphones, null, tint = Mn.ExamText, modifier = Modifier.size(18.dp))
-        Text(if (ui.audioPlaying) "Audio ijro etilmoqda" else "Audio", fontSize = 13.sp, color = Color(0xFF374151), fontWeight = FontWeight.SemiBold)
+        Text(if (ui.audioPlaying) str(R.string.audio_playing) else "Audio", fontSize = 13.sp, color = Color(0xFF374151), fontWeight = FontWeight.SemiBold)
         Spacer(Modifier.weight(1f))
-        Icon(Icons.AutoMirrored.Outlined.VolumeUp, "Ovoz", tint = Color(0xFF374151), modifier = Modifier.size(18.dp))
+        Icon(Icons.AutoMirrored.Outlined.VolumeUp, str(R.string.volume), tint = Color(0xFF374151), modifier = Modifier.size(18.dp))
         Slider(
             value = ui.volume,
             onValueChange = vm::setVolume,
@@ -503,7 +506,7 @@ private fun NumberBar(ui: ExamUi, onPick: (NavQuestion) -> Unit, onPart: (Int) -
     LaunchedEffect(ui.partIndex) { if (firstOfPart >= 0) state.animateScrollToItem(firstOfPart) }
 
     Row(Modifier.fillMaxWidth().padding(horizontal = 8.dp, vertical = 8.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-        NavArrow(Icons.AutoMirrored.Outlined.KeyboardArrowLeft, "Oldingi part", ui.partIndex > 0) { onPart(ui.partIndex - 1) }
+        NavArrow(Icons.AutoMirrored.Outlined.KeyboardArrowLeft, str(R.string.prev_part), ui.partIndex > 0) { onPart(ui.partIndex - 1) }
         LazyRow(Modifier.weight(1f), state = state, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
             itemsIndexed(list, key = { _, q -> q.question.id }) { _, q ->
                 val answered = ui.answered(q.question.id)
@@ -533,7 +536,7 @@ private fun NumberBar(ui: ExamUi, onPick: (NavQuestion) -> Unit, onPart: (Int) -
                 }
             }
         }
-        NavArrow(Icons.AutoMirrored.Outlined.KeyboardArrowRight, "Keyingi part", ui.partIndex < ui.parts.size - 1, dark = true) { onPart(ui.partIndex + 1) }
+        NavArrow(Icons.AutoMirrored.Outlined.KeyboardArrowRight, str(R.string.next_part), ui.partIndex < ui.parts.size - 1, dark = true) { onPart(ui.partIndex + 1) }
     }
 }
 

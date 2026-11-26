@@ -1,5 +1,8 @@
 package uz.mynine.app.ui.theme
 
+import uz.mynine.app.R
+import uz.mynine.app.data.str
+
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -204,7 +207,7 @@ fun ErrorBox(message: String, onRetry: (() -> Unit)? = null) {
         if (onRetry != null) {
             Spacer(Modifier.height(12.dp))
             Text(
-                "Qayta urinish",
+                str(R.string.retry),
                 Modifier.clip(RoundedCornerShape(999.dp)).clickable(onClick = onRetry).padding(vertical = 6.dp),
                 color = Mn.Accent,
                 fontWeight = FontWeight.SemiBold,
@@ -236,5 +239,9 @@ fun moduleTitle(type: String): String = when (type) {
 
 fun minutes(seconds: Int): String {
     val m = (seconds + 59) / 60
-    return if (m >= 60) "${m / 60} soat${if (m % 60 > 0) " ${m % 60} daq" else ""}" else "$m daq"
+    return when {
+        m >= 60 && m % 60 > 0 -> str(R.string.hours_minutes, m / 60, m % 60)
+        m >= 60 -> str(R.string.hours, m / 60)
+        else -> str(R.string.minutes, m)
+    }
 }

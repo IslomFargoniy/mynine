@@ -1,5 +1,8 @@
 package uz.mynine.app.ui.tests
 
+import uz.mynine.app.R
+import uz.mynine.app.data.str
+
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -75,12 +78,10 @@ import uz.mynine.app.ui.theme.ScreenTitle
 import uz.mynine.app.ui.theme.glass
 import uz.mynine.app.ui.theme.minutes
 
-private val Filters = listOf(null to "Hammasi", "listening" to "Listening", "reading" to "Reading", "writing" to "Writing")
-
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
-fun TestsTab(initialModule: String?, openTest: (Int) -> Unit) {
-    var module by rememberSaveable { mutableStateOf(initialModule) }
+/** A skill tab (module = listening|reading|writing) or the full-test list (full = true, opened from home). */
+fun TestsTab(title: String, module: String?, full: Boolean, openTest: (Int) -> Unit, onBack: (() -> Unit)? = null) {
     var search by rememberSaveable { mutableStateOf("") }
     var query by remember { mutableStateOf("") }
     var items by remember { mutableStateOf<List<TestItem>?>(null) }
@@ -97,8 +98,10 @@ fun TestsTab(initialModule: String?, openTest: (Int) -> Unit) {
     LaunchedEffect(module, query, page, reload) {
         error = null
         try {
-            val r = call { tests(search = query.ifBlank { null }, module = module, page = page) }
-            items = if (page == 1) r.data else items.orEmpty() + r.data
+            val r = call { tests(search = query.ifBlank { null }, module = module, full = if (full) 1 else null, page = page) }
+            // A full test has content in all three skills (the server also checks; empty modules are not listed).
+            val data = if (full) r.data.filter { it.modules.size >= 3 } else r.data
+            items = if (page == 1) data else items.orEmpty() + data
             lastPage = r.meta.lastPage
         } catch (e: Exception) {
             error = e.userMessage()
@@ -106,7 +109,16 @@ fun TestsTab(initialModule: String?, openTest: (Int) -> Unit) {
     }
 
     LazyColumn(Modifier.fillMaxSize(), contentPadding = BottomBarSpace, verticalArrangement = Arrangement.spacedBy(12.dp)) {
-        item { ScreenTitle("Testlar", Modifier.padding(top = 20.dp)) }
+        item {
+            Row(Modifier.padding(top = 20.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                if (onBack != null) {
+                    Box(Modifier.size(44.dp).glass(CircleShape).clickable(onClick = onBack), contentAlignment = Alignment.Center) {
+                        Icon(Icons.AutoMirrored.Outlined.ArrowBack, str(R.string.back), tint = Mn.Ink2)
+                    }
+                }
+                ScreenTitle(title)
+            }
+        }
         item {
             Row(
                 Modifier.fillMaxWidth().height(50.dp).glass(RoundedCornerShape(999.dp), strong = true).padding(horizontal = 18.dp),
@@ -115,7 +127,7 @@ fun TestsTab(initialModule: String?, openTest: (Int) -> Unit) {
             ) {
                 Icon(Icons.Outlined.Search, null, tint = Mn.Subtle, modifier = Modifier.size(20.dp))
                 Box(Modifier.weight(1f)) {
-                    if (search.isEmpty()) Text("Test nomi bo'yicha qidirish", color = Mn.Subtle, fontSize = 15.sp)
+                    if (search.isEmpty()) Text(str(R.string.search_hint), color = Mn.Subtle, fontSize = 15.sp)
                     BasicTextField(
                         search, { search = it },
                         singleLine = true,
@@ -127,36 +139,17 @@ fun TestsTab(initialModule: String?, openTest: (Int) -> Unit) {
                 }
             }
         }
-        item {
-            Row(Modifier.horizontalScroll(rememberScrollState()), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                Filters.forEach { (id, label) ->
-                    val on = module == id
-                    Text(
-                        label,
-                        Modifier
-                            .clip(RoundedCornerShape(999.dp))
-                            .background(if (on) Mn.Accent else Mn.Glass)
-                            .border(1.dp, if (on) Color.Transparent else Mn.GlassEdge, RoundedCornerShape(999.dp))
-                            .clickable { module = id }
-                            .padding(horizontal = 16.dp, vertical = 9.dp),
-                        color = if (on) Color.White else Mn.Ink2,
-                        fontSize = 14.sp,
-                        fontWeight = FontWeight.SemiBold,
-                    )
-                }
-            }
-        }
         error?.let { msg -> item { ErrorBox(msg) { reload++ } } }
         val list = items
         if (list == null && error == null) item { LoadingBox() }
         if (list != null && list.isEmpty()) {
-            item { Text("Hech narsa topilmadi.", Modifier.fillMaxWidth().padding(24.dp), textAlign = TextAlign.Center, color = Mn.Subtle) }
+            item { Text(str(R.string.nothing_found), Modifier.fillMaxWidth().padding(24.dp), textAlign = TextAlign.Center, color = Mn.Subtle) }
         }
         items(list.orEmpty(), key = { it.id }) { t -> TestCard(t) { openTest(t.id) } }
         if (list != null && page < lastPage) {
             item {
                 Text(
-                    "Yana yuklash",
+                    str(R.string.load_more),
                     Modifier.fillMaxWidth().clip(RoundedCornerShape(999.dp)).clickable { page++ }.padding(14.dp),
                     color = Mn.Accent, fontWeight = FontWeight.SemiBold, textAlign = TextAlign.Center,
                 )
@@ -175,8 +168,8 @@ private fun TestCard(t: TestItem, onClick: () -> Unit) {
         Row(verticalAlignment = Alignment.CenterVertically) {
             Text(t.name, Modifier.weight(1f), fontSize = 16.sp, fontWeight = FontWeight.Bold, color = Mn.Ink)
             when {
-                t.inProgressAttemptId != null -> Pill("Davom etmoqda", bg = Mn.AccentSoft, fg = Mn.AccentDark)
-                t.lastFinishedAttemptId != null -> Pill("Yechilgan", bg = Mn.GreenSoft, fg = Mn.Green)
+                t.inProgressAttemptId != null -> Pill(str(R.string.in_progress), bg = Mn.AccentSoft, fg = Mn.AccentDark)
+                t.lastFinishedAttemptId != null -> Pill(str(R.string.solved), bg = Mn.GreenSoft, fg = Mn.Green)
             }
         }
         FlowRow(horizontalArrangement = Arrangement.spacedBy(6.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
@@ -188,19 +181,23 @@ private fun TestCard(t: TestItem, onClick: () -> Unit) {
 }
 
 @Composable
-fun TestDetailScreen(testId: Int, onBack: () -> Unit, openExam: (Int) -> Unit, openResult: (Int) -> Unit) {
+fun TestDetailScreen(testId: Int, skill: String? = null, onBack: () -> Unit, openExam: (Int) -> Unit, openResult: (Int) -> Unit) {
     val scope = rememberCoroutineScope()
     var test by remember { mutableStateOf<TestItem?>(null) }
     var error by remember { mutableStateOf<String?>(null) }
     var selected by remember { mutableStateOf<Set<String>>(emptySet()) }
     var starting by remember { mutableStateOf(false) }
     var reload by remember { mutableIntStateOf(0) }
+    var fullCount by remember { mutableIntStateOf(0) }
 
     LaunchedEffect(testId, reload) {
         error = null
         try {
-            val t = call { test(testId) }.test
+            // Opened from a skill tab: only that skill is shown and solved.
+            val full = call { test(testId) }.test
+            val t = if (skill != null && full.modules.any { it.type == skill }) full.copy(modules = full.modules.filter { it.type == skill }) else full
             test = t
+            fullCount = full.modules.size
             selected = t.modules.map { it.type }.toSet()
         } catch (e: Exception) {
             error = e.userMessage()
@@ -219,8 +216,8 @@ fun TestDetailScreen(testId: Int, onBack: () -> Unit, openExam: (Int) -> Unit, o
                 Box(
                     Modifier.size(44.dp).glass(CircleShape).clickable(onClick = onBack),
                     contentAlignment = Alignment.Center,
-                ) { Icon(Icons.AutoMirrored.Outlined.ArrowBack, "Orqaga", tint = Mn.Ink2) }
-                Text("Testlar", fontSize = 14.sp, fontWeight = FontWeight.SemiBold, color = Mn.Subtle)
+                ) { Icon(Icons.AutoMirrored.Outlined.ArrowBack, str(R.string.back), tint = Mn.Ink2) }
+                Text(str(R.string.tests), fontSize = 14.sp, fontWeight = FontWeight.SemiBold, color = Mn.Subtle)
             }
 
             Column(Modifier.weight(1f).verticalScroll(rememberScrollState()).padding(top = 18.dp), verticalArrangement = Arrangement.spacedBy(18.dp)) {
@@ -235,7 +232,7 @@ fun TestDetailScreen(testId: Int, onBack: () -> Unit, openExam: (Int) -> Unit, o
                                 listOfNotNull(
                                     t.folder?.name?.trim(),
                                     t.variant?.let { if (it == "general") "General Training" else "Academic" },
-                                    "${t.modules.size} modul",
+                                    str(R.string.module_count, t.modules.size),
                                     minutes(t.modules.sumOf { it.durationSeconds }),
                                 ).joinToString(" · "),
                                 fontSize = 15.sp, color = Mn.Muted,
@@ -243,7 +240,7 @@ fun TestDetailScreen(testId: Int, onBack: () -> Unit, openExam: (Int) -> Unit, o
                         }
 
                         Column(Modifier.fillMaxWidth().glass(RoundedCornerShape(28.dp)).padding(8.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                            Text("Qaysi modullarni yechasiz?", Modifier.padding(start = 12.dp, top = 10.dp, bottom = 4.dp), fontSize = 13.sp, fontWeight = FontWeight.Bold, color = Mn.Subtle)
+                            Text(str(R.string.which_modules), Modifier.padding(start = 12.dp, top = 10.dp, bottom = 4.dp), fontSize = 13.sp, fontWeight = FontWeight.Bold, color = Mn.Subtle)
                             t.modules.forEach { m ->
                                 val on = m.type in selected
                                 Row(
@@ -267,7 +264,7 @@ fun TestDetailScreen(testId: Int, onBack: () -> Unit, openExam: (Int) -> Unit, o
                                     Column(Modifier.weight(1f)) {
                                         Text(m.title, fontSize = 16.sp, fontWeight = FontWeight.Bold, color = Mn.Ink)
                                         Text(
-                                            "${m.partsCount} part · ${m.questionsCount} savol · ${minutes(m.durationSeconds)}",
+                                            str(R.string.parts_questions, m.partsCount, m.questionsCount, minutes(m.durationSeconds)),
                                             fontSize = 13.sp, color = Mn.Subtle,
                                         )
                                     }
@@ -279,10 +276,10 @@ fun TestDetailScreen(testId: Int, onBack: () -> Unit, openExam: (Int) -> Unit, o
                             Modifier.fillMaxWidth().glass(RoundedCornerShape(24.dp)).padding(18.dp),
                             verticalArrangement = Arrangement.spacedBy(12.dp),
                         ) {
-                            Text("Qoidalar", fontSize = 15.sp, fontWeight = FontWeight.Bold, color = Mn.Ink)
-                            Rule(Icons.Outlined.Headphones, "Listening audiosi faqat bir marta ijro etiladi. Quloqchin taqing.")
-                            Rule(Icons.Outlined.Save, "Javoblar avtomatik saqlanadi — internet uzilsa ham davom etasiz.")
-                            Rule(Icons.Outlined.Timer, "Vaqt server bo'yicha hisoblanadi, ilovadan chiqsangiz ham to'xtamaydi.")
+                            Text(str(R.string.rules), fontSize = 15.sp, fontWeight = FontWeight.Bold, color = Mn.Ink)
+                            Rule(Icons.Outlined.Headphones, str(R.string.rule_audio))
+                            Rule(Icons.Outlined.Save, str(R.string.rule_save))
+                            Rule(Icons.Outlined.Timer, str(R.string.rule_timer))
                         }
                         Spacer(Modifier.height(8.dp))
                     }
@@ -292,13 +289,13 @@ fun TestDetailScreen(testId: Int, onBack: () -> Unit, openExam: (Int) -> Unit, o
             val t = test
             if (t != null) {
                 val chosen = t.modules.filter { it.type in selected }
-                val module = if (chosen.size == 1 && t.modules.size > 1) chosen.first().type else null
+                val module = if (chosen.size == 1 && fullCount > 1) chosen.first().type else null
                 val ready = chosen.isNotEmpty() && (chosen.size == 1 || chosen.size == t.modules.size)
                 if (!ready && chosen.isNotEmpty()) {
-                    Text("Bitta modulni yoki to'liq testni tanlang.", Modifier.fillMaxWidth().padding(bottom = 8.dp), textAlign = TextAlign.Center, color = Mn.Subtle, fontSize = 13.sp)
+                    Text(str(R.string.pick_one_or_full), Modifier.fillMaxWidth().padding(bottom = 8.dp), textAlign = TextAlign.Center, color = Mn.Subtle, fontSize = 13.sp)
                 }
                 PrimaryButton(
-                    if (t.inProgressAttemptId != null) "Davom etish" else "Boshlash · ${minutes(chosen.sumOf { it.durationSeconds })}",
+                    if (t.inProgressAttemptId != null) str(R.string.continue_) else str(R.string.start_with, minutes(chosen.sumOf { it.durationSeconds })),
                     Modifier.fillMaxWidth(),
                     enabled = ready,
                     loading = starting,
@@ -317,12 +314,12 @@ fun TestDetailScreen(testId: Int, onBack: () -> Unit, openExam: (Int) -> Unit, o
                 }
                 t.lastFinishedAttemptId?.let { last ->
                     Text(
-                        "Oxirgi natijani ko'rish",
+                        str(R.string.see_last_result),
                         Modifier.fillMaxWidth().clip(RoundedCornerShape(999.dp)).clickable { openResult(last) }.padding(12.dp),
                         textAlign = TextAlign.Center, color = Mn.Accent, fontWeight = FontWeight.SemiBold, fontSize = 14.sp,
                     )
                 }
-                Text("Tartib: Listening → Reading → Writing", Modifier.fillMaxWidth().padding(top = 6.dp), textAlign = TextAlign.Center, fontSize = 13.sp, color = Mn.Subtle)
+                if (skill == null) Text(str(R.string.order), Modifier.fillMaxWidth().padding(top = 6.dp), textAlign = TextAlign.Center, fontSize = 13.sp, color = Mn.Subtle)
             }
         }
     }

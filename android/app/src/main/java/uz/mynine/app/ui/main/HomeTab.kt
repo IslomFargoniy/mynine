@@ -1,5 +1,8 @@
 package uz.mynine.app.ui.main
 
+import uz.mynine.app.R
+import uz.mynine.app.data.str
+
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -63,7 +66,8 @@ fun HomeTab(
     openTest: (Int) -> Unit,
     openExam: (Int) -> Unit,
     openResult: (Int) -> Unit,
-    openTests: (String?) -> Unit,
+    openSkill: (String) -> Unit,
+    openFullTests: () -> Unit,
     openProfile: () -> Unit,
 ) {
     val user by Session.user.collectAsState()
@@ -76,7 +80,7 @@ fun HomeTab(
         error = null
         try {
             attempts = call { attempts(1) }.data
-            tests = call { tests() }.data.take(4)
+            tests = call { tests(full = 1) }.data.filter { it.modules.size >= 3 }.take(4)
             runCatching { call { me() }.user }.getOrNull()?.let { Session.update(it) }
         } catch (e: Exception) {
             error = e.userMessage()
@@ -91,7 +95,7 @@ fun HomeTab(
             Row(Modifier.fillMaxWidth().padding(top = 20.dp), verticalAlignment = Alignment.CenterVertically) {
                 Column(Modifier.weight(1f)) {
                     Text(greeting(), fontSize = 14.sp, color = Mn.Subtle, fontWeight = FontWeight.Medium)
-                    Text(user?.name?.split(" ")?.firstOrNull()?.ifBlank { null } ?: "Talaba", fontSize = 26.sp, fontWeight = FontWeight.ExtraBold, color = Mn.Ink)
+                    Text(user?.name?.split(" ")?.firstOrNull()?.ifBlank { null } ?: str(R.string.student), fontSize = 26.sp, fontWeight = FontWeight.ExtraBold, color = Mn.Ink)
                 }
                 Box(Modifier.clip(androidx.compose.foundation.shape.CircleShape).clickable(onClick = openProfile)) { Avatar(user?.name ?: "") }
             }
@@ -102,9 +106,9 @@ fun HomeTab(
         item {
             if (lastDone != null) BandCard(lastDone) { openResult(lastDone.id) }
             else GlassCard(Modifier.fillMaxWidth(), radius = 28.dp) {
-                Text("Birinchi testingizni yeching", fontSize = 18.sp, fontWeight = FontWeight.Bold, color = Mn.Ink)
+                Text(str(R.string.first_test_title), fontSize = 18.sp, fontWeight = FontWeight.Bold, color = Mn.Ink)
                 Spacer(Modifier.height(6.dp))
-                Text("Natijangiz shu yerda ko'rinadi: overall band va har bir modul bo'yicha ball.", fontSize = 14.sp, color = Mn.Muted, lineHeight = 20.sp)
+                Text(str(R.string.first_test_text), fontSize = 14.sp, color = Mn.Muted, lineHeight = 20.sp)
             }
         }
 
@@ -114,16 +118,16 @@ fun HomeTab(
 
         item {
             Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
-                SectionHeader("Modullar")
+                SectionHeader(str(R.string.modules))
                 Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                    ModuleTile("Listening", Icons.Outlined.Headphones, Color(0x2E38BDF8), Color(0xFF0369A1), Modifier.weight(1f)) { openTests("listening") }
-                    ModuleTile("Reading", Icons.AutoMirrored.Outlined.MenuBook, Color(0x244F46E5), Mn.AccentDark, Modifier.weight(1f)) { openTests("reading") }
-                    ModuleTile("Writing", Icons.Outlined.Edit, Color(0x24EC4899), Color(0xFFBE185D), Modifier.weight(1f)) { openTests("writing") }
+                    ModuleTile("Listening", Icons.Outlined.Headphones, Color(0x2E38BDF8), Color(0xFF0369A1), Modifier.weight(1f)) { openSkill("listening") }
+                    ModuleTile("Reading", Icons.AutoMirrored.Outlined.MenuBook, Color(0x244F46E5), Mn.AccentDark, Modifier.weight(1f)) { openSkill("reading") }
+                    ModuleTile("Writing", Icons.Outlined.Edit, Color(0x24EC4899), Color(0xFFBE185D), Modifier.weight(1f)) { openSkill("writing") }
                 }
             }
         }
 
-        item { SectionHeader("Yangi testlar", "Hammasi") { openTests(null) } }
+        item { SectionHeader(str(R.string.full_tests), str(R.string.all)) { openFullTests() } }
         items(tests.orEmpty(), key = { it.id }) { t ->
             Row(
                 Modifier.fillMaxWidth().glass(RoundedCornerShape(22.dp)).clickable { openTest(t.id) }.padding(16.dp),
@@ -143,9 +147,9 @@ fun HomeTab(
 }
 
 private fun greeting(): String = when (LocalTime.now().hour) {
-    in 5..10 -> "Xayrli tong,"
-    in 11..17 -> "Xayrli kun,"
-    else -> "Xayrli kech,"
+    in 5..10 -> str(R.string.good_morning)
+    in 11..17 -> str(R.string.good_day)
+    else -> str(R.string.good_evening)
 }
 
 @Composable
@@ -156,13 +160,13 @@ private fun BandCard(item: AttemptSummary, onClick: () -> Unit) {
         Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(18.dp)) {
             BandRing(main, 92)
             Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                Text(if (b?.overall != null) "Oxirgi overall band" else "Oxirgi natija", fontSize = 13.sp, fontWeight = FontWeight.SemiBold, color = Mn.Subtle)
+                Text(if (b?.overall != null) str(R.string.last_overall) else str(R.string.last_result), fontSize = 13.sp, fontWeight = FontWeight.SemiBold, color = Mn.Subtle)
                 Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
                     b?.listening?.let { Pill("L ${band(it)}") }
                     b?.reading?.let { Pill("R ${band(it)}") }
                     b?.writing?.let { Pill("W ${band(it)}") }
                 }
-                Text("Natijani ko'rish →", fontSize = 14.sp, fontWeight = FontWeight.SemiBold, color = Mn.Accent)
+                Text(str(R.string.see_result), fontSize = 14.sp, fontWeight = FontWeight.SemiBold, color = Mn.Accent)
             }
         }
     }
@@ -196,14 +200,14 @@ private fun ContinueCard(item: AttemptSummary, onClick: () -> Unit) {
             .padding(18.dp),
         verticalArrangement = Arrangement.spacedBy(10.dp),
     ) {
-        Text("DAVOM ETTIRISH", fontSize = 12.sp, fontWeight = FontWeight.Bold, color = Color(0xFFE0E7FF), letterSpacing = 1.sp)
+        Text(str(R.string.continue_caps), fontSize = 12.sp, fontWeight = FontWeight.Bold, color = Color(0xFFE0E7FF), letterSpacing = 1.sp)
         Text(
             (item.test.name ?: "Test") + (item.module?.let { " · " + moduleTitle(it) } ?: ""),
             fontSize = 18.sp, fontWeight = FontWeight.Bold, color = Color.White,
         )
-        Text("Tugallanmagan test — qolgan joyidan davom eting.", fontSize = 14.sp, color = Color(0xFFE0E7FF))
+        Text(str(R.string.unfinished), fontSize = 14.sp, color = Color(0xFFE0E7FF))
         Text(
-            "Davom etish",
+            str(R.string.continue_),
             Modifier.clip(RoundedCornerShape(999.dp)).background(Color.White).padding(horizontal = 18.dp, vertical = 10.dp),
             color = Mn.AccentDark, fontWeight = FontWeight.Bold, fontSize = 14.sp,
         )

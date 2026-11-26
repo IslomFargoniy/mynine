@@ -1,6 +1,30 @@
 package uz.mynine.app.ui.main
 
+import uz.mynine.app.R
+import uz.mynine.app.data.str
+
+import androidx.activity.compose.BackHandler
+import androidx.compose.animation.animateColorAsState
+import androidx.compose.animation.core.Spring
+import androidx.compose.animation.core.animateDpAsState
+import androidx.compose.animation.core.spring
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
+import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.layout.BoxWithConstraints
+import androidx.compose.foundation.layout.offset
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.selection.selectable
+import androidx.compose.material.icons.automirrored.rounded.MenuBook
+import androidx.compose.material.icons.outlined.Edit
+import androidx.compose.material.icons.outlined.Headphones
+import androidx.compose.material.icons.rounded.AccessTime
+import androidx.compose.material.icons.rounded.Edit
+import androidx.compose.material.icons.rounded.Headphones
+import androidx.compose.material.icons.rounded.Home
+import androidx.compose.runtime.key
+import androidx.compose.ui.draw.shadow
+import androidx.compose.ui.semantics.Role
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -26,7 +50,6 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.outlined.MenuBook
 import androidx.compose.material.icons.outlined.AccessTime
 import androidx.compose.material.icons.outlined.Home
-import androidx.compose.material.icons.outlined.Person
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -63,63 +86,101 @@ import uz.mynine.app.ui.theme.band
 import uz.mynine.app.ui.theme.glass
 import uz.mynine.app.ui.theme.moduleTitle
 
-enum class Tab(val label: String, val icon: ImageVector) {
-    Home("Bosh", Icons.Outlined.Home),
-    Tests("Testlar", Icons.AutoMirrored.Outlined.MenuBook),
-    History("Tarix", Icons.Outlined.AccessTime),
-    Profile("Profil", Icons.Outlined.Person),
+enum class Tab(private val fixedLabel: String?, val icon: ImageVector, val selectedIcon: ImageVector, val module: String? = null) {
+    Home(null, Icons.Outlined.Home, Icons.Rounded.Home),
+    Listening("Listening", Icons.Outlined.Headphones, Icons.Rounded.Headphones, "listening"),
+    Reading("Reading", Icons.AutoMirrored.Outlined.MenuBook, Icons.AutoMirrored.Rounded.MenuBook, "reading"),
+    Writing("Writing", Icons.Outlined.Edit, Icons.Rounded.Edit, "writing"),
+    Attempts(null, Icons.Outlined.AccessTime, Icons.Rounded.AccessTime);
+
+    /** Skill tabs keep their English exam names in every language. */
+    val label: String get() = fixedLabel ?: str(if (this == Home) R.string.nav_home else R.string.attempts)
 }
 
+/** Screens of the home tab without a tab of their own: Home stays lit and back returns home. */
+private enum class HomeChild { Profile, FullTests }
+
 @Composable
-fun MainScreen(openTest: (Int) -> Unit, openExam: (Int) -> Unit, openResult: (Int) -> Unit) {
+fun MainScreen(openTest: (Int, String?) -> Unit, openExam: (Int) -> Unit, openResult: (Int) -> Unit) {
     var tab by rememberSaveable { mutableStateOf(Tab.Home) }
-    var testsModule by rememberSaveable { mutableStateOf<String?>(null) }
+    var child by rememberSaveable { mutableStateOf<HomeChild?>(null) }
+
+    BackHandler(enabled = child != null || tab != Tab.Home) {
+        if (child != null) child = null else tab = Tab.Home
+    }
 
     GlassBackground(tab.ordinal) {
         Box(Modifier.fillMaxSize().windowInsetsPadding(WindowInsets.statusBars)) {
-            when (tab) {
-                Tab.Home -> HomeTab(
-                    openTest = openTest,
+            when {
+                child == HomeChild.Profile -> ProfileTab(openHistory = { child = null; tab = Tab.Attempts }, onBack = { child = null })
+                child == HomeChild.FullTests -> TestsTab(str(R.string.full_tests), module = null, full = true, openTest = { openTest(it, null) }, onBack = { child = null })
+                tab == Tab.Home -> HomeTab(
+                    openTest = { openTest(it, null) },
                     openExam = openExam,
                     openResult = openResult,
-                    openTests = { module -> testsModule = module; tab = Tab.Tests },
-                    openProfile = { tab = Tab.Profile },
+                    openSkill = { module -> tab = Tab.entries.first { it.module == module } },
+                    openFullTests = { child = HomeChild.FullTests },
+                    openProfile = { child = HomeChild.Profile },
                 )
-                Tab.Tests -> TestsTab(initialModule = testsModule, openTest = openTest)
-                Tab.History -> HistoryTab(openExam = openExam, openResult = openResult)
-                Tab.Profile -> ProfileTab(openHistory = { tab = Tab.History })
+                tab == Tab.Attempts -> HistoryTab(openExam = openExam, openResult = openResult)
+                else -> key(tab) {
+                    TestsTab(tab.label, module = tab.module, full = false, openTest = { openTest(it, tab.module) })
+                }
             }
-            BottomBar(tab, Modifier.align(Alignment.BottomCenter)) { tab = it; if (it != Tab.Tests) testsModule = null }
+            BottomBar(if (child != null) Tab.Home else tab, Modifier.align(Alignment.BottomCenter)) { child = null; tab = it }
         }
     }
 }
 
+/** Floating tab bar (same design as the MultiTest app): a card with a pill that slides to the chosen tab. */
 @Composable
 private fun BottomBar(current: Tab, modifier: Modifier, onSelect: (Tab) -> Unit) {
-    Row(
+    val shape = RoundedCornerShape(22.dp)
+    Box(
         modifier
             .windowInsetsPadding(WindowInsets.navigationBars)
-            .padding(horizontal = 16.dp, vertical = 14.dp)
+            .padding(start = 12.dp, end = 12.dp, bottom = 12.dp)
             .fillMaxWidth()
-            .height(68.dp)
-            .glass(RoundedCornerShape(999.dp), strong = true)
-            .padding(6.dp),
-        horizontalArrangement = Arrangement.spacedBy(4.dp),
+            .height(62.dp)
+            .shadow(14.dp, shape, ambientColor = Color.Black.copy(alpha = 0.10f), spotColor = Color.Black.copy(alpha = 0.16f))
+            .clip(shape)
+            .background(Color.White)
+            .border(1.dp, Color(0xFFE2E8F0), shape),
     ) {
-        Tab.entries.forEach { t ->
-            val active = t == current
-            Column(
-                Modifier
-                    .weight(1f)
-                    .fillMaxHeight()
-                    .clip(RoundedCornerShape(999.dp))
-                    .background(if (active) Mn.Accent else Color.Transparent)
-                    .clickable { onSelect(t) },
-                horizontalAlignment = Alignment.CenterHorizontally,
-                verticalArrangement = Arrangement.Center,
-            ) {
-                Icon(t.icon, t.label, tint = if (active) Color.White else Mn.Muted, modifier = Modifier.size(20.dp))
-                Text(t.label, fontSize = 11.sp, fontWeight = FontWeight.SemiBold, color = if (active) Color.White else Mn.Muted)
+        BoxWithConstraints(Modifier.fillMaxSize().padding(4.dp)) {
+            val itemWidth = maxWidth / Tab.entries.size
+            val pillOffset by animateDpAsState(
+                itemWidth * current.ordinal,
+                spring(dampingRatio = 0.72f, stiffness = Spring.StiffnessMediumLow),
+                label = "pill",
+            )
+            Box(Modifier.offset(x = pillOffset).width(itemWidth).fillMaxHeight().clip(RoundedCornerShape(18.dp)).background(Mn.AccentSoft))
+            Row(Modifier.fillMaxSize()) {
+                Tab.entries.forEach { t ->
+                    val selected = t == current
+                    val color by animateColorAsState(if (selected) Mn.Accent else Mn.Subtle, label = "tabColor")
+                    Column(
+                        Modifier
+                            .width(itemWidth)
+                            .fillMaxHeight()
+                            .clip(RoundedCornerShape(18.dp))
+                            .selectable(
+                                selected = selected,
+                                onClick = { if (!selected) onSelect(t) },
+                                role = Role.Tab,
+                                interactionSource = remember { MutableInteractionSource() },
+                                indication = null,
+                            ),
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        verticalArrangement = Arrangement.Center,
+                    ) {
+                        Icon(if (selected) t.selectedIcon else t.icon, null, tint = color, modifier = Modifier.size(26.dp))
+                        Text(
+                            t.label, color = color, fontSize = 10.sp, fontWeight = FontWeight.Bold, maxLines = 1,
+                            overflow = TextOverflow.Ellipsis, modifier = Modifier.padding(top = 1.dp, start = 2.dp, end = 2.dp),
+                        )
+                    }
+                }
             }
         }
     }
@@ -151,7 +212,7 @@ fun AttemptRow(item: AttemptSummary, onClick: () -> Unit) {
             val modules = when {
                 item.module != null -> moduleTitle(item.module)
                 item.modules.isNotEmpty() -> item.modules.joinToString(" · ") { moduleTitle(it) }
-                else -> "To'liq test"
+                else -> str(R.string.full_test)
             }
             Text("$modules · ${shortDate(item.startedAt)}", fontSize = 13.sp, color = Mn.Subtle)
         }
@@ -160,14 +221,14 @@ fun AttemptRow(item: AttemptSummary, onClick: () -> Unit) {
             val value = b?.overall ?: b?.listening ?: b?.reading ?: b?.writing
             Pill("Band ${band(value)}", bg = Mn.GreenSoft, fg = Mn.Green)
         } else {
-            Pill("Davom etmoqda", bg = Mn.AccentSoft, fg = Mn.AccentDark)
+            Pill(str(R.string.in_progress), bg = Mn.AccentSoft, fg = Mn.AccentDark)
         }
     }
 }
 
 fun shortDate(iso: String?): String {
     if (iso == null || iso.length < 10) return ""
-    val months = listOf("yan", "fev", "mar", "apr", "may", "iyun", "iyul", "avg", "sen", "okt", "noy", "dek")
+    val months = str(R.string.months).split(",")
     val m = iso.substring(5, 7).toIntOrNull() ?: return iso.take(10)
     val d = iso.substring(8, 10).toIntOrNull() ?: return iso.take(10)
     return "$d-${months[(m - 1).coerceIn(0, 11)]}"
@@ -193,16 +254,16 @@ fun HistoryTab(openExam: (Int) -> Unit, openResult: (Int) -> Unit) {
     }
 
     LazyColumn(Modifier.fillMaxSize(), contentPadding = BottomBarSpace, verticalArrangement = Arrangement.spacedBy(10.dp)) {
-        item { ScreenTitle("Tarix", Modifier.padding(top = 20.dp, bottom = 8.dp)) }
+        item { ScreenTitle(str(R.string.attempts), Modifier.padding(top = 20.dp, bottom = 8.dp)) }
         error?.let { msg -> item { ErrorBox(msg) { reload++ } } }
         val list = items
         if (list == null && error == null) item { LoadingBox() }
         if (list != null && list.isEmpty()) {
             item {
                 GlassCard(Modifier.fillMaxWidth()) {
-                    Text("Hali test yechmagansiz", fontWeight = FontWeight.Bold, color = Mn.Ink)
+                    Text(str(R.string.no_attempts), fontWeight = FontWeight.Bold, color = Mn.Ink)
                     Spacer(Modifier.height(4.dp))
-                    Text("Testlar bo'limidan birinchi testingizni boshlang.", color = Mn.Muted, fontSize = 14.sp)
+                    Text(str(R.string.no_attempts_text), color = Mn.Muted, fontSize = 14.sp)
                 }
             }
         }
@@ -212,7 +273,7 @@ fun HistoryTab(openExam: (Int) -> Unit, openResult: (Int) -> Unit) {
         if (list != null && page < lastPage) {
             item {
                 Text(
-                    "Yana yuklash",
+                    str(R.string.load_more),
                     Modifier.fillMaxWidth().clip(RoundedCornerShape(999.dp)).clickable { page++ }.padding(14.dp),
                     color = Mn.Accent, fontWeight = FontWeight.SemiBold, textAlign = TextAlign.Center,
                 )

@@ -1,5 +1,7 @@
 package uz.mynine.app.data
 
+import uz.mynine.app.R
+
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonObject
 import okhttp3.Interceptor
@@ -35,6 +37,7 @@ interface StudentApi {
     @GET("tests") suspend fun tests(
         @Query("search") search: String? = null,
         @Query("module") module: String? = null,
+        @Query("full") full: Int? = null,
         @Query("folder_id") folderId: Int? = null,
         @Query("page") page: Int = 1,
     ): TestsResponse
@@ -79,6 +82,7 @@ object ApiClient {
             val builder = chain.request().newBuilder()
                 .header("Accept", "application/json")
                 .header("X-Platform", "android")
+                .header("Accept-Language", AppLanguage.currentCode())
                 .header("X-App-Version", BuildConfig.VERSION_NAME)
             token?.let { builder.header("Authorization", "Bearer $it") }
             val response = chain.proceed(builder.build())
@@ -112,21 +116,21 @@ suspend fun <T> call(block: suspend StudentApi.() -> T): T = try {
 } catch (e: HttpException) {
     val body = runCatching { e.response()?.errorBody()?.string() }.getOrNull()
     val parsed = body?.let { runCatching { AppJson.decodeFromString(ApiErrorBody.serializer(), it) }.getOrNull() }
-    throw ApiException(e.code(), parsed?.code, parsed?.message ?: "Server xatosi (${e.code()})")
+    throw ApiException(e.code(), parsed?.code, parsed?.message ?: str(R.string.err_server, e.code()))
 } catch (e: IOException) {
-    throw ApiException(0, "offline", "Internet aloqasi yo'q. Qayta urinib ko'ring.")
+    throw ApiException(0, "offline", str(R.string.err_offline))
 }
 
 fun Throwable.userMessage(): String = when (this) {
     is ApiException -> when (code) {
-        "invalid_code" -> "Kod noto'g'ri yoki muddati o'tgan. Botdan yangi kod oling."
-        "invalid_token" -> "Google orqali kirish muddati o'tdi. Qayta urinib ko'ring."
-        "invalid_credentials" -> "Login yoki parol noto'g'ri."
-        "staff_account" -> "Bu xodim akkaunti. Xodimlar mynine.uz saytidan foydalanadi."
-        "account_suspended" -> "Akkaunt bloklangan."
-        "too_many_requests" -> "Juda ko'p urinish. Bir daqiqadan keyin qayta urinib ko'ring."
-        "module_locked" -> "Avval oldingi modulni yakunlang."
+        "invalid_code" -> str(R.string.err_invalid_code)
+        "invalid_token" -> str(R.string.err_invalid_token)
+        "invalid_credentials" -> str(R.string.err_invalid_credentials)
+        "staff_account" -> str(R.string.err_staff)
+        "account_suspended" -> str(R.string.err_suspended)
+        "too_many_requests" -> str(R.string.err_too_many)
+        "module_locked" -> str(R.string.err_module_locked)
         else -> message
     }
-    else -> message ?: "Kutilmagan xatolik"
+    else -> message ?: str(R.string.unknown_error)
 }

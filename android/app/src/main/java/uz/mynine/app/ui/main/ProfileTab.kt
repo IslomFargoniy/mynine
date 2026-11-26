@@ -1,5 +1,15 @@
 package uz.mynine.app.ui.main
 
+import uz.mynine.app.R
+import uz.mynine.app.data.str
+import uz.mynine.app.data.AppLanguage
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.material.icons.automirrored.outlined.ArrowBack
+import androidx.compose.material.icons.outlined.Language
+import androidx.compose.material3.RadioButton
+import androidx.compose.ui.draw.clip
+
 import android.content.Intent
 import android.net.Uri
 import androidx.compose.foundation.clickable
@@ -58,19 +68,25 @@ import uz.mynine.app.ui.theme.ScreenTitle
 import uz.mynine.app.ui.theme.glass
 
 @Composable
-fun ProfileTab(openHistory: () -> Unit) {
+fun ProfileTab(openHistory: () -> Unit, onBack: () -> Unit) {
     val user by Session.user.collectAsState()
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
     var editName by remember { mutableStateOf(false) }
     var confirmDelete by remember { mutableStateOf(false) }
+    var pickLanguage by remember { mutableStateOf(false) }
     var error by remember { mutableStateOf<String?>(null) }
 
     Column(
         Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(BottomBarSpace),
         verticalArrangement = Arrangement.spacedBy(16.dp),
     ) {
-        ScreenTitle("Profil", Modifier.padding(top = 20.dp))
+        Row(Modifier.padding(top = 20.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+            Box(Modifier.size(44.dp).glass(CircleShape).clickable(onClick = onBack), contentAlignment = Alignment.Center) {
+                Icon(Icons.AutoMirrored.Outlined.ArrowBack, str(R.string.back), tint = Mn.Ink2)
+            }
+            ScreenTitle(str(R.string.profile))
+        }
 
         GlassCard(Modifier.fillMaxWidth(), radius = 28.dp, onClick = { editName = true }) {
             Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(14.dp)) {
@@ -78,28 +94,30 @@ fun ProfileTab(openHistory: () -> Unit) {
                 Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
                     Text(user?.name ?: "", fontSize = 19.sp, fontWeight = FontWeight.Bold, color = Mn.Ink)
                     (user?.email ?: user?.username)?.let { Text(maskEmail(it), fontSize = 14.sp, color = Mn.Subtle) }
-                    Pill("Mynine talabasi", bg = Mn.AccentSoft, fg = Mn.AccentDark)
+                    Pill(str(R.string.mynine_student), bg = Mn.AccentSoft, fg = Mn.AccentDark)
                 }
             }
         }
 
         Column(Modifier.fillMaxWidth().glass(RoundedCornerShape(24.dp))) {
-            SettingRow(Icons.Outlined.Badge, "Ismni o'zgartirish", null) { editName = true }
+            SettingRow(Icons.Outlined.Badge, str(R.string.change_name), null) { editName = true }
             HorizontalDivider(color = Color(0x120F172A))
-            SettingRow(Icons.AutoMirrored.Outlined.Send, "Telegram", if (user?.telegramConnected == true) "Ulangan" else "Ulanmagan", valueColor = if (user?.telegramConnected == true) Mn.Green else Mn.Subtle)
+            SettingRow(Icons.AutoMirrored.Outlined.Send, "Telegram", if (user?.telegramConnected == true) str(R.string.connected) else str(R.string.not_connected), valueColor = if (user?.telegramConnected == true) Mn.Green else Mn.Subtle)
             HorizontalDivider(color = Color(0x120F172A))
-            SettingRow(Icons.Outlined.AccessTime, "Urinishlar tarixi", "›", onClick = openHistory)
+            SettingRow(Icons.Outlined.AccessTime, str(R.string.history), "›", onClick = openHistory)
+            HorizontalDivider(color = Color(0x120F172A))
+            SettingRow(Icons.Outlined.Language, str(R.string.language), languageName(AppLanguage.selected())) { pickLanguage = true }
         }
 
         Column(Modifier.fillMaxWidth().glass(RoundedCornerShape(24.dp))) {
-            SettingRow(Icons.AutoMirrored.Outlined.Logout, "Chiqish", null) {
+            SettingRow(Icons.AutoMirrored.Outlined.Logout, str(R.string.exit), null) {
                 scope.launch {
                     runCatching { call { logout() } }
                     Session.clear()
                 }
             }
             HorizontalDivider(color = Color(0x120F172A))
-            SettingRow(Icons.Outlined.DeleteOutline, "Hisobni o'chirish", null, tint = Mn.Red) { confirmDelete = true }
+            SettingRow(Icons.Outlined.DeleteOutline, str(R.string.delete_account), null, tint = Mn.Red) { confirmDelete = true }
         }
 
         error?.let { Text(it, color = Mn.Red, fontSize = 14.sp) }
@@ -108,7 +126,7 @@ fun ProfileTab(openHistory: () -> Unit) {
         Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.Center, verticalAlignment = Alignment.CenterVertically) {
             Text("Mynine ${BuildConfig.VERSION_NAME} · ", fontSize = 13.sp, color = Mn.Subtle)
             Text(
-                "Maxfiylik siyosati",
+                str(R.string.privacy),
                 Modifier.clickable { context.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse("${ApiClient.baseUrl}/privacy"))) },
                 fontSize = 13.sp, color = Mn.Accent, fontWeight = FontWeight.SemiBold,
             )
@@ -119,8 +137,8 @@ fun ProfileTab(openHistory: () -> Unit) {
         var name by remember { mutableStateOf(user?.name ?: "") }
         AlertDialog(
             onDismissRequest = { editName = false },
-            title = { Text("Ism") },
-            text = { OutlinedTextField(name, { name = it }, singleLine = true, label = { Text("Ism va familiya") }) },
+            title = { Text(str(R.string.name)) },
+            text = { OutlinedTextField(name, { name = it }, singleLine = true, label = { Text(str(R.string.full_name)) }) },
             confirmButton = {
                 TextButton(enabled = name.trim().length >= 2, onClick = {
                     scope.launch {
@@ -131,9 +149,35 @@ fun ProfileTab(openHistory: () -> Unit) {
                             error = e.userMessage()
                         }
                     }
-                }) { Text("Saqlash") }
+                }) { Text(str(R.string.save)) }
             },
-            dismissButton = { TextButton(onClick = { editName = false }) { Text("Bekor qilish") } },
+            dismissButton = { TextButton(onClick = { editName = false }) { Text(str(R.string.cancel)) } },
+        )
+    }
+
+    if (pickLanguage) {
+        val current = AppLanguage.selected()
+        AlertDialog(
+            onDismissRequest = { pickLanguage = false },
+            title = { Text(str(R.string.language)) },
+            text = {
+                Column {
+                    AppLanguage.entries.forEach { lang ->
+                        Row(
+                            Modifier.fillMaxWidth().clip(RoundedCornerShape(14.dp)).clickable {
+                                pickLanguage = false
+                                if (lang != current) AppLanguage.apply(lang)
+                            }.padding(vertical = 12.dp, horizontal = 8.dp),
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(12.dp),
+                        ) {
+                            RadioButton(selected = lang == current, onClick = null)
+                            Text(languageName(lang), fontSize = 16.sp, color = Mn.Ink)
+                        }
+                    }
+                }
+            },
+            confirmButton = { TextButton(onClick = { pickLanguage = false }) { Text(str(R.string.cancel)) } },
         )
     }
 
@@ -141,8 +185,8 @@ fun ProfileTab(openHistory: () -> Unit) {
         AlertDialog(
             onDismissRequest = { confirmDelete = false },
             icon = { Icon(Icons.Outlined.Shield, null, tint = Mn.Red) },
-            title = { Text("Hisobni o'chirasizmi?") },
-            text = { Text("Hisobingiz va unga bog'langan ma'lumotlar butunlay o'chiriladi. Bu amalni qaytarib bo'lmaydi.", textAlign = TextAlign.Start) },
+            title = { Text(str(R.string.delete_q)) },
+            text = { Text(str(R.string.delete_text), textAlign = TextAlign.Start) },
             confirmButton = {
                 TextButton(onClick = {
                     scope.launch {
@@ -154,9 +198,9 @@ fun ProfileTab(openHistory: () -> Unit) {
                         }
                         confirmDelete = false
                     }
-                }) { Text("O'chirish", color = Mn.Red) }
+                }) { Text(str(R.string.delete), color = Mn.Red) }
             },
-            dismissButton = { TextButton(onClick = { confirmDelete = false }) { Text("Bekor qilish") } },
+            dismissButton = { TextButton(onClick = { confirmDelete = false }) { Text(str(R.string.cancel)) } },
         )
     }
 }
@@ -182,6 +226,14 @@ private fun SettingRow(
         Text(title, Modifier.weight(1f), fontSize = 15.sp, fontWeight = FontWeight.SemiBold, color = if (tint == Mn.Red) Mn.Red else Mn.Ink)
         value?.let { Text(it, fontSize = 15.sp, color = valueColor, fontWeight = FontWeight.Medium) }
     }
+}
+
+/** Each language is named in itself, so it can be found whatever the current language is. */
+private fun languageName(lang: AppLanguage): String = when (lang) {
+    AppLanguage.System -> str(R.string.lang_system)
+    AppLanguage.Uzbek -> "O'zbekcha"
+    AppLanguage.Russian -> "Русский"
+    AppLanguage.English -> "English"
 }
 
 private fun maskEmail(value: String): String {
