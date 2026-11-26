@@ -61,22 +61,29 @@ class AttemptController extends Controller
     {
         $data = $request->validate([
             'test_id' => ['required', 'integer'],
-            'module' => ['nullable', 'in:'.implode(',', array_keys(Attempt::PRACTICE_MODULES))],
+            // One module ("reading") or several ("listening,reading"); null or all of them = the whole test.
+            'module' => ['nullable', 'string', 'max:32'],
         ]);
-        $module = $data['module'] ?? null;
+        $modules = Attempt::parseModules($data['module'] ?? null);
+        if (($data['module'] ?? null) !== null && $data['module'] !== '' && $modules === []) {
+            throw ApiException::unprocessable('module_invalid', 'Unknown module.');
+        }
 
         $test = Test::find($data['test_id']);
         if (! $test || $test->isMock() || ! $request->user()->can('attempt', $test)) {
             throw ApiException::forbidden('This test is not available.');
         }
 
-        if ($module !== null) {
-            $hasModule = $test->types()->whereHas('parts')
-                ->whereHas('type', fn ($q) => $q->where('name', Attempt::PRACTICE_MODULES[$module]))
-                ->exists();
-            if (! $hasModule) {
+        $module = null;
+        if ($modules !== []) {
+            $present = $test->types()->whereHas('parts')->with('type')->get()
+                ->map(fn ($tt) => array_search($tt->type?->name, Attempt::PRACTICE_MODULES, true))
+                ->filter()->unique()->values()->all();
+            if (array_diff($modules, $present) !== []) {
                 throw ApiException::unprocessable('module_not_in_test', 'This test has no such module.');
             }
+            // Every module of the test chosen: that is the full test.
+            $module = array_diff($present, $modules) === [] ? null : implode(',', $modules);
         }
 
         $running = Attempt::where('user_id', Auth::id())->whereNull('mock_id')->whereNull('finished_at')->get();

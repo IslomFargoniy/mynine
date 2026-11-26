@@ -52,6 +52,28 @@ class Attempt extends Model
      */
     public const PRACTICE_MODULES = ['listening' => 'Listening', 'reading' => 'Reading', 'writing' => 'Writing'];
 
+    /**
+     * The practised modules in exam order, e.g. ['listening', 'reading'] for "listening,reading"; empty for
+     * the whole test or a value that is not a valid module list.
+     *
+     * @return array<string>
+     */
+    public static function parseModules(?string $module): array
+    {
+        $keys = array_values(array_unique(array_filter(array_map('trim', explode(',', (string) $module)))));
+        if ($keys === [] || array_diff($keys, array_keys(self::PRACTICE_MODULES)) !== []) {
+            return [];
+        }
+
+        return array_values(array_intersect(array_keys(self::PRACTICE_MODULES), $keys));
+    }
+
+    /** @return array<string> */
+    public function practiceModules(): array
+    {
+        return $this->mock_id ? [] : self::parseModules($this->module);
+    }
+
     /** @var array<int>|null|false false = not resolved yet */
     private array|null|false $cachedModuleTestTypeIds = false;
 
@@ -190,7 +212,7 @@ class Attempt extends Model
             // Single-module practice: only that module of the test.
             $this->isModulePractice() => TestType::withoutEagerLoads()
                 ->where('test_id', $this->test_id)
-                ->whereHas('type', fn ($q) => $q->where('name', self::PRACTICE_MODULES[$this->module]))
+                ->whereHas('type', fn ($q) => $q->whereIn('name', array_map(fn ($m) => self::PRACTICE_MODULES[$m], $this->practiceModules())))
                 ->pluck('id'),
             default => collect(),
         };
@@ -202,10 +224,10 @@ class Attempt extends Model
         return $this->cachedModuleTestTypeIds = $ids->isEmpty() ? null : $ids->map(fn ($id) => (int) $id)->all();
     }
 
-    /** A practice attempt of one module (no mock). */
+    /** A practice attempt of one module or of some modules (no mock), not the whole test. */
     public function isModulePractice(): bool
     {
-        return ! $this->mock_id && isset(self::PRACTICE_MODULES[(string) $this->module]);
+        return $this->practiceModules() !== [];
     }
 
     public function allowsTestType(TestType $testType): bool

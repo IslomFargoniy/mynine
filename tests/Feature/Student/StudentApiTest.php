@@ -242,3 +242,31 @@ test('listening audio started late extends the module by the reported lag (once,
 test('the account deletion instructions page is public', function () {
     $this->get('/delete-account')->assertOk()->assertSee('Hisobni o');
 });
+
+test('the app can practise two of the three modules together; all of them is the full test', function () {
+    $writing = TestType::create(['test_id' => $this->test->id, 'type_id' => makeType('Writing', 60)->id]);
+    Part::create(['test_type_id' => $writing->id, 'name' => 'Task 1', 'minute' => 20]);
+
+    $attempt = studentApi('POST', 'attempts', ['test_id' => $this->test->id, 'module' => 'reading,listening'], $this->token)
+        ->assertCreated()->assertJsonPath('attempt.module', 'listening,reading')->json('attempt');
+    expect(collect($attempt['modules'])->pluck('type')->all())->toBe(['listening', 'reading']);
+    $id = $attempt['id'];
+
+    // Writing is not part of it.
+    studentApi('GET', "attempts/{$id}/parts/{$writing->parts()->first()->id}", [], $this->token)->assertForbidden();
+
+    // The attempt ends with its last chosen module, and has no overall band.
+    studentApi('POST', "attempts/{$id}/modules/{$attempt['modules'][0]['type_id']}/start", [], $this->token)->assertOk();
+    studentApi('POST', "attempts/{$id}/modules/{$attempt['modules'][0]['type_id']}/submit", [], $this->token)->assertOk();
+    expect(Attempt::find($id)->finished_at)->toBeNull();
+    studentApi('POST', "attempts/{$id}/modules/{$attempt['modules'][1]['type_id']}/start", [], $this->token)->assertOk();
+    studentApi('POST', "attempts/{$id}/modules/{$attempt['modules'][1]['type_id']}/submit", [], $this->token)->assertOk();
+    expect(Attempt::find($id)->finished_at)->not->toBeNull()
+        ->and(app(App\Services\MockResultService::class)->attemptBands(Attempt::find($id))['overall'])->toBeNull();
+
+    // Every module chosen = the whole test; an unknown module is refused.
+    studentApi('POST', 'attempts', ['test_id' => $this->test->id, 'module' => 'listening,reading,writing'], $this->token)
+        ->assertCreated()->assertJsonPath('attempt.module', null);
+    studentApi('POST', 'attempts', ['test_id' => $this->test->id, 'module' => 'reading,speaking'], $this->token)
+        ->assertStatus(422)->assertJsonPath('code', 'module_invalid');
+});

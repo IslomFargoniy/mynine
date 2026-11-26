@@ -132,7 +132,7 @@ export default function AttemptShow() {
 
                 {/* Summary: overall band + four modules in one row */}
                 {resultsVisible !== false && (
-                <div className={isModulePractice ? 'grid max-w-xs grid-cols-1 gap-3' : 'grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5'}>
+                <div className={isModulePractice ? `grid ${String(attempt.module).includes(',') ? 'max-w-md grid-cols-2' : 'max-w-xs grid-cols-1'} gap-3` : 'grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5'}>
                     {!isModulePractice && (
                     <div className="glass-strong col-span-2 flex items-center gap-4 rounded-[22px] p-4 sm:col-span-3 lg:col-span-1 lg:flex-col lg:items-start lg:gap-2">
                         <div>
@@ -156,8 +156,8 @@ export default function AttemptShow() {
                             ['Speaking', speaking],
                         ] as const
                     )
-                        // A single-module practice shows that module only (no overall band).
-                        .filter(([name]) => !isModulePractice || name.toLowerCase() === attempt.module)
+                        // A module practice shows its modules only (no overall band).
+                        .filter(([name]) => !isModulePractice || String(attempt.module).split(',').includes(name.toLowerCase()))
                         .map(([name, type]) => {
                         const band = type ? calculateModuleBand(type) : 0;
                         const objectiveModule = name === 'Listening' || name === 'Reading';

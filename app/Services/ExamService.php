@@ -148,12 +148,21 @@ class ExamService
             EvaluateEssayJob::dispatch($answer->id);
         }
 
-        // Single-module practice: the module is the whole attempt.
-        if ($attempt->isModulePractice()) {
+        // Module practice: the attempt ends with its last chosen module.
+        if ($attempt->isModulePractice() && $this->allModulesSubmitted($attempt)) {
             $this->finishAttempt($attempt->fresh() ?? $attempt);
         }
 
         return true;
+    }
+
+    private function allModulesSubmitted(Attempt $attempt): bool
+    {
+        $typeIds = $attempt->examModules()->pluck('type_id')->map(fn ($id) => (int) $id)->all();
+        $submitted = AttemptType::where('attempt_id', $attempt->id)->where('is_submitted', true)
+            ->pluck('type_id')->map(fn ($id) => (int) $id)->all();
+
+        return array_diff($typeIds, $submitted) === [];
     }
 
     /**

@@ -288,11 +288,9 @@ fun TestDetailScreen(testId: Int, skill: String? = null, onBack: () -> Unit, ope
             val t = test
             if (t != null) {
                 val chosen = t.modules.filter { it.type in selected }
-                val module = if (chosen.size == 1 && fullCount > 1) chosen.first().type else null
-                val ready = chosen.isNotEmpty() && (chosen.size == 1 || chosen.size == t.modules.size)
-                if (!ready && chosen.isNotEmpty()) {
-                    Text(str(R.string.pick_one_or_full), Modifier.fillMaxWidth().padding(bottom = 8.dp), textAlign = TextAlign.Center, color = Mn.Subtle, fontSize = 13.sp)
-                }
+                // Some modules: "listening,reading"; all of them: the full test (null).
+                val module = if (chosen.size < fullCount) chosen.joinToString(",") { it.type } else null
+                val ready = chosen.isNotEmpty()
                 PrimaryButton(
                     if (t.inProgressAttemptId != null) str(R.string.continue_) else str(R.string.start_with, minutes(chosen.sumOf { it.durationSeconds })),
                     Modifier.fillMaxWidth(),

@@ -229,7 +229,11 @@ fun SectionHeader(title: String, action: String? = null, onAction: (() -> Unit)?
 /** Band like "6.5" (whole bands as "7.0"), or "–". */
 fun band(value: Double?): String = value?.let { String.format(java.util.Locale.US, "%.1f", it) } ?: "–"
 
-fun moduleTitle(type: String): String = when (type) {
+/** "reading" → "Reading"; a module practice of several ("listening,reading") → "Listening · Reading". */
+fun moduleTitle(type: String): String =
+    if (',' in type) type.split(',').joinToString(" · ") { moduleTitle(it.trim()) } else singleModuleTitle(type)
+
+private fun singleModuleTitle(type: String): String = when (type) {
     "listening" -> "Listening"
     "reading" -> "Reading"
     "writing" -> "Writing"

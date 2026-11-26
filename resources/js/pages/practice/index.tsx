@@ -369,7 +369,7 @@ export default function Practice() {
             .then((res) => {
                 setIsSubmitting(false);
                 setIsFinishModalOpen(false);
-                if (res.success && attempt.module) {
+                if (res.success && attempt.module && !attempt.module.includes(',')) {
                     // Single-module practice: the module was the whole attempt (finished on the server).
                     clearLocalDrafts();
                     router.post(route('practice-attempt-submit', attempt.id));
@@ -436,7 +436,7 @@ export default function Practice() {
                 audioPath={testType?.test?.audio_path}
                 isTimeUp={isTimeUp}
                 onExpire={() => {
-                    if (attempt.module) {
+                    if (attempt.module && !attempt.module.includes(',')) {
                         // Single-module practice: time up = the attempt is over, go to its result.
                         setIsTimeUp(true);
                         syncQueue.flushAttempt(attempt.id).finally(() => {

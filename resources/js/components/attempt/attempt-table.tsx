@@ -129,7 +129,7 @@ const AttemptTable = ({ searchData, hidePagination, ...attempt }: AttemptTablePr
                                     <TruncatedText className="max-w-[14rem] text-[11px] text-muted-foreground">{item?.test?.name}</TruncatedText>
                                     {item?.module && !item?.mock_id && (
                                         <span className="mt-1 inline-flex rounded-full border border-glass-edge bg-muted px-2 py-0.5 text-[10px] font-bold text-foreground">
-                                            {t(`practice_module.${item.module}`)}
+                                            {String(item.module).split(',').map((m: string) => t(`practice_module.${m}`)).join(' · ')}
                                         </span>
                                     )}
                                 </TableCell>
