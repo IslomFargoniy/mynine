@@ -16,6 +16,7 @@ final class Session: ObservableObject {
             user = try? JSONDecoder().decode(User.self, from: data)
         }
         if user == nil { API.shared.token = nil }
+        ApiCache.userId = user?.id
         API.shared.onUnauthorized = { [weak self] in
             Task { @MainActor in self?.clear() }
         }
@@ -31,6 +32,7 @@ final class Session: ObservableObject {
 
     func update(_ user: User) {
         UserDefaults.standard.set(try? JSONEncoder().encode(user), forKey: "session.user")
+        ApiCache.userId = user.id
         self.user = user
     }
 
@@ -38,6 +40,8 @@ final class Session: ObservableObject {
         Keychain.delete(service: service, account: "token")
         UserDefaults.standard.removeObject(forKey: "session.user")
         API.shared.token = nil
+        ApiCache.clear()
+        ApiCache.userId = nil
         user = nil
     }
 }

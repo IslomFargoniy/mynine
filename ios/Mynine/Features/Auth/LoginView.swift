@@ -26,8 +26,8 @@ struct LoginView: View {
                         Text("mynine").font(.system(size: 22, weight: .heavy)).foregroundStyle(Mn.ink)
                     }
                     VStack(alignment: .leading, spacing: 10) {
-                        Text("IELTS'ga har kuni\ntayyorlaning").font(.system(size: 32, weight: .heavy)).foregroundStyle(Mn.ink).tracking(-0.8)
-                        Text("Listening, Reading va Writing testlari — web'dagi imtihon xonasi bilan bir xil.").font(.system(size: 16)).foregroundStyle(Mn.muted)
+                        Text(tr("login_title")).font(.system(size: 32, weight: .heavy)).foregroundStyle(Mn.ink).tracking(-0.8)
+                        Text(tr("login_subtitle")).font(.system(size: 16)).foregroundStyle(Mn.muted)
                     }
                     .padding(.top, 8)
 
@@ -41,47 +41,47 @@ struct LoginView: View {
                         .frame(height: 52)
                         .clipShape(Capsule())
 
-                        SecondaryButton(title: "Google bilan kirish", image: "GoogleLogo", enabled: !busy) {
+                        SecondaryButton(title: tr("google_sign_in"), image: "GoogleLogo", enabled: !busy) {
                             run {
                                 guard let token = try await google.idToken() else { throw CancellationError() }
                                 session.signIn(try await API.shared.send(.post, "auth/google", body: ["id_token": token]))
                             }
                         }
 
-                        divider("yoki Telegram kodi")
+                        divider(tr("or_telegram"))
 
                         Button {
                             openBot()
                             codeFocused = true
                         } label: {
-                            Label("@\(bot)'dan kod olish", systemImage: "paperplane")
+                            Label(tr("get_code", bot), systemImage: "paperplane")
                                 .font(.system(size: 15, weight: .semibold))
                                 .foregroundStyle(Mn.accentDark)
                                 .frame(maxWidth: .infinity, minHeight: 50)
                                 .background(Mn.accentSoft, in: Capsule())
                         }
 
-                        Text("6 xonali kod").font(.system(size: 13, weight: .semibold)).foregroundStyle(Mn.muted).frame(maxWidth: .infinity, alignment: .leading)
+                        Text(tr("code_6")).font(.system(size: 13, weight: .semibold)).foregroundStyle(Mn.muted).frame(maxWidth: .infinity, alignment: .leading)
                         OtpField(code: $code, focused: $codeFocused) { full in
                             run { session.signIn(try await API.shared.send(.post, "auth/telegram", body: ["code": full])) }
                         }
 
-                        PrimaryButton(title: "Kirish", loading: busy && !showPassword, enabled: code.count == 6) {
+                        PrimaryButton(title: tr("sign_in"), loading: busy && !showPassword, enabled: code.count == 6) {
                             run { session.signIn(try await API.shared.send(.post, "auth/telegram", body: ["code": code])) }
                         }
 
                         if !showPassword {
-                            Button("Login va parol bilan kirish") { withAnimation { showPassword = true } }
+                            Button(tr("with_password")) { withAnimation { showPassword = true } }
                                 .font(.system(size: 14, weight: .semibold)).foregroundStyle(Mn.accent).padding(.top, 4)
                         } else {
-                            divider("login va parol")
-                            field("Email yoki login", text: $login).textContentType(.username).keyboardType(.emailAddress)
-                            SecureField("Parol", text: $password)
+                            divider(tr("login_password"))
+                            field(tr("email_or_login"), text: $login).textContentType(.username).keyboardType(.emailAddress)
+                            SecureField(tr("password"), text: $password)
                                 .textContentType(.password)
                                 .padding(.horizontal, 16).frame(height: 52)
-                                .background(Color.white, in: RoundedRectangle(cornerRadius: 16))
-                                .overlay(RoundedRectangle(cornerRadius: 16).stroke(Color(hex: 0xCBD5E1)))
-                            SecondaryButton(title: "Parol bilan kirish", systemImage: "lock", enabled: !busy && !login.isEmpty && !password.isEmpty) {
+                                .background(Mn.surface, in: RoundedRectangle(cornerRadius: 16))
+                                .overlay(RoundedRectangle(cornerRadius: 16).stroke(Mn.fieldBorder))
+                            SecondaryButton(title: tr("sign_in_password"), systemImage: "lock", enabled: !busy && !login.isEmpty && !password.isEmpty) {
                                 run {
                                     session.signIn(try await API.shared.send(.post, "auth/password", body: ["login": login.trimmingCharacters(in: .whitespaces), "password": password]))
                                 }
@@ -93,7 +93,7 @@ struct LoginView: View {
                     .padding(20)
                     .glass(radius: 28)
 
-                    Text("Faqat Mynine o'quv markazi talabalari uchun.\nKirish orqali foydalanish shartlariga rozilik bildirasiz.")
+                    Text(tr("login_footer"))
                         .font(.system(size: 13)).foregroundStyle(Mn.subtle).multilineTextAlignment(.center).frame(maxWidth: .infinity)
                 }
                 .padding(.horizontal, 24).padding(.vertical, 20)
@@ -117,8 +117,8 @@ struct LoginView: View {
             .textInputAutocapitalization(.never)
             .autocorrectionDisabled()
             .padding(.horizontal, 16).frame(height: 52)
-            .background(Color.white, in: RoundedRectangle(cornerRadius: 16))
-            .overlay(RoundedRectangle(cornerRadius: 16).stroke(Color(hex: 0xCBD5E1)))
+            .background(Mn.surface, in: RoundedRectangle(cornerRadius: 16))
+            .overlay(RoundedRectangle(cornerRadius: 16).stroke(Mn.fieldBorder))
     }
 
     private func run(_ block: @escaping () async throws -> Void) {
@@ -139,11 +139,11 @@ struct LoginView: View {
     private func handleApple(_ result: Result<ASAuthorization, Error>) {
         switch result {
         case .failure(let e):
-            if (e as? ASAuthorizationError)?.code != .canceled { error = "Apple orqali kirib bo'lmadi." }
+            if (e as? ASAuthorizationError)?.code != .canceled { error = tr("apple_failed") }
         case .success(let auth):
             guard let credential = auth.credential as? ASAuthorizationAppleIDCredential,
                   let tokenData = credential.identityToken, let token = String(data: tokenData, encoding: .utf8) else {
-                error = "Apple orqali kirib bo'lmadi."
+                error = tr("apple_failed")
                 return
             }
             let name = [credential.fullName?.givenName, credential.fullName?.familyName].compactMap { $0 }.joined(separator: " ")
@@ -179,8 +179,8 @@ struct OtpField: View {
                     Text(ch)
                         .font(.system(size: 22, weight: .bold)).foregroundStyle(Mn.ink)
                         .frame(maxWidth: .infinity, minHeight: 54)
-                        .background(Color.white, in: RoundedRectangle(cornerRadius: 16))
-                        .overlay(RoundedRectangle(cornerRadius: 16).stroke(!ch.isEmpty || i == chars.count ? Mn.accent : Color(hex: 0xCBD5E1), lineWidth: 1.5))
+                        .background(Mn.surface, in: RoundedRectangle(cornerRadius: 16))
+                        .overlay(RoundedRectangle(cornerRadius: 16).stroke(!ch.isEmpty || i == chars.count ? Mn.accent : Mn.fieldBorder, lineWidth: 1.5))
                 }
             }
             .allowsHitTesting(false)
@@ -244,7 +244,7 @@ final class GoogleSignIn: NSObject, ObservableObject, ASWebAuthenticationPresent
         let (data, _) = try await URLSession.shared.data(for: request)
         struct TokenResponse: Decodable { let id_token: String? }
         guard let token = try? JSONDecoder().decode(TokenResponse.self, from: data).id_token else {
-            throw APIError(status: 0, code: "google", message: "Google orqali kirib bo'lmadi. Telegram kodi bilan kiring.")
+            throw APIError(status: 0, code: "google", message: tr("google_failed"))
         }
         return token
     }

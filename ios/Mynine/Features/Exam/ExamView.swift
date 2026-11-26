@@ -102,9 +102,9 @@ struct ExamView: View {
             case .loading, .done: ProgressView().tint(Mn.examBlue)
             case .error:
                 VStack(spacing: 14) {
-                    Text(vm.error ?? "Xatolik").multilineTextAlignment(.center).foregroundStyle(Mn.examText)
-                    examButton("Qayta urinish", dark: true) { vm.load() }
-                    examButton("Chiqish") { onExit() }
+                    Text(vm.error ?? tr("error")).multilineTextAlignment(.center).foregroundStyle(Mn.examText)
+                    examButton(tr("retry"), dark: true) { vm.load() }
+                    examButton(tr("exit")) { onExit() }
                 }
                 .padding(32)
             case .intro: intro
@@ -114,7 +114,7 @@ struct ExamView: View {
                 Color.white.opacity(0.6).ignoresSafeArea()
                 VStack(spacing: 12) {
                     ProgressView().tint(Mn.examBlue)
-                    Text(vm.autoSubmitted ? "Vaqt tugadi. Javoblar topshirilmoqda…" : "Javoblar topshirilmoqda…").font(.system(size: 15, weight: .semibold)).foregroundStyle(Mn.examText)
+                    Text(vm.autoSubmitted ? tr("time_up_submitting") : tr("submitting")).font(.system(size: 15, weight: .semibold)).foregroundStyle(Mn.examText)
                 }
             }
         }
@@ -129,21 +129,21 @@ struct ExamView: View {
             if phase != .running { page.js("ExamRoom.flush(), ExamRoom.setLocked(true)") }
         }
         .onChange(of: scenePhase) { _, s in if s == .active { vm.onForeground() } }
-        .alert("Testdan chiqasizmi?", isPresented: $confirmExit) {
-            Button("Chiqish", role: .destructive) { onExit() }
-            Button("Qolish", role: .cancel) {}
+        .alert(tr("leave_q"), isPresented: $confirmExit) {
+            Button(tr("exit"), role: .destructive) { onExit() }
+            Button(tr("stay"), role: .cancel) {}
         } message: {
-            Text("Javoblaringiz saqlangan. Vaqt to'xtamaydi — keyin \"Davom etish\" orqali qaytishingiz mumkin.")
+            Text(tr("leave_text"))
         }
-        .alert("\(vm.module?.title ?? "Modul") modulini yakunlaysizmi?", isPresented: $confirmSubmit) {
-            Button("Yakunlash") { vm.submitModule() }
-            Button("Bekor qilish", role: .cancel) {}
+        .alert(tr("finish_module_q", vm.module?.title ?? tr("module")), isPresented: $confirmSubmit) {
+            Button(tr("finish")) { vm.submitModule() }
+            Button(tr("cancel"), role: .cancel) {}
         } message: {
             let total = vm.navQuestions.count
             let done = vm.navQuestions.filter { vm.answered($0.question.id) }.count
-            Text("\(total) savoldan \(done) tasiga javob berdingiz. Yakunlangandan keyin javoblarni o'zgartirib bo'lmaydi.")
+            Text(tr("answered_of", total, done))
         }
-        .alert("Xatolik", isPresented: Binding(get: { vm.error != nil && (vm.phase == .running || vm.phase == .intro) }, set: { if !$0 { vm.error = nil } })) {
+        .alert(tr("error"), isPresented: Binding(get: { vm.error != nil && (vm.phase == .running || vm.phase == .intro) }, set: { if !$0 { vm.error = nil } })) {
             Button("OK") { vm.error = nil }
         } message: { Text(vm.error ?? "") }
     }
@@ -162,11 +162,11 @@ struct ExamView: View {
             Rectangle().fill(Mn.examLine).frame(height: 1)
             ScrollView {
                 VStack(alignment: .leading, spacing: 16) {
-                    Text("Modul \(vm.moduleIndex + 1) / \(vm.attempt?.modules.count ?? 1)").font(.system(size: 14, weight: .semibold)).foregroundStyle(Color(hex: 0x4B5563))
+                    Text(tr("module_n_of", vm.moduleIndex + 1, vm.attempt?.modules.count ?? 1)).font(.system(size: 14, weight: .semibold)).foregroundStyle(Color(hex: 0x4B5563))
                     Text(vm.module?.title ?? "").font(.system(size: 32, weight: .heavy)).foregroundStyle(Mn.examText)
                     HStack(spacing: 16) {
                         Label(Fmt.minutes(vm.module?.durationSeconds ?? 0), systemImage: "timer")
-                        Text("\(vm.module?.parts.count ?? 0) part · \(vm.module?.parts.reduce(0) { $0 + ($1.questionCount ?? 0) } ?? 0) savol")
+                        Text(tr("parts_questions_short", vm.module?.parts.count ?? 0, vm.module?.parts.reduce(0) { $0 + ($1.questionCount ?? 0) } ?? 0))
                     }
                     .font(.system(size: 15, weight: .semibold)).foregroundStyle(Color(hex: 0x374151))
                     VStack(alignment: .leading, spacing: 10) {
@@ -175,12 +175,12 @@ struct ExamView: View {
                     }
                     .frame(maxWidth: .infinity, alignment: .leading)
                     .padding(16).background(Mn.examPanel).overlay(Rectangle().stroke(Color(hex: 0xE5E7EB)))
-                    Text("Vaqt \"Boshlash\" bosilganda boshlanadi va server bo'yicha hisoblanadi.").font(.system(size: 13)).foregroundStyle(Color(hex: 0x4B5563))
+                    Text(tr("timer_starts")).font(.system(size: 13)).foregroundStyle(Color(hex: 0x4B5563))
                 }
                 .padding(24).frame(maxWidth: 640, alignment: .leading)
             }
             Button { vm.startModule() } label: {
-                Text("Boshlash").font(.system(size: 16, weight: .bold)).foregroundStyle(.white).frame(maxWidth: .infinity, minHeight: 52).background(Mn.examText)
+                Text(tr("start")).font(.system(size: 16, weight: .bold)).foregroundStyle(.white).frame(maxWidth: .infinity, minHeight: 52).background(Mn.examText)
             }
             .padding(20)
         }
@@ -188,9 +188,9 @@ struct ExamView: View {
 
     private var instructions: [String] {
         switch vm.module?.type {
-        case "listening": return ["Quloqchinni taqing va ovozni sozlang.", "Audio faqat bir marta ijro etiladi, to'xtatib bo'lmaydi.", "Javoblarni audio davomida yozing."]
-        case "writing": return ["Task 1 uchun kamida 150, Task 2 uchun kamida 250 so'z yozing.", "Matn avtomatik saqlanadi.", "Natija AI tomonidan baholanadi."]
-        default: return ["Barcha savollarga javob bering.", "Passage va savollar orasida yuqoridagi tablar bilan o'ting.", "Matnni belgilab Highlight yoki Note qo'shing."]
+        case "listening": return [tr("ins_l1"), tr("ins_l2"), tr("ins_l3")]
+        case "writing": return [tr("ins_w1"), tr("ins_w2"), tr("ins_w3")]
+        default: return [tr("ins_r1"), tr("ins_r2"), tr("ins_r3_ios")]
         }
     }
 
@@ -322,7 +322,7 @@ struct ExamView: View {
         VStack(spacing: 0) {
             HStack(spacing: 10) {
                 Image(systemName: "headphones").foregroundStyle(Mn.examText)
-                Text(vm.audioPlaying ? "Audio ijro etilmoqda" : "Audio").font(.system(size: 13, weight: .semibold)).foregroundStyle(Color(hex: 0x374151))
+                Text(vm.audioPlaying ? tr("audio_playing") : "Audio").font(.system(size: 13, weight: .semibold)).foregroundStyle(Color(hex: 0x374151))
                 Spacer()
                 Image(systemName: "speaker.wave.2").foregroundStyle(Color(hex: 0x374151))
                 Slider(value: $vm.volume, in: 0...1).frame(width: 140).tint(Mn.examText)

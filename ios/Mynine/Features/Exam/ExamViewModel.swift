@@ -195,7 +195,7 @@ final class ExamViewModel: ObservableObject {
             do {
                 _ = try await API.shared.data(.post, "attempts/\(attemptId)/modules/\(m.typeId)/submit")
             } catch let e as APIError where e.offline {
-                error = "Internet yo'q: modul yakunlanmadi. Aloqa tiklangach yana bosing."
+                error = tr("offline_submit")
                 phase = .running
                 startTicker()
                 return

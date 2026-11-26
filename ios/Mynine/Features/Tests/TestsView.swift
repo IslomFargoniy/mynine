@@ -1,55 +1,49 @@
 import SwiftUI
 
-private let filters: [(String?, String)] = [(nil, "Hammasi"), ("listening", "Listening"), ("reading", "Reading"), ("writing", "Writing")]
-
+/// A skill tab (module = listening | reading | writing) or the full-test list (full, opened from home).
 struct TestsView: View {
-    let initialModule: String?
+    let title: String
+    let module: String?
+    let full: Bool
+    var onBack: (() -> Void)?
     @EnvironmentObject private var router: Router
-    @State private var module: String?
     @State private var search = ""
     @State private var items: [TestItem]?
     @State private var page = 1
     @State private var lastPage = 1
     @State private var error: String?
-    @State private var started = false
 
     var body: some View {
         ScrollView {
             LazyVStack(alignment: .leading, spacing: 12) {
-                ScreenTitle(text: "Testlar").padding(.top, 12)
+                HStack(spacing: 12) {
+                    if let onBack {
+                        Button(action: onBack) {
+                            Image(systemName: "arrow.left").font(.system(size: 17, weight: .semibold)).foregroundStyle(Mn.ink2)
+                                .frame(width: 44, height: 44).glass(radius: 22)
+                        }
+                    }
+                    ScreenTitle(text: title)
+                }
+                .padding(.top, 12)
                 HStack(spacing: 10) {
                     Image(systemName: "magnifyingglass").foregroundStyle(Mn.subtle)
-                    TextField("Test nomi bo'yicha qidirish", text: $search)
+                    TextField(tr("search_hint"), text: $search)
                         .textInputAutocapitalization(.never).autocorrectionDisabled()
                         .submitLabel(.search)
                 }
                 .padding(.horizontal, 18).frame(height: 50)
                 .glass(radius: 25, strong: true)
 
-                ScrollView(.horizontal, showsIndicators: false) {
-                    HStack(spacing: 8) {
-                        ForEach(filters, id: \.1) { f in
-                            let on = module == f.0
-                            Button { module = f.0 } label: {
-                                Text(f.1).font(.system(size: 14, weight: .semibold))
-                                    .foregroundStyle(on ? .white : Mn.ink2)
-                                    .padding(.horizontal, 16).padding(.vertical, 9)
-                                    .background(on ? Mn.accent : Color.white.opacity(0.55), in: Capsule())
-                                    .overlay(Capsule().stroke(on ? .clear : Mn.glassEdge))
-                            }
-                        }
-                    }
-                }
-
                 if let error { ErrorCard(message: error) { Task { await load(1) } } }
                 if items == nil && error == nil { ProgressView().frame(maxWidth: .infinity).padding(40) }
-                if let items, items.isEmpty { Text("Hech narsa topilmadi.").foregroundStyle(Mn.subtle).frame(maxWidth: .infinity).padding(24) }
+                if let items, items.isEmpty { Text(tr("nothing_found")).foregroundStyle(Mn.subtle).frame(maxWidth: .infinity).padding(24) }
 
                 ForEach(items ?? []) { t in
-                    Button { router.open(.test(t.id)) } label: { TestCard(test: t) }.buttonStyle(.plain)
+                    Button { router.open(.test(t.id, skill: module)) } label: { TestCard(test: t) }.buttonStyle(.plain)
                 }
                 if items != nil && page < lastPage {
-                    Button("Yana yuklash") { Task { await load(page + 1) } }
+                    Button(tr("load_more")) { Task { await load(page + 1) } }
                         .font(.system(size: 15, weight: .semibold)).foregroundStyle(Mn.accent).frame(maxWidth: .infinity).padding(14)
                 }
             }
@@ -58,10 +52,7 @@ struct TestsView: View {
         }
         .scrollDismissesKeyboard(.interactively)
         .refreshable { await load(1) }
-        .onAppear {
-            if !started { started = true; module = initialModule }
-        }
-        .task(id: "\(module ?? "")|\(search)") {
+        .task(id: search) {
             try? await Task.sleep(nanoseconds: search.isEmpty ? 0 : 350_000_000)
             if Task.isCancelled { return }
             items = nil
@@ -73,10 +64,17 @@ struct TestsView: View {
         error = nil
         do {
             let q = search.trimmingCharacters(in: .whitespaces)
-            let r: TestsResponse = try await API.shared.send(.get, "tests", query: ["search": q.isEmpty ? nil : q, "module": module, "page": String(p)])
-            items = p == 1 ? r.data : (items ?? []) + r.data
-            page = p
-            lastPage = r.meta?.lastPage ?? 1
+            let query: [String: String?] = ["search": q.isEmpty ? nil : q, "module": module, "full": full ? "1" : nil, "page": String(p)]
+            // A full test has content in all three skills (the server also checks; empty modules are not listed).
+            let show = { (r: TestsResponse) in
+                let data = full ? r.data.filter { $0.modules.count >= 3 } : r.data
+                items = p == 1 ? data : (items ?? []) + data
+                page = p
+                lastPage = r.meta?.lastPage ?? 1
+            }
+            // The first page without a search comes from the cache at once, then from the network.
+            if p == 1 && q.isEmpty { try await API.shared.cached("tests", query: query, show: show) }
+            else { show(try await API.shared.send(.get, "tests", query: query)) }
         } catch {
             self.error = error.localizedDescription
         }
@@ -91,8 +89,8 @@ struct TestCard: View {
             HStack {
                 Text(test.name).font(.system(size: 16, weight: .bold)).foregroundStyle(Mn.ink)
                 Spacer()
-                if test.inProgressAttemptId != nil { Pill(text: "Davom etmoqda", bg: Mn.accentSoft, fg: Mn.accentDark) }
-                else if test.lastFinishedAttemptId != nil { Pill(text: "Yechilgan", bg: Mn.greenSoft, fg: Mn.green) }
+                if test.inProgressAttemptId != nil { Pill(text: tr("in_progress"), bg: Mn.accentSoft, fg: Mn.accentDark) }
+                else if test.lastFinishedAttemptId != nil { Pill(text: tr("solved"), bg: Mn.greenSoft, fg: Mn.green) }
             }
             HStack(spacing: 6) {
                 ForEach(test.modules, id: \.typeId) { Pill(text: $0.title) }
@@ -108,6 +106,8 @@ struct TestCard: View {
 
 struct TestDetailView: View {
     let testId: Int
+    /// Opened from a skill tab: only that skill is ticked; the student may tick the others too.
+    var skill: String?
     @EnvironmentObject private var router: Router
     @Environment(\.dismiss) private var dismiss
     @State private var test: TestItem?
@@ -124,7 +124,7 @@ struct TestDetailView: View {
                         Image(systemName: "arrow.left").font(.system(size: 17, weight: .semibold)).foregroundStyle(Mn.ink2)
                             .frame(width: 44, height: 44).glass(radius: 22)
                     }
-                    Text("Testlar").font(.system(size: 14, weight: .semibold)).foregroundStyle(Mn.subtle)
+                    Text(tr("tests")).font(.system(size: 14, weight: .semibold)).foregroundStyle(Mn.subtle)
                     Spacer()
                 }
                 .padding(.horizontal, 20).padding(.top, 8)
@@ -135,26 +135,26 @@ struct TestDetailView: View {
                         if let t = test {
                             VStack(alignment: .leading, spacing: 6) {
                                 Text(t.name).font(.system(size: 28, weight: .heavy)).foregroundStyle(Mn.ink)
-                                Text([t.folder?.name.trimmingCharacters(in: .whitespaces) ?? "", t.variant == "general" ? "General Training" : "Academic", "\(t.modules.count) modul", Fmt.minutes(t.modules.reduce(0) { $0 + ($1.durationSeconds ?? 0) })].filter { !$0.isEmpty }.joined(separator: " · "))
+                                Text([t.folder?.name.trimmingCharacters(in: .whitespaces) ?? "", t.variant == "general" ? "General Training" : "Academic", tr("module_count", t.modules.count), Fmt.minutes(t.modules.reduce(0) { $0 + ($1.durationSeconds ?? 0) })].filter { !$0.isEmpty }.joined(separator: " · "))
                                     .font(.system(size: 15)).foregroundStyle(Mn.muted)
                             }
                             VStack(alignment: .leading, spacing: 4) {
-                                Text("Qaysi modullarni yechasiz?").font(.system(size: 13, weight: .bold)).foregroundStyle(Mn.subtle).padding(.leading, 12).padding(.top, 10)
+                                Text(tr("which_modules")).font(.system(size: 13, weight: .bold)).foregroundStyle(Mn.subtle).padding(.leading, 12).padding(.top, 10)
                                 ForEach(t.modules, id: \.typeId) { m in
                                     let on = selected.contains(m.type)
                                     Button {
                                         if on { selected.remove(m.type) } else { selected.insert(m.type) }
                                     } label: {
                                         HStack(spacing: 12) {
-                                            Image(systemName: on ? "checkmark.square.fill" : "square").font(.system(size: 24)).foregroundStyle(on ? Mn.accent : Color(hex: 0x94A3B8))
+                                            Image(systemName: on ? "checkmark.square.fill" : "square").font(.system(size: 24)).foregroundStyle(on ? Mn.accent : Mn.fieldBorder)
                                             VStack(alignment: .leading, spacing: 2) {
                                                 Text(m.title).font(.system(size: 16, weight: .bold)).foregroundStyle(Mn.ink)
-                                                Text("\(m.partsCount ?? 0) part · \(m.questionsCount ?? 0) savol · \(Fmt.minutes(m.durationSeconds ?? 0))").font(.system(size: 13)).foregroundStyle(Mn.subtle)
+                                                Text(tr("parts_questions", m.partsCount ?? 0, m.questionsCount ?? 0, Fmt.minutes(m.durationSeconds ?? 0))).font(.system(size: 13)).foregroundStyle(Mn.subtle)
                                             }
                                             Spacer()
                                         }
                                         .padding(.horizontal, 12).padding(.vertical, 14)
-                                        .background(on ? Color.white.opacity(0.85) : .clear, in: RoundedRectangle(cornerRadius: 22))
+                                        .background(on ? Mn.raised : .clear, in: RoundedRectangle(cornerRadius: 22))
                                     }
                                     .buttonStyle(.plain)
                                 }
@@ -162,10 +162,10 @@ struct TestDetailView: View {
                             .padding(8).glass(radius: 28)
 
                             VStack(alignment: .leading, spacing: 12) {
-                                Text("Qoidalar").font(.system(size: 15, weight: .bold)).foregroundStyle(Mn.ink)
-                                rule("headphones", "Listening audiosi faqat bir marta ijro etiladi. Quloqchin taqing.")
-                                rule("square.and.arrow.down", "Javoblar avtomatik saqlanadi — internet uzilsa ham davom etasiz.")
-                                rule("timer", "Vaqt server bo'yicha hisoblanadi, ilovadan chiqsangiz ham to'xtamaydi.")
+                                Text(tr("rules")).font(.system(size: 15, weight: .bold)).foregroundStyle(Mn.ink)
+                                rule("headphones", tr("rule_audio"))
+                                rule("square.and.arrow.down", tr("rule_save"))
+                                rule("timer", tr("rule_timer"))
                             }
                             .padding(18).glass()
                         } else if error == nil {
@@ -177,16 +177,16 @@ struct TestDetailView: View {
 
                 if let t = test {
                     let chosen = t.modules.filter { selected.contains($0.type) }
-                    let ready = !chosen.isEmpty && (chosen.count == 1 || chosen.count == t.modules.count)
+                    let all = chosen.count == t.modules.count
                     VStack(spacing: 8) {
-                        if !ready && !chosen.isEmpty { Text("Bitta modulni yoki to'liq testni tanlang.").font(.system(size: 13)).foregroundStyle(Mn.subtle) }
-                        PrimaryButton(title: t.inProgressAttemptId != nil ? "Davom etish" : "Boshlash · \(Fmt.minutes(chosen.reduce(0) { $0 + ($1.durationSeconds ?? 0) }))", loading: starting, enabled: ready) {
-                            start(t, module: chosen.count == 1 && t.modules.count > 1 ? chosen[0].type : nil)
+                        // Any combination: fewer than all modules go as "listening,reading"; all of them is the full test.
+                        PrimaryButton(title: t.inProgressAttemptId != nil ? tr("continue_") : tr("start_with", Fmt.minutes(chosen.reduce(0) { $0 + ($1.durationSeconds ?? 0) })), loading: starting, enabled: !chosen.isEmpty) {
+                            start(t, module: all ? nil : chosen.map(\.type).joined(separator: ","))
                         }
                         if let last = t.lastFinishedAttemptId {
-                            Button("Oxirgi natijani ko'rish") { router.open(.result(last)) }.font(.system(size: 14, weight: .semibold)).foregroundStyle(Mn.accent)
+                            Button(tr("see_last_result")) { router.open(.result(last)) }.font(.system(size: 14, weight: .semibold)).foregroundStyle(Mn.accent)
                         }
-                        Text("Tartib: Listening → Reading → Writing").font(.system(size: 13)).foregroundStyle(Mn.subtle)
+                        if all && chosen.count > 1 { Text(tr("order")).font(.system(size: 13)).foregroundStyle(Mn.subtle) }
                     }
                     .padding(.horizontal, 20).padding(.bottom, 8)
                 }
@@ -206,9 +206,14 @@ struct TestDetailView: View {
     private func load() async {
         error = nil
         do {
-            let r: TestResponse = try await API.shared.send(.get, "tests/\(testId)")
-            test = r.test
-            selected = Set(r.test.modules.map(\.type))
+            // Cached copy first, then the fresh one (its running / finished attempt ids decide the button).
+            try await API.shared.cached("tests/\(testId)") { (r: TestResponse) in
+                let first = test == nil
+                test = r.test
+                if first {
+                    selected = skill.flatMap { s in r.test.modules.contains { $0.type == s } ? [s] : nil } ?? Set(r.test.modules.map(\.type))
+                }
+            }
         } catch {
             self.error = error.localizedDescription
         }

@@ -3,19 +3,24 @@ import SwiftUI
 @main
 struct MynineApp: App {
     @StateObject private var session = Session.shared
+    @StateObject private var prefs = Prefs.shared
 
     var body: some Scene {
         WindowGroup {
             RootView()
                 .environmentObject(session)
-                .preferredColorScheme(.light)
+                .environmentObject(prefs)
+                .preferredColorScheme(prefs.colorScheme)
                 .tint(Mn.accent)
+                // A language change redraws every screen with the new strings.
+                .id(prefs.language)
         }
     }
 }
 
 enum Route: Hashable {
-    case test(Int)
+    /// A test page; `skill` ticks only that module (opened from a skill tab).
+    case test(Int, skill: String? = nil)
     case result(Int)
 }
 
@@ -48,13 +53,15 @@ struct RootView: View {
                     MainView()
                         .navigationDestination(for: Route.self) { route in
                             switch route {
-                            case .test(let id): TestDetailView(testId: id)
+                            case .test(let id, let skill): TestDetailView(testId: id, skill: skill)
                             case .result(let id): ResultView(attemptId: id)
                             }
                         }
                 }
                 .fullScreenCover(item: $router.exam) { target in
+                    // The exam room is the white IELTS UI in both themes, its alerts included.
                     ExamView(attemptId: target.id) { router.examFinished(target.id) } onExit: { router.exam = nil }
+                        .preferredColorScheme(.light)
                 }
                 .environmentObject(router)
             } else {

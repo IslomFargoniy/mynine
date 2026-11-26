@@ -13,10 +13,16 @@ Android ilovasi (`../android`) bilan funksional teng nativ iOS ilova. Reja: [`..
 Mynine/
 ├── App/        MynineApp (RootView, Router: test / natija / imtihon full screen)
 ├── Core/       API (modellar, URLSession), Session (Keychain), AnswerQueue (Application Support), Theme (liquid glass)
-├── Features/   Auth (Telegram kodi, parol, Google PKCE, Sign in with Apple), Main (Bosh, Tarix, Profil),
+├── Features/   Auth (Telegram kodi, parol, Google PKCE, Sign in with Apple), Main (Home, Listening/Reading/Writing, Attempts; Profil avatar orqali),
 │               Tests (ro'yxat, tafsilot), Exam (ViewModel, WKWebView ko'prigi, xona), Result
 └── Resources/  Assets (AppIcon, LogoMark), Info.plist (Google redirect sxemasi), entitlements, PrivacyInfo
 ```
+
+## Til, mavzu, kesh
+
+- Matnlar uz / ru / en: `Core/StringsTable.swift` Android resurslaridan yaratiladi (`python3 ios/scripts/gen_strings.py`), `tr("key")` bilan olinadi. Til va mavzu (Telefon / Yorug' / Qorong'i) Profil'da, `Core/Prefs.swift`.
+- Ranglar `Mn` da yorug' va qorong'i variantli; imtihon xonasi doim oq.
+- Ro'yxat ekranlari oxirgi javobni keshdan darrov ko'rsatadi (`API.cached`, Caches/api, foydalanuvchi bo'yicha, chiqishda o'chiriladi).
 
 ## Kirish
 

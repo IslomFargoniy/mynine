@@ -190,12 +190,14 @@ struct APIError: LocalizedError {
 
     var errorDescription: String? {
         switch code {
-        case "invalid_code": return "Kod noto'g'ri yoki muddati o'tgan. Botdan yangi kod oling."
-        case "invalid_credentials": return "Login yoki parol noto'g'ri."
-        case "staff_account": return "Bu xodim akkaunti. Xodimlar mynine.uz saytidan foydalanadi."
-        case "account_suspended": return "Akkaunt bloklangan."
-        case "too_many_requests": return "Juda ko'p urinish. Bir daqiqadan keyin qayta urinib ko'ring."
-        case "module_locked": return "Avval oldingi modulni yakunlang."
+        case "invalid_code": return tr("err_invalid_code")
+        case "invalid_token": return tr("err_invalid_token")
+        case "invalid_credentials": return tr("err_invalid_credentials")
+        case "staff_account": return tr("err_staff")
+        case "account_suspended": return tr("err_suspended")
+        case "too_many_requests": return tr("err_too_many")
+        case "module_locked": return tr("err_module_locked")
+        case "offline": return tr("err_offline")
         default: return message
         }
     }
@@ -248,6 +250,7 @@ final class API: @unchecked Sendable {
         request.httpMethod = method.rawValue
         request.setValue("application/json", forHTTPHeaderField: "Accept")
         request.setValue("ios", forHTTPHeaderField: "X-Platform")
+        request.setValue(Prefs.code, forHTTPHeaderField: "Accept-Language")
         request.setValue(appVersion, forHTTPHeaderField: "X-App-Version")
         if let token { request.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization") }
         if let body {
@@ -259,13 +262,13 @@ final class API: @unchecked Sendable {
         do {
             (data, response) = try await session.data(for: request)
         } catch {
-            throw APIError(status: 0, code: "offline", message: "Internet aloqasi yo'q. Qayta urinib ko'ring.")
+            throw APIError(status: 0, code: "offline", message: tr("err_offline"))
         }
         let status = (response as? HTTPURLResponse)?.statusCode ?? 0
         guard (200..<300).contains(status) else {
             if status == 401, token != nil { onUnauthorized?() }
             let parsed = try? decoder.decode(ErrorBody.self, from: data)
-            throw APIError(status: status, code: parsed?.code, message: parsed?.message ?? "Server xatosi (\(status))")
+            throw APIError(status: status, code: parsed?.code, message: parsed?.message ?? tr("err_server", status))
         }
         return data
     }
@@ -275,9 +278,52 @@ final class API: @unchecked Sendable {
         do {
             return try decoder.decode(T.self, from: data)
         } catch {
-            throw APIError(status: 200, code: "decode", message: "Javobni o'qib bo'lmadi.")
+            throw APIError(status: 200, code: "decode", message: tr("decode_failed"))
         }
     }
+}
+
+extension API {
+    /// Stale-while-revalidate for the list screens: `show` gets the cached answer at once (when there is one),
+    /// then the fresh one. Errors reach the caller only when nothing was cached.
+    func cached<T: Decodable>(_ path: String, query: [String: String?] = [:], show: (T) -> Void) async throws {
+        let key = ApiCache.key(path, query)
+        if let data = ApiCache.read(key), let value = try? decoder.decode(T.self, from: data) { show(value) }
+        let hadCache = ApiCache.read(key) != nil
+        do {
+            let data = try await data(.get, path, query: query)
+            let value = try decoder.decode(T.self, from: data)
+            show(value)
+            ApiCache.write(key, data)
+        } catch {
+            if !hadCache { throw error }
+        }
+    }
+}
+
+/// The last API answers (raw JSON) per user in Caches/api; cleared on sign-out.
+enum ApiCache {
+    nonisolated(unsafe) static var userId: Int?
+
+    private static var dir: URL {
+        let d = FileManager.default.urls(for: .cachesDirectory, in: .userDomainMask)[0].appendingPathComponent("api", isDirectory: true)
+        try? FileManager.default.createDirectory(at: d, withIntermediateDirectories: true)
+        return d
+    }
+
+    static func key(_ path: String, _ query: [String: String?]) -> String {
+        let q = query.compactMap { k, v in v.map { "\(k)=\($0)" } }.sorted().joined(separator: "&")
+        return (path + "?" + q).replacingOccurrences(of: "[^A-Za-z0-9_.=-]", with: "_", options: .regularExpression)
+    }
+
+    private static func file(_ key: String) -> URL? {
+        guard let userId else { return nil }
+        return dir.appendingPathComponent("\(userId)_\(key).json")
+    }
+
+    static func read(_ key: String) -> Data? { file(key).flatMap { try? Data(contentsOf: $0) } }
+    static func write(_ key: String, _ data: Data) { if let f = file(key) { try? data.write(to: f, options: .atomic) } }
+    static func clear() { try? FileManager.default.removeItem(at: dir) }
 }
 
 private struct AnyEncodable: Encodable {
