@@ -193,12 +193,11 @@ fun TestDetailScreen(testId: Int, skill: String? = null, onBack: () -> Unit, ope
     LaunchedEffect(testId, reload) {
         error = null
         try {
-            // Opened from a skill tab: only that skill is shown and solved.
-            val full = call { test(testId) }.test
-            val t = if (skill != null && full.modules.any { it.type == skill }) full.copy(modules = full.modules.filter { it.type == skill }) else full
+            // All modules are listed; opened from a skill tab only that skill is ticked, the student may tick the rest.
+            val t = call { test(testId) }.test
             test = t
-            fullCount = full.modules.size
-            selected = t.modules.map { it.type }.toSet()
+            fullCount = t.modules.size
+            selected = if (skill != null && t.modules.any { it.type == skill }) setOf(skill) else t.modules.map { it.type }.toSet()
         } catch (e: Exception) {
             error = e.userMessage()
         }
@@ -319,7 +318,7 @@ fun TestDetailScreen(testId: Int, skill: String? = null, onBack: () -> Unit, ope
                         textAlign = TextAlign.Center, color = Mn.Accent, fontWeight = FontWeight.SemiBold, fontSize = 14.sp,
                     )
                 }
-                if (skill == null) Text(str(R.string.order), Modifier.fillMaxWidth().padding(top = 6.dp), textAlign = TextAlign.Center, fontSize = 13.sp, color = Mn.Subtle)
+                if (t.modules.size > 1 && selected.size == t.modules.size) Text(str(R.string.order), Modifier.fillMaxWidth().padding(top = 6.dp), textAlign = TextAlign.Center, fontSize = 13.sp, color = Mn.Subtle)
             }
         }
     }
