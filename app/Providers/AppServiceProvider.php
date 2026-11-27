@@ -38,6 +38,13 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
+        // Every email gets a plain-text part next to the HTML one (HTML-only mail scores worse with spam filters).
+        \Illuminate\Support\Facades\Event::listen(\Illuminate\Mail\Events\MessageSending::class, function ($event) {
+            $message = $event->message;
+            if ($message->getTextBody() === null && is_string($html = $message->getHtmlBody()) && $html !== '') {
+                $message->text(\App\Support\MailText::fromHtml($html));
+            }
+        });
 
         User::observe(UserObserver::class);
         Section::observe(SectionObserver::class);
